@@ -6,8 +6,8 @@
      <script src="games.js" data-game="sudoku" data-show-when="#home:not(.hidden)"></script>
 
    Every game then gets:
-     - the Rizzo menu: swipe up from the bottom of the screen (or tap the blue bar while on the game's
-       menu) for "All games", sound, reduce motion, updates and more
+     - the Rizzo menu: a button in the top-left corner (or Esc on a computer) opens "All games", sound,
+       reduce motion, updates and more. The button takes on the game's own look (see "Styling" below)
      - shared settings: volume, music, sound effects, mute, reduce motion and update notes are the same
        in every game, so you set them once
      - automatic updates: it checks GitHub for a newer version when the game opens, comes back from the
@@ -16,8 +16,10 @@
 
    Settings on the tag (all optional):
      data-show-when="#home:not(.hidden)"  the game's menu screen. Updates wait for it so they never cut into
-                                          play, and the blue bar is only tappable while it shows (a swipe
-                                          up works anywhere)
+                                          play, and the button sits lighter while it isn't showing
+     data-hide-when=".panel.show"         hide the button while this matches (e.g. the game's own full-screen
+                                          panels, so it never covers their back buttons)
+     data-top="12" data-left="12"         where the button sits, in pixels from the top-left corner
      data-sounds="sfx"                    which sound sliders the game uses: "sfx", "music" or "sfx,music"
                                           (default "sfx,music")
      data-pill-top="12"                   how far down the update note sits, in pixels (default 12)
@@ -33,6 +35,11 @@
      RizzoGames.menuOpen      true while the menu is showing
      RizzoGames.check(true)   check for an update now
      <html> gets the class "rz-reduce-motion" while reduce motion is on
+
+   Styling: a game can give the button and the menu its own look by setting any of these CSS variables
+   on :root (each has a Rizzo-blue default):
+     --rz-btn-bg, --rz-btn-fg, --rz-btn-border, --rz-btn-radius, --rz-btn-shadow, --rz-btn-size
+     --rz-accent (switches, sliders), --rz-accent-grad, --rz-accent-edge, --rz-on-accent ("All games" button)
 
    Optional hooks: define window.RizzoHooks with any of these, at any time:
      onMenuOpen() / onMenuClose()  e.g. pause the game while the menu is up
@@ -117,29 +124,26 @@
   color:var(--rz-ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:normal;text-align:left;text-transform:none;font-style:normal}
 @media (prefers-color-scheme:dark){.rz-ui{--rz-bg:#0f1528;--rz-card:#161e36;--rz-ink:#e8eeff;--rz-muted:#93a0c2;--rz-line:#26304f;--rz-blue:#6aa6ff;--rz-soft:#1f2946}}
 .rz-ui *{box-sizing:border-box}
-/* the pull-up bar */
-.rz-handle{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 3px);z-index:2147483000;transform:translateX(-50%);
-  width:96px;height:26px;padding:0;margin:0;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.rz-handle i{display:block;width:46px;height:5px;border-radius:3px;background:linear-gradient(90deg,#5aa8ff,#1d4ed8);
-  box-shadow:0 0 0 1.5px rgba(255,255,255,.6),0 2px 8px rgba(37,99,235,.5);transition:width .2s,opacity .3s}
-.rz-handle:hover i,.rz-handle:focus-visible i{width:60px}
-.rz-handle:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px;border-radius:999px}
-.rz-handle.rz-quiet{pointer-events:none}
-.rz-handle.rz-quiet i{opacity:.45}
-/* with a mouse: the bar is always clickable, and lights up with a label when the pointer comes near */
-.rz-lab{position:absolute;bottom:100%;left:50%;transform:translate(-50%,4px);padding:5px 11px;border-radius:999px;white-space:nowrap;
-  background:#1d4ed8;color:#fff;font:700 12.5px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 12px rgba(37,99,235,.4);
-  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
-.rz-lab kbd{font:inherit;font-weight:800;padding:1px 5px;margin-left:4px;border-radius:4px;background:rgba(255,255,255,.22)}
-@media (hover:hover) and (pointer:fine){
-  .rz-handle.rz-quiet{pointer-events:auto}
-  .rz-handle.rz-near i,.rz-handle:hover i{width:64px;opacity:1}
-  .rz-handle.rz-near .rz-lab,.rz-handle:hover .rz-lab,.rz-handle:focus-visible .rz-lab{opacity:1;transform:translate(-50%,0)}
-}
-.rz-tip{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);z-index:2147483000;transform:translate(-50%,8px);
-  padding:7px 13px;border-radius:999px;background:#1d4ed8;color:#fff;font-weight:700;font-size:13px;white-space:nowrap;
-  box-shadow:0 6px 16px rgba(37,99,235,.4);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
-.rz-tip.rz-show{opacity:1;transform:translate(-50%,0)}
+/* the menu button (games restyle it with the --rz-btn-* variables). Every rule is prefixed with .rz-ui so a game's
+   own button styles (like a "pressed" nudge) can't move or reshape it */
+.rz-ui .rz-mbtn{position:fixed;z-index:2147483000;width:var(--rz-btn-size,42px);height:var(--rz-btn-size,42px);margin:0;padding:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;line-height:1;
+  background:var(--rz-btn-bg,linear-gradient(180deg,#4f9bff,#1d4ed8));color:var(--rz-btn-fg,#fff);
+  border:var(--rz-btn-border,1.5px solid rgba(255,255,255,.4));border-radius:var(--rz-btn-radius,13px);
+  box-shadow:var(--rz-btn-shadow,0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35));
+  transform:none;translate:none;-webkit-tap-highlight-color:transparent;transition:opacity .25s,visibility .25s,filter .15s}
+.rz-ui .rz-mbtn svg{width:54%;height:54%;display:block;pointer-events:none}
+.rz-ui .rz-mbtn:hover{filter:brightness(1.08)}
+.rz-ui .rz-mbtn:active{transform:none;translate:none;filter:brightness(.9)}
+.rz-ui .rz-mbtn:focus-visible{outline:3px solid #7cc8ff;outline-offset:3px}
+.rz-ui .rz-mbtn.rz-quiet{opacity:.55}
+.rz-ui .rz-mbtn.rz-quiet:hover,.rz-ui .rz-mbtn.rz-quiet:focus-visible{opacity:1}
+.rz-ui .rz-mbtn.rz-hide{opacity:0;visibility:hidden;pointer-events:none}
+.rz-ui .rz-mbtn.rz-pulse{animation:rzpulse 1.4s ease-in-out 3}
+@keyframes rzpulse{50%{box-shadow:var(--rz-btn-shadow,0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35)),0 0 0 7px color-mix(in srgb,var(--rz-accent,#7cc8ff) 45%,transparent)}}
+.rz-tip{position:fixed;z-index:2147483000;padding:7px 12px;border-radius:999px;background:var(--rz-accent,#1d4ed8);color:var(--rz-on-accent,#fff);font-weight:700;font-size:13px;
+  white-space:nowrap;box-shadow:0 6px 16px rgba(37,99,235,.4);opacity:0;pointer-events:none;transform:translateX(-6px);transition:opacity .3s,transform .3s}
+.rz-tip.rz-show{opacity:1;transform:none}
 /* the menu */
 .rz-scrim{position:fixed;inset:0;z-index:2147483002;background:rgba(5,9,24,.5);opacity:0;pointer-events:none;transition:opacity .25s}
 .rz-scrim.rz-show{opacity:1;pointer-events:auto}
@@ -156,15 +160,15 @@
 .rz-badge svg{width:24px;height:26px}
 .rz-head b{display:block;font-size:17px;font-weight:800}
 .rz-head small{display:block;color:var(--rz-muted);font-size:13px;margin-top:1px}
-.rz-x{margin-left:auto;width:36px;height:36px;flex-shrink:0;border-radius:50%;border:0;background:var(--rz-soft);color:var(--rz-ink);
+.rz-ui .rz-x{margin-left:auto;width:36px;height:36px;flex-shrink:0;border-radius:50%;border:0;background:var(--rz-soft);color:var(--rz-ink);
   display:flex;align-items:center;justify-content:center;cursor:pointer}
 .rz-x svg{width:16px;height:16px}
-.rz-leave{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:14px;
-  background:linear-gradient(180deg,#4f9bff,#1d4ed8);color:#fff;font-weight:800;font-size:16px;text-decoration:none;
-  box-shadow:0 3px 0 #0f2b7a,0 8px 18px rgba(37,99,235,.3);-webkit-tap-highlight-color:transparent}
-.rz-leave svg{width:17px;height:17px}
-.rz-leave:active{transform:translateY(2px);box-shadow:0 1px 0 #0f2b7a}
-.rz-leave.rz-armed{background:linear-gradient(180deg,#ff7a5c,#d93b2b);box-shadow:0 3px 0 #7a1d12}
+.rz-ui .rz-leave{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:14px;border:0;margin:0;
+  background:var(--rz-accent-grad,linear-gradient(180deg,#4f9bff,#1d4ed8));color:var(--rz-on-accent,#fff);font-weight:800;font-size:16px;text-decoration:none;
+  box-shadow:0 3px 0 var(--rz-accent-edge,#0f2b7a),0 8px 18px rgba(0,0,0,.18);transform:none;translate:none;-webkit-tap-highlight-color:transparent}
+.rz-ui .rz-leave svg{width:17px;height:17px}
+.rz-ui .rz-leave:active{transform:none;translate:0 2px;box-shadow:0 1px 0 var(--rz-accent-edge,#0f2b7a)}
+.rz-ui .rz-leave.rz-armed{background:linear-gradient(180deg,#ff7a5c,#d93b2b);color:#fff;box-shadow:0 3px 0 #7a1d12}
 .rz-warn{margin:8px 4px 0;color:#d93b2b;font-size:13.5px;font-weight:600}
 .rz-warn:empty{display:none}
 .rz-ui h3{margin:20px 4px 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rz-muted)}
@@ -174,16 +178,16 @@
 .rz-row .rz-l{flex:1;min-width:0;font-weight:600}
 .rz-row small{display:block;color:var(--rz-muted);font-size:12.5px;font-weight:400;margin-top:1px}
 .rz-row.rz-slide .rz-l{flex:0 0 96px}
-.rz-row input[type=range]{flex:1;min-width:0;margin:0;accent-color:var(--rz-blue);height:28px}
+.rz-row input[type=range]{flex:1;min-width:0;margin:0;accent-color:var(--rz-accent,var(--rz-blue));height:28px}
 .rz-row output{flex:0 0 40px;text-align:right;font-variant-numeric:tabular-nums;color:var(--rz-muted);font-weight:700;font-size:13px}
 .rz-row.rz-dim{opacity:.45}
-.rz-sw{appearance:none;-webkit-appearance:none;flex-shrink:0;width:48px;height:29px;margin:0;border-radius:15px;background:var(--rz-line);position:relative;cursor:pointer;transition:background-color .2s}
-.rz-sw::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
-.rz-sw:checked{background:var(--rz-blue)}
-.rz-sw:checked::after{transform:translateX(19px)}
+.rz-ui .rz-sw{appearance:none;-webkit-appearance:none;flex-shrink:0;width:48px;height:29px;margin:0;border-radius:15px;background:var(--rz-line);position:relative;cursor:pointer;transition:background-color .2s}
+.rz-ui .rz-sw::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.rz-ui .rz-sw:checked{background:var(--rz-accent,var(--rz-blue))}
+.rz-ui .rz-sw:checked::after{transform:translateX(19px)}
 .rz-sw:focus-visible,.rz-btn:focus-visible,.rz-x:focus-visible,.rz-leave:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
-.rz-btn{flex-shrink:0;border:0;border-radius:10px;padding:8px 13px;background:var(--rz-soft);color:var(--rz-ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
-.rz-btn:active{transform:scale(.96)}
+.rz-ui .rz-btn{flex-shrink:0;border:0;border-radius:10px;padding:8px 13px;background:var(--rz-soft);color:var(--rz-ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.rz-ui .rz-btn:active{transform:none;translate:0 1px}
 .rz-foot{margin:16px 4px 0;color:var(--rz-muted);font-size:12.5px;text-align:center}
 /* update note */
 .rz-pill{position:fixed;left:50%;z-index:2147483004;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 32px);
@@ -197,11 +201,14 @@
 .rz-pill.ok i::after{content:"";position:absolute;left:4.5px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .rz-pill.off i{background:#8a90a0}
 @keyframes rzspin{to{transform:rotate(360deg)}}
-html.rz-reduce-motion .rz-sheet,html.rz-reduce-motion .rz-scrim,html.rz-reduce-motion .rz-pill,html.rz-reduce-motion .rz-tip,html.rz-reduce-motion .rz-sw::after{transition:none}
-html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
+html.rz-reduce-motion .rz-sheet,html.rz-reduce-motion .rz-scrim,html.rz-reduce-motion .rz-pill,html.rz-reduce-motion .rz-tip,html.rz-reduce-motion .rz-mbtn,html.rz-reduce-motion .rz-sw::after{transition:none}
+html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}
+html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     document.head.appendChild(css);
 
     const R_SVG = '<svg viewBox="130 105 270 300" aria-hidden="true"><defs><linearGradient id="rzR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6f0ff"/><stop offset=".46" stop-color="#5aa8ff"/><stop offset=".54" stop-color="#1d4ed8"/><stop offset="1" stop-color="#3f86ff"/></linearGradient></defs><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="url(#rzR)" stroke="url(#rzR)" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>';
+    // the same chunky slanted R as the app icon, in the button's own colour
+    const R_PLAIN = '<svg viewBox="130 105 270 300" aria-hidden="true"><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="currentColor" stroke="currentColor" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>';
     const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
     const CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     const gameName = (opt.name || document.title || 'Game').trim();
@@ -211,12 +218,12 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
     const slider = (key, label) => `<label class="rz-row rz-slide" data-row="${key}"><span class="rz-l">${label}</span>
       <input type="range" min="0" max="100" step="5" data-k="${key}" aria-label="${label}"><output></output></label>`;
 
-    /* ---------- the pull-up bar, a first-time tip, and the menu ---------- */
+    /* ---------- the menu button, a first-time tip, and the menu ---------- */
     const ui = document.createElement('div');
     ui.className = 'rz-ui';
     ui.innerHTML = `
-<button class="rz-handle" type="button" aria-label="Open the Rizzo menu (Esc)" aria-haspopup="dialog"><i></i><span class="rz-lab">Rizzo menu<kbd>Esc</kbd></span></button>
-<div class="rz-tip" aria-hidden="true">${mouse ? 'Click the blue bar or press Esc for the Rizzo menu' : 'Swipe up for the Rizzo menu'}</div>
+<button class="rz-mbtn" type="button" aria-label="Rizzo menu${mouse ? ' (Esc)' : ''}" title="Rizzo menu${mouse ? ' (Esc)' : ''}" aria-haspopup="dialog" aria-expanded="false">${R_PLAIN}</button>
+<div class="rz-tip" aria-hidden="true">${mouse ? 'Rizzo menu · Esc' : 'Tap for the Rizzo menu'}</div>
 <div class="rz-scrim"></div>
 <div class="rz-sheet" role="dialog" aria-modal="true" aria-label="Rizzo menu" tabindex="-1">
   <div class="rz-grab"></div>
@@ -248,8 +255,13 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
 </div>`;
     document.body.appendChild(ui);
     const $ = s => ui.querySelector(s);
-    const handle = $('.rz-handle'), sheet = $('.rz-sheet'), scrim = $('.rz-scrim'), tip = $('.rz-tip');
+    const btn = $('.rz-mbtn'), sheet = $('.rz-sheet'), scrim = $('.rz-scrim'), tip = $('.rz-tip');
     const leave = $('.rz-leave'), warn = $('.rz-warn');
+    btn.style.top = tip.style.top = `calc(env(safe-area-inset-top,0px) + ${+opt.top || 12}px)`;
+    btn.style.left = `calc(env(safe-area-inset-left,0px) + ${+opt.left || 12}px)`;
+    // the tip sits just to the right of the button
+    tip.style.left = `calc(env(safe-area-inset-left,0px) + ${(+opt.left || 12) + 52}px)`;
+    tip.style.marginTop = '6px';
 
     // the music slider only appears active in games that have music (and likewise for effects)
     for (const k of ['music', 'sfx']) if (!sounds.includes(k)) {
@@ -292,7 +304,8 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
       syncMenu();
       sheet.scrollTop = 0;
       sheet.classList.add('rz-show'); scrim.classList.add('rz-show');
-      handle.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.classList.remove('rz-pulse');
       tip.classList.remove('rz-show');
       store('rz-menu-intro', '9');                       // they've found it: no more tips
       setTimeout(() => sheet.focus({preventScroll: true}), 50);
@@ -303,7 +316,7 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
       api.menuOpen = false;
       sheet.classList.remove('rz-show', 'rz-drag'); scrim.classList.remove('rz-show');
       sheet.style.transform = '';
-      handle.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-expanded', 'false');
       disarm();
       call('onMenuClose');
     };
@@ -311,7 +324,7 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
       armed = false;
       if (leave) { leave.classList.remove('rz-armed'); leave.lastChild.textContent = 'All games'; warn.textContent = ''; }
     }
-    handle.addEventListener('click', openMenu);
+    btn.addEventListener('click', openMenu);
     scrim.addEventListener('click', closeMenu);
     $('.rz-x').addEventListener('click', closeMenu);
     // While the menu is open it gets the keyboard: Escape closes it, and the game doesn't see key presses
@@ -342,17 +355,6 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
       if (!gameUsedIt) { e.preventDefault(); openMenu(); }
     });
 
-    // With a mouse, the bar lights up and shows its label when the pointer comes near the bottom of the screen
-    if (mouse) {
-      let near = false;
-      addEventListener('pointermove', e => {
-        if (e.pointerType !== 'mouse') return;
-        const r = handle.getBoundingClientRect();
-        const now = e.clientY > innerHeight - 90 && Math.abs(e.clientX - (r.left + r.width / 2)) < 220;
-        if (now !== near) { near = now; handle.classList.toggle('rz-near', near); }
-      }, {passive: true});
-      document.addEventListener('mouseleave', () => { near = false; handle.classList.remove('rz-near'); });
-    }
 
     /* ---------- "All games", with a warning first if the game wants one ---------- */
     if (leave) leave.addEventListener('click', e => {
@@ -382,40 +384,7 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
       }
     });
 
-    /* ---------- swiping: up from the bottom opens it, down on the menu closes it ---------- */
-    // An upward swipe that starts near the bottom of the screen opens the menu. If the page (or the panel the
-    // finger is on) can still scroll down, the swipe is left alone so normal scrolling still works.
-    const ZONE = 70;
-    const canScrollDown = el => {
-      for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
-        if (n.nodeType !== 1) continue;
-        const s = getComputedStyle(n);
-        if (/(auto|scroll)/.test(s.overflowY) && n.scrollHeight - n.clientHeight - n.scrollTop > 2) return true;
-      }
-      const se = document.scrollingElement || document.documentElement;
-      return se.scrollHeight - innerHeight - se.scrollTop > 2;
-    };
-    // A swipe that starts on (or just around) the blue bar always counts, even on a page that scrolls
-    const nearBar = (x, y) => {
-      const r = handle.getBoundingClientRect();
-      return x > r.left - 40 && x < r.right + 40 && y > r.top - 24 && y < r.bottom + 30;
-    };
-    let sw = null;
-    addEventListener('touchstart', e => {
-      sw = null;
-      if (api.menuOpen || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      if (t.clientY < innerHeight - ZONE) return;
-      if (!nearBar(t.clientX, t.clientY) && canScrollDown(e.target)) return;
-      sw = {x: t.clientX, y: t.clientY};
-    }, {passive: true, capture: true});
-    addEventListener('touchmove', e => {
-      if (!sw) return;
-      const t = e.touches[0], dy = sw.y - t.clientY, dx = Math.abs(t.clientX - sw.x);
-      if (dy > 34 && dy > dx * 1.3) { sw = null; openMenu(); }
-      else if (dx > 40 || dy < -20) sw = null;
-    }, {passive: true, capture: true});
-    addEventListener('touchend', () => { sw = null; }, {passive: true, capture: true});
+    /* ---------- swiping down on the menu closes it ---------- */
 
     let dz = null;
     sheet.addEventListener('touchstart', e => {
@@ -441,28 +410,32 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
     sheet.addEventListener('touchend', dragEnd);
     sheet.addEventListener('touchcancel', dragEnd);
 
-    /* ---------- the bar is tappable on the game's menu, and quietly visible during play ---------- */
+    /* ---------- the button sits lighter during play, and steps aside for the game's own panels ---------- */
     let queued = false, waitingRef = () => false;
+    const covered = () => { if (!opt.hideWhen) return false; try { return !!document.querySelector(opt.hideWhen); } catch { return false; } };
     const onChange = () => {
       queued = false;
-      const menu = onMenu();
-      handle.classList.toggle('rz-quiet', !menu);
-      handle.tabIndex = menu ? 0 : -1;
+      const hide = covered() && !api.menuOpen;
+      btn.classList.toggle('rz-quiet', !onMenu());
+      btn.classList.toggle('rz-hide', hide);
+      btn.tabIndex = hide ? -1 : 0;
+      if (hide) tip.classList.remove('rz-show');
       if (waitingRef()) tryReload();
     };
-    if (opt.showWhen) {
+    if (opt.showWhen || opt.hideWhen) {
       new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(onChange); } })
         .observe(document.body, {subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'style'], childList: true});
     }
     onChange();
-    // The first few times, a little tip points at the bar
+    // The first few times, the button gives a gentle pulse and a tip says what it is
     const intro = +(read('rz-menu-intro') || 0);
     if (intro < 3) {
       store('rz-menu-intro', intro + 1);
       setTimeout(() => {
-        if (!onMenu() || api.menuOpen) return;
+        if (!onMenu() || api.menuOpen || covered()) return;
+        btn.classList.add('rz-pulse');
         tip.classList.add('rz-show');
-        setTimeout(() => tip.classList.remove('rz-show'), 3200);
+        setTimeout(() => tip.classList.remove('rz-show'), 3600);
       }, 900);
     }
 

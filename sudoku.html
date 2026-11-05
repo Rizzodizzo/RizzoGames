@@ -6,7 +6,7 @@
 <title>Sudoku</title>
 <meta name="theme-color" content="#f6f4ef">
 <link rel="manifest" href="manifest.webmanifest">
-<script src="games.js" data-game="sudoku" data-show-when="#home:not(.hidden)" data-sounds="sfx" data-pill-top="64"></script>
+<script src="games.js" data-game="sudoku" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show, .overlay.show" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -80,7 +80,7 @@ header button{white-space:nowrap;flex-shrink:0}
 #diffLabel span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 #diffLabel .dl-mode{font-size:.6em;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px}
 .newsplit{display:flex;flex-shrink:0;gap:2px}
-@media (max-width:360px){.ngword{display:none}}
+@media (max-width:420px){.ngword{display:none}}   /* phones: "New" leaves room for the difficulty and the Rizzo button */
 .newsplit #newBtn{border-top-right-radius:3px;border-bottom-right-radius:3px}
 .diffpick{position:relative;display:flex;align-items:center;justify-content:center;width:34px;border-radius:3px 8px 8px 3px;cursor:pointer;background:var(--accent);color:var(--onaccent)}
 .diffpick svg.ic{width:16px;height:16px;transform:rotate(90deg)}
@@ -667,6 +667,13 @@ html.nofx #scene *,html.nofx .catlayer *,html.nofx .bunnylayer *,html.nofx .bunn
 html.nofx .vinestem{stroke-dashoffset:0}html.nofx .pleaf{scale:1}html.nofx .cat .z{opacity:.6}
 html.nofx body[data-fx=gold] .cell.given .v,html.nofx body[data-fx=gold] h1,html.nofx body[data-fx=gold] .score,html.nofx body[data-fx=gold] button.primary,html.nofx body[data-fx=gold] label.primary{animation:none!important}
 
+
+/* ---------- Rizzo menu button: styled like Sudoku's own buttons, following whichever theme is on ---------- */
+:root{--rz-btn-bg:var(--btn);--rz-btn-fg:var(--accent);--rz-btn-border:none;--rz-btn-radius:10px;--rz-btn-shadow:none;--rz-btn-size:40px;
+  --rz-accent:var(--accent);--rz-accent-grad:var(--accent);--rz-accent-edge:rgba(0,0,0,.25);--rz-on-accent:var(--onaccent)}
+/* leave room for it in the top-left corner */
+.topbar{padding-left:52px}
+#game > header{padding-left:48px}
 </style>
 </head>
 <body>

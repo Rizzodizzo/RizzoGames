@@ -897,8 +897,15 @@ html.rm .t-spk{display:none}
 .hleft .homebtns .sq .ndot{top:-11px;right:-7px;height:20px;min-width:20px;padding:0 5px;font-size:11px}
 
 .answers button.ph{visibility:hidden;pointer-events:none}
+
+/* ---------- Rizzo menu button: a gold-edged square like Equus's own buttons ---------- */
+:root{--rz-btn-bg:linear-gradient(180deg,rgba(46,28,86,.94),rgba(18,12,40,.94));--rz-btn-fg:#ffd23f;--rz-btn-border:2px solid rgba(255,210,63,.8);
+  --rz-btn-radius:0;--rz-btn-shadow:4px 4px 0 rgba(0,0,0,.45),0 0 18px rgba(255,210,63,.28);--rz-btn-size:42px;
+  --rz-accent:#ff7a45;--rz-accent-grad:linear-gradient(180deg,#ff8a55,#e4572e);--rz-accent-edge:#8d2a14;--rz-on-accent:#fff}
+/* race stats move down a little so the button never covers them */
+.track .stats{top:64px}
 </style>
-<script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)"></script>
+<script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden)"></script>
 </head>
 <body>
 <div id="loader" role="status" aria-live="polite"><div class="ldbox"><div class="ldlogo logo2 ld"><span class="t-eth">Ethereal</span><span class="t-equ" data-t="EQUUS">EQUUS</span><span class="t-exa">Examination</span></div><div class="ldcar" aria-hidden="true"><i></i></div><div class="ldbar"><i id="ldFill"></i></div><div class="ldtxt" id="ldTxt">Warming up the engine...</div></div></div>
