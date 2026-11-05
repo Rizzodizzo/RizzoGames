@@ -902,6 +902,23 @@ html.rm .t-spk{display:none}
   --rz-btn-radius:0;--rz-btn-shadow:4px 4px 0 rgba(0,0,0,.45),0 0 18px rgba(255,210,63,.28);--rz-btn-size:42px}
 /* race stats start a little further right so the button sits beside them (the countdown lights stay put) */
 .track .stats{left:50px}
+
+/* ---------- phone on its side: road on the left, questions on the right, menus shrink to fit ---------- */
+@media (orientation:landscape) and (max-height:560px){
+  body{background:#0d0a1c!important}
+  main{min-height:0!important;height:100dvh!important;flex-direction:row!important;gap:8px!important;
+    padding:6px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))!important}
+  .track{flex:1.7 1 0!important;min-height:0!important;min-width:0}
+  .quiz{flex:1 1 0;min-width:0;justify-content:center;overflow-y:auto;border-top:0!important;border-left:3px solid #ff7a45!important;border-radius:12px;box-shadow:-10px 0 40px rgba(255,122,69,.22),inset 0 1px 0 rgba(255,255,255,.08)!important}
+  .quiz::before{left:-3px!important;right:auto!important;top:0!important;bottom:0!important;width:3px;height:auto!important;background:linear-gradient(180deg,transparent,#ffd23f,#ff7a45,#ffd23f,transparent)!important}
+  .quiz .q{font-size:clamp(1.4rem,min(4vw,11vh),3rem)!important;margin:2px 0 clamp(6px,2.4vh,14px)!important}
+  .quiz .q.hist{font-size:clamp(1rem,min(2.4vw,7vh),1.8rem)!important}
+  .quiz .answers{grid-template-columns:1fr 1fr!important}
+  .quiz .answers button{padding:clamp(6px,3vh,16px) 6px!important;font-size:clamp(1.1rem,min(2.6vw,7.5vh),2rem)!important}
+  .overlay{padding:10px max(12px,env(safe-area-inset-right)) 10px max(12px,env(safe-area-inset-left))!important}
+  .overlay .homehead .tag{display:none!important}
+  .overlay .homehead .logo,.overlay .homehead .logo2{font-size:clamp(1.4rem,min(7vw,13vh),3.4rem)!important}
+}
 </style>
 <script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-splash="#loader" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden)"></script>
 </head>
@@ -6820,7 +6837,9 @@ function testBeans(n){beans+=n;saveGarage();renderCareer();if(view==="garage")re
 }
 
 function fitUI(){
-  const u=Math.max(1,Math.min(2.2,Math.min(innerWidth/1000,innerHeight/640)))*(SET.big?1.12:1);
+  // a phone on its side is short: let the menus shrink to fit instead of scrolling
+  const short=innerWidth>innerHeight&&innerHeight<560;
+  const u=(short?Math.max(.62,Math.min(1,innerHeight/560)):Math.max(1,Math.min(2.2,Math.min(innerWidth/1000,innerHeight/640))))*(SET.big?1.12:1);
   document.documentElement.style.setProperty("--u",u.toFixed(3))
 }
 addEventListener("resize",fitUI);
