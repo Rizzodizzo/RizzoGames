@@ -39,15 +39,22 @@
   /* ---------- shared styles ---------- */
   const css = document.createElement('style');
   css.textContent = `
-    .rz-back{position:fixed;z-index:2147483000;display:inline-flex;align-items:center;gap:5px;
-      padding:7px 13px 7px 9px;border-radius:999px;text-decoration:none;
-      font:700 14px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;
-      color:#fff;background:rgba(20,22,29,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-      box-shadow:0 2px 10px rgba(0,0,0,.22);-webkit-tap-highlight-color:transparent;
-      transition:opacity .2s,transform .15s}
-    .rz-back svg{width:16px;height:16px}
-    .rz-back:active{transform:scale(.94)}
-    .rz-back:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
+    /* the back button: a small Rizzo-blue "R" badge that slides open to "All games" when tapped */
+    .rz-back{position:fixed;z-index:2147483000;display:inline-flex;align-items:center;height:38px;
+      padding:0 9px;border-radius:999px;text-decoration:none;color:#fff;
+      font:800 14px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;white-space:nowrap;
+      background:linear-gradient(180deg,#4f9bff,#1d4ed8);border:1.5px solid rgba(255,255,255,.35);
+      box-shadow:0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35);-webkit-tap-highlight-color:transparent;
+      transition:opacity .25s,transform .15s,padding .3s cubic-bezier(.2,.8,.2,1)}
+    .rz-r{width:18px;height:18px;flex-shrink:0;display:block}
+    .rz-lbl{display:inline-flex;align-items:center;gap:3px;overflow:hidden;max-width:0;opacity:0;
+      transition:max-width .3s cubic-bezier(.2,.8,.2,1),opacity .2s,margin .3s;margin-left:0}
+    .rz-lbl svg{width:14px;height:14px;flex-shrink:0}
+    .rz-back.rz-open{padding:0 14px 0 11px}
+    .rz-back.rz-open .rz-lbl{max-width:120px;opacity:1;margin-left:8px}
+    @media (hover:hover) and (pointer:fine){.rz-back:hover{padding:0 14px 0 11px}.rz-back:hover .rz-lbl{max-width:120px;opacity:1;margin-left:8px}}
+    .rz-back:active{transform:translateY(2px);box-shadow:0 1px 0 #0f2b7a,0 4px 10px rgba(37,99,235,.3)}
+    .rz-back:focus-visible{outline:3px solid #7cc8ff;outline-offset:3px}
     .rz-back.rz-off{opacity:0;pointer-events:none}
     .rz-pill{position:fixed;left:50%;z-index:2147483001;display:flex;align-items:center;gap:8px;
       width:max-content;max-width:calc(100% - 32px);padding:7px 14px 7px 11px;border-radius:999px;
@@ -74,12 +81,35 @@
     back.className = 'rz-back';
     back.href = './';
     back.setAttribute('aria-label', 'Back to all games');
-    back.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Games';
+    // the same chunky, slanted R as the app icon
+    back.innerHTML = '<svg class="rz-r" viewBox="130 105 270 300" aria-hidden="true"><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="#fff" stroke="#fff" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>' +
+      '<span class="rz-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>All games</span>';
     const [v, h] = corner;
     back.style[v === 'bottom' ? 'bottom' : 'top'] = `calc(env(safe-area-inset-${v === 'bottom' ? 'bottom' : 'top'},0px) + ${gap})`;
     if (h === 'center') { back.style.left = '50%'; back.style.translate = '-50% 0'; }
     else back.style[h === 'right' ? 'right' : 'left'] = `calc(env(safe-area-inset-${h === 'right' ? 'right' : 'left'},0px) + ${gap})`;
     document.body.appendChild(back);
+
+    // On touch screens: the first tap opens it, a second tap leaves. It closes again by itself.
+    let shutTimer = 0;
+    const setOpen = on => {
+      back.classList.toggle('rz-open', on);
+      clearTimeout(shutTimer);
+      if (on) shutTimer = setTimeout(() => back.classList.remove('rz-open'), 4000);
+    };
+    const hoverable = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    back.addEventListener('click', e => {
+      if (hoverable || back.classList.contains('rz-open')) return;   // already showing "All games": go
+      e.preventDefault();
+      setOpen(true);
+    });
+    addEventListener('pointerdown', e => { if (!back.contains(e.target)) setOpen(false); }, true);
+    // The first few times, it opens briefly by itself so people learn what it is
+    const shown = +(read('rz-back-intro') || 0);
+    if (shown < 3) {
+      store('rz-back-intro', shown + 1);
+      setTimeout(() => { if (onMenu()) { setOpen(true); clearTimeout(shutTimer); shutTimer = setTimeout(() => setOpen(false), 2200); } }, 700);
+    }
   }
 
   // Watch for the menu appearing and disappearing (shows/hides the button, and lets a waiting update in)
@@ -87,7 +117,7 @@
   const onChange = () => {
     queued = false;
     const menu = onMenu();
-    if (back) { back.classList.toggle('rz-off', !menu); back.tabIndex = menu ? 0 : -1; }
+    if (back) { back.classList.toggle('rz-off', !menu); back.tabIndex = menu ? 0 : -1; if (!menu) back.classList.remove('rz-open'); }
     if (waiting) tryReload();
   };
   if (opt.showWhen) {
