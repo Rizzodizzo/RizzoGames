@@ -72,6 +72,10 @@
   };
 
   if (!isHub) store('hub-last-' + id, Date.now());
+  if (isHub) document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href]');
+    if (a && a.origin === location.origin && !e.defaultPrevented) try { sessionStorage.setItem('rz-from-hub', Date.now()); } catch {}
+  }, true);
   // the same chunky slanted R as the app icon, drawn in the current text colour
   const R_PLAIN = '<svg viewBox="130 105 270 300" aria-hidden="true"><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="currentColor" stroke="currentColor" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>';
 
@@ -163,7 +167,16 @@
     splash.innerHTML = R_PLAIN + (title ? `<span>${title}</span>` : '') + '<i><b></b><b></b><b></b></i>';
     document.documentElement.appendChild(splash);
     if (opt.splash) { splash.classList.add('rz-gone'); splash.style.display = 'none'; }   // the game shows its own while loading
-    const ready = () => requestAnimationFrame(() => requestAnimationFrame(() => vtDone ? vtDone.then(hideSplash) : hideSplash()));
+    // Arriving from the launcher, the card is zooming into this splash. Keep it up until the zoom is over:
+    // some browsers (Safari) don't say when it ends, so it also stays for at least the zoom's length.
+    let fromHub = false;
+    try { fromHub = Date.now() - (+sessionStorage.getItem('rz-from-hub') || 0) < 5000; sessionStorage.removeItem('rz-from-hub'); } catch {}
+    const ZOOM_MS = 650;
+    const ready = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (vtDone) vtDone.then(hideSplash);
+      else if (fromHub && !settings.reduceMotion) setTimeout(hideSplash, Math.max(0, ZOOM_MS - performance.now()));
+      else hideSplash();
+    }));
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, {once: true}); else ready();
     setTimeout(hideSplash, 3000);                                        // never longer than this
     addEventListener('pageshow', e => { if (e.persisted) hideSplash(); });   // coming back with the browser's back button
