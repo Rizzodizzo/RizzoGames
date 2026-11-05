@@ -114,6 +114,8 @@
   const card = 'rz-card-' + String(id).replace(/[^\w-]/g, '');
   const early = document.createElement('style');
   early.textContent = `
+/* no iPhone rubber-band bounce that shows what's underneath the page */
+html,body{overscroll-behavior:none}
 @view-transition{navigation:auto}
 ::view-transition-group(*){animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.3s}

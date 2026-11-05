@@ -486,7 +486,7 @@ body[data-fx=candy] .board{box-shadow:0 0 18px rgba(255,95,162,.35)}
 .lr-l svg.ic{width:20px;height:20px;color:var(--accent)}
 .lr-r{color:var(--muted);font-size:.9rem}
 .lr-r svg.ic{width:16px;height:16px}
-.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s,background-color .3s}
+.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s,background-color .3s}
 .panel.show{transform:none;visibility:visible;transition:transform .38s var(--ease),visibility 0s,background-color .3s}
 .panel.dragging,.sheet.dragging{transition:none!important}
 .sheet{transition:transform .3s var(--ease)}
@@ -713,6 +713,11 @@ html.rm .stitle span,html.rm .stitle .sel{animation:none}
 @keyframes ringdraw{from{stroke-dashoffset:1}}
 html.rm .mode.active .mart .ring{animation:none}
 
+/* The page itself never scrolls or bounces: when everything fits there's nothing to move, and if a small
+   screen needs it, the page scrolls inside without the iPhone's rubber-band showing what's underneath */
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{height:100%;box-sizing:border-box;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch}
+.sheet,.panel,.overlay,#histList,#tips,.tabpages{overscroll-behavior:none}
 /* the two halves of the home screen only matter sideways (below); upright they're invisible */
 .home .hl,.home .hr{display:contents}
 .home{height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
