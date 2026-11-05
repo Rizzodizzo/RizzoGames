@@ -917,7 +917,22 @@ html.rm .t-spk{display:none}
   .quiz .q.sent{font-size:clamp(.95rem,min(2.1vw,5.4vh),1.35rem)!important;line-height:1.25!important}
   .quiz .answers.airtap button{font-size:clamp(.9rem,min(2vw,5vh),1.25rem)!important;padding:clamp(6px,2.2vh,12px) 4px!important}
   html.rz-phone .track{flex:2.3 1 0!important}
-  html.rz-phone .quiz{padding:8px 10px!important}
+  /* edge to edge: the road/ocean runs under the island and to the top and bottom; only readouts keep clear */
+  main{padding:0!important;gap:0!important}
+  .track{border:0!important;border-radius:0!important}
+  .quiz{border-radius:0!important;padding:max(8px,env(safe-area-inset-top)) calc(env(safe-area-inset-right,0px) + 10px) max(8px,env(safe-area-inset-bottom)) 12px!important}
+  .track .stats{top:max(24px,calc(env(safe-area-inset-top,0px) + 22px))!important;left:calc(env(safe-area-inset-left,0px) + 58px)!important;right:10px!important}
+  .track .fuelrow{left:calc(env(safe-area-inset-left,0px) + 12px)!important;right:12px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 6px)!important}
+  .combo{right:14px!important}
+  /* the question panel is all question: the answers stretch to fill whatever height is left */
+  .quiz{display:flex!important;flex-direction:column!important;justify-content:flex-start!important}
+  .quiz .qtag{align-self:center}
+  .quiz .q{flex:none}
+  .quiz .answers{flex:1 1 0;min-height:0;grid-auto-rows:1fr;align-content:stretch}
+  .quiz .answers button{height:100%}
+  .quiz .answers.air{flex:none}
+  .quiz .answers:not(.air):not(.airtap) button{font-size:clamp(1.4rem,min(3.4vw,10vh),3rem)!important}
+  .quiz .answers.airtap button{font-size:clamp(1rem,min(2.4vw,6vh),1.5rem)!important}
   .quiz .answers{grid-template-columns:1fr 1fr!important}
   .quiz .answers button{padding:clamp(6px,3vh,16px) 6px!important;font-size:clamp(1.1rem,min(2.6vw,7.5vh),2rem)!important}
   .overlay{padding:10px max(12px,env(safe-area-inset-right)) 10px max(12px,env(safe-area-inset-left))!important}
@@ -1292,8 +1307,13 @@ function waterAt(z){
   }
   return null
 }
+// how much of the road sits behind the island or rounded corners on each side (0 on most screens)
+const SAFE={l:0,r:0};
+const safeProbe=(()=>{const d=document.createElement("div");d.style.cssText="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)";document.documentElement.appendChild(d);return d})();
 function resize(){
   const r=$("track").getBoundingClientRect();
+  {const cs=getComputedStyle(safeProbe),il=parseFloat(cs.paddingLeft)||0,ir=parseFloat(cs.paddingRight)||0;
+   SAFE.l=Math.max(0,il-r.left);SAFE.r=Math.max(0,r.right-(innerWidth-ir))}
   dpr=GQ.lvl>=2?Math.min(2,Math.max(1,Math.round(window.devicePixelRatio||1))):GQ.lvl===1?Math.min(1.5,window.devicePixelRatio||1):1;
   dpr=Math.max(1,dpr);
   W=Math.max(300,Math.floor(r.width));
@@ -5430,12 +5450,13 @@ function draw(){
     ctx.drawImage(draw.vgs[RBS],0,0,W,H)
   }
   ctx.fillStyle="rgba(0,0,0,.45)";
-  ctx.fillRect(10,10,W-20,8*U);
+  const bx=10+SAFE.l,bW=W-20-SAFE.l-SAFE.r;      // the progress bar stays clear of the island
+  ctx.fillRect(bx,10,bW,8*U);
   ctx.fillStyle=css("--you");
-  ctx.fillRect(10,10,(W-20)*Math.min(1,dist/TRACK),8*U);
+  ctx.fillRect(bx,10,bW*Math.min(1,dist/TRACK),8*U);
   RIV.forEach((r,i)=>{
     ctx.fillStyle=r.color;
-    ctx.fillRect(10+(W-20)*Math.min(1,rd[i]/TRACK)-2,8,4,8*U+4)
+    ctx.fillRect(bx+bW*Math.min(1,rd[i]/TRACK)-2,8,4,8*U+4)
   });
   if(mode==="count"||goFlash>0)drawCountdown(W/2,HY+(BY-HY)*.4,U,Math.max(125*U,HY*.62));
   if(school&&mode==="run"&&dist>=school.z0&&dist<=school.z1){
@@ -6395,9 +6416,9 @@ function drawAir(){
   }
   ctx.restore();
   if(GQ.lvl>0)ctx.drawImage(AB.vg,0,0,W,H);
-  const bw=W-20,fr=Math.max(0,Math.min(1,A.t/AIR_T));
-  ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(10,10,bw,8*U2);
-  ctx.fillStyle=fr<.2?"#ff6b5b":"#6fd6ff";ctx.fillRect(10,10,bw*fr,8*U2);
+  const bw=W-20-SAFE.l-SAFE.r,bx=10+SAFE.l,fr=Math.max(0,Math.min(1,A.t/AIR_T));
+  ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(bx,10,bw,8*U2);
+  ctx.fillStyle=fr<.2?"#ff6b5b":"#6fd6ff";ctx.fillRect(bx,10,bw*fr,8*U2);
   if(mode==="count"||goFlash>0)drawCountdown(W/2,H*.52,U2*.62,Math.max(100*U2*.62,H*.2));
   drawToastAir()
 }
