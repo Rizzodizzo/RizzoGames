@@ -6130,16 +6130,39 @@ function krakenTentacles(h,p,n,R,H,cols,sd){
   }
 }
 function krakenModel(p){
-  return amod("krak"+p,110,70,h=>{
-    const PU="#8e2f86",PL="#a8439f";
-    krakenTentacles(h,p,8,18,34,["#7d3187","#6d2877"],3);
-    aRing(h,0,0,19,17,-3,14,PU,10);aRing(h,0,1,17,15,14,26,PU,10);aRing(h,0,2,14,12,26,36,PL,10);aRing(h,0,3,9,8,36,43,PL,8);aRing(h,0,3,5,4.5,43,47,PL,8);
-    for(const [dx,dy,dz] of [[-12,8,-15],[11,6,-15.5],[13,36,-7],[-11,38,-6]])aBox(h,dx-1.6,dx+1.6,dy,dy+3,dz-1,dz,"#6a2166");
-    for(const sx of [-1,1]){
-      aBox(h,sx*8-5,sx*8+5,20,30,-16.4,-15.4,"#ffffff");aBox(h,sx*8-3.2,sx*8+3.2,21.5,28.5,-16.8,-16.3,"#ffd23f");aBox(h,sx*8-.7,sx*8+.7,21,29,-17.1,-16.7,"#111111");
-      aSeg(h,[sx*14,33,-15.6],[sx*3,30,-16.4],1,1,"#3d1240")
+  return amod("krak2_"+p,120,80,h=>{
+    const ph=p/8*Math.PI*2;
+    // just two tentacles raised out of the sea, one either side, swaying and curling at the tip
+    for(const [i,a] of [[0,Math.PI+.45],[1,-.45]]){
+      const sd=i?1:-1,sw=Math.sin(ph+i*2.2)*.12,P=[];
+      for(let k=0;k<=10;k++){const t=k/10,r=19+t*t*24,aa=a+sw*t*sd,y=Math.sin(t*Math.PI*.55)*30+.5,curl=t>.65?(t-.65)/.35:0;
+        P.push([Math.cos(aa)*r+Math.cos(aa)*curl*curl*-9,y-curl*curl*9,Math.sin(aa)*r*.8])}
+      aChain(h,P,3.6,.7,["#7d3187","#8e3a95"]);
+      for(let k=2;k<8;k++)aBox(h,P[k][0]-.9,P[k][0]+.9,P[k][1]-2.2,P[k][1]-1.2,P[k][2]-.9,P[k][2]+.9,"#f6b3d2")
     }
+    // two loops further out, breaking the surface like the rest of the tentacle is under water
+    for(const [a,r0] of [[.35,32],[2.75,34]]){const P=[];for(let k=0;k<=6;k++){const t=k/6,r=r0+t*12;P.push([Math.cos(a+t*.25)*r,Math.sin(t*Math.PI)*9+.3,Math.sin(a+t*.25)*r*.8])}aChain(h,P,2.6,2,["#7d3187","#8e3a95"])}
+    // octopus shape: a low head carrying the eyes, a slight neck, then a big rounded mantle swept up and back
+    const prof=[[0,19,0],[3,20,0],[6,20.5,0],[9,20,0],[12,18.5,.5],[15,17,1.5],[18,17.5,3],[21,18.5,4.5],[24,19,6],[27,18.6,7.5],[30,17.5,9],[33,15.5,10.5],[36,12.5,12],[39,8.5,13],[41,4.5,13.5]];
+    const cols=["#742470","#7a2775","#842b7e","#8e2f86","#97368f","#a03d97","#a8439f","#b14ba8"];
+    for(let k=0;k<prof.length-1;k++){const [y0,r0,b0]=prof[k],[y1]=prof[k+1];aRing(h,0,b0,r0,r0*.86,y0,y1,cols[Math.min(cols.length-1,Math.floor(k/2))],14)}
+    // big eyes just above the water, angry brows
+    for(const sx of [-1,1]){
+      const ex=sx*8.5,ez=-16.6;
+      aBox(h,ex-5,ex+5,6,15,ez-1.4,ez,"#ffffff");aBox(h,ex-3.4,ex+3.4,7.2,13.8,ez-1.9,ez-1.3,"#ffd23f");aBox(h,ex-.8,ex+.8,7,14,ez-2.3,ez-1.8,"#111111");
+      aBox(h,ex-1.4,ex-.2,11.6,13,ez-2.4,ez-2.2,"#ffffff");
+      aSeg(h,[sx*14.5,17.5,-15.2],[sx*3.5,15.4,-17.2],1.1,1.1,"#3d1240")
+    }
+    for(const [dx,dy,dz] of [[-11,26,-9.5],[9,30,-6],[-2,35,-1.5],[14,23,-8]])aBox(h,dx-1.6,dx+1.6,dy,dy+2.6,dz-1,dz,"#6a2166")
   })
+}
+/* water drawn over the base of something sitting in the sea, so it looks like it's in it, not on it */
+function airWaterLine(xx,yy,u,r,z,tk,sd){
+  const tl=airTilt(z),ry=Math.max(1.2*u,r*.86*Math.sin(tl)*u*.55+1*u),cy=yy+ry*.55;
+  ctx.save();ctx.globalAlpha*=.5;ctx.fillStyle="#2a78b8";ctx.beginPath();ctx.ellipse(xx,cy,(r+2)*u,ry,0,0,Math.PI);ctx.fill();ctx.restore();
+  const fo=.5+.5*Math.sin(tk*2.4+sd);
+  ctx.strokeStyle="rgba(255,255,255,"+(.6+.3*fo)+")";ctx.lineWidth=Math.max(1,1.8*u);
+  ctx.beginPath();ctx.ellipse(xx,cy,(r+3+fo*2)*u,ry+fo*.6*u,0,0,Math.PI);ctx.stroke()
 }
 /* ---------- pirate ship ---------- */
 function shipModel(att,p){
@@ -6292,7 +6315,7 @@ function airScenery(o,xx,yy,u,z,tk){
     case"gremlin":airWaterRing(xx,yy,u,50,tk,o.seed,true);airDraw3d(gremlinIslandModel(v,2+Math.floor(o.seed)%3,APH(tk,4,1.3,o.seed)),xx,yy,u,o.X,z);break;
     case"kingdom":{airWaterRing(xx,yy,u*.78,74,tk,o.seed,true);airDraw3d(islandModel(v,true),xx,yy,u*.78,o.X,z);
       const s=u*.78/K,tilt=airTilt(z);castleFlag(xx,yy+40*Math.sin(tilt)*s*K,s,tk,Math.atan2(o.X,z)*.85,tilt);break}
-    case"kraken":airWaterRing(xx,yy,u*1.1,30,tk,o.seed,false);airDraw3d(krakenModel(APH(tk,8,.5,o.seed)),xx,yy,u*1.1,o.X,z,Math.sin(tk*1.4+o.seed)*2*u);break;
+    case"kraken":airWaterRing(xx,yy,u*1.1,40,tk,o.seed,false);airDraw3d(krakenModel(APH(tk,8,.5,o.seed)),xx,yy+(1+Math.sin(tk*1.4+o.seed))*1.2*u,u*1.1,o.X,z);airWaterLine(xx,yy+(1+Math.sin(tk*1.4+o.seed))*1.2*u,u*1.1,20,z,tk,o.seed);break;
     case"pirates":{airWaterRing(xx,yy,u*1.1,30,tk,o.seed,false);airDraw3d(pirateSwimModel(APH(tk,4,.9,o.seed)),xx,yy,u*1.1,o.X,z);
       if(u>.45){const bw=34*u,bx=xx-22*u,by=yy-44*u;ctx.fillStyle="#fff";ctx.strokeStyle="#222";ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(bx,by,bw,13*u,4*u);ctx.fill();ctx.stroke();ctx.fillStyle="#222";ctx.font="700 "+Math.max(7,8.5*u)+"px Rajdhani,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("HELP!",bx+bw/2,by+7*u)}
       break}
