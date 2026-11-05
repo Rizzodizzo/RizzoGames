@@ -672,6 +672,50 @@ html.nofx body[data-fx=gold] .cell.given .v,html.nofx body[data-fx=gold] h1,html
 :root{--rz-btn-bg:var(--btn);--rz-btn-fg:var(--accent);--rz-btn-border:none;--rz-btn-radius:10px;--rz-btn-shadow:none;--rz-btn-size:40px}
 /* leave room for it in the top-left corner */
 .topbar{padding-left:52px}
+/* Home screen: swipe the mode, pick a difficulty, one Play button */
+.home{--hg:clamp(24px,4.5vh,46px);padding-top:0;height:calc(100dvh - 32px);min-height:500px;display:flex;flex-direction:column;box-sizing:border-box}
+.home.hidden{display:none}
+.topbar{flex:none;height:40px;margin:0;position:relative}
+.topbar #homeSettings{margin-left:auto}
+.points{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--panel);padding:7px 14px;border-radius:999px;font-size:1rem;white-space:nowrap}
+.home .stitle{display:flex;justify-content:center;gap:clamp(4px,1.5vw,7px);flex:none;margin:clamp(14px,3.5vh,40px) 0 clamp(10px,2.5vh,30px);font-size:clamp(1.3rem,min(6.4vw,4vh),2rem);letter-spacing:0;line-height:1}
+.stitle span{width:1.6em;height:1.6em;display:grid;place-items:center;border-radius:.3em;background:var(--panel);color:var(--ink);font-weight:800;
+  box-shadow:inset 0 0 0 1px var(--thin),0 6px 14px rgba(0,0,0,.08);animation:tilein .5s var(--ease) both}
+.stitle span:nth-child(2){animation-delay:.05s}.stitle span:nth-child(3){animation-delay:.1s}.stitle span:nth-child(4){animation-delay:.15s}
+.stitle span:nth-child(5){animation-delay:.2s}.stitle span:nth-child(6){animation-delay:.25s}
+.stitle .sel{background:var(--accent);color:var(--onaccent);box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 40%,transparent);transform:translateY(-3px)}
+@keyframes tilein{from{opacity:0;transform:translateY(12px) scale(.8)}}
+html.rm .stitle span{animation:none}
+.modes{flex:1 1 0;min-height:130px;padding:6px 23% 14px;align-items:stretch}
+.mode{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;border-radius:24px;box-sizing:border-box;max-height:340px;align-self:center;height:100%}
+.mode.active{outline:2px solid var(--accent);outline-offset:-2px}
+.mode:not(.active){transform:scale(.84);opacity:.45}
+.mode h2{margin:clamp(8px,2vh,18px) 0 0;font-size:clamp(1.1rem,3vh,1.6rem)}
+.home .mode-ic{width:clamp(60px,13vh,120px);height:clamp(60px,13vh,120px);border-radius:28%}
+.home .mode-ic svg.ic{width:55%;height:55%}
+.modenav{flex:none;margin:-6px 0 0}
+.diffseg{flex:none;display:flex;gap:3px;padding:4px;margin:var(--hg) 0 0;background:var(--panel);border-radius:13px}
+.diffseg button{flex:1;min-width:0;padding:10px 0;background:none;color:var(--muted);font-size:clamp(.74rem,3.4vw,.88rem);font-weight:600;border-radius:9px;transition:background .2s,color .2s}
+.diffseg button.on{background:var(--accent);color:var(--onaccent)}
+.playrow{flex:none;margin-top:clamp(8px,1.6vh,14px);position:relative}
+.playrow .play{padding:15px;font-size:1.15rem}
+.playrow .continue{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 8px}
+.cv-t{font-size:1.1rem;font-weight:700}
+.cv-m{font-size:.74rem;font-weight:500;opacity:.85}
+.mode-best{position:absolute;left:0;right:0;top:100%;height:var(--hg);display:flex;align-items:center;justify-content:center;gap:6px;margin:0;font-size:.85rem}
+.mode-best:empty{visibility:hidden}
+.mode-best svg.ic{width:15px;height:15px;color:var(--gold)}
+.homebtns{flex:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:var(--hg)}
+.homebtns .htile{display:flex;flex-direction:column;align-items:center;gap:9px;margin:0;padding:15px 4px 12px;border-radius:16px;background:var(--panel);font-weight:600;font-size:.84rem}
+.ht-ic{position:relative;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--same);color:var(--accent)}
+.homebtns .ht-ic svg.ic{width:25px;height:25px}
+.ht-theme{grid-template-columns:repeat(3,1fr);gap:3px;padding:8px;place-items:stretch}
+.ht-theme i{border-radius:3px;background:var(--panel)}
+.ht-theme i:nth-child(even){background:var(--bg)}
+.ht-theme i.a{background:var(--accent)}
+.ht-theme i:nth-child(3){background:var(--gold)}
+.ht-badge{position:absolute;top:-7px;right:-9px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:var(--accent);color:var(--onaccent);font-size:.68rem;font-weight:700;display:grid;place-items:center}
+@media (hover:hover){.homebtns .htile:hover .ht-ic{transform:translateY(-2px)}.ht-ic{transition:transform .2s}}
 #game > header{padding-left:48px}
 </style>
 </head>
@@ -686,18 +730,24 @@ html.nofx body[data-fx=gold] .cell.given .v,html.nofx body[data-fx=gold] h1,html
       <span class="points" id="totalPoints"></span>
       <button class="iconbtn" id="homeSettings" aria-label="Settings"><i data-icon="settings"></i></button>
     </div>
-    <h1>Sudoku</h1>
-    <p class="tag" id="modeTag">Swipe to pick a mode</p>
-    <div class="modes" id="modes"></div>
+    <h1 class="stitle" aria-label="Sudoku"><span>S</span><span>U</span><span>D</span><span class="sel">O</span><span>K</span><span>U</span></h1>
+    <div class="modes" id="modes" aria-label="Mode"></div>
     <div class="modenav">
       <button class="modearrow" id="modePrev" aria-label="Previous mode"><i data-icon="chevron"></i></button>
       <div class="dots modedots" id="modeDots"></div>
       <button class="modearrow" id="modeNext" aria-label="Next mode"><i data-icon="chevron"></i></button>
     </div>
+    <div class="diffseg" id="diffSeg" role="radiogroup" aria-label="Difficulty"></div>
+    <div class="playrow">
+      <button class="primary play" id="playBtn">Play</button>
+      <button class="primary continue hidden" id="continueBtn"><span class="cv-t">Continue</span><span class="cv-m" id="continueInfo"></span></button>
+      <button class="newgame hidden" id="newBtnHome">New game</button>
+      <div class="mode-best" id="modeBest"></div>
+    </div>
     <div class="homebtns">
-      <button class="howbtn" id="howBtn"><i data-icon="help"></i>How to play</button>
-      <button class="howbtn" id="themesBtn"><i data-icon="palette"></i>Themes</button>
-      <button class="howbtn wide" id="historyBtn"><i data-icon="history"></i>Game history</button>
+      <button class="htile" id="howBtn"><span class="ht-ic"><i data-icon="help"></i></span><span class="ht-l">How to play</span></button>
+      <button class="htile" id="themesBtn"><span class="ht-ic ht-theme" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i></span><span class="ht-l">Themes</span></button>
+      <button class="htile" id="historyBtn"><span class="ht-ic"><i data-icon="history"></i><b class="ht-badge hidden" id="histCount"></b></span><span class="ht-l">History</span></button>
     </div>
   </section>
 
@@ -2948,62 +2998,55 @@ function notice(msg) {
 /* ---------- home screen ---------- */
 const fmt = s => `${String(s / 60 | 0).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-// Build one swipeable card per mode
+// Build one swipeable card per mode: just its icon and name
 const modesEl = $('#modes');
 modesEl.innerHTML = MODES.map(m => `
-  <div class="mode" data-mode="${m.id}">
+  <div class="mode" data-mode="${m.id}" role="button" aria-label="${m.name}">
     <div class="mode-ic">${icon(m.icon)}</div>
     <h2>${m.name}</h2>
-    <p>${m.desc}</p>
-    <ul class="feat">${m.feats.map(([ok, t]) => `<li><span class="${ok ? 'y' : 'n'}">${icon(ok ? 'check' : 'close')}</span>${t}</li>`).join('')}</ul>
-    <label class="selwrap"><span>Difficulty</span><select aria-label="${m.name} difficulty"></select></label>
-    <div class="mode-best"></div>
-    <div class="resume hidden"><span class="resume-info"></span></div>
-    <div class="playrow">
-      <button class="primary play">Play ${m.name}</button>
-      <button class="continue primary hidden">Continue</button>
-      <button class="newgame hidden">New game</button>
-    </div>
   </div>`).join('');
 $('#modeDots').innerHTML = MODES.map(() => '<i></i>').join('');
 const modeCards = [...modesEl.children];
+$('#diffSeg').innerHTML = DIFFS.map(d => `<button role="radio" data-d="${d.id}">${d.name}</button>`).join('');
 
 function recordFor(mode, diff) { return records[`${mode}:${diff}`]; }
+const currentSave = () => Object.values(loadSaves())[0] || null;   // only one puzzle is ever in progress
 function renderHome() {
-  const saves = loadSaves();
-  modeCards.forEach(card => {
-    const sv = saves[card.dataset.mode];
-    card.querySelector('.play').classList.toggle('hidden', !!sv);
-    card.querySelector('.continue').classList.toggle('hidden', !sv);
-    card.querySelector('.newgame').classList.toggle('hidden', !sv);
-    card.querySelector('.resume').classList.toggle('hidden', !sv);
-    if (sv) {
-      const filled = sv.st.grid.filter(v => v).length, start = sv.p.puzzle.filter(v => v).length;
-      const pct = Math.round((filled - start) / Math.max(1, 81 - start) * 100);
-      card.querySelector('.resume-info').innerHTML = `${icon('timer')}<span>In progress: <b>${DIFF[sv.p.diff].name}</b> · ${fmt(sv.st.seconds)} · ${pct}% filled</span>`;
-    }
-  });
-  modeCards.forEach(card => {
-    const m = card.dataset.mode, sel = card.querySelector('select'), chosen = prefs.diff[m] || 'medium';
-    sel.innerHTML = DIFFS.map(d => {
-      const r = recordFor(m, d.id);
-      return `<option value="${d.id}"${d.id === chosen ? ' selected' : ''}>${d.name}${r && r.best != null ? '  ·  best ' + fmt(r.best) : ''}</option>`;
-    }).join('');
-    const r = recordFor(m, chosen);
-    card.querySelector('.mode-best').innerHTML = r && r.best != null
-      ? `High score <b>${num(r.bestScore || 0)}</b> · best <b>${fmt(r.best)}</b> · ${r.wins} win${r.wins === 1 ? '' : 's'}`
-      : `${DIFF[chosen].sub} · no wins yet`;
-  });
-  $('#totalPoints').innerHTML = `${icon('star')}${num(totalPoints)} point${totalPoints === 1 ? '' : 's'}`;
+  const sv = currentSave();
+  $('#playBtn').classList.toggle('hidden', !!sv);
+  $('#continueBtn').classList.toggle('hidden', !sv);
+  $('#newBtnHome').classList.toggle('hidden', !sv);
+  if (sv) {
+    const filled = sv.st.grid.filter(v => v).length, start = sv.p.puzzle.filter(v => v).length;
+    const pct = Math.round((filled - start) / Math.max(1, 81 - start) * 100);
+    $('#continueInfo').textContent = `${(MODES.find(m => m.id === sv.p.mode) || {name: ''}).name} · ${DIFF[sv.p.diff].name} · ${fmt(sv.st.seconds)} · ${pct}%`;
+  }
+  $('#totalPoints').innerHTML = `${icon('star')}${num(totalPoints)}`;
+  $('#totalPoints').setAttribute('aria-label', `${num(totalPoints)} point${totalPoints === 1 ? '' : 's'}`);
+  let games = 0; try { games = (JSON.parse(localStorage.getItem('sudoku-history-v1')) || []).length; } catch {}
+  $('#histCount').textContent = games > 99 ? '99+' : games;
+  $('#histCount').classList.toggle('hidden', !games);
   setActiveMode(modeId);
+}
+function renderDiff() {
+  const chosen = prefs.diff[modeId] || 'medium';
+  [...$('#diffSeg').children].forEach(b => {
+    const on = b.dataset.d === chosen;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+  });
+  const r = recordFor(modeId, chosen);
+  $('#modeBest').innerHTML = r && r.wins
+    ? `${icon('trophy')}<span><b>${r.wins}</b> win${r.wins === 1 ? '' : 's'}${r.best != null ? ` · best <b>${fmt(r.best)}</b>` : ''}</span>`
+    : '';
 }
 function setActiveMode(id) {
   modeId = id; prefs.mode = id; savePrefs();
   const k = MODES.findIndex(m => m.id === id);
-  modeCards.forEach((c, j) => c.classList.toggle('active', j === k));
+  modeCards.forEach((c, j) => { c.classList.toggle('active', j === k); c.setAttribute('aria-pressed', j === k); });
   [...$('#modeDots').children].forEach((d, j) => d.classList.toggle('on', j === k));
   $('#modePrev').disabled = k === 0;
   $('#modeNext').disabled = k === MODES.length - 1;
+  renderDiff();
 }
 function scrollToMode(k, smooth = true) {
   modesEl.scrollTo({left: modeCards[k].offsetLeft - modeCards[0].offsetLeft, behavior: smooth ? 'smooth' : 'auto'});
@@ -3016,7 +3059,6 @@ modesEl.addEventListener('scroll', () => {
 }, {passive: true});
 [...$('#modeDots').children].forEach((d, k) => d.onclick = () => scrollToMode(k));
 const modeIndex = () => MODES.findIndex(m => m.id === modeId);
-if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) $('#modeTag').textContent = 'Drag or use the arrows to pick a mode';
 $('#modePrev').onclick = () => scrollToMode(Math.max(0, modeIndex() - 1));
 $('#modeNext').onclick = () => scrollToMode(Math.min(MODES.length - 1, modeIndex() + 1));
 // Mouse dragging (touch already scrolls natively): follow the pointer, then settle on the nearest card,
@@ -3047,31 +3089,19 @@ addEventListener('pointerup', e => {
   setTimeout(() => suppressModeClick = false, 0);
 });
 modesEl.addEventListener('click', e => { if (suppressModeClick) { e.stopPropagation(); e.preventDefault(); } }, true);
-modeCards.forEach((card, k) => {
-  card.addEventListener('click', e => { if (!card.classList.contains('active') && !e.target.closest('select')) scrollToMode(k); });
-  card.querySelector('select').addEventListener('change', e => {
-    prefs.diff[card.dataset.mode] = e.target.value; savePrefs(); renderHome();
-  });
-  card.querySelector('.play').addEventListener('click', e => {
-    e.stopPropagation();
-    setActiveMode(card.dataset.mode);
-    diffId = prefs.diff[modeId] || 'medium';
-    newGame();
-  });
-  card.querySelector('.continue').addEventListener('click', e => {
-    e.stopPropagation();
-    setActiveMode(card.dataset.mode);
-    resumeGame(card.dataset.mode);
-  });
-  card.querySelector('.newgame').addEventListener('click', e => {
-    e.stopPropagation();
-    if (!confirm('Start a new puzzle? Your saved one for this mode will be lost.')) return;
-    setActiveMode(card.dataset.mode);
-    clearSave(card.dataset.mode);
-    diffId = prefs.diff[modeId] || 'medium';
-    newGame();
-  });
+modeCards.forEach((card, k) => card.addEventListener('click', () => { if (!card.classList.contains('active')) scrollToMode(k); }));
+$('#diffSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  prefs.diff[modeId] = b.dataset.d; savePrefs(); renderDiff();
 });
+function startChosen() { diffId = prefs.diff[modeId] || 'medium'; newGame(); }
+$('#playBtn').onclick = startChosen;
+$('#continueBtn').onclick = () => { const sv = currentSave(); if (sv) { setActiveMode(sv.p.mode); resumeGame(sv.p.mode); } };
+$('#newBtnHome').onclick = () => {
+  if (!confirm('Start a new puzzle? Your puzzle in progress will be lost.')) return;
+  writeSaves({});
+  startChosen();
+};
 // Restart a CSS animation class on an element
 function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function showScreen(id) {
@@ -3349,16 +3379,17 @@ function startTimer(from = 0) {
   }, 1000);
 }
 
-/* ---------- saved games: one per mode, so you can pick up where you left off ---------- */
+/* ---------- saved game: the one puzzle in progress, so you can pick up where you left off ---------- */
 const SAVE_KEY = 'sudoku-saves-v1';
 let currentPuzzle = null, saveTimer = null;
 function loadSaves() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch { return {}; } }
+// Only one puzzle can be in progress. Older versions kept one per mode: keep the most recently played
+{ const sv = loadSaves(), ks = Object.keys(sv);
+  if (ks.length > 1) { const k = ks.reduce((x, y) => (sv[y].at || 0) > (sv[x].at || 0) ? y : x); try { localStorage.setItem(SAVE_KEY, JSON.stringify({[k]: sv[k]})); } catch {} } }
 function writeSaves(v) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch {} }
 function saveGame() {
   if (!currentPuzzle || done) return;
-  const saves = loadSaves();
-  saves[currentPuzzle.mode] = {p: currentPuzzle, st: {grid, notes, mistakes, hints, hintsLeft, seconds, log: moveLog}, at: Date.now()};
-  writeSaves(saves);
+  writeSaves({[currentPuzzle.mode]: {p: currentPuzzle, st: {grid, notes, mistakes, hints, hintsLeft, seconds, log: moveLog}, at: Date.now()}});
 }
 function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveGame, 250); }
 function clearSave(mode) { const saves = loadSaves(); delete saves[mode]; writeSaves(saves); }

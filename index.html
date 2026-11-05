@@ -167,14 +167,10 @@ const GAMES = [
     art: 'sudoku',
     // A little line under the description, read from the game's own saved data
     stat() {
-      const pts = +localStorage.getItem('sudoku-total-v1') || 0;
-      let saves = {};
-      try { saves = JSON.parse(localStorage.getItem('sudoku-saves-v1')) || {}; } catch {}
-      const inProgress = Object.keys(saves).length;
-      const parts = [];
-      if (pts) parts.push(`★ ${pts.toLocaleString()} points`);
-      if (inProgress) parts.push(`${inProgress} puzzle${inProgress > 1 ? 's' : ''} in progress`);
-      return parts.join(' · ');
+      let recs = {};
+      try { recs = JSON.parse(localStorage.getItem('sudoku-records-v1')) || {}; } catch {}
+      const wins = Object.values(recs).reduce((n, r) => n + ((r && r.wins) || 0), 0);
+      return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : 'No wins yet';
     },
   },
   {
@@ -187,12 +183,8 @@ const GAMES = [
     stat() {
       let g = null;
       try { g = JSON.parse(localStorage.getItem('mr_garage')); } catch {}
-      if (!g) return '';
-      const parts = [];
-      if (g.beans) parts.push(`${g.beans.toLocaleString()} jellybeans`);
-      const wins = g.career && g.career.wins;
-      if (wins) parts.push(`${wins} win${wins > 1 ? 's' : ''}`);
-      return parts.join(' · ');
+      const wins = (g && g.career && g.career.wins) || 0;
+      return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : 'No wins yet';
     },
   },
 ];
