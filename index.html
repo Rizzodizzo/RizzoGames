@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rizzo Games</title>
+<meta name="theme-color" content="#eef3fc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0f1f" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rizzo Games">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Light or dark follows the device setting automatically */
+:root{
+  --bg:#eef3fc;--panel:#ffffff;--ink:#121a33;--muted:#5f6b88;--line:#dbe3f3;--soft:#e8eefb;
+  --accent:#2563eb;--shadow:0 6px 22px rgba(23,48,110,.09);--shadow-hi:0 14px 34px rgba(23,48,110,.16);
+  --glow1:rgba(59,130,246,.22);--glow2:rgba(56,189,248,.18);--dots:rgba(37,99,235,.07);
+  --logo:linear-gradient(180deg,#8fdcff 0%,#4f9bff 46%,#1d4ed8 54%,#3b7bff 100%);
+  --logo-edge:#0f2b7a;--logo-glow:rgba(37,99,235,.35);
+  --pill:linear-gradient(90deg,#1d4ed8,#3b8bff);--pill-edge:#0f2b7a;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0f1f;--panel:#131a2e;--ink:#e8eeff;--muted:#93a0c2;--line:#222c48;--soft:#1b2440;
+    --accent:#5b9dff;--shadow:0 6px 22px rgba(0,0,0,.4);--shadow-hi:0 14px 34px rgba(0,0,0,.55);
+    --glow1:rgba(59,130,246,.30);--glow2:rgba(34,211,238,.16);--dots:rgba(147,197,253,.06);
+    --logo:linear-gradient(180deg,#c6f0ff 0%,#6cb6ff 46%,#2f6bff 54%,#5b9dff 100%);
+    --logo-edge:#071643;--logo-glow:rgba(91,157,255,.55);
+    --pill:linear-gradient(90deg,#2f6bff,#38bdf8);--pill-edge:#071643;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  min-height:100dvh;display:flex;justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 18px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);
+}
+/* soft blue glows and a faint dot grid behind everything */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(60% 38% at 22% 0%,var(--glow1),transparent 70%),
+    radial-gradient(50% 32% at 88% 6%,var(--glow2),transparent 70%),
+    radial-gradient(circle,var(--dots) 1.2px,transparent 1.6px) 0 0/22px 22px;
+}
+.app{width:100%;max-width:720px;position:relative;z-index:1}
+
+/* ---------- header ---------- */
+header{text-align:center;margin:18px 0 26px}
+.logo{margin:0;display:flex;flex-direction:column;align-items:center;font-family:Bungee,Impact,"Arial Black",sans-serif;font-weight:400;line-height:1}
+.rz{
+  position:relative;display:inline-block;font-size:clamp(3.4rem,18vw,5.6rem);letter-spacing:.03em;
+  background:var(--logo);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  transform:skewX(-7deg);
+  filter:drop-shadow(0 5px 0 var(--logo-edge)) drop-shadow(0 12px 22px var(--logo-glow));
+}
+/* a light sweep that glides across RIZZO every few seconds */
+.rz::after{
+  content:attr(data-t);position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.95) 50%,transparent 60%) 140% 0/260% 100% no-repeat;
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  animation:shine 4.5s ease-in-out 1s infinite;
+}
+@keyframes shine{0%{background-position:140% 0}45%,100%{background-position:-40% 0}}
+.gm{
+  margin-top:-.05em;display:inline-block;font-size:clamp(1rem,4.6vw,1.35rem);letter-spacing:.45em;
+  padding:.42em .5em .42em .95em;border-radius:999px;color:#fff;background:var(--pill);
+  box-shadow:0 4px 0 var(--pill-edge),0 10px 20px var(--logo-glow);
+}
+/* the badge sits straight; only the letters lean, matching RIZZO */
+.gm span{display:inline-block;transform:skewX(-10deg)}
+.spark{position:absolute;width:18px;height:18px;color:#7cc8ff;animation:twinkle 2.6s ease-in-out infinite}
+.spark.s1{left:8%;top:6%}
+.spark.s2{right:6%;top:38%;width:13px;height:13px;animation-delay:.9s;color:#a5b4fc}
+.spark.s3{left:20%;bottom:-6%;width:11px;height:11px;animation-delay:1.6s}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+.logowrap{position:relative;display:inline-block;padding:4px 30px 10px}
+.tag{margin:14px 0 0;color:var(--muted);font-weight:700;font-size:.98rem}
+
+/* ---------- game cards ---------- */
+.games{display:grid;grid-template-columns:1fr;gap:14px;list-style:none;margin:0;padding:0}
+@media (min-width:600px){.games{grid-template-columns:1fr 1fr}}
+.game{
+  display:flex;flex-direction:column;text-decoration:none;color:inherit;
+  background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;
+  box-shadow:var(--shadow);transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .2s;
+  -webkit-tap-highlight-color:transparent;animation:rise .45s cubic-bezier(.2,.8,.2,1) both;
+}
+.game:active{transform:scale(.97)}
+@media (hover:hover){.game:hover{transform:translateY(-3px);box-shadow:var(--shadow-hi)}}
+.game:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.art{position:relative;height:128px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.art svg{width:96px;height:96px;position:relative;z-index:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+.art::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.35),transparent 60%)}
+.body{padding:14px 16px 16px;display:flex;align-items:center;gap:12px}
+.txt{flex:1;min-width:0}
+.txt h2{margin:0;font-size:1.25rem;font-weight:800}
+.txt p{margin:3px 0 0;color:var(--muted);font-size:.92rem;line-height:1.35}
+.stat{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:.8rem;font-weight:800;color:var(--ink);background:var(--soft);padding:4px 10px;border-radius:999px}
+.stat:empty{display:none}
+.go{flex-shrink:0;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--c,var(--accent));color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--c,var(--accent)) 40%,transparent)}
+.go svg{width:20px;height:20px}
+
+.soon{
+  border:2px dashed var(--line);border-radius:20px;padding:22px 16px;text-align:center;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;
+  animation:rise .45s cubic-bezier(.2,.8,.2,1) both;
+}
+.soon b{color:var(--ink);font-size:1rem}
+.soon svg{width:28px;height:28px;opacity:.7}
+
+footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:26px}
+
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.game,.soon,.rz::after,.spark{animation:none}.game{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logowrap">
+      <svg class="spark s1" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 0l2.2 7.8L20 10l-7.8 2.2L10 20l-2.2-7.8L0 10l7.8-2.2z"/></svg>
+      <svg class="spark s2" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 0l2.2 7.8L20 10l-7.8 2.2L10 20l-2.2-7.8L0 10l7.8-2.2z"/></svg>
+      <svg class="spark s3" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 0l2.2 7.8L20 10l-7.8 2.2L10 20l-2.2-7.8L0 10l7.8-2.2z"/></svg>
+      <h1 class="logo" aria-label="Rizzo Games"><span class="rz" data-t="RIZZO" aria-hidden="true">RIZZO</span><span class="gm" aria-hidden="true"><span>GAMES</span></span></h1>
+    </div>
+    <p class="tag">Pick a game to play</p>
+  </header>
+  <ul class="games" id="games"></ul>
+  <footer id="foot">Works offline once you've opened each game</footer>
+</div>
+
+<script>
+/* ======================================================================
+   THE GAME LIST
+   To add a new game:
+     1. Put its .html file next to this one (e.g. word-hunt.html)
+     2. Add one entry below
+     3. In the game's file, add the games.js line just before the closing body tag
+        (copy it from the top of games.js)
+   That's it. sw.js picks up new games by itself.
+   ====================================================================== */
+const GAMES = [
+  {
+    id: 'sudoku',
+    name: 'Sudoku',
+    file: 'sudoku.html',
+    blurb: 'Classic, Killer and Paper modes, with hints that teach you.',
+    colors: ['#3b6fe0', '#7ea6ff'],
+    art: 'sudoku',
+    // A little line under the description, read from the game's own saved data
+    stat() {
+      const pts = +localStorage.getItem('sudoku-total-v1') || 0;
+      let saves = {};
+      try { saves = JSON.parse(localStorage.getItem('sudoku-saves-v1')) || {}; } catch {}
+      const inProgress = Object.keys(saves).length;
+      const parts = [];
+      if (pts) parts.push(`★ ${pts.toLocaleString()} points`);
+      if (inProgress) parts.push(`${inProgress} puzzle${inProgress > 1 ? 's' : ''} in progress`);
+      return parts.join(' · ');
+    },
+  },
+  {
+    id: 'ethereal-equus',
+    name: 'Ethereal Equus Examination',
+    file: 'ethereal-equus.html',
+    blurb: 'Answer fast to stay fuelled and race to the finish.',
+    colors: ['#7c3aed', '#f472b6'],
+    art: 'equus',
+    stat() {
+      let g = null;
+      try { g = JSON.parse(localStorage.getItem('mr_garage')); } catch {}
+      if (!g) return '';
+      const parts = [];
+      if (g.beans) parts.push(`${g.beans.toLocaleString()} jellybeans`);
+      const wins = g.career && g.career.wins;
+      if (wins) parts.push(`${wins} win${wins > 1 ? 's' : ''}`);
+      return parts.join(' · ');
+    },
+  },
+];
+
+/* ---------- card art (simple inline drawings, no image files needed) ---------- */
+const ART = {
+  sudoku: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="#fff"/>
+    <rect x="35.5" y="35.5" width="25" height="25" fill="#c7d6fb"/>
+    <path d="M34 8v80M62 8v80M8 34h80M8 62h80" stroke="#1c2130" stroke-width="3"/>
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1c2130" stroke-width="4"/>
+    <g font-family="Nunito,system-ui,sans-serif" font-weight="800" font-size="19" text-anchor="middle" fill="#1c2130">
+      <text x="20" y="27">5</text><text x="76" y="27">3</text><text x="48" y="55" fill="#2f5bd3">7</text>
+      <text x="20" y="83">9</text><text x="76" y="55">1</text><text x="48" y="83">4</text>
+    </g></svg>`,
+  // a glowing horse head with a rainbow mane and floating maths symbols
+  equus: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <defs><linearGradient id="mane" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7dd3fc"/><stop offset=".5" stop-color="#c084fc"/><stop offset="1" stop-color="#f9a8d4"/></linearGradient></defs>
+    <path d="M62 88c1-12 3-20 8-28 5-9 6-19 2-28-4-9-12-15-22-16l-4-8-4 9c-9 4-16 12-21 22l-6 11c-2 4 0 8 4 8l9-1c4 0 8-2 11-5l5-2c1 12-3 25-9 38z" fill="#fff"/>
+    <path d="M51 16c8 2 16 8 20 17 3 7 3 15 0 23-3 7-5 13-6 20 5-6 10-14 12-23 2-10 0-20-6-27-5-6-12-10-20-10z" fill="url(#mane)"/>
+    <path d="M46 10l3-6 3 8z" fill="#fde68a"/>
+    <circle cx="40" cy="31" r="3.2" fill="#1e1b4b"/><circle cx="41.2" cy="29.8" r="1" fill="#fff"/>
+    <ellipse cx="21" cy="50" rx="2" ry="1.4" fill="#c4b5fd"/>
+    <g font-family="Bungee,Impact,sans-serif" font-size="15" fill="#fff" opacity=".9">
+      <text x="6" y="22">+</text><text x="78" y="20">×</text><text x="8" y="80">÷</text>
+    </g></svg>`,
+};
+const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
+const plus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[c]);
+const lastPlayed = id => +(localStorage.getItem('hub-last-' + id) || 0);
+
+function render() {
+  // Most recently played game goes first, so your favourite is always at the top
+  const list = GAMES.map((g, k) => ({...g, k})).sort((a, b) => lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
+  document.getElementById('games').innerHTML = list.map((g, n) => {
+    let stat = '';
+    try { stat = g.stat ? g.stat() : ''; } catch {}
+    return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]}" aria-label="Play ${esc(g.name)}">
+      <div class="art" style="background:linear-gradient(135deg,${g.colors[0]},${g.colors[1]})">${ART[g.art] || ''}</div>
+      <div class="body">
+        <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.blurb)}</p><span class="stat">${esc(stat)}</span></div>
+        <span class="go">${arrow}</span>
+      </div></a></li>`;
+  }).join('') + `<li class="soon" style="animation-delay:${list.length * 60}ms">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>`;
+}
+render();
+// Coming back from a game (or the app waking up) refreshes the stats and the order
+addEventListener('pageshow', render);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+
+/* ---------- offline ---------- */
+// Updates are handled by games.js (below), the same as in every game
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  // Ask sw.js to save every game now, so they all work offline even before you've opened them
+  navigator.serviceWorker.ready.then(reg => {
+    if (reg.active) reg.active.postMessage({type: 'warm', urls: GAMES.map(g => g.file)});
+  }).catch(() => {});
+} else {
+  document.getElementById('foot').textContent = 'Open from the website to play offline';
+}
+</script>
+<script src="games.js" data-game="hub" data-back="off"></script>
+</body>
+</html>

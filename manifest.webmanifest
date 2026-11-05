@@ -1,0 +1,15 @@
+{
+  "name": "Rizzo Games",
+  "short_name": "Rizzo Games",
+  "description": "All our games in one app: Sudoku, Ethereal Equus Examination and more",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3fc",
+  "theme_color": "#eef3fc",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
