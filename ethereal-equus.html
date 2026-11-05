@@ -905,8 +905,9 @@ html.rm .t-spk{display:none}
 
 /* ---------- phone on its side: road on the left, questions on the right, menus shrink to fit ---------- */
 @media (orientation:landscape) and (max-height:560px){
-  body{background:#0d0a1c!important}
-  main{min-height:0!important;height:100dvh!important;flex-direction:row!important;gap:8px!important;
+  html,body{height:100%!important;overflow:hidden!important;overscroll-behavior:none!important}
+  body{background:#0d0a1c!important;position:fixed;inset:0;width:100%}
+  main{min-height:0!important;height:100%!important;flex-direction:row!important;gap:8px!important;
     padding:6px max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))!important}
   .track{flex:1.7 1 0!important;min-height:0!important;min-width:0}
   .quiz{flex:1 1 0;min-width:0;justify-content:center;overflow-y:auto;border-top:0!important;border-left:3px solid #ff7a45!important;border-radius:12px;box-shadow:-10px 0 40px rgba(255,122,69,.22),inset 0 1px 0 rgba(255,255,255,.08)!important}
