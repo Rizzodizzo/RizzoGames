@@ -131,7 +131,13 @@
   if (opt.splash) early.textContent += `\n${opt.splash}{view-transition-name:${card}}`;
   document.head.appendChild(early);
   // arriving with a page transition: the launcher skips its own card slide-in so the two don't fight
-  addEventListener('pagereveal', e => { if (e.viewTransition) document.documentElement.classList.add('rz-vt'); });
+  // and the splash stays up until the zoom has finished, or it would fade out halfway through it
+  let vtDone = null;
+  addEventListener('pagereveal', e => {
+    if (!e.viewTransition) return;
+    document.documentElement.classList.add('rz-vt');
+    vtDone = e.viewTransition.finished.catch(() => {});
+  });
 
   // The splash: shows the moment the game starts loading, and fades away once the game has drawn itself
   let splash = null;
@@ -157,7 +163,7 @@
     splash.innerHTML = R_PLAIN + (title ? `<span>${title}</span>` : '') + '<i><b></b><b></b><b></b></i>';
     document.documentElement.appendChild(splash);
     if (opt.splash) { splash.classList.add('rz-gone'); splash.style.display = 'none'; }   // the game shows its own while loading
-    const ready = () => requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+    const ready = () => requestAnimationFrame(() => requestAnimationFrame(() => vtDone ? vtDone.then(hideSplash) : hideSplash()));
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, {once: true}); else ready();
     setTimeout(hideSplash, 3000);                                        // never longer than this
     addEventListener('pageshow', e => { if (e.persisted) hideSplash(); });   // coming back with the browser's back button

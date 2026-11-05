@@ -121,7 +121,21 @@ header{text-align:center;margin:18px 0 26px}
 .soon b{color:var(--ink);font-size:1rem}
 .soon svg{width:28px;height:28px;opacity:.7}
 
-footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:26px}
+.games>li{position:relative}
+/* favourite star: sits on the card's picture, fills in gold when the game is a favourite */
+.fav{position:absolute;top:10px;right:10px;z-index:2;width:40px;height:40px;padding:0;border:0;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;background:rgba(10,16,40,.28);color:#fff;-webkit-tap-highlight-color:transparent;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:background .2s,transform .15s}
+.fav svg{width:22px;height:22px;overflow:visible}
+.fav path{fill:transparent;stroke:currentColor;stroke-width:2;stroke-linejoin:round;transition:fill .2s,stroke .2s}
+.fav[aria-pressed=true]{background:rgba(10,16,40,.38)}
+.fav[aria-pressed=true] path{fill:#ffd23f;stroke:#ffd23f}
+.fav:active{transform:scale(.88)}
+.fav:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.fav.pop svg{animation:favpop .45s cubic-bezier(.2,.8,.2,1.4)}
+@keyframes favpop{0%{transform:scale(.6)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+html.rz-reduce-motion .fav.pop svg{animation:none}
+.nofx .game,.nofx .soon{animation:none}
 
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 /* Reduce motion follows the switch in the Rizzo menu (off unless the player turns it on), not the phone setting */
@@ -143,7 +157,6 @@ html.rz-vt .game,html.rz-vt .soon{animation:none}
     <p class="tag">Pick a game to play</p>
   </header>
   <ul class="games" id="games"></ul>
-  <footer id="foot">Works offline once you've opened each game</footer>
 </div>
 
 <script>
@@ -218,25 +231,50 @@ const plus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[c]);
 const lastPlayed = id => +(localStorage.getItem('hub-last-' + id) || 0);
+// Favourites: starred games always stay at the top
+const FAV_KEY = 'hub-favs';
+const loadFavs = () => { try { const f = JSON.parse(localStorage.getItem(FAV_KEY)); return Array.isArray(f) ? f : []; } catch { return []; } };
+const star = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>`;
 
-function render() {
-  // Most recently played game goes first, so your favourite is always at the top
-  const list = GAMES.map((g, k) => ({...g, k})).sort((a, b) => lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
-  document.getElementById('games').innerHTML = list.map((g, n) => {
+function render(still) {
+  // Favourites first, then the most recently played
+  const favs = loadFavs(), isFav = id => favs.includes(id);
+  const list = GAMES.map((g, k) => ({...g, k})).sort((a, b) =>
+    (isFav(b.id) - isFav(a.id)) || lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
+  const el = document.getElementById('games');
+  el.classList.toggle('nofx', !!still);           // re-sorting after a tap shouldn't replay the slide-in
+  el.innerHTML = list.map((g, n) => {
     let stat = '';
     try { stat = g.stat ? g.stat() : ''; } catch {}
+    const f = isFav(g.id);
     return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]};view-transition-name:rz-card-${g.id}" aria-label="Play ${esc(g.name)}">
       <div class="art" style="background:linear-gradient(135deg,${g.colors[0]},${g.colors[1]})">${ART[g.art] || ''}</div>
       <div class="body">
         <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.blurb)}</p><span class="stat">${esc(stat)}</span></div>
         <span class="go">${arrow}</span>
-      </div></a></li>`;
-  }).join('') + `<li class="soon" style="animation-delay:${list.length * 60}ms">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>`;
+      </div></a>
+      <button class="fav" data-id="${esc(g.id)}" aria-pressed="${f}" aria-label="${f ? 'Remove ' + esc(g.name) + ' from favourites' : 'Add ' + esc(g.name) + ' to favourites'}" style="view-transition-name:rz-fav-${g.id}">${star}</button></li>`;
+  }).join('') + `<li class="soon" style="animation-delay:${list.length * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>`;
 }
+document.getElementById('games').addEventListener('click', e => {
+  const b = e.target.closest('.fav'); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const id = b.dataset.id, favs = loadFavs(), on = !favs.includes(id);
+  const next = on ? [...favs, id] : favs.filter(x => x !== id);
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {}
+  const redo = () => {
+    render(true);
+    const nb = document.querySelector(`.fav[data-id="${CSS.escape(id)}"]`);
+    if (nb && on) nb.classList.add('pop');
+  };
+  // the cards glide into their new places
+  if (document.startViewTransition && !document.documentElement.classList.contains('rz-reduce-motion')) document.startViewTransition(redo);
+  else redo();
+});
 render();
 // Coming back from a game (or the app waking up) refreshes the stats and the order
-addEventListener('pageshow', render);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+addEventListener('pageshow', () => render());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(true); });
 
 /* ---------- offline ---------- */
 // Updates and settings are handled by games.js (in the <head>), the same as in every game
@@ -245,8 +283,6 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.ready.then(reg => {
     if (reg.active) reg.active.postMessage({type: 'warm', urls: GAMES.map(g => g.file)});
   }).catch(() => {});
-} else {
-  document.getElementById('foot').textContent = 'Open from the website to play offline';
 }
 </script>
 </body>
