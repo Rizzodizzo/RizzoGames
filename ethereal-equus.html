@@ -1041,7 +1041,7 @@ html.rz-touch #resultScreen .keys{display:none}
 .overlay .g2sw button{display:flex;align-items:center;gap:6px;padding:6px 16px;background:none;color:#cfd3e6;border:0;box-shadow:none!important;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:.8rem;letter-spacing:.06em}
 .g2sw button svg{width:16px;height:16px}
 .overlay .g2sw button.on{background:#f3efe6;color:#14191b}
-#garageScreen #gName{flex:none;margin:6px 0 0;line-height:1.15;text-align:center;font-size:1.05rem;backdrop-filter:none;background:none;border:0;padding:0}
+#garageScreen #gName{display:none!important;flex:none;margin:6px 0 0;line-height:1.15;text-align:center;font-size:1.05rem;backdrop-filter:none;background:none;border:0;padding:0}
 #gName b{display:block;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.7)}
 #gName small{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#cfd3e6;opacity:.85}
 .g2side{flex:none;display:flex;flex-direction:column;gap:8px;min-width:0;background:rgba(10,8,24,.72);border:1px solid rgba(255,255,255,.12);padding:10px}
@@ -7117,8 +7117,13 @@ let gVeh="car",gVehMoving=false;
 const VEH_TABS={car:["skin","spoiler","wheel"],jet:["skin","wing"]};
 function gScrollVeh(smooth){const v=$("gVeh");if(!v||!v.clientWidth)return;v.scrollTo({left:(gVeh==="jet"?1:0)*v.clientWidth,behavior:smooth?"smooth":"auto"})}
 function gPageSize(){
-  const el=$("garage"),W=el.clientWidth,H=el.clientHeight,gap=8,short=innerHeight<560;
-  const cols=Math.max(2,Math.floor((W+gap)/((short?82:84)+gap))),cw=(W-gap*(cols-1))/cols,ch=cw*.7+26;
+  const el=$("garage"),W=el.clientWidth,H=el.clientHeight-8,gap=8,nameH=28;
+  if(innerHeight>innerWidth){
+    // upright: always two rows, with as many cards across as fit at that height
+    const cwMax=Math.max(60,((H-gap)/2-nameH)/.7),cols=Math.max(3,Math.ceil((W+gap)/(Math.min(cwMax,112)+gap)));
+    return {cols,rows:2}
+  }
+  const cols=Math.max(2,Math.floor((W+gap)/(82+gap))),cw=(W-gap*(cols-1))/cols,ch=cw*.7+nameH;
   return {cols,rows:Math.max(1,Math.floor((H+gap)/(ch+gap)))}
 }
 function renderGarage(keep){
