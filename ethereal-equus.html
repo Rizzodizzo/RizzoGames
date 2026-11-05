@@ -958,7 +958,9 @@ html.rz-phone .track{border:0;border-radius:0}
 html.rz-phone body{background:#0d0a1c}
 /* upright phones: the menus start below the status bar and the R button, so nothing slides under the island */
 @media (orientation:portrait){
-  html.rz-phone .overlay{padding-top:calc(env(safe-area-inset-top,0px) + 56px)!important;padding-bottom:max(10px,env(safe-area-inset-bottom))!important}
+  html.rz-phone .overlay{padding-top:calc(env(safe-area-inset-top,0px) + 12px)!important;padding-bottom:max(10px,env(safe-area-inset-bottom))!important}
+  /* only the home screen has the R button in the corner, so only it needs the extra room at the top */
+  html.rz-phone .overlay:has(#homeScreen:not(.hidden)){padding-top:calc(env(safe-area-inset-top,0px) + 56px)!important}
   /* the car display gives up the space the status bar and R button now take */
   html.rz-phone .hright canvas{width:min(100%,calc((100dvh - 24vh - 300px - 70px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*1.2))!important}
 }
@@ -982,6 +984,37 @@ body:not(.paused) .track:has(#ov.hidden) .stats .pbtn{display:flex}
 /* while racing the R button is hidden, so the stat row can start at the edge */
 .track .stats{grid-template-columns:auto repeat(4,minmax(0,1fr))!important;left:12px!important}
 @media (orientation:landscape) and (max-height:560px){.track .stats{left:calc(env(safe-area-inset-left,0px) + 12px)!important}}
+/* the boxes' drop shadows all fall to the right; nudge the screens left by half of that so they look centred */
+@media (orientation:portrait) and (max-width:820px){#ov .panel:is(#statsScreen,#achScreen,#setScreen,#garageScreen,#howScreen){transform:translateX(-3px)}}
+/* results: centred in the space upright; sideways always two columns (results left, prize and buttons right) */
+#resultScreen{margin-block:auto}
+/* on the results the achievement pop-up comes up from the bottom, so it never covers VICTORY */
+body:has(#resultScreen:not(.hidden)) #achToast{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+body:has(#resultScreen:not(.hidden)) #achToast:not(.show){transform:translate(-50%,160%)}
+body:has(#resultScreen:not(.hidden)) #achToast.hide{transform:translate(-50%,160%)}
+html.rz-touch #resultScreen .keys{display:none}
+@media (orientation:landscape) and (max-height:560px){
+  #resultScreen.panel:not(.hidden){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(12px,3vw,28px);align-items:center;width:100%}
+  #resultScreen .result{font-size:clamp(1.8rem,min(6vw,13vh),3.4rem);margin:0}
+  #resultScreen .tag{margin-top:2px;font-size:clamp(.8rem,3.6vh,1rem)}
+  #resultScreen .board{margin-top:6px;gap:3px}
+  #resultScreen .board li{padding:clamp(2px,1vh,5px) 10px;font-size:clamp(.78rem,3.6vh,.95rem)}
+  #resultScreen .facts{margin-top:6px}
+  #resultScreen .fact{padding:3px 10px;min-width:70px}
+  #resultScreen .fact b{font-size:clamp(.95rem,4.4vh,1.15rem)}
+  #resultScreen .reward{margin-top:0}
+  #resultScreen .prize{padding:clamp(4px,1.6vh,8px) 18px}
+  #resultScreen .prizenum{font-size:clamp(1.7rem,9vh,2.6rem)}
+  #resultScreen .pj .jb{font-size:clamp(1.3rem,7vh,2rem)}
+  #resultScreen .prizelbl{font-size:clamp(.7rem,3.4vh,.95rem)}
+  #resultScreen .beanbar{margin-top:6px}
+  #resultScreen .resbtns{margin-top:8px}
+  .overlay #resultScreen .resbtns #nextBtn,.overlay #resultScreen .resbtns .sec{padding:clamp(6px,2.2vh,10px) 20px;font-size:clamp(.95rem,4.4vh,1.15rem)}
+  html.rz-touch #resultScreen .keys{display:none}
+  #resultScreen .winrays{width:min(560px,92vh)}   /* the glow behind the title stays on screen */
+  body:has(#resultScreen:not(.hidden)) #achToast{left:auto;right:calc(env(safe-area-inset-right,0px) + 12px);width:min(380px,46vw);transform:translate(0,0)}
+  body:has(#resultScreen:not(.hidden)) #achToast:not(.show),body:has(#resultScreen:not(.hidden)) #achToast.hide{transform:translate(0,160%)}
+}
 /* upright screens: no dark frame around the road and question panel, they run edge to edge */
 @media (orientation:portrait) and (max-width:820px){
   html,body{overflow:hidden;overscroll-behavior:none}
@@ -1049,7 +1082,7 @@ body:not(.paused) .track:has(#ov.hidden) .stats .pbtn{display:flex}
         <div class="setgrid">
           <div class="sgroup">
             <h3>Sound</h3>
-            <p class="snote">Volume, music, effects and reduce motion are shared by every Rizzo game. Swipe up from the bottom of the screen any time, or:</p>
+            <p class="snote">Volume, music, effects and reduce motion are shared by every Rizzo game. Tap the R button in the corner any time, or:</p>
             <button class="sec" id="stRizzo">Open the Settings menu</button>
           </div>
           <div class="sgroup">
@@ -5829,7 +5862,7 @@ function updateAir(dt){
   if(pg&&pg.state===0&&!pg.on&&elapsed>=pg.t0){pg.on=true;pg.d=dist+AIR_PRV*elapsed+900}
   if(pg&&pg.state===0&&pg.on){
     const dz=pg.d-AIR_PRV*elapsed-dist;
-    if(!pg.warned&&dz<800){pg.warned=true;say("PEGASUS! CLICK IT","#ff9cf2")}
+    if(!pg.warned&&dz<800){pg.warned=true;say(AIR_TAP?"PEGASUS! TAP IT":"PEGASUS! CLICK IT","#ff9cf2")}
     if(dz<-44){pg.state=2;say("IT GOT AWAY","#c9d1e0")}
   }
   if(A.boost>0){A.xd+=dt*(speed*1.6+40)*airBF();A.boost-=dt}
@@ -5983,6 +6016,297 @@ function mermaidRock(x,y,u,tk,sd){
   c.fillStyle="rgba(255,255,255,"+(.5+.4*Math.sin(tk*4+sd))+")";for(const [dx,dy] of [[-26,-40],[22,-44],[30,-26]]){c.fillRect(dx-1,dy-4,2,8);c.fillRect(dx-4,dy-1,8,2)}
   c.restore()
 }
+/* ===================== AIRBORNE 3D SCENERY =====================
+   Everything on the ocean is a lit low-poly model, built from the same parts as the road (mk + draw3d).
+   Models are cached; moving parts (tentacles, arms, wings, tails, flags) have a few animation steps each. */
+const AM={};
+function amod(key,mw,ml,build){let M=AM[key];if(!M){M=mk(mw,ml,build);M.osort=true;M.lowPlain=true;AM[key]=M}return M}
+const aV={add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],mul:(a,k)=>[a[0]*k,a[1]*k,a[2]*k],
+  cross:(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],nrm:a=>{const m=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/m,a[1]/m,a[2]/m]}};
+/* a square tube from a to b (any direction), radius r0 at a and r1 at b */
+function aSeg(h,a,b,r0,r1,col){
+  const d=aV.nrm(aV.sub(b,a)),ref=Math.abs(d[1])>.9?[1,0,0]:[0,1,0],s1=aV.nrm(aV.cross(d,ref)),s2=aV.cross(d,s1);
+  const c=(p,r,i,j)=>aV.add(p,aV.add(aV.mul(s1,r*i),aV.mul(s2,r*j)));
+  h.solid([c(a,r0,-1,-1),c(a,r0,1,-1),c(a,r0,1,1),c(a,r0,-1,1),c(b,r1,-1,-1),c(b,r1,1,-1),c(b,r1,1,1),c(b,r1,-1,1)],col)
+}
+/* a chain of tubes along a list of points, tapering from r0 to r1, colours cycling */
+function aChain(h,P,r0,r1,cols){for(let i=0;i<P.length-1;i++){const t0=i/(P.length-1),t1=(i+1)/(P.length-1);aSeg(h,P[i],P[i+1],r0+(r1-r0)*t0,r0+(r1-r0)*t1,cols[i%cols.length])}}
+/* an n-sided flat-topped ring (ellipse) between y0 and y1 */
+function aRing(h,cx,cz,rx,rz,y0,y1,col,n){n=n||10;const p=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2+Math.PI/n;p.push([cx+Math.cos(a)*rx,cz+Math.sin(a)*rz])}h.poly(p,y0,y1,"dark",col)}
+/* a square pyramid / tapered block */
+function aRoof(h,cx,cz,r,y0,y1,col){h([cx-r,cx+r,cz-r,cz+r],y0,[cx-.4,cx+.4,cz-.4,cz+.4],y1,"dark",col)}
+function aBox(h,x0,x1,y0,y1,z0,z1,col){h([x0,x1,z0,z1],y0,[x0,x1,z0,z1],y1,"dark",col)}
+const aRnd=(s,i)=>{const v=Math.sin(s*127.1+i*311.7)*43758.5453;return v-Math.floor(v)};
+const APH=(tk,n,sp,sd)=>Math.floor(((tk*sp+(sd||0))%1+1)%1*n);
+
+/* ---------- islands ---------- */
+function aPalm(h,bx,bz,ht,lean,dirA,sd){
+  const top=[bx+Math.cos(dirA)*lean*ht,ht,bz+Math.sin(dirA)*lean*ht*.6],P=[];
+  for(let i=0;i<=5;i++){const t=i/5,bend=Math.sin(t*Math.PI*.5);P.push([bx+(top[0]-bx)*bend,top[1]*t,bz+(top[2]-bz)*bend])}
+  aChain(h,P.map(p=>[p[0],p[1]+6,p[2]]),2.1,1.3,["#8a5a2f","#a06a38"]);
+  const c=[top[0],top[1]+6,top[2]];
+  for(const [dx,dz] of [[-1.3,-1],[1.3,-.8],[0,1.2]])aBox(h,c[0]+dx-1.3,c[0]+dx+1.3,c[1]-3.2,c[1]-.6,c[2]+dz-1.3,c[2]+dz+1.3,"#6b3e1a");
+  const N=7;
+  for(let i=0;i<N;i++){
+    const a=i/N*Math.PI*2+sd,L=14+aRnd(sd,i)*4,dx=Math.cos(a),dz=Math.sin(a),sx=-dz,sz=dx,w=2.6;
+    const m=[c[0]+dx*L*.5,c[1]+L*.18,c[2]+dz*L*.5],t=[c[0]+dx*L,c[1]-L*.32,c[2]+dz*L];
+    const col=i%2?"#2f9e44":"#43b85a";
+    h.sheet([[c[0]-sx*.8,c[1],c[2]-sz*.8],[c[0]+sx*.8,c[1],c[2]+sz*.8],[m[0]+sx*w,m[1],m[2]+sz*w],[m[0]-sx*w,m[1],m[2]-sz*w]],"dark",col);
+    h.sheet([[m[0]-sx*w,m[1],m[2]-sz*w],[m[0]+sx*w,m[1],m[2]+sz*w],t,t],"dark",col)
+  }
+}
+function aIslandBase(h,rx,v){
+  const rz=rx*.62;
+  aRing(h,0,0,rx,rz,-3,2.5,"#e3c47f",14);
+  aRing(h,0,1,rx*.88,rz*.86,2.5,5,"#f3dca2",14);
+  aRing(h,rx*.04,4,rx*.6,rz*.56,5,10,"#4cb860",12);
+  aRing(h,rx*.02,6,rx*.42,rz*.4,10,13.5,"#3fa553",10);
+  // rocks on the shore
+  for(let i=0;i<3;i++){const a=.4+i*1.9+v,r=rx*(.78+aRnd(v,i)*.12),x=Math.cos(a)*r,z=Math.sin(a)*rz*.8,s=3+aRnd(v,i+5)*3.5;
+    h([x-s,x+s,z-s*.8,z+s*.8],1,[x-s*.5,x+s*.6,z-s*.4,z+s*.4],1+s*1.3,"dark",i%2?"#8d8f99":"#a3a6b1")}
+}
+function islandModel(v,king){
+  return amod("isl"+(king?"K":"")+(v%6),king?160:110,king?100:70,h=>{
+    const rx=king?74:50;aIslandBase(h,rx,v);
+    if(king){castleOn(h,v);return}
+    const n=2+(v%2);
+    for(let i=0;i<n;i++){const a=-1.2+i*1.3+aRnd(v,i)*.5,bx=Math.cos(a)*rx*.3,bz=4+Math.sin(a)*rx*.2;aPalm(h,bx,bz,24+aRnd(v,i+9)*12,.22+aRnd(v,i+3)*.18,a+.6,v+i)}
+    const ex=v%3;
+    if(ex===0){ // a little beach hut
+      aBox(h,-rx*.62,-rx*.62+14,4,15,-6,6,"#c8a26a");
+      h([-rx*.62-2,-rx*.62+16,-8,8],15,[-rx*.62+5,-rx*.62+9,-1,1],24,"dark","#d9b36b");
+      aBox(h,-rx*.62+5,-rx*.62+9,4,11,-6.6,-6,"#5a3a1c")
+    }else if(ex===1){ // beach umbrella and towel
+      const ux=rx*.5,uz=-rx*.18;aSeg(h,[ux,4,uz],[ux,22,uz],.6,.6,"#f3f3f3");
+      for(let i=0;i<8;i++){const a0=i/8*Math.PI*2,a1=(i+1)/8*Math.PI*2;h.sheet([[ux,24,uz],[ux,24,uz],[ux+Math.cos(a1)*11,19,uz+Math.sin(a1)*11],[ux+Math.cos(a0)*11,19,uz+Math.sin(a0)*11]],"dark",i%2?"#e63946":"#ffffff")}
+      aBox(h,ux-12,ux-3,5,5.4,uz-3,uz+6,"#2a6fd6")
+    }else{ // treasure chest
+      const tx=rx*.45,tz=-rx*.2;aBox(h,tx-5,tx+5,5,11,tz-3.5,tz+3.5,"#7a4a22");aBox(h,tx-5.4,tx+5.4,11,13.5,tz-3.9,tz+3.9,"#ffd23f");aBox(h,tx-1,tx+1,8,11,tz-3.8,tz-3.5,"#ffd23f")
+    }
+  })
+}
+function castleOn(h,v){
+  const R=v%2<1,r1=R?"#d62828":"#2a6fd6",r2=R?"#2a6fd6":"#d62828",WALL="#b9bccd",LIGHT="#cfd2e2",DARK="#2a2f45";
+  aBox(h,-34,34,13,36,-5,5,WALL);                         // front wall
+  for(const sx of [-1,1])aBox(h,sx*34-4,sx*34+4,13,34,-5,26,WALL);   // side walls
+  aBox(h,-34,34,13,30,22,28,"#a7abbf");                   // back wall
+  for(let i=0;i<8;i++)aBox(h,-33+i*9.3,-28.5+i*9.3,36,40,-5.4,-1,"#9ea2b8");
+  aBox(h,-6,6,13,27,-5.6,-4.8,DARK);aRoof(h,0,-5.2,6.4,27,31,DARK);
+  for(const [tx,tz] of [[-36,-3],[36,-3],[-36,24],[36,24]]){aRing(h,tx,tz,7.5,7.5,13,52,LIGHT,8);aRoof(h,tx,tz,8.5,52,68,r2);aBox(h,tx-1.4,tx+1.4,38,44,tz-7.6,tz-7.2,DARK)}
+  aRing(h,0,12,11,11,13,74,LIGHT,10);aRoof(h,0,12,12.5,74,96,r1);
+  for(const y of [44,58])aBox(h,-2,2,y,y+7,.8,1.2,DARK);
+  aSeg(h,[0,96,12],[0,108,12],.5,.5,"#5a4a2a");
+  for(const hx of [-56,54]){aBox(h,hx-6,hx+6,5,15,-2,8,"#f3ead2");h([hx-8,hx+8,-4,10],15,[hx-1,hx+1,2,4],23,"dark","#e07a2f")}
+}
+function castleFlag(x,y,s,tk,yaw,tilt){ // the flag on the keep waves, drawn as its own little model
+  const p=APH(tk,4,1.6),M=amod("cflag"+p,20,10,h=>{const w=Math.sin(p/4*Math.PI*2)*2.5;h.sheet([[0,107,12],[11,105+w*.4,12+w],[11,100+w*.4,12+w],[0,101,12]],"dark","#ffd23f")});
+  draw3d(M,x,y,s,"#888",null,0,yaw,tilt,true)
+}
+/* ---------- gremlins (standing on their island, built into it so they sit on the grass) ---------- */
+function aGremlin(h,ox,oz,b,w){
+  const G="#4fae3a",GL="#6bc84a",GD="#3b8a2a",P=(x,y,z)=>[ox+x,13.5+b+y,oz+z];
+  aSeg(h,P(-2.4,0,0),P(-2.6,5,0),1.2,1.3,GD);aSeg(h,P(2.4,0,0),P(2.6,5,0),1.2,1.3,GD);
+  const B=(x0,x1,y0,y1,z0,z1,c)=>aBox(h,ox+x0,ox+x1,13.5+b+y0,13.5+b+y1,oz+z0,oz+z1,c);
+  B(-4.4,4.4,4.5,12.5,-3.4,3.4,G);B(-6,6,12,22,-4.6,4.6,GL);
+  for(const d of [-1,1]){h.sheet([P(d*5.6,20,-1),P(d*5.6,15,-1),P(d*15,24+w*d*1.5,1),P(d*15,24+w*d*1.5,1)],"dark",G);aSeg(h,P(d*4,11,0),P(d*9,16+w*d*3,-2),1,.9,GD)}
+  for(const d of [-1,1]){B(d*3-1.9,d*3+1.9,16.5,20,-4.9,-4.6,"#ffe14a");B(d*3-.8,d*3+.8,17,19.2,-5.1,-4.9,"#c1121f")}
+  B(-3,3,13.3,15,-4.9,-4.6,"#2b1010");for(const d of [-1.6,1.6])B(d-.6,d+.6,14,15,-5,-4.9,"#ffffff")
+}
+function gremlinIslandModel(v,n,p){
+  return amod("gisl"+(v%6)+n+p,110,70,h=>{
+    aIslandBase(h,50,v);aPalm(h,14,10,26,.25,.4,v);
+    for(let i=0;i<n;i++){const ph=p/4*Math.PI*2+i*1.9,b=Math.abs(Math.sin(ph))*3;aGremlin(h,[-22,-4,14,26][i],[-4,-8,-6,3][i],b,Math.sin(ph*2))}
+  })
+}
+/* ---------- kraken ---------- */
+function krakenTentacles(h,p,n,R,H,cols,sd){
+  for(let i=0;i<n;i++){
+    const a=[-2.9,-.25,-2.45,-.7,2.2,1.0,2.6,.55][i%8]+(aRnd(sd,i)-.5)*.2,dx=Math.cos(a),dz=Math.sin(a),sw=Math.sin(p/8*Math.PI*2+i*1.3)*.35,P=[];
+    const up=.75+aRnd(sd,i+3)*.5;
+    for(let k=0;k<=7;k++){const t=k/7,r=R*.8+t*R*2.1,y=-2+Math.sin(t*Math.PI*.95)*H*up+(t>.7?(t-.7)*H*.9*up:0),aa=a+sw*t*t;
+      P.push([Math.cos(aa)*r,y,Math.sin(aa)*r*.75])}
+    aChain(h,P,3,.7,cols);
+    for(let k=2;k<6;k++)aBox(h,P[k][0]-.8,P[k][0]+.8,P[k][1]-2,P[k][1]-1.1,P[k][2]-.8,P[k][2]+.8,"#f6b3d2")
+  }
+}
+function krakenModel(p){
+  return amod("krak"+p,110,70,h=>{
+    const PU="#8e2f86",PL="#a8439f";
+    krakenTentacles(h,p,8,18,34,["#7d3187","#6d2877"],3);
+    aRing(h,0,0,19,17,-3,14,PU,10);aRing(h,0,1,17,15,14,26,PU,10);aRing(h,0,2,14,12,26,36,PL,10);aRing(h,0,3,9,8,36,43,PL,8);aRing(h,0,3,5,4.5,43,47,PL,8);
+    for(const [dx,dy,dz] of [[-12,8,-15],[11,6,-15.5],[13,36,-7],[-11,38,-6]])aBox(h,dx-1.6,dx+1.6,dy,dy+3,dz-1,dz,"#6a2166");
+    for(const sx of [-1,1]){
+      aBox(h,sx*8-5,sx*8+5,20,30,-16.4,-15.4,"#ffffff");aBox(h,sx*8-3.2,sx*8+3.2,21.5,28.5,-16.8,-16.3,"#ffd23f");aBox(h,sx*8-.7,sx*8+.7,21,29,-17.1,-16.7,"#111111");
+      aSeg(h,[sx*14,33,-15.6],[sx*3,30,-16.4],1,1,"#3d1240")
+    }
+  })
+}
+/* ---------- pirate ship ---------- */
+function shipModel(att,p){
+  return amod("ship"+(att?"A":"")+p,100,40,h=>{
+    const O=[[-34,-11],[22,-11],[40,0],[22,11],[-34,11]],sc=(k)=>O.map(q=>[q[0]*k,q[1]*k]);
+    h.poly(sc(.8),-5,4,"dark","#5a3416");h.poly(O,4,14,"dark","#6b3f1f");h.poly(sc(.92),14,14.8,"dark","#b07a40");
+    for(const z of [-11.3,11.3])aBox(h,-34,22,12,14,z-.3,z+.3,"#4a2a12");
+    for(const dx of [-22,-9,4,16])aBox(h,dx-1.4,dx+1.4,7.5,10.5,-11.6,-11.2,"#ffd23f");
+    for(const dx of [-16,-2,11])aBox(h,dx-1.2,dx+1.2,10.8,12.4,-14,-11.2,"#1c1c22");
+    aBox(h,-34,-18,14,25,-10,10,"#7a4a22");aBox(h,-35,-17,25,27,-11,11,"#4a2a12");aBox(h,-28,-24,17,22,-10.4,-10,"#ffd23f");
+    aSeg(h,[38,13,0],[54,22,0],1.1,.6,"#4a2a12");
+    const masts=[[-6,72],[16,62]];
+    for(const [mx,top] of masts){
+      aSeg(h,[mx,14,0],[mx,top,0],1.5,1.1,"#3b2410");aSeg(h,[mx-12,top-8,-1],[mx+12,top-8,-1],.6,.6,"#3b2410");
+      const s0=top-8,s1=26,mid=(s0+s1)/2,b=-5;
+      h.sheet([[mx-12,s0,-1.4],[mx+12,s0,-1.4],[mx+13,mid,b],[mx-13,mid,b]],"dark","#f3ead2");
+      h.sheet([[mx-13,mid,b],[mx+13,mid,b],[mx+12,s1,-1.4],[mx-12,s1,-1.4]],"dark","#e6d8b6")
+    }
+    aBox(h,-9,-3,45,51,-6.4,-5.6,"#1c1c22");aBox(h,-7.4,-4.6,46.6,49.4,-6.8,-6.3,"#f3ead2");   // skull on the main sail
+    const w=Math.sin(p/4*Math.PI*2);
+    h.sheet([[-6,72,0],[-6,64,0],[4,65+w,w*2.5],[4,71+w,w*2.5]],"dark","#111111");
+    if(att){
+      // the kraken rises behind the ship, eyes over the deck, and wraps its tentacles over the rail
+      aRing(h,6,22,17,13,-3,16,"#8e2f86",10);aRing(h,6,23,14,11,16,30,"#a8439f",10);aRing(h,6,24,9,7,30,37,"#a8439f",8);
+      for(const sx of [-1,1]){aBox(h,6+sx*6.5-3.6,6+sx*6.5+3.6,21,28,11.4,12.2,"#ffffff");aBox(h,6+sx*6.5-2.2,6+sx*6.5+2.2,21.8,27.2,11,11.5,"#ffd23f");aBox(h,6+sx*6.5-.6,6+sx*6.5+.6,21.4,27.6,10.7,11.1,"#111111")}
+      const sw=Math.sin(p/4*Math.PI*2);
+      for(const [x,side] of [[-24,-1],[0,-1],[24,-1],[-12,1],[30,1]]){
+        const zW=side*16,zD=side*2,P=[],q=(a,b,c,t)=>a*(1-t)*(1-t)+2*b*t*(1-t)+c*t*t;
+        for(let k=0;k<=7;k++){const t=k/7;P.push([x+q(0,3,7,t)+sw*1.5*t,q(-3,34,17,t),q(zW,zW*.9,zD,t)])}
+        aChain(h,P,3.4,1,["#7d3187","#6d2877"]);
+        for(let k=2;k<6;k++)aBox(h,P[k][0]-.8,P[k][0]+.8,P[k][1]-1.8,P[k][1]-.9,P[k][2]-.8,P[k][2]+.8,"#f6b3d2")
+      }
+    }
+  })
+}
+/* ---------- swimming pirates ---------- */
+function pirateSwimModel(p){
+  return amod("swim"+p,80,30,h=>{
+    aRing(h,22,2,7,6,-3,9,"#8a5a2f",8);for(const y of [0,6])aRing(h,22,2,7.4,6.4,y,y+1.2,"#4a2a12",8);
+    for(let i=0;i<3;i++){
+      const px=(i-1)*17-4,bob=Math.sin(p/4*Math.PI*2+i*2.1)*1.2,sh=i===1?"#2c6fb5":i?"#d62828":"#f3ead2";
+      aBox(h,px-5,px+5,-2+bob,7+bob,-3.4,3.4,sh);
+      if(i!==1)for(const y of [0,3.4])aBox(h,px-5.2,px+5.2,y+bob,y+1.2+bob,-3.6,3.6,"#1c2f55");
+      aBox(h,px-4,px+4,7+bob,15+bob,-3.6,3.6,"#f1c27d");
+      if(i===1){aRoof(h,px,0,6,15+bob,22+bob,"#111111");aBox(h,px-1,px+1,17+bob,19+bob,-3.4,-2.8,"#f3ead2")}
+      else aBox(h,px-4.4,px+4.4,13+bob,16+bob,-4,4,i?"#ffd23f":"#d62828");
+      aBox(h,px-2.6,px-1.2,10.5+bob,12+bob,-3.9,-3.6,"#111111");
+      if(i===0)aBox(h,px+.8,px+3.2,10+bob,12.4+bob,-3.9,-3.6,"#111111");else aBox(h,px+1.2,px+2.6,10.5+bob,12+bob,-3.9,-3.6,"#111111");
+      const wv=Math.sin(p/4*Math.PI*2*2+i*2)*.5;
+      aSeg(h,[px+4.5,6+bob,0],[px+9+wv*3,17+bob,-1],1.1,1,sh);aBox(h,px+8+wv*3,px+11+wv*3,17+bob,20+bob,-2.5,.5,"#f1c27d")
+    }
+  })
+}
+/* ---------- sea serpent ---------- */
+function serpentModel(p){
+  return amod("serp"+p,170,30,h=>{
+    const G="#1f8f58",GL="#2fae6a",Y="#ffd23f";
+    for(let i=0;i<3;i++){
+      const cx=-6+i*34,r=13*(1+.22*Math.sin(p/6*Math.PI*2+i*1.6)),P=[];
+      for(let k=0;k<=8;k++){const a=Math.PI-k/8*Math.PI;P.push([cx+Math.cos(a)*13,-3+Math.sin(a)*r,0])}
+      aChain(h,P,5.6,5.6,[G,GL]);
+      aRoof(h,cx,0,2.2,-3+r+4,-3+r+10,Y)
+    }
+    const hb=Math.sin(p/6*Math.PI*2)*2,N=[];
+    for(let k=0;k<=6;k++){const t=k/6;N.push([-19-36*t,-3+Math.sin(t*Math.PI*.6)*32+hb*t,0])}
+    aChain(h,N,5.6,4.8,[G,GL]);
+    const hx=-58,hy=29+hb;
+    aBox(h,hx-14,hx+4,hy-3,hy+6,-5.5,5.5,GL);aBox(h,hx-20,hx-12,hy-3,hy+3,-4,4,GL);
+    aBox(h,hx-20,hx-6,hy-5.5,hy-3,-3.6,3.6,"#c0392b");
+    for(const z of [-1,1]){aBox(h,hx-6,hx-1,hy+1,hy+5,z*5.6-.5,z*5.6+.5,"#ffffff");aBox(h,hx-5,hx-2.5,hy+1.8,hy+4,z*6.1-.3,z*6.1+.3,"#111111");aRoof(h,hx,z*3,1.8,hy+6,hy+13,"#ff9f1c")}
+    const T=[];for(let k=0;k<=5;k++){const t=k/5;T.push([68+t*30,-3+Math.sin(t*Math.PI)*8,0])}
+    aChain(h,T,5,1.4,[G,GL]);
+    h.sheet([[96,0,0],[104,12+hb,0],[108,2,0],[104,-2,0]],"dark",G)
+  })
+}
+/* ---------- mermaid on a rock ---------- */
+function mermaidModel(p){
+  return amod("merm"+p,80,40,h=>{
+    h([-32,32,-14,14],-3,[-24,22,-10,10],12,"dark","#5b6272");h([-22,16,-9,9],12,[-14,8,-6,6],24,"dark","#7b8396");
+    h([18,34,-8,8],-3,[22,30,-4,4],8,"dark","#6a7182");h([-40,-26,-6,8],-3,[-36,-30,-2,4],6,"dark","#6a7182");
+    const sw=Math.sin(p/4*Math.PI*2);
+    aChain(h,[[-2,25,-2],[8,23,-5],[16,17,-7],[22,10,-7],[26,4,-6]],4.2,2,["#2fd3c4","#2aa9c9","#3a7bd5"]);
+    h.sheet([[26,4,-6],[34,8+sw*2,-7],[33,3,-7],[34,-3+sw*2,-7]],"dark","#ff7eb6");
+    aBox(h,-7,3,24,40,-3,3,"#f6c9a0");for(const d of [-3.4,.6])aBox(h,d-1.6,d+1.6,33,36.4,-3.6,-3,"#ff7eb6");
+    aBox(h,-7.5,3.5,41,52,-4.4,4.4,"#f6c9a0");
+    aBox(h,-8.5,4.5,49,55,-5,5,"#e0561a");aBox(h,-8.5,-4.5,34,51,-5,5,"#e0561a");aBox(h,-1,4.5,38,49,3,5,"#e0561a");
+    for(const d of [-4,0])aBox(h,d-.7,d+.7,46,48,-4.7,-4.4,"#111111");aBox(h,-3.4,-.6,43.4,44.4,-4.7,-4.4,"#d94a6a");
+    aSeg(h,[3,38,0],[10+sw*1.5,50+sw,-2],1.3,1.1,"#f6c9a0");aSeg(h,[-7,38,0],[-13,32,-1],1.3,1.1,"#f6c9a0")
+  })
+}
+/* ---------- seagulls ---------- */
+function gullModel(p){
+  return amod("gull"+p,30,30,h=>{
+    const f=Math.sin(p/4*Math.PI*2);
+    aSeg(h,[-9,0,0],[0,.6,0],2.2,3.4,"#f4f6fa");aSeg(h,[0,.6,0],[7,1,0],3.4,2.4,"#f4f6fa");aBox(h,6,11.5,-.4,4.4,-2.2,2.2,"#f4f6fa");aBox(h,11,14.5,.4,1.6,-.7,.7,"#ffb020");
+    aBox(h,9.4,10.4,1.8,2.8,-1.9,1.9,"#111111");
+    h.sheet([[-10,.4,-1.5],[-10,.4,1.5],[-14,1.4,2.6],[-14,1.4,-2.6]],"dark","#e6eaf2");
+    for(const z of [-1,1]){
+      const m=[1,1.5+f*4,z*9],t=[-2,1+f*9,z*17];
+      h.sheet([[-4,1,z*1.6],[4,1,z*1.6],[3,m[1],m[2]],[-3,m[1],m[2]]],"dark","#e6eaf2");
+      h.sheet([[-3,m[1],m[2]],[3,m[1],m[2]],t,[-5,t[1],t[2]]],"dark","#2a3142")
+    }
+  })
+}
+/* ---------- skydivers ---------- */
+const SKY_PAL=[["#e63946","#ffffff"],["#2a6fd6","#ffd23f"],["#ff8c1a","#ffffff"],["#2fbf71","#ffffff"]];
+function skydiverModel(st,c,p){
+  return amod("sky"+st+c+p,40,16,h=>{
+    const pl=SKY_PAL[c],w=Math.sin(p/4*Math.PI*2),SUIT="#2d3a5a";
+    aBox(h,-2.6,2.6,0,8,-1.7,1.7,SUIT);aBox(h,-2.2,2.2,8.4,12.6,-2,2,"#f2c9a0");aBox(h,-2.5,2.5,11.4,13.4,-2.3,2.3,pl[0]);
+    aBox(h,-1.4,1.4,9.6,11,-2.3,-2,"#1c1c22");
+    if(st===0){
+      aSeg(h,[-2.4,7,0],[-4,13,0],.8,.7,SUIT);aSeg(h,[2.4,7,0],[4,13,0],.8,.7,SUIT);
+      aSeg(h,[-1.2,0,0],[-1.6+w*.5,-6,0],.9,.8,SUIT);aSeg(h,[1.2,0,0],[1.6-w*.5,-6,0],.9,.8,SUIT);
+      const N=6,pts=[];for(let i=0;i<=N;i++){const a=-1.1+i/N*2.2;pts.push([Math.sin(a)*19,30+Math.cos(a)*9])}
+      for(let i=0;i<N;i++){const A=pts[i],B=pts[i+1],col=i%2?pl[1]:pl[0];
+        h.sheet([[A[0],A[1],-6],[B[0],B[1],-6],[B[0],B[1],6],[A[0],A[1],6]],"dark",col);
+        h.sheet([[A[0],A[1],-6],[B[0],B[1],-6],[B[0],B[1]-2.2,-6],[A[0],A[1]-2.2,-6]],"dark",col)}
+      for(const i of [0,2,4,6])for(const z of [-5,5])aSeg(h,[pts[i][0],pts[i][1]-1,z],[i<3?-3.6:3.6,13,0],.22,.22,"#2a2f40")
+    }else{
+      aSeg(h,[-2.4,7,0],[-9,11+w*4,0],.8,.7,SUIT);aSeg(h,[2.4,7,0],[9,11-w*4,0],.8,.7,SUIT);
+      aSeg(h,[-1.2,.5,0],[-6,-6-w*3,0],.9,.8,SUIT);aSeg(h,[1.2,.5,0],[6,-6+w*3,0],.9,.8,SUIT)
+    }
+  })
+}
+/* ---------- the pegasus: the 3D horse, with wings, a horn and a rainbow mane, no rider ---------- */
+const PEG_PAL={b:"#f7f7ff",d:"#d9dcf2",l:"#ffffff",k:"#f9a8d4",h:"#cfc8e6"};
+function pegasus3d(x,y,s,tk,dir){
+  const m=mk(30,64,h=>horseBuild(h,"air",{ph:(tk*1.6)%1000,mv:1,tk,pooT:-1,big:false,fallT:-1,wg:"wg_unicorn",wh:null,yaw:dir*1.25,noRider:true,horn:true,rbw:true,pal:PEG_PAL}));
+  m.osort=GQ.lvl>0;
+  draw3d(m,x,y,s*1.1,"#f7f7ff",null,0,dir*1.25,.32,true)
+}
+/* ---------- drawing a scenery item in the world ---------- */
+function airTilt(z){return Math.max(.14,Math.min(.62,Math.atan(50/Math.max(1,z))+.1))}
+function airDraw3d(M,xx,yy,u,X,z,lift,yawAdd,sMul){
+  const s=u*(sMul||1)/K,tilt=airTilt(z),yaw=Math.atan2(X,z)*.85+(yawAdd||0);
+  draw3d.plain=u<(GQ.lvl>=2?.55:.9);     // only big, close scenery needs the careful part ordering
+  draw3d(M,xx,yy+40*Math.sin(tilt)*s*K,s,"#888",null,lift||0,yaw,tilt,true);
+  draw3d.plain=false
+}
+function airWaterRing(xx,yy,u,rx,tk,sd,shallow){
+  const fo=.5+.5*Math.sin(tk*2+sd*3);
+  if(shallow){ctx.fillStyle="rgba(120,230,225,.55)";ctx.beginPath();ctx.ellipse(xx,yy+1*u,(rx+16)*u,(rx*.3+2)*u,0,0,TAU2);ctx.fill()}
+  ctx.strokeStyle="rgba(255,255,255,"+(.45+.35*fo)+")";ctx.lineWidth=Math.max(1,2.2*u);ctx.beginPath();ctx.ellipse(xx,yy+1*u,(rx+6+fo*3)*u,(rx*.24+fo)*u,0,0,TAU2);ctx.stroke()
+}
+function airScenery(o,xx,yy,u,z,tk){
+  const v=Math.floor(o.seed*7)%6;
+  switch(o.type){
+    case"island":airWaterRing(xx,yy,u,50,tk,o.seed,true);airDraw3d(islandModel(v,false),xx,yy,u,o.X,z);break;
+    case"gremlin":airWaterRing(xx,yy,u,50,tk,o.seed,true);airDraw3d(gremlinIslandModel(v,2+Math.floor(o.seed)%3,APH(tk,4,1.3,o.seed)),xx,yy,u,o.X,z);break;
+    case"kingdom":{airWaterRing(xx,yy,u*.78,74,tk,o.seed,true);airDraw3d(islandModel(v,true),xx,yy,u*.78,o.X,z);
+      const s=u*.78/K,tilt=airTilt(z);castleFlag(xx,yy+40*Math.sin(tilt)*s*K,s,tk,Math.atan2(o.X,z)*.85,tilt);break}
+    case"kraken":airWaterRing(xx,yy,u*1.1,30,tk,o.seed,false);airDraw3d(krakenModel(APH(tk,8,.5,o.seed)),xx,yy,u*1.1,o.X,z,Math.sin(tk*1.4+o.seed)*2*u);break;
+    case"pirates":{airWaterRing(xx,yy,u*1.1,30,tk,o.seed,false);airDraw3d(pirateSwimModel(APH(tk,4,.9,o.seed)),xx,yy,u*1.1,o.X,z);
+      if(u>.45){const bw=34*u,bx=xx-22*u,by=yy-44*u;ctx.fillStyle="#fff";ctx.strokeStyle="#222";ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(bx,by,bw,13*u,4*u);ctx.fill();ctx.stroke();ctx.fillStyle="#222";ctx.font="700 "+Math.max(7,8.5*u)+"px Rajdhani,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("HELP!",bx+bw/2,by+7*u)}
+      break}
+    case"serpent":airWaterRing(xx,yy,u*.85,60,tk,o.seed,false);airDraw3d(serpentModel(APH(tk,6,.6,o.seed)),xx,yy,u*.85,o.X,z,0,o.dir<0?Math.PI:0);break;
+    case"ship":airWaterRing(xx,yy,u*.95,38,tk,o.seed,false);airDraw3d(shipModel(false,APH(tk,4,1.2,o.seed)),xx,yy,u*.95,o.X,z,Math.sin(tk*1.6+o.seed)*1.5*u,(o.dir<0?Math.PI:0)+.45);break;
+    case"attack":airWaterRing(xx,yy,u*.95,44,tk,o.seed,false);airDraw3d(shipModel(true,APH(tk,4,1.2,o.seed)),xx,yy,u*.95,o.X,z,Math.sin(tk*3+o.seed)*2*u,(o.dir<0?Math.PI:0)+.45);break;
+    case"mermaid":{airWaterRing(xx,yy,u*1.2,34,tk,o.seed,false);airDraw3d(mermaidModel(APH(tk,4,.8,o.seed)),xx,yy,u*1.2,o.X,z);
+      ctx.fillStyle="rgba(255,255,255,"+(.5+.4*Math.sin(tk*4+o.seed))+")";for(const [dx,dy] of [[-30,-44],[26,-50],[34,-30]]){ctx.fillRect(xx+(dx-1)*u*1.2,yy+(dy-4)*u*1.2,2*u*1.2,8*u*1.2);ctx.fillRect(xx+(dx-4)*u*1.2,yy+(dy-1)*u*1.2,8*u*1.2,2*u*1.2)}
+      break}
+  }
+}
+/* how far a scenery item reaches either side, in model units, so it's kept until it's really off screen */
+const AIR_HALF={island:60,gremlin:60,kingdom:80,kraken:70,pirates:45,serpent:110,ship:56,attack:60,mermaid:45};
+
 /* ===================== AIRBORNE ENVIRONMENT v2 ===================== */
 function airCloudSprite(v,dark){
   const key="acl"+v+(dark?"d":"");
@@ -6245,14 +6569,23 @@ function drawToastAir(){
   if(toastT<=0)return;
   const U2=Math.max(.8,H/400);
   ctx.save();
-  const age=1.1-toastT,pop=age<.28?1+.55*Math.pow(1-age/.28,2)*Math.cos(age*22):1;
+  const age=1.1-toastT;
   ctx.globalAlpha=Math.min(1,toastT*3);
-  let fs=46*U2;
-  ctx.font="400 "+fs+"px Bungee,Impact,'Arial Black',sans-serif";
+  // sized to fit: never wider than the screen (long messages shrink), never taller than a slice of it
+  let fs=Math.min(38*U2,H*.085);
+  const face=fs=>"400 "+fs+"px Bungee,Impact,'Arial Black',sans-serif";
+  ctx.font=face(fs);
+  const maxW=W*.8-SAFE.l-SAFE.r,tw=ctx.measureText(toastTxt).width+fs*.24;
+  if(tw>maxW){fs*=maxW/tw;ctx.font=face(fs)}
+  const w=ctx.measureText(toastTxt).width+fs*.24,room=(W*.96-SAFE.l-SAFE.r)/Math.max(1,w);
+  const pop=Math.min(age<.28?1+.55*Math.pow(1-age/.28,2)*Math.cos(age*22):1,Math.max(1,room));
+  // just below the stat boxes, so it never covers them
+  const st=document.querySelector(".track .stats"),sb=st?st.offsetTop+st.offsetHeight:0;
+  const y=Math.max(H*.2,sb+fs*1.2)-age*10*U2;
   ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.translate(W/2,H*.2-age*14*U2);ctx.scale(pop,pop);ctx.rotate(-.04);
+  ctx.translate(W/2+(SAFE.l-SAFE.r)/2,y);ctx.scale(pop,pop);ctx.rotate(-.04);
   ctx.lineJoin="round";
-  ctx.shadowColor=toastCol;ctx.shadowBlur=30*U2;
+  ctx.shadowColor=toastCol;ctx.shadowBlur=Math.min(30*U2,fs*.6);
   ctx.lineWidth=fs*.22;ctx.strokeStyle="#0c1a33";ctx.strokeText(toastTxt,0,fs*.07);
   ctx.shadowBlur=0;ctx.lineWidth=fs*.12;ctx.strokeStyle="#fff";ctx.strokeText(toastTxt,0,0);
   ctx.fillStyle=toastCol;ctx.fillText(toastTxt,0,0);
@@ -6326,31 +6659,21 @@ function drawAir(){
   for(const o of A.scn){
     const z=zj+(o.d-dv);
     if(z>2900)break;
-    if(z<170)continue;
-    const a=Math.min(1,(3000-z)/900)*Math.min(1,(z-170)/150),u=f/z;
-    it.push([z,()=>{
-      const xx=W/2+o.X*f/z,yy=wy(z);
-      ctx.save();ctx.globalAlpha=a;
-      switch(o.type){
-        case"island":islandArt(xx,yy,u,tick,o.seed,false);break;
-        case"gremlin":islandArt(xx,yy,u,tick,o.seed,false);[[-24,3],[-4,6],[17,2],[30,5]].slice(0,2+Math.floor(o.seed)%3).forEach(([gx,gy],i)=>gremlin(xx+gx*u,yy+(gy-3)*u,u*.95,tick,o.seed+i*2.1));break;
-        case"kingdom":islandArt(xx,yy,u*.78,tick,o.seed,true);break;
-        case"kraken":kraken(xx,yy,u*1.1,tick,o.seed);break;
-        case"pirates":pirateSwim(xx,yy,u*1.1,tick,o.seed);break;
-        case"serpent":serpent(xx,yy,u*.85,tick,o.seed,o.dir);break;
-        case"ship":pirateShip(xx,yy,u*.95,tick,o.seed,false);break;
-        case"attack":pirateShip(xx,yy,u*.95,tick,o.seed,true);break;
-        case"mermaid":mermaidRock(xx,yy,u*1.2,tick,o.seed);break
-      }
-      ctx.restore()
-    }])
+    if(z<26)continue;
+    const u=f/z,xx=W/2+o.X*f/z,half=(AIR_HALF[o.type]||60)*u*1.35;
+    if(xx+half<0||xx-half>W)continue;          // only gone once it has slid off the side of the screen
+    const a=Math.min(1,(3000-z)/900);
+    it.push([z,()=>{const yy=wy(z);ctx.save();ctx.globalAlpha=a;airScenery(o,xx,yy,u,z,tick);ctx.restore()}])
   }
   for(const b of A.birds){
     const z=zj+(b.d+elapsed*14-dv);
     if(z>2700)break;
     if(z<40)continue;
     const a=Math.min(1,(2800-z)/700);
-    it.push([z,()=>{const [x,y]=P(b.X,b.Y,z);ctx.save();ctx.globalAlpha=a;birdFlock(x,y,f/z*.9,tick,b.n,b.seed);ctx.restore()}])
+    it.push([z,()=>{const [x,y]=P(b.X,b.Y,z),sc=f/z*.9,tl=Math.max(-.35,Math.min(.3,Math.atan2(-b.Y,z)));ctx.save();ctx.globalAlpha=a;
+      for(let i=0;i<b.n;i++){const bx=x+(i%2?1:-1)*Math.ceil(i/2)*16*sc,by=y+Math.ceil(i/2)*8*sc+Math.sin(tick*1.5+i)*2*sc;
+        draw3d(gullModel(APH(tick,4,2.4,i*.27+b.seed)),bx,by,sc*.75/K,"#888",null,0,Math.PI/2+Math.atan2(b.X,z)*.8+Math.sin(tick*.7+i)*.15,tl,true)}
+      ctx.restore()}])
   }
   if(A.peg&&A.peg.state===0&&A.peg.on){
     const pg=A.peg,dz=pg.d-AIR_PRV*elapsed-dd,z=zj+dz;
@@ -6360,7 +6683,9 @@ function drawAir(){
       ctx.save();ctx.globalAlpha=fd;
       g=ctx.createRadialGradient(x,y,2,x,y,40*sc);g.addColorStop(0,"rgba(255,156,242,.45)");g.addColorStop(1,"rgba(255,156,242,0)");
       ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,40*sc,0,TAU);ctx.fill();
-      pegasus(x,y,sc,tick,-pg.dir);ctx.restore()
+      pegasus3d(x,y+16*sc,sc*.62/K,tick,-pg.dir);
+      ctx.fillStyle="rgba(255,255,255,.85)";for(let i=0;i<7;i++){const t=(tick*1.4+i/7)%1;ctx.beginPath();ctx.arc(x+pg.dir*(20+t*70)*sc,y+(Math.sin(i*2.4)*12+t*12)*sc,Math.max(.8,(2.2-t*1.4)*sc),0,TAU);ctx.fill()}
+      ctx.restore()
     }])
   }
   for(const dv2 of A.sky.divers){
@@ -6370,7 +6695,8 @@ function drawAir(){
     it.push([z,()=>{
       const [x,y]=P(dv2.X,dv2.Y,z),sc=f/z*.9,fd=Math.min(1,(1500-z)/300);
       if(dv2.st===0)A.tg.push({x,y:y-20*sc,r:Math.max(26*sc,18*U2),z,ref:dv2,kind:"chute"});
-      ctx.save();ctx.globalAlpha=fd;skydiver(x,y,sc,tick,dv2.st,dv2.sd,dv2.rot);if(dv2.ic&&dv2.st===0)clickIcon(x,y-20*sc,Math.max(.9*U2,sc*1.5),tick);ctx.restore()
+      const tl=Math.max(-.3,Math.min(.45,Math.atan2(-dv2.Y,z)+.05)),ds=sc*1.05/K;
+      ctx.save();ctx.globalAlpha=fd;draw3d(skydiverModel(dv2.st,Math.floor(dv2.sd)%4,APH(tick,4,dv2.st?3:1.1,dv2.sd)),x,y+6*sc+40*Math.sin(tl)*ds*K,ds,"#888",null,0,dv2.st?dv2.rot*1.5:Math.sin(tick*.8+dv2.sd)*.35+Math.atan2(dv2.X,z)*.8,tl,true);ctx.restore()
     }])
   }
   for(const sp2 of A.spl){
