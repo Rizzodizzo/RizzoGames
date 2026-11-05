@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#eef3fc" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0f1f" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="hub" data-back="off"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -147,8 +148,9 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:26px}
    To add a new game:
      1. Put its .html file next to this one (e.g. word-hunt.html)
      2. Add one entry below
-     3. In the game's file, add the games.js line just before the closing body tag
-        (copy it from the top of games.js)
+     3. In the game's file, add the games.js line inside its <head>
+        (copy it from the top of games.js). That gives it the Rizzo menu, shared settings,
+        automatic updates and offline play
    That's it. sw.js picks up new games by itself.
    ====================================================================== */
 const GAMES = [
@@ -241,7 +243,7 @@ addEventListener('pageshow', render);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
 /* ---------- offline ---------- */
-// Updates are handled by games.js (below), the same as in every game
+// Updates and settings are handled by games.js (in the <head>), the same as in every game
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   // Ask sw.js to save every game now, so they all work offline even before you've opened them
   navigator.serviceWorker.ready.then(reg => {
@@ -251,6 +253,5 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   document.getElementById('foot').textContent = 'Open from the website to play offline';
 }
 </script>
-<script src="games.js" data-game="hub" data-back="off"></script>
 </body>
 </html>

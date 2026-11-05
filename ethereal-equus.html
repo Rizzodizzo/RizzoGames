@@ -898,6 +898,7 @@ html.rm .t-spk{display:none}
 
 .answers button.ph{visibility:hidden;pointer-events:none}
 </style>
+<script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)"></script>
 </head>
 <body>
 <div id="loader" role="status" aria-live="polite"><div class="ldbox"><div class="ldlogo logo2 ld"><span class="t-eth">Ethereal</span><span class="t-equ" data-t="EQUUS">EQUUS</span><span class="t-exa">Examination</span></div><div class="ldcar" aria-hidden="true"><i></i></div><div class="ldbar"><i id="ldFill"></i></div><div class="ldtxt" id="ldTxt">Warming up the engine...</div></div></div>
@@ -953,9 +954,8 @@ html.rm .t-spk{display:none}
         <div class="setgrid">
           <div class="sgroup">
             <h3>Sound</h3>
-            <div class="srow"><span>Sound</span><button class="tog" id="stMute" role="switch" aria-checked="true"><i></i></button></div>
-            <label class="srow"><span>Music</span><input type="range" id="stMusic" min="0" max="100" step="5"><b id="stMusicV"></b></label>
-            <label class="srow"><span>Effects</span><input type="range" id="stSfx" min="0" max="100" step="5"><b id="stSfxV"></b></label>
+            <p class="snote">Volume, music, effects and reduce motion are shared by every Rizzo game. Swipe up from the bottom of the screen any time, or:</p>
+            <button class="sec" id="stRizzo">Open the Rizzo menu</button>
           </div>
           <div class="sgroup">
             <h3>Graphics</h3>
@@ -965,7 +965,6 @@ html.rm .t-spk{display:none}
           <div class="sgroup">
             <h3>Comfort</h3>
             <div class="srow"><span>Large text</span><button class="tog" id="stBig" role="switch" aria-checked="false"><i></i></button></div>
-            <div class="srow"><span>Reduce motion</span><button class="tog" id="stRm" role="switch" aria-checked="false"><i></i></button></div>
             <div class="srow"><span>Colour-blind friendly colours</span><button class="tog" id="stCb" role="switch" aria-checked="false"><i></i></button></div>
           </div>
           <div class="sgroup">
@@ -1267,6 +1266,14 @@ const SET={music:70,sfx:90,gfx:"auto",big:false,rm:false,cb:false};
 try{Object.assign(SET,JSON.parse(localStorage.getItem("mr_set")||"{}"))}catch(e){}
 if((SET.v|0)<2){SET.rm=false;SET.v=2;try{localStorage.setItem("mr_set",JSON.stringify(SET))}catch(e){}}
 function saveSet(){try{localStorage.setItem("mr_set",JSON.stringify(SET))}catch(e){}}
+/* Rizzo Games: volume, music, effects, mute and reduce motion are shared by every game. They're set in the
+   Rizzo menu (swipe up from the bottom of the screen), and Equus copies them into its own settings. */
+const RZ=window.RizzoGames;
+if(RZ){let m0=false;try{m0=JSON.parse(localStorage.getItem("mr_audio")||"{}").muted===true}catch(e){}
+  RZ.seed({volume:1,music:SET.music/100,sfx:SET.sfx/100,muted:m0,reduceMotion:!!SET.rm})}   /* very first time only */
+function rzSync(){if(!RZ)return;const s=RZ.settings;SET.music=Math.round(s.music*100);SET.sfx=Math.round(s.sfx*100);SET.rm=!!s.reduceMotion}
+const rzVol=()=>RZ?RZ.settings.volume:1;
+rzSync();
 /* phones start Auto on Medium: fewer mid-race quality switches (each one rebuilds the race canvases) */
 const GQ={lvl:SET.gfx==="auto"?((matchMedia&&matchMedia("(pointer:coarse)").matches)?1:2):+SET.gfx,ema:16,bad:0,good:0,lastDown:-1e9,lastT:0};
 function gqDpr(cap){const d=window.devicePixelRatio||1;return GQ.lvl>=2?Math.min(cap,d):GQ.lvl===1?Math.min(cap,1.5,d):1}
@@ -1301,8 +1308,6 @@ function updateSetUI(){
   const el=$("setScreen");if(!el)return;
   const tg=(id,v)=>{const b=$(id);if(b)b.setAttribute("aria-checked",String(!!v))};
   tg("stMute",!muted);tg("stBig",SET.big);tg("stRm",SET.rm);tg("stCb",SET.cb);
-  $("stMusic").value=SET.music;$("stMusicV").textContent=SET.music;
-  $("stSfx").value=SET.sfx;$("stSfxV").textContent=SET.sfx;
   document.querySelectorAll("#stGfx button").forEach(b=>{const on=b.dataset.v===String(SET.gfx);b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on))});
   const N=["Low","Medium","High"];
   $("stGfxNote").innerHTML=SET.gfx==="auto"?`Auto watches the frame rate during races and lowers detail if your device struggles. Currently <b>${N[GQ.lvl]}</b>.`:`Fixed at <b>${N[GQ.lvl]}</b>. Low is built for slower computers: simpler buildings, no fog, smaller crowds, a shorter view distance and a lower resolution on big screens.`;
@@ -1313,10 +1318,11 @@ function updateSetUI(){
 }
 
 try{muted=JSON.parse(localStorage.getItem("mr_audio")||"{}").muted===true}catch(e){}
+if(RZ)muted=!!RZ.settings.muted;
 function actx(){
   if(!ac){
     ac=new (window.AudioContext||window.webkitAudioContext)();
-    master=ac.createGain();master.gain.value=muted?0:1;master.connect(ac.destination);
+    master=ac.createGain();master.gain.value=muted?0:rzVol();master.connect(ac.destination);
     sfxG=ac.createGain();sfxG.gain.value=.9*SET.sfx/100;sfxG.connect(master);
     musG=ac.createGain();musG.gain.value=musLvl();musG.connect(master);
     noiseBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
@@ -1543,10 +1549,11 @@ function startTicks(){
 }
 function stopTicks(){cancelAnimationFrame(tkRaf)}
 
-function setMuted(m){
+function setMuted(m,fromRizzo){
+  if(RZ&&!fromRizzo&&!!m!==!!RZ.settings.muted){RZ.set({muted:!!m});return}
   muted=m;
   try{localStorage.setItem("mr_audio",JSON.stringify({muted}))}catch(e){}
-  try{if(master)master.gain.setTargetAtTime(m?0:1,ac.currentTime,.03)}catch(e){}
+  try{if(master)master.gain.setTargetAtTime(m?0:rzVol(),ac.currentTime,.03)}catch(e){}
   const pb=$("pSound");if(pb)pb.textContent=m?"Sound: Off":"Sound: On";
   try{updateSetUI()}catch(e){}
   const b=$("bSound");
@@ -6275,10 +6282,8 @@ $("bAch").onclick=()=>showScreen("ach");
 $("achBack").onclick=()=>showScreen("home");
 $("achList").onclick=e=>{const b=e.target.closest("[data-ach]");if(b)achClaim(b.dataset.ach)};
 $("setBack").onclick=()=>showScreen("home");
-$("stMute").onclick=()=>setMuted(!muted);
-for(const [id,k] of [["stBig","big"],["stRm","rm"],["stCb","cb"]])$(id).onclick=()=>{SET[k]=!SET[k];saveSet();applySet();updateSetUI()};
-for(const [id,k] of [["stMusic","music"],["stSfx","sfx"]])$(id).oninput=e=>{SET[k]=+e.target.value;saveSet();applySet();updateSetUI()};
-$("stSfx").onchange=()=>{try{sfx.ui()}catch(e){}};
+$("stRizzo").onclick=()=>{if(RZ)RZ.openMenu()};
+for(const [id,k] of [["stBig","big"],["stCb","cb"]])$(id).onclick=()=>{SET[k]=!SET[k];saveSet();applySet();updateSetUI()};
 $("stGfx").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;SET.gfx=b.dataset.v==="auto"?"auto":+b.dataset.v;saveSet();setGfxLevel(SET.gfx==="auto"?((matchMedia&&matchMedia("(pointer:coarse)").matches)?1:2):SET.gfx);GQ.bad=GQ.good=0;updateSetUI()};
 $("stReset").onclick=()=>{
   const b=$("stReset");
@@ -6287,7 +6292,13 @@ $("stReset").onclick=()=>{
   location.reload()
 };
 applySet();
-setMuted(muted);
+setMuted(muted,true);
+if(RZ)RZ.onChange(s=>{rzSync();applySet();setMuted(!!s.muted,true);updateSetUI()});
+window.RizzoHooks={
+  onMenuOpen(){setPause(true)},                 /* opening the Rizzo menu mid-race pauses it */
+  leaveWarning(){return view==="game"&&(mode==="count"||mode==="run"||mode==="fail")?"You're in the middle of a race. Leaving now ends it with no rewards.":null},
+  previewSound(k){try{if(k!=="music")sfx.ui()}catch(e){}}
+};
 $("hBack").onclick=()=>showScreen("home");
 $("nextBtn").onclick=()=>{mode="idle";showScreen("home")};
 $("resGarage").onclick=()=>{mode="idle";showScreen("garage")};
@@ -6819,6 +6830,5 @@ function fitText(){
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);
   setTimeout(go,0)})();
 </script>
-<script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)"></script>
 </body>
 </html>

@@ -6,6 +6,7 @@
 <title>Sudoku</title>
 <meta name="theme-color" content="#f6f4ef">
 <link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="sudoku" data-show-when="#home:not(.hidden)" data-sounds="sfx" data-pill-top="64"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -856,22 +857,17 @@ html.nofx body[data-fx=gold] .cell.given .v,html.nofx body[data-fx=gold] h1,html
   <div class="sheet" role="dialog" aria-label="Settings">
     <div class="grab"></div>
     <div class="sheethead"><h2>Settings</h2><button class="primary" id="settingsDone">Done</button></div>
+    <h3>Every game</h3>
+    <button class="setrow linkrow" id="openRizzo"><span class="lr-l"><i data-icon="settings"></i>Sound, motion &amp; updates</span><span class="lr-r"><span>Rizzo menu</span><i data-icon="chevron"></i></span></button>
     <h3>Look</h3>
     <button class="setrow linkrow" id="openThemes"><span class="lr-l"><i data-icon="palette"></i>Themes</span><span class="lr-r"><span id="themeNow"></span><i data-icon="chevron"></i></span></button>
-    <h3>Sound</h3>
-    <label class="setrow"><span>Sound effects</span><input type="checkbox" class="switch" data-set="sound"></label>
-    <label class="setrow"><span>Volume</span><input type="range" min="0" max="1" step="0.05" id="volume"></label>
     <h3>Board</h3>
     <label class="setrow"><span>Highlight row, column &amp; box</span><input type="checkbox" class="switch" data-set="hlPeers"></label>
     <label class="setrow"><span>Highlight matching numbers</span><input type="checkbox" class="switch" data-set="hlSame"></label>
     <label class="setrow"><span>Show numbers left on the pad</span><input type="checkbox" class="switch" data-set="showCounts"></label>
     <label class="setrow"><span>Show timer</span><input type="checkbox" class="switch" data-set="showTimer"></label>
     <h3>Motion</h3>
-    <label class="setrow"><span>Reduce motion<small class="setsub" id="rmNote">Instant menus, moves and win screens</small></span><input type="checkbox" class="switch" data-set="reduceMotion"></label>
     <label class="setrow"><span>Background animations<small class="setsub" id="bgNote">Falling petals, fish, sleeping cats and other theme effects</small></span><input type="checkbox" class="switch" data-set="bgMotion"></label>
-    <h3>Updates</h3>
-    <label class="setrow"><span>Show update checks<small class="setsub">A little note at the top whenever the game checks for a new version</small></span><input type="checkbox" class="switch" data-set="showUpdates"></label>
-    <div class="setrow"><span>Version<small class="setsub" id="verNote">Not checked yet</small></span><button class="ghost small" id="checkUpdBtn">Check now</button></div>
     <h3>Data</h3>
     <button class="danger" id="resetBtn">Reset scores &amp; best times</button>
   </div>
@@ -969,6 +965,19 @@ const SETTINGS_KEY = 'sudoku-settings-v1';
 const DEFAULT_SETTINGS = {theme: 'auto', sound: true, volume: 0.7, hlPeers: true, hlSame: true, showCounts: true, showTimer: true, reduceMotion: false, showUpdates: true};
 let settings = {...DEFAULT_SETTINGS};
 try { settings = {...settings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY))}; } catch {}
+/* Rizzo Games: sound and reduce motion are shared by every game. They're set in the Rizzo menu
+   (swipe up from the bottom of the screen), and Sudoku copies them into its own settings. */
+const RZ = window.RizzoGames;
+if (RZ) RZ.seed({volume: 1, sfx: settings.volume, muted: settings.sound === false,   // the very first time only,
+                 reduceMotion: !!(settings.rmChosen && settings.reduceMotion)});     // so players keep their old choices
+function rzSync() {
+  if (!RZ) return;
+  settings.sound = !RZ.settings.muted;
+  settings.volume = RZ.level('sfx');
+  settings.reduceMotion = !!RZ.settings.reduceMotion;
+  settings.rmChosen = true;                       // the shared switch decides (off for new players)
+}
+rzSync();
 // Reduce motion: once you flip the switch in the app (rmChosen), your choice wins.
 // Until then it follows the phone's own setting (Reduce Motion on iPhone, Remove animations on Android).
 const systemReduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -3756,14 +3765,10 @@ function renderSettings() {
   $('#themeNow').textContent = settings.theme === 'auto' ? 'Auto' : THEMES[settings.theme].name;
   document.querySelectorAll('#settingsOverlay [data-set]').forEach(el => el.checked =
     el.dataset.set === 'reduceMotion' ? motionOff() : el.dataset.set === 'bgMotion' ? fxOn() : !!settings[el.dataset.set]);
-  const follow = 'Following your phone\'s motion setting. Flip to choose for this app.';
-  $('#rmNote').textContent = settings.rmChosen ? 'Instant menus, moves and win screens' : follow;
   $('#bgNote').textContent = 'Falling petals, fish, sleeping cats and other theme effects';
-  $('#volume').value = settings.volume;
-  $('#volume').disabled = !settings.sound;
 }
 // the game clock stops while settings or themes are open
-const updatePaused = () => { paused = ['#settingsOverlay', '#themesPanel', '#historyPanel', '#replayPanel'].some(id => $(id).classList.contains('show')); };
+const updatePaused = () => { paused = !!(RZ && RZ.menuOpen) || ['#settingsOverlay', '#themesPanel', '#historyPanel', '#replayPanel'].some(id => $(id).classList.contains('show')); };
 function openSettings() {
   renderSettings();
   $('#settingsOverlay').classList.add('show');
@@ -3945,8 +3950,6 @@ document.querySelectorAll('#settingsOverlay [data-set]').forEach(el => el.addEve
   if (el.dataset.set === 'sound' && el.checked) Sound.place(5);
   renderSettings();
 }));
-$('#volume').addEventListener('input', e => { settings.volume = +e.target.value; saveSettings(); });
-$('#volume').addEventListener('change', () => Sound.place(5));
 if (systemReduce && systemReduce.addEventListener) systemReduce.addEventListener('change', () => applySettings());
 function applySettings() {
   $('#game').classList.toggle('notimer', !settings.showTimer);
@@ -4264,7 +4267,9 @@ $('#winReplay').onclick = () => { if (lastFinished) openReplay(lastFinished); };
    games.js checks GitHub for a newer sudoku.html whenever the app opens or comes back from the background,
    and reloads into it by itself. These hooks tell it how Sudoku likes that done. */
 window.RizzoHooks = {
-  loud: () => settings.showUpdates,                                     // "Show update checks" setting
+  onMenuOpen: () => updatePaused(),                                     // the clock stops while the menu is up
+  onMenuClose: () => updatePaused(),
+  previewSound: () => Sound.place(5),                                   // let go of a slider: hear the new level
   canReload: () => !$('#winOverlay').classList.contains('show'),        // don't cut off a win
   beforeReload() {                                                      // save, and remember if mid-puzzle
     saveGame();
@@ -4275,11 +4280,10 @@ window.RizzoHooks = {
     if (info && info.mode && loadSaves()[info.mode]) resumeGame(info.mode);
   },
 };
-addEventListener('rizzo:version', e => {
-  $('#verNote').textContent = e.detail.when ? `Last updated ${e.detail.when}` : 'Not checked yet';
-});
-$('#checkUpdBtn').onclick = () => window.RizzoGames && RizzoGames.check(true);
+// a shared setting changed in the Rizzo menu: copy it in and redraw
+if (RZ) RZ.onChange(() => { rzSync(); applySettings(); });
+// Settings > "Sound, motion & updates" opens the Rizzo menu
+$('#openRizzo').onclick = () => { closeSettings(); if (RZ) setTimeout(() => RZ.openMenu(), 120); };
 </script>
-<script src="games.js" data-game="sudoku" data-show-when="#home:not(.hidden)" data-corner="bottom-center" data-pill-top="64"></script>
 </body>
 </html>
