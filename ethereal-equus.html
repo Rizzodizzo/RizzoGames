@@ -140,7 +140,6 @@ kbd{font-family:inherit;font-size:.7em;border:1px solid currentColor;border-radi
 .sr{position:absolute;left:-9999px}
 body{background:repeating-linear-gradient(135deg,transparent 0 26px,rgba(128,128,128,.06) 26px 52px),var(--bg)}
 main{position:relative}
-main::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:20;border:6px solid transparent;border-image:repeating-linear-gradient(135deg,#f3efe6 0 12px,#e4572e 12px 24px,#2a6fd6 24px 36px) 6}
 .track .stats{position:absolute;top:30px;left:12px;right:12px;pointer-events:none;gap:8px}
 .track .stat{flex:none;min-width:88px;background:rgba(10,14,25,.58);color:#f3efe6;border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(4px)}
 .track .stat span{color:#c9d1e0}
@@ -475,7 +474,6 @@ button,.overlay .mode,.overlay .sec,.overlay #go,.overlay #nextBtn,.overlay .cas
 .board li.you{transform:none;font-weight:700;font-size:clamp(1.4rem,2.6vw,calc(2rem*var(--u)));padding-top:calc(10px*var(--u));padding-bottom:calc(10px*var(--u));letter-spacing:.06em}
 .board li.you::before{display:none}
 .board li.you .dot{width:1em;height:1em;border:2px solid #fff}
-main:has(#ov:not(.hidden))::after{border-image:linear-gradient(135deg,#ffd23f,#ff7a45 50%,#c2398a) 1;box-shadow:inset 0 0 40px rgba(255,122,69,.28)}
 .overlay .homehead .tag{max-width:none;width:100%;font-family:Rajdhani,"Segoe UI",system-ui,sans-serif;font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:clamp(.95rem,2.2vw,calc(1.7rem*var(--u)));white-space:nowrap}
 @media (max-width:700px){.overlay .homehead .tag{white-space:normal;text-wrap:balance;font-size:clamp(.9rem,3.6vw,1.2rem);letter-spacing:.06em}}
 .logo .m,.logo .r{position:relative;display:inline-block}
