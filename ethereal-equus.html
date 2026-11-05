@@ -900,10 +900,9 @@ html.rm .t-spk{display:none}
 
 /* ---------- Rizzo menu button: a gold-edged square like Equus's own buttons ---------- */
 :root{--rz-btn-bg:linear-gradient(180deg,rgba(46,28,86,.94),rgba(18,12,40,.94));--rz-btn-fg:#ffd23f;--rz-btn-border:2px solid rgba(255,210,63,.8);
-  --rz-btn-radius:0;--rz-btn-shadow:4px 4px 0 rgba(0,0,0,.45),0 0 18px rgba(255,210,63,.28);--rz-btn-size:42px;
-  --rz-accent:#ff7a45;--rz-accent-grad:linear-gradient(180deg,#ff8a55,#e4572e);--rz-accent-edge:#8d2a14;--rz-on-accent:#fff}
-/* race stats move down a little so the button never covers them */
-.track .stats{top:64px}
+  --rz-btn-radius:0;--rz-btn-shadow:4px 4px 0 rgba(0,0,0,.45),0 0 18px rgba(255,210,63,.28);--rz-btn-size:42px}
+/* race stats start a little further right so the button sits beside them (the countdown lights stay put) */
+.track .stats{left:50px}
 </style>
 <script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden)"></script>
 </head>
@@ -5000,6 +4999,86 @@ function scenery(camX){
   ctx.restore()
 }
 
+/* ---------- start countdown: a lamp gantry plus big punchy numbers (3 red, 2 orange, 1 yellow, GO! green) ---------- */
+const CDG={};
+function cdGlyph(txt,fs,u,cl){
+  const k=Math.min(2,window.devicePixelRatio||1),key=txt+"|"+fs+"|"+k;
+  if(CDG[key]!==undefined)return CDG[key];
+  for(const q in CDG)if(!q.startsWith(txt+"|"))continue;else delete CDG[q];
+  const c=document.createElement("canvas"),pad=24*u,x=c.getContext("2d");
+  if(!x){CDG[key]=null;return null}
+  const F="400 "+fs+"px Bungee,Impact,'Arial Black',sans-serif";
+  x.font=F;const w=x.measureText(txt).width;
+  c.width=Math.ceil((w+pad*2)*k);c.height=Math.ceil((fs*1.25+pad*2)*k);c.k=k;
+  x.scale(k,k);x.translate(c.width/k/2,c.height/k/2);
+  x.font=F;x.textAlign="center";x.textBaseline="middle";x.lineJoin="round";
+  x.fillStyle="rgba(10,6,24,.45)";x.fillText(txt,7*u,10*u);
+  x.strokeStyle="#160f2a";x.lineWidth=16*u;x.strokeText(txt,0,0);
+  const g=x.createLinearGradient(0,-fs*.42,0,fs*.42);g.addColorStop(0,cl[0]);g.addColorStop(.55,cl[1]);g.addColorStop(1,cl[1]);
+  x.fillStyle=g;x.fillText(txt,0,0);
+  x.save();x.globalAlpha=.55;x.beginPath();x.rect(-fs*2,-fs*.5,fs*4,fs*.36);x.clip();x.fillStyle="#ffffff";x.fillText(txt,0,0);x.restore();
+  CDG[key]=c;return c
+}
+function drawCountdown(cx,cy,u,lampY){
+  const counting=mode==="count",n=counting?Math.max(1,Math.ceil(cd)):0,t=counting?1-(cd-Math.floor(cd)||1):0;
+  const go=!counting,gp=go?Math.max(0,Math.min(1,1-goFlash/.7)):0,rm=!!SET.rm;
+  const COL={3:["#ffd0c8","#ff5a4a"],2:["#ffe7c2","#ff9b2f"],1:["#fff6c8","#ffd23f"]},GOC=["#d9ffe6","#2fd46f"];
+  ctx.save();
+  /* lamp gantry */
+  {
+    const gw=190*u,gh=58*u,gx=cx-gw/2,gy=lampY-gh/2,a=go?Math.max(0,Math.min(1,goFlash/.25)):1;
+    ctx.globalAlpha=a;
+    ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.roundRect(gx+4*u,gy+5*u,gw,gh,14*u);ctx.fill();
+    const bg=ctx.createLinearGradient(0,gy,0,gy+gh);bg.addColorStop(0,"#2a2440");bg.addColorStop(1,"#120e22");
+    ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(gx,gy,gw,gh,14*u);ctx.fill();
+    ctx.strokeStyle="rgba(255,210,63,.55)";ctx.lineWidth=2.5*u;ctx.stroke();
+    for(let i=0;i<3;i++){
+      const lx=cx+(i-1)*58*u,on=go||i<4-n,green=go,r=18*u;
+      ctx.fillStyle="#07060d";ctx.beginPath();ctx.arc(lx,lampY,r+4*u,0,TAU2);ctx.fill();
+      if(on){
+        const c=green?"#3dff8a":"#ff3b30";
+        ctx.save();ctx.shadowColor=c;ctx.shadowBlur=26*u;
+        const lg=ctx.createRadialGradient(lx-r*.35,lampY-r*.35,r*.1,lx,lampY,r);
+        lg.addColorStop(0,"#ffffff");lg.addColorStop(.35,green?"#a8ffc9":"#ff9a8f");lg.addColorStop(1,c);
+        ctx.fillStyle=lg;ctx.beginPath();ctx.arc(lx,lampY,r,0,TAU2);ctx.fill();ctx.restore()
+      }else{
+        const lg=ctx.createRadialGradient(lx-r*.35,lampY-r*.35,r*.1,lx,lampY,r);
+        lg.addColorStop(0,"#5a2a2a");lg.addColorStop(1,"#2a1214");
+        ctx.fillStyle=lg;ctx.beginPath();ctx.arc(lx,lampY,r,0,TAU2);ctx.fill()
+      }
+      ctx.fillStyle="rgba(255,255,255,.18)";ctx.beginPath();ctx.ellipse(lx-r*.3,lampY-r*.45,r*.38,r*.2,-.5,0,TAU2);ctx.fill()
+    }
+  }
+  /* the big number / GO! */
+  const txt=go?"GO!":String(n),cl=go?GOC:COL[n]||COL[1];
+  let sc,al;
+  if(go){sc=rm?1:(gp<.18?.55+gp/.18*.75:1.3+(gp-.18)*.5);al=gp<.55?1:Math.max(0,1-(gp-.55)/.45)}
+  else{const ein=Math.min(1,t/.22),ov=1-Math.pow(1-ein,3);sc=rm?1:(1.85-.85*ov+(ein>=1?Math.sin(Math.min(1,(t-.22)/.2)*Math.PI)*-.05:0)-Math.max(0,t-.75)*.5);al=t<.75?1:Math.max(0,1-(t-.75)/.25)}
+  const fs=(go?150:170)*u;
+  ctx.globalAlpha=al;
+  /* burst ring (numbers) or rays (GO) */
+  if(!rm){
+    if(go){
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(gp*.6);
+      for(let i=0;i<14;i++){
+        const a=i/14*TAU2,r0=fs*(.45+gp*.5),r1=fs*(1.1+gp*1.6),w=.07;
+        ctx.fillStyle=i%2?"rgba(61,255,138,"+(.35*(1-gp))+")":"rgba(255,255,255,"+(.28*(1-gp))+")";
+        ctx.beginPath();ctx.moveTo(Math.cos(a-w)*r0,Math.sin(a-w)*r0);ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);ctx.lineTo(Math.cos(a+w)*r0,Math.sin(a+w)*r0);ctx.closePath();ctx.fill()
+      }
+      ctx.restore()
+    }else{
+      const rr=fs*(.45+t*.9);
+      ctx.strokeStyle=cl[1];ctx.globalAlpha=al*Math.max(0,.7-t);ctx.lineWidth=Math.max(1,12*u*(1-t));
+      ctx.beginPath();ctx.arc(cx,cy,rr,0,TAU2);ctx.stroke();ctx.globalAlpha=al
+    }
+  }
+  /* the lettering is drawn once into its own little canvas, so it fades out cleanly as one piece */
+  const im=cdGlyph(txt,Math.round(fs),u,cl);
+  if(im){const fit=Math.min(1,W*.86/Math.max(1,(im.width/im.k-48*u)*sc));ctx.translate(cx,cy);ctx.scale(sc*fit,sc*fit);ctx.drawImage(im,-im.width/2/im.k,-im.height/2/im.k,im.width/im.k,im.height/im.k)}
+  ctx.restore();
+  /* a soft white flash the instant it turns green */
+  if(go&&gp<.25&&!rm){ctx.save();ctx.globalAlpha=.22*(1-gp/.25);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,W,H);ctx.restore()}
+}
 function lights(n,green){
   for(let i=0;i<3;i++){
     ctx.fillStyle=green?"#4cc38a":(i<n?"#ff3b30":"#3a1512");
@@ -5176,8 +5255,12 @@ function draw(){
       ctx.restore()
     }
     let z0=zNear;
-    while(z0<ZS){
-      const st=z0<260?7:14,zb=(Math.floor((dist+z0)/st)+1)*st-dist,z1=Math.min(ZS,zb);
+    let guard=0;
+    while(z0<ZS&&guard++<600){
+      /* each strip ends on the next 7 m (or 14 m) mark. Rounding could make that mark land exactly on z0,
+         which left z0 stuck and froze the whole game; always step forward at least a sliver */
+      const st=z0<260?7:14;let zb=(Math.floor((dist+z0)/st)+1)*st-dist;if(!(zb>z0+1e-3))zb=z0+st;
+      const z1=Math.min(ZS,zb);
       const yf=yOf(z1),yn=yOf(z0)+.7,hp=yn-yf,sf=1/(1+z1/38),sn=1/(1+z0/38);
       const cf=W/2-camX*RW*sf,cn=W/2-camX*RW*sn,hf=RW*sf,hn=RW*sn,zw=dist+(z0+z1)/2;
       const band=Math.floor(zw/14)&1,lod=Math.max(0,Math.min(1,(hp-1.2)/2.5));
@@ -5300,14 +5383,7 @@ function draw(){
     ctx.fillStyle=r.color;
     ctx.fillRect(10+(W-20)*Math.min(1,rd[i]/TRACK)-2,8,4,8*U+4)
   });
-  if(mode==="count"){
-    const n=Math.ceil(cd),frac=cd-Math.floor(cd),t=1-frac;
-    lights(4-n,false);
-    bigText(String(n),1+.55*(1-t),1-t*.45,"#ffffff")
-  }else if(goFlash>0){
-    lights(3,true);
-    bigText("GO!",1+(.7-goFlash)*1.2,Math.min(1,goFlash/.4),"#4cc38a")
-  }
+  if(mode==="count"||goFlash>0)drawCountdown(W/2,HY+(BY-HY)*.4,U,Math.max(125*U,HY*.62));
   if(school&&mode==="run"&&dist>=school.z0&&dist<=school.z1){
     const bw=Math.min(W*.92,620*U),bh=30*U,bx=W/2-bw/2,by2=H-74*U;
     ctx.save();
@@ -6193,10 +6269,7 @@ function drawAir(){
   const bw=W-20,fr=Math.max(0,Math.min(1,A.t/AIR_T));
   ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(10,10,bw,8*U2);
   ctx.fillStyle=fr<.2?"#ff6b5b":"#6fd6ff";ctx.fillRect(10,10,bw*fr,8*U2);
-  if(mode==="count"){
-    const n=Math.ceil(cd),t=1-(cd-Math.floor(cd));
-    bigText(String(n),1+.55*(1-t),1-t*.45,"#ffffff")
-  }else if(goFlash>0)bigText("GO!",1+(.7-goFlash)*1.2,Math.min(1,goFlash/.4),"#4cc38a");
+  if(mode==="count"||goFlash>0)drawCountdown(W/2,H*.52,U2*.62,Math.max(100*U2*.62,H*.2));
   drawToastAir()
 }
 

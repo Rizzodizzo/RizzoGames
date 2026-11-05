@@ -36,10 +36,9 @@
      RizzoGames.check(true)   check for an update now
      <html> gets the class "rz-reduce-motion" while reduce motion is on
 
-   Styling: a game can give the button and the menu its own look by setting any of these CSS variables
-   on :root (each has a Rizzo-blue default):
+   Styling: a game can give the menu button (and the label that slides out of it) its own look by setting
+   any of these CSS variables on :root. Each has a Rizzo-blue default. The menu itself always stays Rizzo blue.
      --rz-btn-bg, --rz-btn-fg, --rz-btn-border, --rz-btn-radius, --rz-btn-shadow, --rz-btn-size
-     --rz-accent (switches, sliders), --rz-accent-grad, --rz-accent-edge, --rz-on-accent ("All games" button)
 
    Optional hooks: define window.RizzoHooks with any of these, at any time:
      onMenuOpen() / onMenuClose()  e.g. pause the game while the menu is up
@@ -126,24 +125,37 @@
 .rz-ui *{box-sizing:border-box}
 /* the menu button (games restyle it with the --rz-btn-* variables). Every rule is prefixed with .rz-ui so a game's
    own button styles (like a "pressed" nudge) can't move or reshape it */
-.rz-ui .rz-mbtn{position:fixed;z-index:2147483000;width:var(--rz-btn-size,42px);height:var(--rz-btn-size,42px);margin:0;padding:0;
+.rz-ui .rz-corner{position:fixed;z-index:2147483000;display:block;transition:opacity .25s,visibility .25s}
+.rz-ui .rz-corner.rz-quiet{opacity:.55}
+.rz-ui .rz-corner.rz-quiet:hover,.rz-ui .rz-corner.rz-quiet:focus-within,.rz-ui .rz-corner.rz-quiet.rz-intro{opacity:1}
+.rz-ui .rz-corner.rz-hide{opacity:0;visibility:hidden;pointer-events:none}
+.rz-ui .rz-mbtn{position:relative;z-index:2;width:var(--rz-btn-size,42px);height:var(--rz-btn-size,42px);margin:0;padding:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;line-height:1;
   background:var(--rz-btn-bg,linear-gradient(180deg,#4f9bff,#1d4ed8));color:var(--rz-btn-fg,#fff);
   border:var(--rz-btn-border,1.5px solid rgba(255,255,255,.4));border-radius:var(--rz-btn-radius,13px);
   box-shadow:var(--rz-btn-shadow,0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35));
-  transform:none;translate:none;-webkit-tap-highlight-color:transparent;transition:opacity .25s,visibility .25s,filter .15s}
+  transform:none;translate:none;-webkit-tap-highlight-color:transparent;transition:filter .15s}
 .rz-ui .rz-mbtn svg{width:54%;height:54%;display:block;pointer-events:none}
 .rz-ui .rz-mbtn:hover{filter:brightness(1.08)}
 .rz-ui .rz-mbtn:active{transform:none;translate:none;filter:brightness(.9)}
 .rz-ui .rz-mbtn:focus-visible{outline:3px solid #7cc8ff;outline-offset:3px}
-.rz-ui .rz-mbtn.rz-quiet{opacity:.55}
-.rz-ui .rz-mbtn.rz-quiet:hover,.rz-ui .rz-mbtn.rz-quiet:focus-visible{opacity:1}
-.rz-ui .rz-mbtn.rz-hide{opacity:0;visibility:hidden;pointer-events:none}
 .rz-ui .rz-mbtn.rz-pulse{animation:rzpulse 1.4s ease-in-out 3}
-@keyframes rzpulse{50%{box-shadow:var(--rz-btn-shadow,0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35)),0 0 0 7px color-mix(in srgb,var(--rz-accent,#7cc8ff) 45%,transparent)}}
-.rz-tip{position:fixed;z-index:2147483000;padding:7px 12px;border-radius:999px;background:var(--rz-accent,#1d4ed8);color:var(--rz-on-accent,#fff);font-weight:700;font-size:13px;
-  white-space:nowrap;box-shadow:0 6px 16px rgba(37,99,235,.4);opacity:0;pointer-events:none;transform:translateX(-6px);transition:opacity .3s,transform .3s}
-.rz-tip.rz-show{opacity:1;transform:none}
+@keyframes rzpulse{50%{box-shadow:var(--rz-btn-shadow,0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35)),0 0 0 7px rgba(124,200,255,.45)}}
+/* the label that slides out from behind the button: same colours, edge and corners as the button */
+.rz-ui .rz-fly{position:absolute;z-index:1;top:0;left:calc(var(--rz-btn-size,42px) / 2);height:var(--rz-btn-size,42px);box-sizing:border-box;
+  display:flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer;
+  padding:0 15px 0 calc(var(--rz-btn-size,42px) / 2 + 11px);
+  background:var(--rz-btn-bg,linear-gradient(180deg,#4f9bff,#1d4ed8));color:var(--rz-btn-fg,#fff);
+  border:var(--rz-btn-border,1.5px solid rgba(255,255,255,.4));border-radius:var(--rz-btn-radius,13px);
+  box-shadow:var(--rz-btn-shadow,0 3px 0 #0f2b7a,0 6px 16px rgba(37,99,235,.35));
+  font:700 14px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;
+  clip-path:inset(-12px 100% -12px 0);opacity:0;pointer-events:none;
+  transition:clip-path .32s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.rz-ui .rz-fly kbd{font:inherit;font-size:11.5px;font-weight:800;padding:3px 6px;border-radius:5px;background:color-mix(in srgb,currentColor 18%,transparent)}
+.rz-ui .rz-corner.rz-intro .rz-fly,.rz-ui .rz-corner:has(.rz-mbtn:focus-visible) .rz-fly{clip-path:inset(-12px -24px -12px 0);opacity:1;pointer-events:auto}
+@media (hover:hover) and (pointer:fine){
+  .rz-ui .rz-corner:hover .rz-fly{clip-path:inset(-12px -24px -12px 0);opacity:1;pointer-events:auto}
+}
 /* the menu */
 .rz-scrim{position:fixed;inset:0;z-index:2147483002;background:rgba(5,9,24,.5);opacity:0;pointer-events:none;transition:opacity .25s}
 .rz-scrim.rz-show{opacity:1;pointer-events:auto}
@@ -153,6 +165,10 @@
   transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s}
 .rz-sheet.rz-show{transform:translate(-50%,0);visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s}
 .rz-sheet.rz-drag{transition:none}
+.rz-sheet{scrollbar-width:thin;scrollbar-color:var(--rz-line) transparent}
+.rz-sheet::-webkit-scrollbar{width:8px}
+.rz-sheet::-webkit-scrollbar-track{background:transparent}
+.rz-sheet::-webkit-scrollbar-thumb{background:var(--rz-line);border-radius:4px;border:2px solid var(--rz-bg)}
 .rz-grab{width:42px;height:5px;border-radius:3px;background:var(--rz-line);margin:6px auto 12px}
 .rz-head{display:flex;align-items:center;gap:12px;margin:0 2px 14px}
 .rz-badge{width:44px;height:44px;flex-shrink:0;border-radius:12px;background:linear-gradient(160deg,#16245e,#070d26);
@@ -164,10 +180,10 @@
   display:flex;align-items:center;justify-content:center;cursor:pointer}
 .rz-x svg{width:16px;height:16px}
 .rz-ui .rz-leave{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:14px;border:0;margin:0;
-  background:var(--rz-accent-grad,linear-gradient(180deg,#4f9bff,#1d4ed8));color:var(--rz-on-accent,#fff);font-weight:800;font-size:16px;text-decoration:none;
-  box-shadow:0 3px 0 var(--rz-accent-edge,#0f2b7a),0 8px 18px rgba(0,0,0,.18);transform:none;translate:none;-webkit-tap-highlight-color:transparent}
+  background:linear-gradient(180deg,#4f9bff,#1d4ed8);color:#fff;font-weight:800;font-size:16px;text-decoration:none;
+  box-shadow:0 3px 0 #0f2b7a,0 8px 18px rgba(37,99,235,.3);transform:none;translate:none;-webkit-tap-highlight-color:transparent}
 .rz-ui .rz-leave svg{width:17px;height:17px}
-.rz-ui .rz-leave:active{transform:none;translate:0 2px;box-shadow:0 1px 0 var(--rz-accent-edge,#0f2b7a)}
+.rz-ui .rz-leave:active{transform:none;translate:0 2px;box-shadow:0 1px 0 #0f2b7a}
 .rz-ui .rz-leave.rz-armed{background:linear-gradient(180deg,#ff7a5c,#d93b2b);color:#fff;box-shadow:0 3px 0 #7a1d12}
 .rz-warn{margin:8px 4px 0;color:#d93b2b;font-size:13.5px;font-weight:600}
 .rz-warn:empty{display:none}
@@ -178,12 +194,12 @@
 .rz-row .rz-l{flex:1;min-width:0;font-weight:600}
 .rz-row small{display:block;color:var(--rz-muted);font-size:12.5px;font-weight:400;margin-top:1px}
 .rz-row.rz-slide .rz-l{flex:0 0 96px}
-.rz-row input[type=range]{flex:1;min-width:0;margin:0;accent-color:var(--rz-accent,var(--rz-blue));height:28px}
+.rz-row input[type=range]{flex:1;min-width:0;margin:0;accent-color:var(--rz-blue);height:28px}
 .rz-row output{flex:0 0 40px;text-align:right;font-variant-numeric:tabular-nums;color:var(--rz-muted);font-weight:700;font-size:13px}
 .rz-row.rz-dim{opacity:.45}
 .rz-ui .rz-sw{appearance:none;-webkit-appearance:none;flex-shrink:0;width:48px;height:29px;margin:0;border-radius:15px;background:var(--rz-line);position:relative;cursor:pointer;transition:background-color .2s}
 .rz-ui .rz-sw::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
-.rz-ui .rz-sw:checked{background:var(--rz-accent,var(--rz-blue))}
+.rz-ui .rz-sw:checked{background:var(--rz-blue)}
 .rz-ui .rz-sw:checked::after{transform:translateX(19px)}
 .rz-sw:focus-visible,.rz-btn:focus-visible,.rz-x:focus-visible,.rz-leave:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
 .rz-ui .rz-btn{flex-shrink:0;border:0;border-radius:10px;padding:8px 13px;background:var(--rz-soft);color:var(--rz-ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
@@ -201,7 +217,7 @@
 .rz-pill.ok i::after{content:"";position:absolute;left:4.5px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .rz-pill.off i{background:#8a90a0}
 @keyframes rzspin{to{transform:rotate(360deg)}}
-html.rz-reduce-motion .rz-sheet,html.rz-reduce-motion .rz-scrim,html.rz-reduce-motion .rz-pill,html.rz-reduce-motion .rz-tip,html.rz-reduce-motion .rz-mbtn,html.rz-reduce-motion .rz-sw::after{transition:none}
+html.rz-reduce-motion .rz-sheet,html.rz-reduce-motion .rz-scrim,html.rz-reduce-motion .rz-pill,html.rz-reduce-motion .rz-ui .rz-fly,html.rz-reduce-motion .rz-ui .rz-corner,html.rz-reduce-motion .rz-sw::after{transition:none}
 html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}
 html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     document.head.appendChild(css);
@@ -222,8 +238,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     const ui = document.createElement('div');
     ui.className = 'rz-ui';
     ui.innerHTML = `
-<button class="rz-mbtn" type="button" aria-label="Rizzo menu${mouse ? ' (Esc)' : ''}" title="Rizzo menu${mouse ? ' (Esc)' : ''}" aria-haspopup="dialog" aria-expanded="false">${R_PLAIN}</button>
-<div class="rz-tip" aria-hidden="true">${mouse ? 'Rizzo menu · Esc' : 'Tap for the Rizzo menu'}</div>
+<div class="rz-corner"><span class="rz-fly" aria-hidden="true"></span><button class="rz-mbtn" type="button" aria-label="Rizzo menu${mouse ? ' (Esc)' : ''}" aria-haspopup="dialog" aria-expanded="false">${R_PLAIN}</button></div>
 <div class="rz-scrim"></div>
 <div class="rz-sheet" role="dialog" aria-modal="true" aria-label="Rizzo menu" tabindex="-1">
   <div class="rz-grab"></div>
@@ -255,13 +270,14 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
 </div>`;
     document.body.appendChild(ui);
     const $ = s => ui.querySelector(s);
-    const btn = $('.rz-mbtn'), sheet = $('.rz-sheet'), scrim = $('.rz-scrim'), tip = $('.rz-tip');
+    const btn = $('.rz-mbtn'), corner = $('.rz-corner'), fly = $('.rz-fly'), sheet = $('.rz-sheet'), scrim = $('.rz-scrim');
     const leave = $('.rz-leave'), warn = $('.rz-warn');
-    btn.style.top = tip.style.top = `calc(env(safe-area-inset-top,0px) + ${+opt.top || 12}px)`;
-    btn.style.left = `calc(env(safe-area-inset-left,0px) + ${+opt.left || 12}px)`;
-    // the tip sits just to the right of the button
-    tip.style.left = `calc(env(safe-area-inset-left,0px) + ${(+opt.left || 12) + 52}px)`;
-    tip.style.marginTop = '6px';
+    corner.style.top = `calc(env(safe-area-inset-top,0px) + ${+opt.top || 12}px)`;
+    corner.style.left = `calc(env(safe-area-inset-left,0px) + ${+opt.left || 12}px)`;
+    // the label that slides out: on a computer when the mouse is over the button, on a phone as a first-time tip
+    const label = (text, key) => { fly.innerHTML = text + (key ? `<kbd>${key}</kbd>` : ''); };
+    if (mouse) label('Rizzo menu', 'Esc'); else label('Rizzo menu');
+    fly.addEventListener('click', () => openMenu());
 
     // the music slider only appears active in games that have music (and likewise for effects)
     for (const k of ['music', 'sfx']) if (!sounds.includes(k)) {
@@ -306,7 +322,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
       sheet.classList.add('rz-show'); scrim.classList.add('rz-show');
       btn.setAttribute('aria-expanded', 'true');
       btn.classList.remove('rz-pulse');
-      tip.classList.remove('rz-show');
+      corner.classList.remove('rz-intro');
       store('rz-menu-intro', '9');                       // they've found it: no more tips
       setTimeout(() => sheet.focus({preventScroll: true}), 50);
       call('onMenuOpen');
@@ -416,10 +432,10 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     const onChange = () => {
       queued = false;
       const hide = covered() && !api.menuOpen;
-      btn.classList.toggle('rz-quiet', !onMenu());
-      btn.classList.toggle('rz-hide', hide);
+      corner.classList.toggle('rz-quiet', !onMenu());
+      corner.classList.toggle('rz-hide', hide);
       btn.tabIndex = hide ? -1 : 0;
-      if (hide) tip.classList.remove('rz-show');
+      if (hide) corner.classList.remove('rz-intro');
       if (waitingRef()) tryReload();
     };
     if (opt.showWhen || opt.hideWhen) {
@@ -434,8 +450,9 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
       setTimeout(() => {
         if (!onMenu() || api.menuOpen || covered()) return;
         btn.classList.add('rz-pulse');
-        tip.classList.add('rz-show');
-        setTimeout(() => tip.classList.remove('rz-show'), 3600);
+        if (!mouse) label('Tap for the Rizzo menu');
+        corner.classList.add('rz-intro');
+        setTimeout(() => { corner.classList.remove('rz-intro'); if (!mouse) setTimeout(() => label('Rizzo menu'), 400); }, 3600);
       }, 900);
     }
 
