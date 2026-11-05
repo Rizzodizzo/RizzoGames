@@ -38,7 +38,8 @@
   --fuel:#ffc23d;--good:#4cc38a;--bad:#ff6b5b;--btn:#ece8dc;--btnink:#14191b
 }
 *{box-sizing:border-box}
-html,body{margin:0}
+html,body{margin:0;overflow-x:hidden;overscroll-behavior-x:none}
+.overlay,.packmodal{overflow-x:hidden!important;overscroll-behavior-x:none;touch-action:pan-y}
 body{background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;min-height:100%;display:flex;justify-content:center}
 main{width:100%;max-width:860px;padding:14px}
 h1{font-size:1.35rem;margin:0 0 10px;letter-spacing:.01em}
