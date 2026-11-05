@@ -127,6 +127,8 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:26px}
 /* Reduce motion follows the switch in the Rizzo menu (off unless the player turns it on), not the phone setting */
 html.rz-reduce-motion .game,html.rz-reduce-motion .soon,html.rz-reduce-motion .rz::after,html.rz-reduce-motion .spark{animation:none}
 html.rz-reduce-motion .game{transition:none}
+/* coming back from a game, the game shrinks into its card: skip the slide-in so the two don't fight */
+html.rz-vt .game,html.rz-vt .soon{animation:none}
 </style>
 </head>
 <body>
@@ -231,7 +233,7 @@ function render() {
   document.getElementById('games').innerHTML = list.map((g, n) => {
     let stat = '';
     try { stat = g.stat ? g.stat() : ''; } catch {}
-    return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]}" aria-label="Play ${esc(g.name)}">
+    return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]};view-transition-name:rz-card-${g.id}" aria-label="Play ${esc(g.name)}">
       <div class="art" style="background:linear-gradient(135deg,${g.colors[0]},${g.colors[1]})">${ART[g.art] || ''}</div>
       <div class="body">
         <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.blurb)}</p><span class="stat">${esc(stat)}</span></div>

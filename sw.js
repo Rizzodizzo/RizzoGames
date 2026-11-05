@@ -1,7 +1,7 @@
 /* Rizzo Games service worker: one worker for the launcher and every game.
-   - Every page (index.html, sudoku.html, math-racer.html, ...) is fetched fresh from the internet first,
-     so a new commit shows up the next time it's opened. The saved copy is only used offline (or on a very
-     slow connection).
+   - Every page (index.html, sudoku.html, ethereal-equus.html, ...) opens instantly from the saved copy, and
+     GitHub is checked for a newer one at the same time. If there is one, the page is told, and games.js
+     reloads into it (on the game's menu, so it never interrupts play). The very first visit uses the internet.
    - You never need to edit this file when you add a game or update one. The launcher tells it which game
      files exist, and it saves each one for offline play.
    - Games can ask "is there a newer version of me?" (Sudoku's update checks do this) and get an answer
@@ -11,7 +11,8 @@ const SCOPE = self.registration.scope;
 const CACHE = 'rizzo-games:' + SCOPE;
 const OLD_CACHES = ['sudoku-app:' + SCOPE];           // left behind by the old Sudoku-only worker
 const SHELL = ['index.html', 'manifest.webmanifest', 'games.js', 'icon-192.png', 'icon-180.png', 'icon-512.png'];
-const SLOW = 4000;   // ms to wait for the internet before falling back to the saved copy
+// pages that have a newer version waiting, but no open window has been told yet
+const pending = new Set();
 
 // One cache key per page: "/" and "/index.html" are the same page, and ?query / #hash are ignored
 const pageKey = url => {
@@ -53,28 +54,30 @@ async function refreshPage(key) {
   return {res, changed: before !== null && before !== now};
 }
 
-// Tell the open tabs showing this page that a newer version arrived
+// Tell the open windows showing this page that a newer version arrived
 async function tellPages(key) {
-  for (const c of await self.clients.matchAll({type: 'window'}))
-    if (pageKey(c.url) === key) c.postMessage({type: 'updated'});
+  let told = 0;
+  for (const c of await self.clients.matchAll({type: 'window', includeUncontrolled: true}))
+    if (pageKey(c.url) === key) { c.postMessage({type: 'updated'}); told++; }
+  if (told) pending.delete(key); else pending.add(key);   // nobody listening yet: say so at the next check
 }
 
-async function servePage(req) {
-  const key = pageKey(req.url);
-  const net = refreshPage(key);
-  const timeout = new Promise(r => setTimeout(r, SLOW));
-  const first = await Promise.race([net.then(x => x.res).catch(() => null), timeout]);
-  if (first) return first;
-  // offline or slow: use the saved copy now, and if the internet catches up with a newer version, reload
-  net.then(x => x.changed && tellPages(key)).catch(() => {});
+// The saved copy straight away (so switching games is instant), with a fresh copy fetched in the background
+async function servePage(e) {
+  const key = pageKey(e.request.url);
   const saved = await (await caches.open(CACHE)).match(key);
-  return saved || net.then(x => x.res);
+  const net = refreshPage(key);
+  if (saved) {
+    e.waitUntil(net.then(x => x.changed && tellPages(key)).catch(() => {}));
+    return saved;
+  }
+  return net.then(x => x.res);                               // first visit: nothing saved yet
 }
 
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || !req.url.startsWith(SCOPE)) return;
-  if (isHtml(req)) { e.respondWith(servePage(req)); return; }
+  if (isHtml(req)) { e.respondWith(servePage(e)); return; }
   // icons, manifest, games.js etc.: saved copy straight away, refreshed in the background
   e.respondWith(caches.open(CACHE).then(async cache => {
     const saved = await cache.match(req, {ignoreSearch: true});
@@ -97,7 +100,11 @@ self.addEventListener('message', e => {
     const key = pageKey((e.source && e.source.url) || SCOPE);
     const reply = msg => (e.ports && e.ports[0] ? e.ports[0] : e.source).postMessage({type: 'checked', ...msg});
     e.waitUntil(refreshPage(key)
-      .then(x => reply({status: x.changed ? 'updated' : 'same', modified: x.res.headers.get('last-modified')}))
+      .then(x => {
+        const newer = x.changed || pending.has(key);   // also counts a newer copy found while the page was opening
+        pending.delete(key);
+        reply({status: newer ? 'updated' : 'same', modified: x.res.headers.get('last-modified')});
+      })
       .catch(() => reply({status: 'offline'})));
   }
 });

@@ -13,6 +13,8 @@
      - automatic updates: it checks GitHub for a newer version when the game opens, comes back from the
        background, gets its internet back, or every 30 minutes, and reloads into it by itself
      - offline play, and a note of when you last played (so the launcher puts your latest game first)
+     - smooth moves: the launcher's card grows into the game, and the game shrinks back into its card
+       (in browsers that support page transitions), with a splash screen in the game's colours while it loads
 
    Settings on the tag (all optional):
      data-show-when="#home:not(.hidden)"  the game's menu screen. Updates wait for it so they never cut into
@@ -20,6 +22,9 @@
      data-hide-when=".panel.show"         hide the button while this matches (e.g. the game's own full-screen
                                           panels, so it never covers their back buttons)
      data-top="12" data-left="12"         where the button sits, in pixels from the top-left corner
+     data-splash="#loader"                the game has its own loading screen: the launcher's card grows into
+                                          that instead of the Rizzo splash (the Rizzo one is still used when
+                                          leaving, to shrink back into the card)
      data-sounds="sfx"                    which sound sliders the game uses: "sfx", "music" or "sfx,music"
                                           (default "sfx,music")
      data-pill-top="12"                   how far down the update note sits, in pixels (default 12)
@@ -39,6 +44,7 @@
    Styling: a game can give the menu button (and the label that slides out of it) its own look by setting
    any of these CSS variables on :root. Each has a Rizzo-blue default. The menu itself always stays Rizzo blue.
      --rz-btn-bg, --rz-btn-fg, --rz-btn-border, --rz-btn-radius, --rz-btn-shadow, --rz-btn-size
+   The splash screen uses the button's colours too, unless --rz-splash-bg / --rz-splash-fg are set.
 
    Optional hooks: define window.RizzoHooks with any of these, at any time:
      onMenuOpen() / onMenuClose()  e.g. pause the game while the menu is up
@@ -66,6 +72,8 @@
   };
 
   if (!isHub) store('hub-last-' + id, Date.now());
+  // the same chunky slanted R as the app icon, drawn in the current text colour
+  const R_PLAIN = '<svg viewBox="130 105 270 300" aria-hidden="true"><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="currentColor" stroke="currentColor" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>';
 
   /* ======================= shared settings ======================= */
   const SKEY = 'rz-settings';
@@ -92,6 +100,69 @@
     syncMenu();
   }
   applyMotion();
+
+  /* ======================= smooth moves between the launcher and the games ======================= */
+  // Page transitions: the launcher's card for this game and the game's splash share a name, so the browser
+  // grows one into the other (and back again). Everything else cross-fades. Reduce motion makes it instant.
+  const card = 'rz-card-' + String(id).replace(/[^\w-]/g, '');
+  const early = document.createElement('style');
+  early.textContent = `
+@view-transition{navigation:auto}
+::view-transition-group(*){animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.3s}
+:root.rz-reduce-motion::view-transition-group(*),:root.rz-reduce-motion::view-transition-old(*),:root.rz-reduce-motion::view-transition-new(*){animation:none}
+.rz-splash{position:fixed;inset:0;z-index:2147483005;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:24px;text-align:center;background:#0b0f22;color:var(--rz-splash-fg,var(--rz-btn-fg,#fff));
+  font:800 clamp(22px,6.5vw,34px)/1.15 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;
+  view-transition-name:${card};transition:opacity .35s ease}
+.rz-splash::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--rz-splash-bg,var(--rz-btn-bg,linear-gradient(180deg,#1d3a8a,#0b1640)))}
+.rz-splash>*{position:relative}
+.rz-splash svg{width:62px;height:68px}
+.rz-splash span{max-width:16em}
+.rz-splash i{display:flex;gap:7px;margin-top:4px}
+.rz-splash i b{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.3;animation:rzdot 1s ease-in-out infinite}
+.rz-splash i b:nth-child(2){animation-delay:.15s}
+.rz-splash i b:nth-child(3){animation-delay:.3s}
+@keyframes rzdot{50%{opacity:1;transform:translateY(-4px)}}
+.rz-splash.rz-gone{opacity:0;pointer-events:none}
+.rz-splash.rz-now{transition:none}
+:root.rz-reduce-motion .rz-splash{transition:none}
+:root.rz-reduce-motion .rz-splash i b{animation:none;opacity:.7}`;
+  if (opt.splash) early.textContent += `\n${opt.splash}{view-transition-name:${card}}`;
+  document.head.appendChild(early);
+  // arriving with a page transition: the launcher skips its own card slide-in so the two don't fight
+  addEventListener('pagereveal', e => { if (e.viewTransition) document.documentElement.classList.add('rz-vt'); });
+
+  // The splash: shows the moment the game starts loading, and fades away once the game has drawn itself
+  let splash = null;
+  const showSplash = () => {
+    if (!splash) return;
+    // the game's own loading screen (if it's somehow still up) hands the name back, so only one thing has it
+    if (opt.splash) try { document.querySelectorAll(opt.splash).forEach(el => { el.style.viewTransitionName = 'none'; }); } catch {}
+    splash.classList.add('rz-now');
+    splash.style.display = '';
+    splash.classList.remove('rz-gone');
+  };
+  const hideSplash = () => {
+    if (!splash || splash.classList.contains('rz-gone')) return;
+    splash.classList.remove('rz-now');
+    splash.classList.add('rz-gone');
+    setTimeout(() => { if (splash.classList.contains('rz-gone')) splash.style.display = 'none'; }, 400);
+  };
+  if (!isHub) {
+    splash = document.createElement('div');
+    splash.className = 'rz-splash';
+    splash.setAttribute('aria-hidden', 'true');
+    const title = (opt.name || document.title || '').trim().replace(/[&<>"]/g, '');
+    splash.innerHTML = R_PLAIN + (title ? `<span>${title}</span>` : '') + '<i><b></b><b></b><b></b></i>';
+    document.documentElement.appendChild(splash);
+    if (opt.splash) { splash.classList.add('rz-gone'); splash.style.display = 'none'; }   // the game shows its own while loading
+    const ready = () => requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, {once: true}); else ready();
+    setTimeout(hideSplash, 3000);                                        // never longer than this
+    addEventListener('pageshow', e => { if (e.persisted) hideSplash(); });   // coming back with the browser's back button
+  }
+
   // another tab or game window changed a setting
   addEventListener('storage', e => {
     if (e.key !== SKEY) return;
@@ -223,8 +294,6 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     document.head.appendChild(css);
 
     const R_SVG = '<svg viewBox="130 105 270 300" aria-hidden="true"><defs><linearGradient id="rzR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6f0ff"/><stop offset=".46" stop-color="#5aa8ff"/><stop offset=".54" stop-color="#1d4ed8"/><stop offset="1" stop-color="#3f86ff"/></linearGradient></defs><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="url(#rzR)" stroke="url(#rzR)" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>';
-    // the same chunky slanted R as the app icon, in the button's own colour
-    const R_PLAIN = '<svg viewBox="130 105 270 300" aria-hidden="true"><path transform="translate(256 256) skewX(-8) translate(-262 -256)" fill="currentColor" stroke="currentColor" stroke-width="14" stroke-linejoin="round" fill-rule="evenodd" d="M150 120H286C344 120 380 154 380 205C380 240 362 266 332 280L388 392H306L260 292H226V392H150Z M226 182V236H280C298 236 306 225 306 209C306 193 298 182 280 182Z"/></svg>';
     const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
     const CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     const gameName = (opt.name || document.title || 'Game').trim();
@@ -381,6 +450,12 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
         warn.textContent = String(w);
         leave.classList.add('rz-armed');
         leave.lastChild.textContent = 'Leave anyway';
+        return;
+      }
+      if (!e.defaultPrevented) {
+        // the menu goes at once (not sliding away) so it isn't seen during the shrink, then the splash shrinks into the card
+        for (const el of [sheet, scrim]) { el.style.transition = 'none'; el.classList.remove('rz-show'); }
+        showSplash();
       }
     });
 
