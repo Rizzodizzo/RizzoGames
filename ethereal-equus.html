@@ -897,7 +897,7 @@ html.rm .t-spk{display:none}
 
 .answers button.ph{visibility:hidden;pointer-events:none}
 
-/* ---------- Rizzo menu button: a gold-edged square like Equus's own buttons ---------- */
+/* ---------- Settings menu button: a gold-edged square like Equus's own buttons ---------- */
 :root{--rz-btn-bg:linear-gradient(180deg,rgba(46,28,86,.94),rgba(18,12,40,.94));--rz-btn-fg:#ffd23f;--rz-btn-border:2px solid rgba(255,210,63,.8);
   --rz-btn-radius:0;--rz-btn-shadow:4px 4px 0 rgba(0,0,0,.45),0 0 18px rgba(255,210,63,.28);--rz-btn-size:42px}
 /* race stats start a little further right so the button sits beside them (the countdown lights stay put) */
@@ -960,7 +960,7 @@ html.rm .t-spk{display:none}
           <div class="sgroup">
             <h3>Sound</h3>
             <p class="snote">Volume, music, effects and reduce motion are shared by every Rizzo game. Swipe up from the bottom of the screen any time, or:</p>
-            <button class="sec" id="stRizzo">Open the Rizzo menu</button>
+            <button class="sec" id="stRizzo">Open the Settings menu</button>
           </div>
           <div class="sgroup">
             <h3>Graphics</h3>
@@ -1272,7 +1272,7 @@ try{Object.assign(SET,JSON.parse(localStorage.getItem("mr_set")||"{}"))}catch(e)
 if((SET.v|0)<2){SET.rm=false;SET.v=2;try{localStorage.setItem("mr_set",JSON.stringify(SET))}catch(e){}}
 function saveSet(){try{localStorage.setItem("mr_set",JSON.stringify(SET))}catch(e){}}
 /* Rizzo Games: volume, music, effects, mute and reduce motion are shared by every game. They're set in the
-   Rizzo menu (swipe up from the bottom of the screen), and Equus copies them into its own settings. */
+   Settings menu (swipe up from the bottom of the screen), and Equus copies them into its own settings. */
 const RZ=window.RizzoGames;
 if(RZ){let m0=false;try{m0=JSON.parse(localStorage.getItem("mr_audio")||"{}").muted===true}catch(e){}
   RZ.seed({volume:1,music:SET.music/100,sfx:SET.sfx/100,muted:m0,reduceMotion:!!SET.rm})}   /* very first time only */
@@ -6374,7 +6374,7 @@ applySet();
 setMuted(muted,true);
 if(RZ)RZ.onChange(s=>{rzSync();applySet();setMuted(!!s.muted,true);updateSetUI()});
 window.RizzoHooks={
-  onMenuOpen(){setPause(true)},                 /* opening the Rizzo menu mid-race pauses it */
+  onMenuOpen(){setPause(true)},                 /* opening the Settings menu mid-race pauses it */
   leaveWarning(){return view==="game"&&(mode==="count"||mode==="run"||mode==="fail")?"You're in the middle of a race. Leaving now ends it with no rewards.":null},
   previewSound(k){try{if(k!=="music")sfx.ui()}catch(e){}}
 };

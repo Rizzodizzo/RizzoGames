@@ -6,7 +6,7 @@
      <script src="games.js" data-game="sudoku" data-show-when="#home:not(.hidden)"></script>
 
    Every game then gets:
-     - the Rizzo menu: a button in the top-left corner (or Esc on a computer) opens "All games", sound,
+     - the Settings menu: a button in the top-left corner (or Esc on a computer) opens "All games", sound,
        reduce motion, updates and more. The button takes on the game's own look (see "Styling" below)
      - shared settings: volume, music, sound effects, mute, reduce motion and update notes are the same
        in every game, so you set them once
@@ -36,7 +36,7 @@
      RizzoGames.onChange(fn)  fn(settings) runs whenever a shared setting changes
      RizzoGames.set({...})    change shared settings (e.g. a game's own mute button)
      RizzoGames.seed({...})   a game's old settings, used only the very first time (so players keep them)
-     RizzoGames.openMenu()    open the Rizzo menu (e.g. from the game's own settings screen)
+     RizzoGames.openMenu()    open the Settings menu (e.g. from the game's own settings screen)
      RizzoGames.menuOpen      true while the menu is showing
      RizzoGames.check(true)   check for an update now
      <html> gets the class "rz-reduce-motion" while reduce motion is on
@@ -313,12 +313,12 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     const ui = document.createElement('div');
     ui.className = 'rz-ui';
     ui.innerHTML = `
-<div class="rz-corner"><span class="rz-fly" aria-hidden="true"></span><button class="rz-mbtn" type="button" aria-label="Rizzo menu${mouse ? ' (Esc)' : ''}" aria-haspopup="dialog" aria-expanded="false">${R_PLAIN}</button></div>
+<div class="rz-corner"><span class="rz-fly" aria-hidden="true"></span><button class="rz-mbtn" type="button" aria-label="Settings menu${mouse ? ' (Esc)' : ''}" aria-haspopup="dialog" aria-expanded="false">${R_PLAIN}</button></div>
 <div class="rz-scrim"></div>
-<div class="rz-sheet" role="dialog" aria-modal="true" aria-label="Rizzo menu" tabindex="-1">
+<div class="rz-sheet" role="dialog" aria-modal="true" aria-label="Settings menu" tabindex="-1">
   <div class="rz-grab"></div>
   <div class="rz-head"><span class="rz-badge">${R_SVG}</span>
-    <span><b>Rizzo Games</b><small>${isHub ? 'Settings for every game' : gameName.replace(/[&<>"]/g, '')}</small></span>
+    <span><b>Settings</b><small>${isHub ? 'Every game' : gameName.replace(/[&<>"]/g, '')}</small></span>
     <button class="rz-x" type="button" aria-label="Close menu">${CLOSE}</button></div>
   ${isHub ? '' : `<a class="rz-leave" href="./">${ARROW}<span>All games</span></a><p class="rz-warn" aria-live="polite"></p>`}
   <h3>Sound</h3>
@@ -328,20 +328,20 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
   </div>
   <h3>Motion</h3>
   <div class="rz-card">
-    <label class="rz-row"><span class="rz-l">Reduce motion<small>Calmer menus, moves and effects</small></span><input type="checkbox" class="rz-sw" data-k="reduceMotion"></label>
+    <label class="rz-row"><span class="rz-l">Reduce motion<small>Fewer animations</small></span><input type="checkbox" class="rz-sw" data-k="reduceMotion"></label>
   </div>
   <h3>Updates</h3>
   <div class="rz-card">
-    <label class="rz-row"><span class="rz-l">Show update checks<small>A little note whenever a game checks for a new version</small></span><input type="checkbox" class="rz-sw" data-k="showUpdates"></label>
+    <label class="rz-row"><span class="rz-l">Show update checks<small>A note when checking for updates</small></span><input type="checkbox" class="rz-sw" data-k="showUpdates"></label>
     <div class="rz-row"><span class="rz-l">Version<small class="rz-ver">Not checked yet</small></span><button class="rz-btn" type="button" data-act="check">Check now</button></div>
-    <div class="rz-row"><span class="rz-l">Reload<small>Start ${isHub ? 'the launcher' : 'this game'} fresh, keeping your progress</small></span><button class="rz-btn" type="button" data-act="reload">Reload</button></div>
+    <div class="rz-row"><span class="rz-l">Reload<small>Restart, keeping your progress</small></span><button class="rz-btn" type="button" data-act="reload">Reload</button></div>
   </div>
   <h3>More</h3>
   <div class="rz-card">
-    <div class="rz-row"><span class="rz-l">Share Rizzo Games<small class="rz-shared">Send the link to a friend</small></span><button class="rz-btn" type="button" data-act="share">Share</button></div>
-    ${standalone ? '' : `<div class="rz-row"><span class="rz-l">Play as an app<small>${ios ? 'In Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>' : 'Use your browser menu and choose <b>Install app</b> or <b>Add to Home Screen</b>'}</small></span></div>`}
+    <div class="rz-row"><span class="rz-l">Share Rizzo Games<small class="rz-shared">Send to a friend</small></span><button class="rz-btn" type="button" data-act="share">Share</button></div>
+    ${standalone ? '' : `<div class="rz-row"><span class="rz-l">Play as an app<small>${ios ? '<b>Share</b> → <b>Add to Home Screen</b>' : 'Browser menu → <b>Install app</b>'}</small></span></div>`}
   </div>
-  <p class="rz-foot">These settings apply to every Rizzo game.</p>
+  <p class="rz-foot">Applies to every game</p>
 </div>`;
     document.body.appendChild(ui);
     const $ = s => ui.querySelector(s);
@@ -351,7 +351,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     corner.style.left = `calc(env(safe-area-inset-left,0px) + ${+opt.left || 12}px)`;
     // the label that slides out: on a computer when the mouse is over the button, on a phone as a first-time tip
     const label = (text, key) => { fly.innerHTML = text + (key ? `<kbd>${key}</kbd>` : ''); };
-    if (mouse) label('Rizzo menu', 'Esc'); else label('Rizzo menu');
+    if (mouse) label('Settings menu', 'Esc'); else label('Settings menu');
     fly.addEventListener('click', () => openMenu());
 
     // the music slider only appears active in games that have music (and likewise for effects)
@@ -359,7 +359,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
       const row = $(`[data-row="${k}"]`);
       row.classList.add('rz-dim');
       row.querySelector('input').disabled = true;
-      row.querySelector('.rz-l').innerHTML += `<small>Not used in this game</small>`;
+      row.querySelector('.rz-l').innerHTML += `<small>Not used here</small>`;
     }
 
     /* ---------- keep the menu showing the current settings ---------- */
@@ -531,9 +531,9 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
       setTimeout(() => {
         if (!onMenu() || api.menuOpen || covered()) return;
         btn.classList.add('rz-pulse');
-        if (!mouse) label('Tap for the Rizzo menu');
+        if (!mouse) label('Tap for settings');
         corner.classList.add('rz-intro');
-        setTimeout(() => { corner.classList.remove('rz-intro'); if (!mouse) setTimeout(() => label('Rizzo menu'), 400); }, 3600);
+        setTimeout(() => { corner.classList.remove('rz-intro'); if (!mouse) setTimeout(() => label('Settings menu'), 400); }, 3600);
       }, 900);
     }
 

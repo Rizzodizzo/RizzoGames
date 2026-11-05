@@ -138,7 +138,7 @@ html.rz-reduce-motion .fav.pop svg{animation:none}
 .nofx .game,.nofx .soon{animation:none}
 
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-/* Reduce motion follows the switch in the Rizzo menu (off unless the player turns it on), not the phone setting */
+/* Reduce motion follows the switch in the Settings menu (off unless the player turns it on), not the phone setting */
 html.rz-reduce-motion .game,html.rz-reduce-motion .soon,html.rz-reduce-motion .rz::after,html.rz-reduce-motion .spark{animation:none}
 html.rz-reduce-motion .game{transition:none}
 /* coming back from a game, the game shrinks into its card: skip the slide-in so the two don't fight */
@@ -166,7 +166,7 @@ html.rz-vt .game,html.rz-vt .soon{animation:none}
      1. Put its .html file next to this one (e.g. word-hunt.html)
      2. Add one entry below
      3. In the game's file, add the games.js line inside its <head>
-        (copy it from the top of games.js). That gives it the Rizzo menu, shared settings,
+        (copy it from the top of games.js). That gives it the Settings menu, shared settings,
         automatic updates and offline play
    That's it. sw.js picks up new games by itself.
    ====================================================================== */
