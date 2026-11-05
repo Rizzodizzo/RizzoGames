@@ -40,6 +40,9 @@
      RizzoGames.menuOpen      true while the menu is showing
      RizzoGames.check(true)   check for an update now
      <html> gets the class "rz-reduce-motion" while reduce motion is on
+     RizzoGames.device        {touch, phone, tablet, ios, standalone}: what the player is using
+                              touch = a touch screen with no mouse (phones and tablets); phone = a touch screen
+                              whose short side is under 600px. <html> also gets "rz-touch" / "rz-phone" classes.
 
    Styling: a game can give the menu button (and the label that slides out of it) its own look by setting
    any of these CSS variables on :root. Each has a Rizzo-blue default. The menu itself always stays Rizzo blue.
@@ -189,8 +192,21 @@
     emit();
   });
 
+  // What the player is using: a phone or tablet (touch, no mouse) or a computer
+  const device = (() => {
+    const mm = q => !!(window.matchMedia && matchMedia(q).matches);
+    const touch = mm('(hover: none) and (pointer: coarse)') || (navigator.maxTouchPoints > 0 && !mm('(pointer: fine)'));
+    const short = Math.min(screen.width || innerWidth, screen.height || innerHeight);
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = mm('(display-mode: standalone)') || navigator.standalone === true;
+    return {touch, phone: touch && short < 600, tablet: touch && short >= 600, ios, standalone};
+  })();
+  document.documentElement.classList.toggle('rz-touch', device.touch);
+  document.documentElement.classList.toggle('rz-phone', device.phone);
+
   const api = window.RizzoGames = {
     settings,
+    device,
     menuOpen: false,
     level: kind => settings.muted ? 0 : settings.volume * (kind === 'music' ? settings.music : kind === 'sfx' ? settings.sfx : 1),
     onChange(fn) { if (typeof fn === 'function') listeners.push(fn); },

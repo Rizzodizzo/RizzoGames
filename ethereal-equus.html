@@ -914,11 +914,41 @@ html.rm .t-spk{display:none}
   .quiz::before{left:-3px!important;right:auto!important;top:0!important;bottom:0!important;width:3px;height:auto!important;background:linear-gradient(180deg,transparent,#ffd23f,#ff7a45,#ffd23f,transparent)!important}
   .quiz .q{font-size:clamp(1.4rem,min(4vw,11vh),3rem)!important;margin:2px 0 clamp(6px,2.4vh,14px)!important}
   .quiz .q.hist{font-size:clamp(1rem,min(2.4vw,7vh),1.8rem)!important}
+  .quiz .q.sent{font-size:clamp(.95rem,min(2.1vw,5.4vh),1.35rem)!important;line-height:1.25!important}
+  .quiz .answers.airtap button{font-size:clamp(.9rem,min(2vw,5vh),1.25rem)!important;padding:clamp(6px,2.2vh,12px) 4px!important}
+  html.rz-phone .track{flex:2.3 1 0!important}
+  html.rz-phone .quiz{padding:8px 10px!important}
   .quiz .answers{grid-template-columns:1fr 1fr!important}
   .quiz .answers button{padding:clamp(6px,3vh,16px) 6px!important;font-size:clamp(1.1rem,min(2.6vw,7.5vh),2rem)!important}
   .overlay{padding:10px max(12px,env(safe-area-inset-right)) 10px max(12px,env(safe-area-inset-left))!important}
   .overlay .homehead .tag{display:none!important}
   .overlay .homehead .logo,.overlay .homehead .logo2{font-size:clamp(1.4rem,min(7vw,13vh),3.4rem)!important}
+}
+
+/* ---------- Airborne tap answers (touch screens) ---------- */
+.quiz .q.tapq .gap{display:inline-block;min-width:3.2em;color:transparent;border-bottom:3px solid #ffd23f;line-height:1.05;margin:0 .1em;transition:color .15s}
+.quiz .q.tapq .gap.shown{color:#5dff9a;border-bottom-color:#5dff9a}
+.quiz .answers.airtap{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1vw,12px)}
+.quiz .answers.airtap button{font-family:Rajdhani,"Segoe UI",system-ui,sans-serif;font-weight:700;letter-spacing:.02em;text-transform:none;font-size:clamp(1rem,2.2vw,1.5rem);padding:clamp(8px,1.6vh,14px) 6px;line-height:1.1}
+.quiz .answers.airtap button::before{display:none}
+.quiz .answers.airtap button.good{background:linear-gradient(180deg,#7dffb0,#2fd46f)!important;border-bottom-color:#12803f!important}
+.quiz .answers.airtap button.bad{background:linear-gradient(180deg,#ff8a7a,#e5383b)!important;border-bottom-color:#8a1f14!important;color:#fff!important}
+
+/* ---------- phones: as much of the road and ocean as possible ---------- */
+html.rz-phone,html.rz-phone body{overflow:hidden;overscroll-behavior:none}
+html.rz-phone body{position:fixed;inset:0;width:100%}
+html.rz-phone main{min-height:0;height:100%;gap:0;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+html.rz-phone .track{border:0;border-radius:0}
+html.rz-phone .quiz{border-radius:0;padding:6px 8px 8px}
+html.rz-phone .qtag{font-size:.62rem;padding:2px 10px;margin-bottom:2px}
+html.rz-phone .quiz .q{font-size:clamp(1.5rem,7.5vw,2.3rem);margin:0 0 6px}
+html.rz-phone .quiz .q.sent{font-size:clamp(.95rem,4.3vw,1.2rem);line-height:1.25;margin:0 auto 6px;min-height:0}
+html.rz-phone .quiz .answers{gap:6px}
+html.rz-phone .quiz .answers button{padding:8px 2px;border-bottom-width:4px;font-size:clamp(1.2rem,6vw,1.6rem)}
+html.rz-phone .quiz .answers.airtap button{font-size:clamp(.95rem,4.4vw,1.2rem);padding:9px 4px}
+@media (orientation:portrait){
+  html.rz-phone .quiz .answers:not(.air):not(.airtap){grid-template-columns:repeat(4,1fr)!important}
 }
 </style>
 <script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-splash="#loader" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden)"></script>
@@ -5521,7 +5551,7 @@ function beginAir(){
   dist=0;speed=0;elapsed=0;streak=0;best=0;right=0;wrong=0;toastT=0;shield=false;qte=null;hopT=0;spinT=0;comboShow(0);
   $("qte").classList.add("hidden");
   $("track").classList.add("air");
-  statLabels(["Distance","km/h","Sentences","Time left"]);
+  statLabels(["Distance","km/h",AIR_TAP?"Correct":"Sentences","Time left"]);
   mode="count";cd=3;lastN=4;goFlash=0;running=false;locked=true;
   engStart();
   $("ov").classList.add("hidden");
@@ -5531,11 +5561,86 @@ function beginAir(){
   $("ans").className="answers";$("ans").innerHTML="";
   hud()
 }
+/* Phones and tablets: no keyboard popping up. Each sentence has one key word blanked out; tap the right
+   one of four words (the others come from the same topic) to boost. Computers keep the typing. */
+const AIR_TAP=!!(RZ&&RZ.device&&RZ.device.touch);
+if(AIR_TAP)addEventListener("DOMContentLoaded",()=>{
+  const m=document.querySelector("#mAir small");if(m)m.textContent="Tap to fly";
+  document.querySelectorAll(".hc").forEach(h=>{const b=h.querySelector("b");if(!b)return;
+    if(b.textContent==="Airborne mode")h.innerHTML="<b>Airborne mode</b>Fly a jet over the ocean against the clock and get as far as you can. Each fact has a missing word: tap the right one of four to build speed and add a second to the clock. A wrong tap costs speed and a second.";
+    if(b.textContent==="Storms and the pegasus")h.innerHTML="<b>Storms and the pegasus</b>The jet flies itself while you answer. In the last 20 seconds a thunderstorm hits and skydivers rain down for 5 seconds: tap a parachute to cut it loose, because crashing into a diver halves your speed and costs 1.5 seconds. Tap the pegasus and answer its calorie question for a big boost and 3 extra seconds.";
+  })
+});
+const AIR_TAP_GAIN=42,AIR_TAP_T=1;
+const STOPW=new Set("instead also about after again also always among around because been before being between both cannot could does doing down during each even every from have having here into just like made make many more most much must near only other over same should since some such than that their them then there these they this those through under very want were what when where which while with would your only often still".split(" "));
+const airClean=w=>w.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g,"");
+const AIR_WORDS={};
+const airOK=c=>c.length>=4&&/^[A-Za-z0-9-]+$/.test(c)&&!STOPW.has(c.toLowerCase());
+// words for wrong answers: a sentence's first word only counts as a name if it's also capitalised mid-sentence
+{
+  const mid=new Set();
+  for(const [,t] of SENT)t.split(/\s+/).forEach((w,i)=>{const c=airClean(w);if(i>0&&/^[A-Z]/.test(c))mid.add(c)});
+  for(const [k,t] of SENT){(AIR_WORDS[k]=AIR_WORDS[k]||new Set());
+    t.split(/\s+/).forEach((w,i)=>{let c=airClean(w);if(!airOK(c))return;if(i===0&&!mid.has(c))c=c.toLowerCase();AIR_WORDS[k].add(c)})}
+}
+const airEnd=w=>/ing$/.test(w)?"ing":/ed$/.test(w)?"ed":/ly$/.test(w)?"ly":/s$/.test(w)?"s":"";
+function airBlank(k,text){
+  const words=text.split(/(\s+)/),idx=[];
+  words.forEach((w,i)=>{if(i>0&&airOK(airClean(w)))idx.push(i)});     // never the first word
+  if(!idx.length)return null;
+  // one of the longer words, so it's a real fact word rather than filler
+  idx.sort((a,b)=>airClean(words[b]).length-airClean(words[a]).length);
+  const i=idx[Math.floor(Math.random()*Math.min(3,idx.length))],ans=airClean(words[i]);
+  const inSent=new Set(words.map(w=>airClean(w).toLowerCase()));
+  const cap=/^[A-Z]/.test(ans),num=/^\d/.test(ans),end=airEnd(ans);
+  const base=[...(AIR_WORDS[k]||[])].filter(w=>!inSent.has(w.toLowerCase())&&/^\d/.test(w)===num&&/^[A-Z]/.test(w)===cap);
+  // best: same kind of ending and a similar length; then loosen until there are three
+  const tiers=[base.filter(w=>airEnd(w)===end&&Math.abs(w.length-ans.length)<=2),base.filter(w=>airEnd(w)===end),base];
+  const opts=[ans];
+  for(const t of tiers){const pool=t.slice();while(opts.length<4&&pool.length){const w=pool.splice(Math.floor(Math.random()*pool.length),1)[0];if(!opts.some(o=>o.toLowerCase()===w.toLowerCase()))opts.push(w)}if(opts.length>=4)break}
+  if(num)while(opts.length<4){const v=String(Math.max(1,Math.round(+ans.replace(/\D/g,"")*(.4+Math.random()*1.6))));if(!opts.includes(v))opts.push(v)}
+  if(opts.length<4)return null;
+  opts.sort(()=>Math.random()-.5);
+  const w=words[i],at=w.indexOf(ans),pre=w.slice(0,at),post=w.slice(at+ans.length);
+  return {before:words.slice(0,i).join("")+pre,after:post+words.slice(i+1).join(""),ans,opts};
+}
+function airTapNext(k,text){
+  const b=airBlank(k,text);
+  if(!b)return false;
+  A.tapQ=b;A.tapLock=false;
+  const q=$("q");q.className="q sent tapq";q.innerHTML="";
+  q.append(document.createTextNode(b.before));
+  const gap=document.createElement("span");gap.className="gap";gap.textContent=b.ans;q.append(gap);
+  q.append(document.createTextNode(b.after));
+  const box=$("ans");box.className="answers airtap";box.innerHTML="";
+  b.opts.forEach(o=>{const bt=document.createElement("button");bt.textContent=o;bt.onclick=()=>airTap(bt,o);box.appendChild(bt)});
+  locked=false;return true;
+}
+function airTap(bt,o){
+  if(!A||mode!=="run"||paused||!A.tapQ||A.tapLock)return;
+  A.tapLock=true;
+  const ok=o===A.tapQ.ans,gap=$("q").querySelector(".gap");
+  A.tot++;
+  if(ok){
+    A.ok++;A.sent++;speed=Math.min(150,speed+AIR_TAP_GAIN);A.boost=1.2;horsePoo(true);
+    streak++;best=Math.max(best,streak);career.airCombo=Math.max(career.airCombo||0,streak);comboShow(streak);
+    A.t+=AIR_TAP_T;A.tflash=1;say("RIGHT! +"+AIR_TAP_T+" s","#6fd6ff");sfx.good(A.sent);sfx.nitro();engBoost();
+    bt.classList.add("good");if(gap)gap.classList.add("shown","good");
+    setTimeout(()=>{if(A&&mode==="run")airNext()},380);
+  }else{
+    speed*=.6;A.t=Math.max(.5,A.t-1);comboShow(streak,true);streak=0;beep(150,.12);
+    say("WRONG -1 s","#ff6b5b");
+    bt.classList.add("bad");if(gap)gap.classList.add("shown","bad");
+    [...$("ans").children].forEach(x=>{if(x.textContent===A.tapQ.ans)x.classList.add("good")});
+    setTimeout(()=>{if(A&&mode==="run")airNext()},1000);
+  }
+}
 function airNext(){
   if(!A)return;
   if(!sentBag.length)sentBag=SENT.map((_,i)=>i).sort(()=>Math.random()-.5);
   const [k,text]=SENT[sentBag.pop()];
   A.s=text;A.awarded=0;A.prev=0;
+  if(AIR_TAP&&airTapNext(k,text)){$("qtag").textContent=k==="a"?"Endangered animals":"Humanitarian";$("qtag").className="qtag "+(k==="a"?"ani":"hum");return}
   const q=$("q");q.className="q sent";q.textContent="";
   for(const ch of text){const sp=document.createElement("span");sp.className="c";sp.textContent=ch;q.appendChild(sp)}
   q.firstChild.classList.add("cur");
@@ -5697,7 +5802,7 @@ function finishAir(){
   beans+=earned;
   career.airRuns++;career.airDist+=d;career.airDivers+=A.freed;career.airSent+=A.sent;career.airChars+=A.chars;
   career.airOk+=A.ok;career.airTot+=A.tot;career.airTime+=elapsed;career.airBest=Math.max(career.airBest,d);
-  if(elapsed>20)career.airWpm=Math.max(career.airWpm,wpm);
+  if(elapsed>20&&!AIR_TAP)career.airWpm=Math.max(career.airWpm,wpm);
   career.beansEarned+=earned;
   saveGarage();renderCareer();
   const t=$("ovTitle");
@@ -5709,7 +5814,7 @@ function finishAir(){
     const you=(i===yi)||(i===5);
     return `<li class="${you?"you":""}"><span class="pos">${i===5?"-":ord(i+1)}</span><i class="dot" style="background:${you?"#ffd23f":"#6fd6ff"}"></i><span>${you?"This flight":"Past flight"}</span><em>${v.toLocaleString()} m</em></li>`
   }).join("");
-  $("facts").innerHTML=`<div class="fact"><b>${wpm}</b><span>Words / min</span></div><div class="fact"><b>${A.freed}</b><span>Chutes cut</span></div><div class="fact"><b>${acc}%</b><span>Accuracy</span></div><div class="fact"><b>${A.sent}</b><span>Sentences</span></div>`;
+  $("facts").innerHTML=(AIR_TAP?`<div class="fact"><b>${A.sent}</b><span>Correct</span></div>`:`<div class="fact"><b>${wpm}</b><span>Words / min</span></div>`)+`<div class="fact"><b>${A.freed}</b><span>Chutes cut</span></div><div class="fact"><b>${acc}%</b><span>Accuracy</span></div>`+(AIR_TAP?"":`<div class="fact"><b>${A.sent}</b><span>Sentences</span></div>`);
   $("reward").innerHTML=earned?`<div class="prize"><div class="confetti" id="confetti" aria-hidden="true"></div><div class="prizerow"><span class="pj"><i class="jb"></i><i class="jb"></i><i class="jb"></i></span><span class="prizenum">+<b id="prizeN">0</b></span></div><div class="prizelbl">JELLYBEANS EARNED</div><div class="prizetag">${earned>=20?"STRATOSPHERIC BONUS!":earned>=10?"GREAT FLIGHT!":"FLIGHT REWARD!"}</div></div>`:`<span class="rw dim">Fly ${AIR_G[0].toLocaleString()} m to earn jellybeans</span>`;
   if(earned)prizeFx(earned);
   renderBeanBar(beans-earned);
@@ -6361,7 +6466,7 @@ function setMode(m){
   $("mAir").classList.toggle("on",air);
   $("mRace").setAttribute("aria-pressed",String(!air));
   $("mAir").setAttribute("aria-pressed",String(air));
-  $("homeTag").textContent=air?"Type to boost. Survive the storm. Beat the clock.":"Answer fast. Stay fuelled. Beat three rivals to the line.";
+  $("homeTag").textContent=air?(AIR_TAP?"Tap to boost. Survive the storm. Beat the clock.":"Type to boost. Survive the storm. Beat the clock."):"Answer fast. Stay fuelled. Beat three rivals to the line.";
   try{localStorage.setItem("mr_gm",m)}catch(e){}
 }
 $("mRace").onclick=()=>setMode("race");
