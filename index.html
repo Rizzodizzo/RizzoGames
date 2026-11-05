@@ -124,7 +124,9 @@ header{text-align:center;margin:18px 0 26px}
 footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:26px}
 
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.game,.soon,.rz::after,.spark{animation:none}.game{transition:none}}
+/* Reduce motion follows the switch in the Rizzo menu (off unless the player turns it on), not the phone setting */
+html.rz-reduce-motion .game,html.rz-reduce-motion .soon,html.rz-reduce-motion .rz::after,html.rz-reduce-motion .spark{animation:none}
+html.rz-reduce-motion .game{transition:none}
 </style>
 </head>
 <body>

@@ -126,6 +126,16 @@
 .rz-handle:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px;border-radius:999px}
 .rz-handle.rz-quiet{pointer-events:none}
 .rz-handle.rz-quiet i{opacity:.45}
+/* with a mouse: the bar is always clickable, and lights up with a label when the pointer comes near */
+.rz-lab{position:absolute;bottom:100%;left:50%;transform:translate(-50%,4px);padding:5px 11px;border-radius:999px;white-space:nowrap;
+  background:#1d4ed8;color:#fff;font:700 12.5px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 12px rgba(37,99,235,.4);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.rz-lab kbd{font:inherit;font-weight:800;padding:1px 5px;margin-left:4px;border-radius:4px;background:rgba(255,255,255,.22)}
+@media (hover:hover) and (pointer:fine){
+  .rz-handle.rz-quiet{pointer-events:auto}
+  .rz-handle.rz-near i,.rz-handle:hover i{width:64px;opacity:1}
+  .rz-handle.rz-near .rz-lab,.rz-handle:hover .rz-lab,.rz-handle:focus-visible .rz-lab{opacity:1;transform:translate(-50%,0)}
+}
 .rz-tip{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);z-index:2147483000;transform:translate(-50%,8px);
   padding:7px 13px;border-radius:999px;background:#1d4ed8;color:#fff;font-weight:700;font-size:13px;white-space:nowrap;
   box-shadow:0 6px 16px rgba(37,99,235,.4);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
@@ -196,6 +206,7 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
     const CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     const gameName = (opt.name || document.title || 'Game').trim();
     const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const mouse = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
     const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
     const slider = (key, label) => `<label class="rz-row rz-slide" data-row="${key}"><span class="rz-l">${label}</span>
       <input type="range" min="0" max="100" step="5" data-k="${key}" aria-label="${label}"><output></output></label>`;
@@ -204,8 +215,8 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
     const ui = document.createElement('div');
     ui.className = 'rz-ui';
     ui.innerHTML = `
-<button class="rz-handle" type="button" aria-label="Open the Rizzo menu" aria-haspopup="dialog"><i></i></button>
-<div class="rz-tip" aria-hidden="true">Swipe up for the Rizzo menu</div>
+<button class="rz-handle" type="button" aria-label="Open the Rizzo menu (Esc)" aria-haspopup="dialog"><i></i><span class="rz-lab">Rizzo menu<kbd>Esc</kbd></span></button>
+<div class="rz-tip" aria-hidden="true">${mouse ? 'Click the blue bar or press Esc for the Rizzo menu' : 'Swipe up for the Rizzo menu'}</div>
 <div class="rz-scrim"></div>
 <div class="rz-sheet" role="dialog" aria-modal="true" aria-label="Rizzo menu" tabindex="-1">
   <div class="rz-grab"></div>
@@ -310,6 +321,38 @@ html.rz-reduce-motion .rz-pill i{animation-duration:2.4s}`;
       if (e.key !== 'Tab') e.stopPropagation();
     }, true);
     addEventListener('keyup', e => { if (api.menuOpen) e.stopPropagation(); }, true);
+
+    // On a computer, Escape also opens the menu, but only when the game itself didn't use the key
+    // (both games use Escape to close their own panels or pause a race, and they keep that).
+    // It watches whether the game changed anything on screen while handling the key press.
+    let seen = [];
+    const keyWatch = new MutationObserver(r => { if (escBefore) seen.push(...r); });
+    keyWatch.observe(document.body, {subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'style', 'open']});
+    let escBefore = false;
+    addEventListener('keydown', e => {
+      escBefore = e.key === 'Escape' && !api.menuOpen && !e.repeat;
+      if (escBefore) { keyWatch.takeRecords(); seen = []; }  // forget anything that happened before this key press
+    }, true);
+    addEventListener('keydown', e => {
+      if (!escBefore || api.menuOpen) return;
+      escBefore = false;
+      const changes = seen.concat(keyWatch.takeRecords());
+      seen = [];
+      const gameUsedIt = e.defaultPrevented || changes.some(r => !ui.contains(r.target));
+      if (!gameUsedIt) { e.preventDefault(); openMenu(); }
+    });
+
+    // With a mouse, the bar lights up and shows its label when the pointer comes near the bottom of the screen
+    if (mouse) {
+      let near = false;
+      addEventListener('pointermove', e => {
+        if (e.pointerType !== 'mouse') return;
+        const r = handle.getBoundingClientRect();
+        const now = e.clientY > innerHeight - 90 && Math.abs(e.clientX - (r.left + r.width / 2)) < 220;
+        if (now !== near) { near = now; handle.classList.toggle('rz-near', near); }
+      }, {passive: true});
+      document.addEventListener('mouseleave', () => { near = false; handle.classList.remove('rz-near'); });
+    }
 
     /* ---------- "All games", with a warning first if the game wants one ---------- */
     if (leave) leave.addEventListener('click', e => {
