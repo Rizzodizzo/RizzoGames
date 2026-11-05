@@ -921,7 +921,7 @@ html.rm .t-spk{display:none}
   main{padding:0!important;gap:0!important}
   .track{border:0!important;border-radius:0!important}
   .quiz{border-radius:0!important;padding:max(8px,env(safe-area-inset-top)) calc(env(safe-area-inset-right,0px) + 10px) max(8px,env(safe-area-inset-bottom)) 12px!important}
-  .track .stats{top:max(24px,calc(env(safe-area-inset-top,0px) + 22px))!important;left:calc(env(safe-area-inset-left,0px) + 58px)!important;right:10px!important}
+  .track .stats{top:max(24px,calc(env(safe-area-inset-top,0px) + 22px))!important;left:calc(env(safe-area-inset-left,0px) + 12px)!important;right:10px!important}
   .track .fuelrow{left:calc(env(safe-area-inset-left,0px) + 12px)!important;right:12px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 6px)!important}
   .combo{right:14px!important}
   /* the question panel is all question: the answers stretch to fill whatever height is left */
@@ -972,8 +972,27 @@ html.rz-phone .quiz .answers.airtap button{font-size:clamp(.95rem,4.4vw,1.2rem);
 @media (orientation:portrait){
   html.rz-phone .quiz .answers:not(.air):not(.airtap){grid-template-columns:repeat(4,1fr)!important}
 }
+
+/* ---------- in-game pause button: the first box in the stat row, matching the others ---------- */
+.track .stats .pbtn{display:none;pointer-events:auto;align-self:stretch;width:var(--pbw,48px);height:auto;min-width:0;padding:0;margin:0;align-items:center;justify-content:center;
+  background:rgba(10,14,25,.58);color:#f3efe6;border:1px solid rgba(255,255,255,.2);border-radius:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:none;cursor:pointer}
+.track .stats .pbtn svg{width:42%;height:42%;fill:currentColor}
+.track .stats .pbtn:active{transform:scale(.92)}
+body:not(.paused) .track:has(#ov.hidden) .stats .pbtn{display:flex}
+/* while racing the R button is hidden, so the stat row can start at the edge */
+.track .stats{grid-template-columns:auto repeat(4,minmax(0,1fr))!important;left:12px!important}
+@media (orientation:landscape) and (max-height:560px){.track .stats{left:calc(env(safe-area-inset-left,0px) + 12px)!important}}
+/* upright screens: no dark frame around the road and question panel, they run edge to edge */
+@media (orientation:portrait) and (max-width:820px){
+  html,body{overflow:hidden;overscroll-behavior:none}
+  body{background:#0d0a1c!important;position:fixed;inset:0;width:100%}
+  main{min-height:0!important;height:100%!important;gap:0!important;
+    padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)!important}
+  .track{border:0!important;border-radius:0!important}
+  .quiz{border-radius:0!important}
+}
 </style>
-<script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-splash="#loader" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden)"></script>
+<script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-splash="#loader" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden), body:not(.paused) #ov.hidden"></script>
 </head>
 <body>
 <div id="loader" role="status" aria-live="polite"><div class="ldbox"><div class="ldlogo logo2 ld"><span class="t-eth">Ethereal</span><span class="t-equ" data-t="EQUUS">EQUUS</span><span class="t-exa">Examination</span></div><div class="ldcar" aria-hidden="true"><i></i></div><div class="ldbar"><i id="ldFill"></i></div><div class="ldtxt" id="ldTxt">Warming up the engine...</div></div></div>
@@ -982,6 +1001,7 @@ html.rz-phone .quiz .answers.airtap button{font-size:clamp(.95rem,4.4vw,1.2rem);
   <div class="track" id="track">
     <canvas id="cv" width="800" height="400"></canvas>
     <div class="stats">
+    <button class="pbtn" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
     <div class="stat"><b id="sDist">0 m</b><span>Distance</span></div>
     <div class="stat"><b id="sSpeed">0</b><span>km/h</span></div>
     <div class="stat"><b id="sPlace">4th</b><span>Place</span></div>
@@ -1314,6 +1334,7 @@ function resize(){
   const r=$("track").getBoundingClientRect();
   {const cs=getComputedStyle(safeProbe),il=parseFloat(cs.paddingLeft)||0,ir=parseFloat(cs.paddingRight)||0;
    SAFE.l=Math.max(0,il-r.left);SAFE.r=Math.max(0,r.right-(innerWidth-ir))}
+  $("track").style.setProperty("--safe-l",SAFE.l+"px");
   dpr=GQ.lvl>=2?Math.min(2,Math.max(1,Math.round(window.devicePixelRatio||1))):GQ.lvl===1?Math.min(1.5,window.devicePixelRatio||1):1;
   dpr=Math.max(1,dpr);
   W=Math.max(300,Math.floor(r.width));
@@ -6423,6 +6444,8 @@ function drawAir(){
   drawToastAir()
 }
 
+document.getElementById("pauseBtn").addEventListener("click",e=>{e.stopPropagation();setPause(true)});
+new ResizeObserver(()=>{const st=document.querySelector(".track .stat");if(st&&st.offsetHeight)$("track").style.setProperty("--pbw",st.offsetHeight+"px")}).observe(document.querySelector(".track .stat"));
 function setPause(p){
   if(p===paused)return;
   if(p&&!(view==="game"&&(mode==="count"||mode==="run"||mode==="fail")))return;
