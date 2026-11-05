@@ -720,8 +720,11 @@ body{padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-rig
 
 /* ---------- phone on its side: no scrolling, clear of the island ---------- */
 @media (orientation:landscape) and (max-height:600px){
-  body{padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  /* side margins sit inside the island's safe area the same way the R button does, so the two never overlap */
+  body{padding:max(14px,env(safe-area-inset-top)) calc(env(safe-area-inset-right,0px) + 12px) max(10px,env(safe-area-inset-bottom)) calc(env(safe-area-inset-left,0px) + 12px)}
   .app{max-width:1100px}
+  #game > header{padding-left:52px}
+  .home .topbar{padding-left:52px}
   /* home: title and modes on the left; difficulty, play and the tiles on the right */
   .home{--hg:clamp(10px,3vh,22px);height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:0;
     display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:clamp(18px,4vw,56px)}
