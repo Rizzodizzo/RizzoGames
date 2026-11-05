@@ -1901,6 +1901,8 @@ function applyTheme() {
       const g = img.match(/gradient\((?:[^,(]|\([^)]*\))*?,?\s*(#[0-9a-f]{3,8}|rgba?\([^)]*\))/i);
       const top = g ? g[1] : t.bg;
       meta.content = top;
+      // the iPhone tints the status bar from the page's background colour, which gradient themes leave blank (white)
+      document.body.style.backgroundColor = top;
     } catch {}
   });
   buildFx(id);
