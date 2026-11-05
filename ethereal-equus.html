@@ -985,7 +985,7 @@ body:not(.paused) .track:has(#ov.hidden) .stats .pbtn{display:flex}
 .track .stats{grid-template-columns:auto repeat(4,minmax(0,1fr))!important;left:12px!important}
 @media (orientation:landscape) and (max-height:560px){.track .stats{left:calc(env(safe-area-inset-left,0px) + 12px)!important}}
 /* the boxes' drop shadows all fall to the right; nudge the screens left by half of that so they look centred */
-@media (orientation:portrait) and (max-width:820px){#ov .panel:is(#statsScreen,#achScreen,#setScreen,#garageScreen,#howScreen){transform:translateX(-3px)}}
+@media (orientation:portrait) and (max-width:820px){#ov .panel:is(#statsScreen,#achScreen,#setScreen,#howScreen){transform:translateX(-3px)}}
 /* results: centred in the space upright; sideways always two columns (results left, prize and buttons right) */
 #resultScreen{margin-block:auto}
 /* on the results the achievement pop-up comes up from the bottom, so it never covers VICTORY */
@@ -1023,6 +1023,83 @@ html.rz-touch #resultScreen .keys{display:none}
     padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)!important}
   .track{border:0!important;border-radius:0!important}
   .quiz{border-radius:0!important}
+}
+
+/* ===================== GARAGE v2: a real garage, one vehicle at a time, no scrolling ===================== */
+#ov:has(#garageScreen:not(.hidden)){overflow:hidden!important;justify-content:flex-start!important}
+#garageScreen:not(.hidden){display:flex!important;flex-direction:column;flex:1 1 0;min-height:0;width:100%!important;max-width:1200px;gap:8px;position:relative;transform:none!important}
+#gbg{position:fixed;inset:0;width:100vw;height:100dvh;z-index:0;pointer-events:none}
+#garageScreen>*:not(#gbg){position:relative;z-index:1}
+#garageScreen .gtop{flex:none}
+.g2main{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:8px}
+.g2stage{flex:1 1 0;min-height:150px;display:flex;flex-direction:column;align-items:center}
+.g2veh{flex:1 1 0;min-height:0;width:100%;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x}
+.g2veh::-webkit-scrollbar{display:none}
+.g2pg{flex:0 0 100%;height:100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;min-width:0}
+#garageScreen #gcv,#garageScreen #gcv2{display:block!important;width:100%!important;height:100%!important;max-width:none!important;margin:0!important;object-fit:contain;background:none!important;border:0!important;touch-action:pan-x!important;cursor:default}
+.g2sw{flex:none;display:flex;gap:6px;padding:4px;background:rgba(10,8,24,.7);border:1px solid rgba(255,255,255,.14);margin-top:2px}
+.overlay .g2sw button{display:flex;align-items:center;gap:6px;padding:6px 16px;background:none;color:#cfd3e6;border:0;box-shadow:none!important;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:.8rem;letter-spacing:.06em}
+.g2sw button svg{width:16px;height:16px}
+.overlay .g2sw button.on{background:#f3efe6;color:#14191b}
+#garageScreen #gName{flex:none;margin:6px 0 0;line-height:1.15;text-align:center;font-size:1.05rem;backdrop-filter:none;background:none;border:0;padding:0}
+#gName b{display:block;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+#gName small{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#cfd3e6;opacity:.85}
+.g2side{flex:none;display:flex;flex-direction:column;gap:8px;min-width:0;background:rgba(10,8,24,.72);border:1px solid rgba(255,255,255,.12);padding:10px}
+.g2pack{display:flex;flex-direction:column;align-items:stretch;gap:5px;position:relative}
+.overlay #garageScreen #openPack{position:relative;overflow:hidden;width:100%;margin:0;padding:12px 16px;display:flex;align-items:center;justify-content:center;gap:12px;
+  font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:1.15rem;letter-spacing:.04em;text-transform:uppercase;
+  background:#2b2440;color:#8f88a8;border:2px solid rgba(255,255,255,.16);box-shadow:none;animation:none;cursor:default}
+#openPack .gfill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(255,122,197,.28),rgba(255,210,63,.3));transition:width .4s}
+#openPack .pl,#openPack .pc{position:relative;z-index:1}
+#openPack .pc{display:flex;align-items:center;gap:5px;font-size:.75em;opacity:.9}
+#openPack .pc .jb{font-size:1.15em}
+#garageScreen #openPack::after{display:none}
+.overlay #garageScreen #openPack.ready{background:linear-gradient(180deg,#ffe27a,#ffc21a 55%,#e69a00);color:#2a1700;border-color:#fff3b8;cursor:pointer;
+  box-shadow:0 0 0 2px rgba(255,210,63,.35),0 0 26px rgba(255,200,40,.6)!important;animation:packglow 1.6s ease-in-out infinite}
+#openPack.ready .gfill{display:none}
+#garageScreen #openPack.ready::after{display:block}
+@keyframes packglow{50%{box-shadow:0 0 0 4px rgba(255,210,63,.25),0 0 42px rgba(255,200,40,.85)}}
+html.rz-reduce-motion #garageScreen #openPack.ready{animation:none}
+#garageScreen .pity{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.7rem;color:#bdb6d6;margin:0}
+#garageScreen .pity .pips{display:flex;gap:2px}
+#garageScreen .pity .pips i{width:9px;height:4px;background:rgba(255,255,255,.16)}
+#garageScreen .pity .pips i.on{background:#ffd23f}
+#garageScreen .pity b{color:#e6ecff}
+.g2tip{margin:0!important;font-size:.72rem!important;color:#ffb3a0;min-height:0;text-align:center;max-width:none!important}
+.g2tip:empty{display:none}
+#garageScreen .gtabs{display:flex!important;grid-template-columns:none!important;margin:0;gap:6px}
+.overlay #garageScreen .gtabs button{flex:1 1 0;padding:7px 4px;font-size:.72rem;gap:5px}
+.overlay #garageScreen .gtabs button[hidden]{display:none!important}
+#garageScreen .garage{flex:none;height:212px;width:100%;margin:0;display:flex!important;gap:0;max-height:none!important;min-height:0!important;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;touch-action:pan-x}
+#garageScreen .garage::-webkit-scrollbar{display:none}
+.gpage{flex:0 0 100%;min-width:0;height:100%;display:grid;grid-template-columns:repeat(var(--gc,3),minmax(0,1fr));grid-template-rows:repeat(var(--gr,2),max-content);gap:8px;align-content:start;scroll-snap-align:start;box-sizing:border-box;padding:4px 2px}
+#garageScreen .chip{width:auto!important;margin:0!important;position:relative;border-width:2px;font-size:.72rem}
+#garageScreen .chip b{display:block;padding:4px 4px 5px;font-size:.72rem;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;box-sizing:border-box}
+#garageScreen .chip.locked{opacity:.6;filter:grayscale(.5)}
+#garageScreen .chip.sel{box-shadow:0 0 0 2px #ffd23f,0 0 16px var(--tc)}
+#garageScreen .chip.eq::before{content:"\2713";position:absolute;top:4px;left:4px;z-index:3;width:16px;height:16px;display:flex;align-items:center;justify-content:center;background:#2fd46f;color:#fff;font-size:11px;font-weight:900}
+#garageScreen .newb{top:2px;right:2px;font-size:9px}
+.g2dots{flex:none;display:flex;justify-content:center;gap:6px;min-height:6px}
+.g2dots i{width:7px;height:7px;background:rgba(255,255,255,.25);cursor:pointer}
+.g2dots i.on{background:#ffd23f}
+/* sideways and big screens: the podium on the left, everything else on the right */
+@media (orientation:landscape){
+  .g2main{flex-direction:row;gap:12px}
+  .g2stage{min-height:0;min-width:0}
+  .g2side{flex:0 0 min(48%,520px);min-height:0;overflow:hidden}
+  #garageScreen .garage{flex:1 1 0;height:auto}
+}
+@media (orientation:landscape) and (max-height:560px){
+  #garageScreen:not(.hidden){gap:4px}
+  #garageScreen .gtop{padding:3px 8px}
+  #garageScreen .gtop h2{font-size:1.1rem}
+  .overlay #garageScreen .gtop .sec{padding:5px 14px;font-size:.85rem}
+  .g2side{padding:7px;gap:5px}
+  .overlay #garageScreen #openPack{padding:7px 12px;font-size:.95rem}
+  .overlay #garageScreen .gtabs button{padding:5px 3px;font-size:.66rem}
+  .overlay #garageScreen .gtabs button svg{width:14px;height:14px}
+  #garageScreen #gName{font-size:.9rem;margin-top:2px}
+  .overlay .g2sw button{padding:4px 12px;font-size:.7rem}
 }
 </style>
 <script src="games.js" data-game="ethereal-equus" data-show-when="#ov:not(.hidden) #homeScreen:not(.hidden)" data-splash="#loader" data-hide-when="#ov:not(.hidden) .panel:not(#homeScreen):not(.hidden), #packModal:not(.hidden), body:not(.paused) #ov.hidden"></script>
@@ -1126,14 +1203,21 @@ html.rz-touch #resultScreen .keys{display:none}
         <div class="resbtns"><button id="nextBtn">Next</button><button class="sec" id="resGarage">Go to garage</button></div>
         <p class="keys"><kbd>Space</kbd> to continue, <kbd>G</kbd> for the garage</p></div>
       </section>
-      <section class="panel gscreen hidden" id="garageScreen">
+      <section class="panel gscreen hidden g2" id="garageScreen">
+        <canvas id="gbg" aria-hidden="true"></canvas>
         <div class="gtop"><button class="sec" id="gBack">Back</button><h2>Garage</h2><span class="bal"><i class="jb"></i> <b id="beanCt">0</b></span></div>
-        <div class="gwrap">
-          <div class="gleft"><canvas id="gcv" width="360" height="300"></canvas><canvas id="gcv2" width="360" height="300" aria-label="Jet preview"></canvas><div id="gName"></div></div>
-          <div class="gright">
-            <div class="gbar"><span id="gtip">Packs cost 50 jellybeans</span><button class="casebtn" id="openPack">Open pack (50)</button><div class="beanbar" id="gBeanBar"><div class="bbtop"><span><i class="jb"></i> <b id="gbCount">0 / 50</b></span><span id="gbText"></span></div><div class="bbtrack"><i id="gbFill"></i></div></div><div class="pity" id="gPity"></div></div>
-            <div class="gtabs" id="gtabs" role="tablist"><button data-tab="skin" class="on" role="tab"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 15l2-5h3l2-3h5l3 3h3l1 5v3H3z"/><circle cx="7" cy="18" r="2" fill="#14191b" stroke="currentColor" stroke-width="1.4"/><circle cx="17" cy="18" r="2" fill="#14191b" stroke="currentColor" stroke-width="1.4"/></svg><span>Skins</span><i class="tdot" aria-hidden="true"></i></button><button data-tab="spoiler" role="tab"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="6" width="20" height="3.5"/><rect x="6" y="9" width="2.6" height="6"/><rect x="15.4" y="9" width="2.6" height="6"/><rect x="3" y="15" width="18" height="4"/></svg><span>Spoilers</span><i class="tdot" aria-hidden="true"></i></button><button data-tab="wheel" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg><span>Wheels</span><i class="tdot" aria-hidden="true"></i></button><button data-tab="wing" role="tab"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.6 6 8.4 4v2.4l-8.4-2-.6 5 3 2V21l-4-1-4 1v-1.6l3-2-.6-5L2 14.4V12l8.4-4z"/></svg><span>Wings</span><i class="tdot" aria-hidden="true"></i></button></div>
+        <div class="g2main">
+          <div class="g2stage">
+            <div class="g2veh" id="gVeh" aria-label="Vehicle"><div class="g2pg"><canvas id="gcv" width="360" height="300" aria-label="Car preview"></canvas></div><div class="g2pg"><canvas id="gcv2" width="360" height="300" aria-label="Jet preview"></canvas></div></div>
+            <div class="g2sw" id="gVehSw" role="tablist"><button data-v="car" class="on" role="tab"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 15l2-5h3l2-3h5l3 3h3l1 5v3H3z"/></svg>Car</button><button data-v="jet" role="tab"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.6 6 8.4 4v2.4l-8.4-2-.6 5 3 2V21l-4-1-4 1v-1.6l3-2-.6-5L2 14.4V12l8.4-4z"/></svg>Jet</button></div>
+            <div id="gName"></div>
+          </div>
+          <div class="g2side">
+            <div class="g2pack"><button class="casebtn" id="openPack"><i class="gfill" id="gbFill"></i><span class="pl">Open pack</span><span class="pc"><i class="jb"></i><b id="gbCount">50</b></span></button>
+              <div class="pity" id="gPity"></div><p class="g2tip" id="gtip" aria-live="polite"></p></div>
+            <div class="gtabs" id="gtabs" role="tablist"><button data-tab="skin" class="on" role="tab" data-veh="car jet"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 15l2-5h3l2-3h5l3 3h3l1 5v3H3z"/><circle cx="7" cy="18" r="2" fill="#14191b" stroke="currentColor" stroke-width="1.4"/><circle cx="17" cy="18" r="2" fill="#14191b" stroke="currentColor" stroke-width="1.4"/></svg><span>Skins</span><i class="tdot" aria-hidden="true"></i></button><button data-tab="spoiler" role="tab" data-veh="car"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="6" width="20" height="3.5"/><rect x="6" y="9" width="2.6" height="6"/><rect x="15.4" y="9" width="2.6" height="6"/><rect x="3" y="15" width="18" height="4"/></svg><span>Spoilers</span><i class="tdot" aria-hidden="true"></i></button><button data-tab="wheel" role="tab" data-veh="car"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg><span>Wheels</span><i class="tdot" aria-hidden="true"></i></button><button data-tab="wing" role="tab" data-veh="jet"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.6 6 8.4 4v2.4l-8.4-2-.6 5 3 2V21l-4-1-4 1v-1.6l3-2-.6-5L2 14.4V12l8.4-4z"/></svg><span>Wings</span><i class="tdot" aria-hidden="true"></i></button></div>
             <div class="garage" id="garage"></div>
+            <div class="g2dots" id="gDots"></div>
           </div>
         </div>
       </section>
@@ -4794,7 +4878,7 @@ function showScreen(n){
   $("ov").scrollTop=0;
   {const el=$({home:"homeScreen",result:"resultScreen",garage:"garageScreen",how:"howScreen",stats:"statsScreen",settings:"setScreen",ach:"achScreen"}[n]);
    if(el){el.classList.remove("enter");void el.offsetWidth;el.classList.add("enter")}}
-  if(n==="garage"){resetPrev();$("gtip").textContent="Packs cost 50 jellybeans";renderGarage()}
+  if(n==="garage"){resetPrev();$("gtip").textContent="";requestAnimationFrame(()=>{gScrollVeh(false);renderGarage();drawGarageBg()})}
   if(n==="home"){resetPrev();renderCareer()}
   menCheck()
 }
@@ -4871,7 +4955,8 @@ function drawHowPreview(){
 function fitGarage(g){
   const cw=g.clientWidth;
   if(!cw)return;
-  const d=Math.max(1,gqDpr(2)),w=Math.round(cw*d),h=Math.round(w*((g.id==="gcv"||g.id==="gcv2")?.8:5/6));
+  const gv=g.id==="gcv"||g.id==="gcv2",bw=gv&&g.clientHeight?Math.min(cw,g.clientHeight*1.25):cw;
+  const d=Math.max(1,gqDpr(2)),w=Math.round(bw*d),h=Math.round(w*(gv?.8:5/6));
   if(g.width!==w||g.height!==h){g.width=w;g.height=h}
 }
 
@@ -4903,7 +4988,7 @@ function stepSpin(dt){
 }
 (function(){
   let lx=0,lt=0,el=null;
-  const ids=["hpv","gcv","gcv2","revealCv"];
+  const ids=["hpv","revealCv"];
   addEventListener("pointerdown",e=>{
     const t=e.target;
     if(!t||!ids.includes(t.id))return;
@@ -6850,7 +6935,7 @@ function frameBody(t){
     if(mode==="run")engRun()
   }
   if(view==="game")draw();else drawMenuBg();
-  if(view==="garage"){drawGarage("gcv");drawGarage("gcv2")}
+  if(view==="garage"){if(gVeh==="car"||gVehMoving)drawGarage("gcv");if(gVeh==="jet"||gVehMoving)drawGarage("gcv2")}
   if(revealOn&&!$("packModal").classList.contains("hidden")&&$("revealCv"))drawGarage("revealCv");
   if(FX.mode!=="off")fxDraw();
   if(view==="home")drawGarage("hpv");
@@ -7028,29 +7113,50 @@ const getEq=c=>c==="spoiler"?eqSp:c==="wheel"?eqWh:c==="wing"?eqWg:equip;
 const setEq=(c,id)=>{if(c==="spoiler")eqSp=id;else if(c==="wheel")eqWh=id;else if(c==="wing")eqWg=id;else equip=id};
 const setPrev=(c,id)=>{if(c==="spoiler")prevSp=id;else if(c==="wheel")prevWh=id;else if(c==="wing")prevWg=id;else prevId=id;prevFocus=id};
 const getPrev=c=>c==="spoiler"?prevSp:c==="wheel"?prevWh:c==="wing"?prevWg:prevId;
-function renderGarage(){
-  $("openPack").classList.toggle("ready",beans>=50);
-  {const rdy=beans>=50;
-  $("gbCount").textContent=Math.min(beans,50)+" / 50";
-  $("gbText").textContent=rdy?"Pack ready to open!":(50-beans)+" to your next pack";
-  $("gbFill").style.width=Math.min(100,beans/50*100)+"%";
-  $("gbFill").classList.toggle("full",rdy)}
-  {const p=career.pity|0,left=10-p;$("gPity").innerHTML=`<span class="plbl">${left<=1?"Next pack is a guaranteed <b>Pearlescent or better</b>":`Pearlescent or better guaranteed within <b>${left}</b> packs`}</span><span class="pips">${Array.from({length:10},(_,i)=>`<i class="${i<p?"on":""}${i===9?" last":""}"></i>`).join("")}</span>`}
-  document.querySelectorAll("#gtabs button").forEach(b=>{b.classList.toggle("on",b.dataset.tab===gTab);const d=b.querySelector(".tdot");if(d)d.classList.toggle("on",newCount(b.dataset.tab)>0)});
+let gVeh="car",gVehMoving=false;
+const VEH_TABS={car:["skin","spoiler","wheel"],jet:["skin","wing"]};
+function gScrollVeh(smooth){const v=$("gVeh");if(!v||!v.clientWidth)return;v.scrollTo({left:(gVeh==="jet"?1:0)*v.clientWidth,behavior:smooth?"smooth":"auto"})}
+function gPageSize(){
+  const el=$("garage"),W=el.clientWidth,H=el.clientHeight,gap=8,short=innerHeight<560;
+  const cols=Math.max(2,Math.floor((W+gap)/((short?82:84)+gap))),cw=(W-gap*(cols-1))/cols,ch=cw*.7+26;
+  return {cols,rows:Math.max(1,Math.floor((H+gap)/(ch+gap)))}
+}
+function renderGarage(keep){
+  const rdy=beans>=50,ob=$("openPack");
+  ob.classList.toggle("ready",rdy);
+  $("gbFill").style.width=(rdy?100:Math.min(100,beans/50*100))+"%";
+  $("gbCount").textContent=rdy?"50":Math.min(beans,50)+" / 50";
+  {const p=career.pity|0,left=10-p;$("gPity").innerHTML=`<span class="pips">${Array.from({length:10},(_,i)=>`<i class="${i<p?"on":""}"></i>`).join("")}</span><span class="plbl">${left<=1?"Next pack: <b>Pearlescent+</b>":`<b>Pearlescent+</b> in ${left}`}</span>`}
+  $("beanCt").textContent=beans;
+  // the tabs that matter for this vehicle
+  if(!VEH_TABS[gVeh].includes(gTab)){if(gTab==="wing"){gVeh="jet";gScrollVeh(false)}else if(gTab!=="skin"){gVeh="car";gScrollVeh(false)}else gTab="skin"}
+  document.querySelectorAll("#gVehSw button").forEach(b=>{const on=b.dataset.v===gVeh;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
+  document.querySelectorAll("#gtabs button").forEach(b=>{b.hidden=!VEH_TABS[gVeh].includes(b.dataset.tab);b.classList.toggle("on",b.dataset.tab===gTab);const d=b.querySelector(".tdot");if(d)d.classList.toggle("on",newCount(b.dataset.tab)>0)});
   const TO=["common","rare","supreme","pearl","ultra"],list=ALLITEMS.filter(x=>x.cat===gTab&&(!x.hz||(prevId||equip)==="horse")).map((x,i)=>[x,i]).sort((a,b)=>TO.indexOf(a[0].t)-TO.indexOf(b[0].t)||a[1]-b[1]).map(e=>e[0]);
   const shown=itemOf(getPrev(gTab)||getEq(gTab))||list[0],own=inv.includes(shown.id),tt=TIERS[shown.t];
-  $("gName").innerHTML=`<span style="color:${tt.c}">${tt.n}</span> · ${shown.n}<br><small>${shown.id===getEq(gTab)?"Equipped":own?"Owned":"Locked: open packs to unlock"}${shown.cat==="wing"?(skinOf(prevId||equip).dragon?" · Inferno Wyrm uses its own wings":" · Airborne jet only"):""}</small>`;
-  $("beanCt").textContent=beans;
-  $("garage").innerHTML=list.map(sk=>{
-    const o=inv.includes(sk.id),t=TIERS[sk.t],part=sk.cat!=="skin";
-    const st=sk.id===getEq(gTab)?"Equipped":o?"Owned":"Locked";
-    const sw=thumbHTML(sk,o);
-    const nw=o&&isNew(sk.id);
-    return `<div class="chip t-${sk.t} ${o?"":"locked"} ${sk.id===shown.id?"sel":""} ${st==="Equipped"?"eq":""}" style="--tc:${t.c}" data-id="${sk.id}" tabindex="0" role="button" aria-label="${sk.n}, ${t.n}, ${st}${nw?", new":""}">${nw?'<i class="newb">NEW</i>':""}${sw}<b>${sk.n}</b><small class="tp">${t.n}</small><small class="st">${st}</small></div>`
-  }).join("")
+  $("gName").innerHTML=`<b style="color:${tt.c}">${shown.n}</b><small>${tt.n}${shown.id===getEq(gTab)?" · Equipped":own?"":" · Locked"}</small>`;
+  // pages of items you swipe through sideways
+  const sc=$("garage"),P=gPageSize(),n=P.cols*P.rows,pages=[],prev=Math.round(sc.scrollLeft/Math.max(1,sc.clientWidth));
+  for(let k=0;k<list.length;k+=n)pages.push(list.slice(k,k+n));
+  sc.style.setProperty("--gc",P.cols);sc.style.setProperty("--gr",P.rows);
+  sc.innerHTML=pages.map(pg=>`<div class="gpage">${pg.map(sk=>{
+    const o=inv.includes(sk.id),t=TIERS[sk.t],eq=sk.id===getEq(gTab),nw=o&&isNew(sk.id);
+    return `<div class="chip t-${sk.t} ${o?"":"locked"} ${sk.id===shown.id?"sel":""} ${eq?"eq":""}" style="--tc:${t.c}" data-id="${sk.id}" tabindex="0" role="button" aria-label="${sk.n}, ${t.n}, ${eq?"Equipped":o?"Owned":"Locked"}${nw?", new":""}">${nw?'<i class="newb">NEW</i>':""}${thumbHTML(sk,o)}<b>${sk.n}</b></div>`}).join("")}</div>`).join("");
+  const at=keep?Math.min(prev,pages.length-1):Math.max(0,Math.floor(list.indexOf(shown)/n));
+  sc.scrollLeft=at*sc.clientWidth;
+  $("gDots").innerHTML=pages.length>1?pages.map((_,k)=>`<i class="${k===at?"on":""}" data-p="${k}"></i>`).join(""):"";
 }
 $("gtabs").onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;gTab=b.dataset.tab;prevFocus=getPrev(gTab);renderGarage()};
-
+$("gVehSw").onclick=e=>{const b=e.target.closest("[data-v]");if(!b||b.dataset.v===gVeh)return;gVeh=b.dataset.v;if(!VEH_TABS[gVeh].includes(gTab))gTab="skin";prevFocus=getPrev(gTab);gScrollVeh(true);renderGarage()};
+{let to=0;$("gVeh").addEventListener("scroll",()=>{
+  const v=$("gVeh"),k=Math.round(v.scrollLeft/Math.max(1,v.clientWidth)),nv=k?"jet":"car";
+  gVehMoving=true;clearTimeout(to);to=setTimeout(()=>{gVehMoving=false;drawGarageBg()},160);
+  if(nv!==gVeh){gVeh=nv;if(!VEH_TABS[gVeh].includes(gTab))gTab="skin";prevFocus=getPrev(gTab);renderGarage()}
+},{passive:true})}
+$("garage").addEventListener("scroll",()=>{const sc=$("garage"),k=Math.round(sc.scrollLeft/Math.max(1,sc.clientWidth));[...$("gDots").children].forEach((d,i)=>d.classList.toggle("on",i===k))},{passive:true});
+$("gDots").onclick=e=>{const d=e.target.closest("[data-p]");if(!d)return;const sc=$("garage");sc.scrollTo({left:+d.dataset.p*sc.clientWidth,behavior:"smooth"})};
+addEventListener("resize",()=>{if(view==="garage"){gScrollVeh(false);renderGarage(true);drawGarageBg()}});
+addEventListener("keydown",e=>{if(view!=="garage"||!$("packModal").classList.contains("hidden"))return;if(e.key==="ArrowLeft"||e.key==="ArrowRight"){gVeh=e.key==="ArrowRight"?"jet":"car";if(!VEH_TABS[gVeh].includes(gTab))gTab="skin";gScrollVeh(true);renderGarage()}});
 
 $("garage").onclick=e=>{
   const el=e.target.closest("[data-id]");
@@ -7059,9 +7165,70 @@ $("garage").onclick=e=>{
   if(!it)return;
   setPrev(it.cat,id);
   if(inv.includes(id)){setEq(it.cat,id);saveGarage();markSeen(id);updateGarageBtn()}
-  renderGarage()
+  renderGarage(true)
 };
 $("garage").onkeydown=e=>{if(e.key==="Enter"&&e.target.click)e.target.click()};
+
+/* ---------- the garage itself: drawn behind everything ---------- */
+function drawGarageBg(){
+  const cv=$("gbg");if(!cv||!cv.clientWidth)return;
+  const d=Math.min(2,devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){cv.width=Math.round(W*d);cv.height=Math.round(H*d)}
+  const c=cv.getContext("2d");c.setTransform(d,0,0,d,0,0);
+  // the floor starts where the podium stands
+  const ref=$(gVeh==="jet"?"gcv2":"gcv").getBoundingClientRect(),cvr=cv.getBoundingClientRect();
+  let fy=ref.height?ref.top-cvr.top+ref.height*.78:H*.5;fy=Math.max(H*.25,Math.min(H*.85,fy));
+  const cx=ref.width?ref.left-cvr.left+ref.width/2:W/2,R=(a,b)=>{const v=Math.sin(a*91.3+b*17.7)*43758.5;return v-Math.floor(v)};
+  // back wall
+  let g=c.createLinearGradient(0,0,0,fy);g.addColorStop(0,"#120f1f");g.addColorStop(1,"#2a2438");c.fillStyle=g;c.fillRect(0,0,W,fy);
+  // brick on the sides
+  const bw=36,bh=14,dw=Math.min(W*.62,Math.max(260,(fy)*1.15)),dx0=cx-dw/2,dx1=cx+dw/2,dtop=Math.max(fy*.16,fy-dw*.62);
+  for(let y=0,r=0;y<fy;y+=bh,r++)for(let x=-(r%2)*bw/2;x<W;x+=bw){
+    if(x+bw>dx0-14&&x<dx1+14&&y+bh>dtop-14)continue;
+    c.fillStyle=`rgb(${58+R(x,y)*16|0},${34+R(y,x)*10|0},${44+R(x+1,y)*10|0})`;c.fillRect(x+1,y+1,bw-2,bh-2)}
+  // roller door behind the podium
+  c.fillStyle="#3a3f4f";c.fillRect(dx0-14,dtop-14,dw+28,fy-dtop+14);
+  g=c.createLinearGradient(0,dtop,0,fy);g.addColorStop(0,"#5d6377");g.addColorStop(1,"#3c4152");c.fillStyle=g;c.fillRect(dx0,dtop,dw,fy-dtop);
+  c.fillStyle="rgba(0,0,0,.28)";for(let y=dtop+10;y<fy;y+=12)c.fillRect(dx0,y,dw,2);
+  c.fillStyle="rgba(255,255,255,.07)";for(let y=dtop+12;y<fy;y+=12)c.fillRect(dx0,y,dw,1);
+  c.fillStyle="#2a2e3a";c.fillRect(dx0-14,dtop-22,dw+28,10);
+  // a tool wall on the left, shelves with tyres on the right
+  const pw=Math.min(150,dx0-24);
+  if(pw>60){
+    const px=Math.max(10,dx0-pw-22),py=fy*.3,ph=fy*.42;
+    c.fillStyle="#7a5c3a";c.fillRect(px,py,pw,ph);c.fillStyle="rgba(0,0,0,.35)";
+    for(let y=py+8;y<py+ph;y+=10)for(let x=px+8;x<px+pw;x+=10){c.beginPath();c.arc(x,y,1.3,0,7);c.fill()}
+    c.fillStyle="#c9ced8";c.strokeStyle="#c9ced8";c.lineCap="round";
+    const t=(x,y)=>[px+pw*x,py+ph*y];
+    c.lineWidth=5;let a=t(.2,.18),b=t(.2,.72);c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();c.beginPath();c.arc(a[0],a[1],7,0,7);c.fill();
+    c.fillStyle="#d62839";a=t(.45,.2);c.fillRect(a[0]-4,a[1],8,ph*.28);c.fillStyle="#c9ced8";c.fillRect(a[0]-1.5,a[1]+ph*.28,3,ph*.22);
+    c.fillStyle="#6b4a2a";a=t(.72,.2);c.fillRect(a[0]-2.5,a[1],5,ph*.5);c.fillStyle="#8e939e";c.fillRect(a[0]-11,a[1]-3,22,11);
+  }
+  const sw=Math.min(150,W-dx1-24);
+  if(sw>60){
+    const sx=Math.min(W-sw-10,dx1+22);
+    for(const [yy,n] of [[fy*.38,2],[fy*.72,3]]){
+      c.fillStyle="#4a4f5e";c.fillRect(sx,yy,sw,6);c.fillStyle="#2c303b";c.fillRect(sx+6,yy+6,4,14);c.fillRect(sx+sw-10,yy+6,4,14);
+      for(let i=0;i<n;i++){const tx=sx+sw*(i+.5)/n,r=Math.min(22,sw/n*.42);c.fillStyle="#15161b";c.beginPath();c.ellipse(tx,yy-r,r*.55,r,0,0,7);c.fill();c.fillStyle="#3b3e48";c.beginPath();c.ellipse(tx,yy-r,r*.25,r*.48,0,0,7);c.fill()}
+    }
+  }
+  // strip lights
+  for(const lx of [W*.22,W*.78]){
+    g=c.createRadialGradient(lx,8,0,lx,8,Math.max(W,H)*.45);g.addColorStop(0,"rgba(220,235,255,.22)");g.addColorStop(1,"rgba(220,235,255,0)");c.fillStyle=g;c.fillRect(0,0,W,H);
+    c.fillStyle="#f3f7ff";c.shadowColor="#cfe2ff";c.shadowBlur=18;c.fillRect(lx-W*.12,6,W*.24,5);c.shadowBlur=0
+  }
+  // concrete floor
+  g=c.createLinearGradient(0,fy,0,H);g.addColorStop(0,"#3b3a46");g.addColorStop(1,"#1b1a22");c.fillStyle=g;c.fillRect(0,fy,W,H-fy);
+  c.fillStyle="rgba(0,0,0,.45)";c.fillRect(0,fy,W,3);
+  c.fillStyle="rgba(255,255,255,.035)";for(let i=0;i<500;i++){const x=R(i,1)*W,y=fy+R(i,2)*(H-fy);c.fillRect(x,y,1.5,1.5)}
+  c.strokeStyle="rgba(255,210,63,.55)";c.lineWidth=4;
+  for(const f of [-1,1]){c.beginPath();c.moveTo(cx+f*dw*.5,fy+2);c.lineTo(cx+f*W*.9,H);c.stroke()}
+  c.fillStyle="rgba(0,0,0,.25)";c.beginPath();c.ellipse(cx+dw*.3,fy+(H-fy)*.45,dw*.18,(H-fy)*.06,0,0,7);c.fill();
+  // spotlight on the podium
+  g=c.createRadialGradient(cx,fy,0,cx,fy,Math.max(dw*.7,160));g.addColorStop(0,"rgba(255,230,180,.22)");g.addColorStop(1,"rgba(255,230,180,0)");c.fillStyle=g;c.fillRect(0,0,W,H);
+  // darker towards the edges
+  g=c.createRadialGradient(cx,fy*.8,Math.min(W,H)*.3,cx,fy*.8,Math.max(W,H)*.85);g.addColorStop(0,"rgba(5,3,12,0)");g.addColorStop(1,"rgba(5,3,12,.75)");c.fillStyle=g;c.fillRect(0,0,W,H)
+}
 
 function rollSkin(ft){
   if(ft==="ultra"){const us=SKINS.filter(x=>x.t==="ultra"),un=us.filter(x=>!inv.includes(x.id)),bw=itemOf("wh_burger");if(un.length)return un[Math.floor(Math.random()*un.length)];if(!inv.includes(bw.id))return bw;return us[Math.floor(Math.random()*us.length)]} /* rolls any cosmetic: skin, spoiler or wheels */
@@ -7073,7 +7240,7 @@ function rollSkin(ft){
 
 function openPack(free){
   if(packBusy)return;
-  if(!free&&beans<50){$("gtip").textContent="Not enough jellybeans yet. Finish in the top 3 to earn more.";return}
+  if(!free&&beans<50){const t=$("gtip");t.textContent="Finish in the top 3 to earn more jellybeans";clearTimeout(t._t);t._t=setTimeout(()=>t.textContent="",2600);return}
   packBusy=true;
   revealOn=false;
   resetPrev();

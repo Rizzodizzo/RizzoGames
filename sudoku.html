@@ -3288,9 +3288,12 @@ function renderHome() {
   }
   $('#totalPoints').innerHTML = `${icon('star')}${num(totalPoints)}`;
   $('#totalPoints').setAttribute('aria-label', `${num(totalPoints)} point${totalPoints === 1 ? '' : 's'}`);
-  let games = 0; try { games = (JSON.parse(localStorage.getItem('sudoku-history-v1')) || []).length; } catch {}
-  $('#histCount').textContent = games > 99 ? '99+' : games;
-  $('#histCount').classList.toggle('hidden', !games);
+  // the badge counts games finished since History was last opened
+  let fresh = 0;
+  try { const seen = +localStorage.getItem('sudoku-history-seen') || 0;
+        fresh = (JSON.parse(localStorage.getItem('sudoku-history-v1')) || []).filter(e => (e.at || 0) > seen).length; } catch {}
+  $('#histCount').textContent = fresh > 99 ? '99+' : fresh;
+  $('#histCount').classList.toggle('hidden', !fresh);
   setActiveMode(modeId);
 }
 function renderDiff() {
@@ -4405,6 +4408,8 @@ function renderHistory() {
   $('#histList').innerHTML = html;
 }
 function openHistory() {
+  try { localStorage.setItem('sudoku-history-seen', Date.now()); } catch {}
+  $('#histCount').classList.add('hidden');
   renderHistory();
   $('#historyPanel').scrollTop = 0;
   $('#historyPanel').classList.add('show');
