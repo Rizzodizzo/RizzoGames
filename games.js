@@ -203,6 +203,21 @@ html,body{overscroll-behavior:none}
     const standalone = mm('(display-mode: standalone)') || navigator.standalone === true;
     return {touch, phone: touch && short < 600, tablet: touch && short >= 600, ios, standalone};
   })();
+  // iPhone Safari can leave a locked page scrolled a little after the phone is turned: it still looks right,
+  // but every tap lands lower than the button you see. After each turn or resize, snap everything back.
+  const unshift = () => {
+    try {
+      if (scrollX || scrollY) scrollTo(0, 0);
+      const se = document.scrollingElement || document.documentElement;
+      if (se.scrollTop || se.scrollLeft) { se.scrollTop = 0; se.scrollLeft = 0; }
+      if (document.body && (document.body.scrollTop && getComputedStyle(document.body).overflowY === 'hidden')) document.body.scrollTop = 0;
+    } catch {}
+  };
+  const unshiftSoon = () => { unshift(); requestAnimationFrame(unshift); setTimeout(unshift, 120); setTimeout(unshift, 450); };
+  addEventListener('orientationchange', unshiftSoon);
+  addEventListener('resize', unshiftSoon);
+  if (window.visualViewport) visualViewport.addEventListener('resize', unshiftSoon);
+  addEventListener('pageshow', unshiftSoon);
   document.documentElement.classList.toggle('rz-touch', device.touch);
   document.documentElement.classList.toggle('rz-phone', device.phone);
 
