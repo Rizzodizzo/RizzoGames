@@ -1893,6 +1893,16 @@ function applyTheme() {
   let meta = document.querySelector('meta[name=theme-color]');
   if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
   meta.content = t.bg;
+  // The iPhone tints the band behind the status bar with this colour. Themes that paint their own background
+  // (cats, Matariki, Christmas...) would leave a mismatched strip, so use the colour actually at the top.
+  requestAnimationFrame(() => {
+    try {
+      const cs = getComputedStyle(document.body), img = cs.backgroundImage || '';
+      const g = img.match(/gradient\((?:[^,(]|\([^)]*\))*?,?\s*(#[0-9a-f]{3,8}|rgba?\([^)]*\))/i);
+      const top = g ? g[1] : t.bg;
+      meta.content = top;
+    } catch {}
+  });
   buildFx(id);
   setupCats(id);
   setupBunny(id === 'easter');
