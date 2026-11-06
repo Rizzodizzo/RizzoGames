@@ -65,7 +65,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   scrollbar-width:none;overscroll-behavior-x:contain;align-items:stretch}
 .modes::-webkit-scrollbar{display:none}
 @media (hover:hover) and (pointer:fine){.modes{cursor:grab}.modes.dragging{cursor:grabbing;scroll-snap-type:none}}
-.mode{flex:0 0 100%;scroll-snap-align:center;max-height:330px;align-self:center;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);
+.mode{container-type:size;flex:0 0 100%;scroll-snap-align:center;max-height:330px;align-self:center;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);
   background:var(--panel);border-radius:26px;box-shadow:0 6px 20px var(--shade);transition:transform .3s var(--ease),opacity .3s;position:relative}
 .mode.active{outline:2.5px solid var(--accent);outline-offset:-2.5px}
 /* the daily streak: a little flame badge in the corner of the Daily card */
@@ -78,10 +78,10 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .mode:not(.active){transform:scale(.84);opacity:.45}
 .mode h2{margin:0;font-size:clamp(1.15rem,3vh,1.55rem);font-weight:900}
 .mode p{margin:-4px 12px 0;color:var(--muted);font-weight:800;font-size:.85rem;text-align:center}
-.mart{width:clamp(110px,min(52vw,25vh),220px);height:auto;flex:none}
+.mart{width:min(clamp(110px,min(52vw,25vh),220px),calc((100cqh - 126px) * 1.6));height:auto;flex:none;min-width:60px}
 .mode:has(.streakb){padding-top:26px}
 /* short phones (like the iPhone SE): smaller drawings so everything fits inside the card */
-@media (max-height:720px) and (orientation:portrait){.mart{width:clamp(80px,min(44vw,17vh),150px)}.mode{gap:6px}.mode h2{font-size:1.1rem}.wtitle{margin-bottom:10px}}
+@media (max-height:720px) and (orientation:portrait){.mode{gap:6px}.mode h2{font-size:1.1rem}.wtitle{margin-bottom:10px}}
 .modenav{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 0}
 .modearrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted)}
 .modearrow.l svg{transform:scaleX(-1)}
@@ -97,10 +97,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
 .play small{font-size:.75rem;font-weight:700;opacity:.88}
 .newg{flex:none;width:58px;border-radius:16px;background:var(--panel);color:var(--accent);display:grid;place-items:center;box-shadow:0 2px 8px var(--shade)}
-.best{flex:none;height:30px;display:flex;align-items:center;justify-content:center;gap:14px;font-size:.88rem;font-weight:800;color:var(--muted)}
-.best span{display:inline-flex;align-items:center;gap:5px}
-.best svg.ic{width:16px;height:16px}
-.best .fire{color:#f0782a}
 .tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
 .tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
 .tile .tic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);transition:transform .2s;position:relative}
@@ -287,7 +283,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .home>.hl{display:flex;flex-direction:column;grid-column:1;grid-row:2;height:100%;min-height:0}
   .modes{min-height:0;padding:18px 20% 6px}
   .mode{max-height:none;gap:6px;border-radius:20px}
-  .mart{width:clamp(90px,32vh,150px)}
+  .mart{width:min(clamp(90px,32vh,150px),calc((100cqh - 100px) * 1.6))}
   .mode h2{font-size:clamp(1rem,4.5vh,1.3rem)}
   .modenav{margin:0}
   .modearrow{width:30px;height:30px}
@@ -296,7 +292,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .seg button{padding:6px 0 5px}
   .playrow{margin-top:10px}
   .play{padding:11px}
-  .best{height:28px}
   .tiles{margin-top:2px;gap:8px}
   .tile{flex-direction:row;justify-content:center;padding:8px 6px;gap:6px;font-size:.8rem}
   .tile .tic{width:34px;height:34px;border-radius:10px}
@@ -338,7 +333,6 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
         <button class="newg hidden" id="newBtnHome" aria-label="New word"></button>
         <button class="newg hidden" id="calBtnHome" aria-label="Calendar of daily words" data-ic="calendar"></button>
       </div>
-      <div class="best" id="modeBest"></div>
       <div class="tiles">
         <button class="tile" id="howBtn"><span class="tic" data-ic="help"></span>How to play</button>
         <button class="tile" id="statsBtn"><span class="tic" data-ic="chart"></span>Stats</button>
@@ -950,7 +944,6 @@ function renderPlay() {
   else $('#playBtn').innerHTML = `<span>Play</span>${m === 'daily' ? `<small>Puzzle #${today()}</small>` : ''}`;
   $('#newBtnHome').classList.toggle('hidden', !(m === 'free' && live));
   $('#calBtnHome').classList.toggle('hidden', m !== 'daily');
-  const st = allStats()[m + ':' + n], streak = liveStreak(st, m);
   // the flame badge on the Daily card shows your daily streak for this word length
   const card = $('#modes').children[0], ds = liveStreak(allStats()['daily:' + n], 'daily');
   if (card) {
@@ -964,7 +957,6 @@ function renderPlay() {
       if (was && ds > was) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }   // it just went up
     }
   }
-  $('#modeBest').innerHTML = st && st.played ? `<span>${ic('check')}${st.wins} won</span><span>${Math.round(st.wins / st.played * 100)}%</span>${streak ? `<span class="fire">${ic('fire')}${streak}</span>` : ''}` : '';
 }
 // open one day's daily word: its finished board, the game you started, or a fresh one
 function playDay(n, day) {
