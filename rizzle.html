@@ -97,7 +97,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
 .play small{font-size:.75rem;font-weight:700;opacity:.88}
 .newg{flex:none;width:58px;border-radius:16px;background:var(--panel);color:var(--accent);display:grid;place-items:center;box-shadow:0 2px 8px var(--shade)}
-.tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:clamp(14px,2.4vh,22px)}   /* room below Play's shadow */
 .tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
 .tile .tic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);transition:transform .2s;position:relative}
 @media (hover:hover){.tile:hover .tic{transform:translateY(-2px)}}
@@ -292,7 +292,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .seg button{padding:6px 0 5px}
   .playrow{margin-top:10px}
   .play{padding:11px}
-  .tiles{margin-top:2px;gap:8px}
+  .tiles{margin-top:14px;gap:8px}
   .tile{flex-direction:row;justify-content:center;padding:8px 6px;gap:6px;font-size:.8rem}
   .tile .tic{width:34px;height:34px;border-radius:10px}
   .tile .tic svg.ic{width:18px;height:18px}
