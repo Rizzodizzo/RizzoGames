@@ -4,10 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Minesweeper</title>
-<meta name="theme-color" content="#eef5ec" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1510" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#eef5ec">
 <link rel="manifest" href="manifest.webmanifest">
-<script src="games.js" data-game="minesweeper" data-show-when="#home:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<script src="games.js" data-game="minesweeper" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,208 +15,440 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-<style>
-/* Light or dark follows the device setting automatically */
-:root{
-  --bg:#eef5ec;--panel:#fff;--ink:#16241a;--muted:#5d6f61;--line:#d5e3d4;--soft:#e3eee1;
-  --accent:#16a34a;--accent-hi:#22c55e;--accent-edge:#0b5a2a;
-  /* the field: grass tiles still hidden, sand tiles dug up (a checkerboard of two shades each) */
-  --h1:#aad751;--h2:#a2d149;--hh:#bfe36a;--o1:#e5c29f;--o2:#d7b899;--boom:#e5484d;
-  --n1:#1976d2;--n2:#388e3c;--n3:#d32f2f;--n4:#7b1fa2;--n5:#ff8f00;--n6:#0097a7;--n7:#424242;--n8:#9e9e9e;
-  --shadow:0 6px 22px rgba(20,60,30,.10);
-  color-scheme:light;
-  /* the Rizzo menu button takes on the game's green */
-  --rz-btn-bg:linear-gradient(180deg,#34d058,#15803d);--rz-btn-border:1.5px solid rgba(255,255,255,.4);
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#0d1510;--panel:#16211a;--ink:#e6f2e7;--muted:#93a896;--line:#25352a;--soft:#1c2a21;
-    --accent:#22c55e;--accent-hi:#4ade80;--accent-edge:#052e16;
-    --h1:#4f7f2a;--h2:#487726;--hh:#5d9132;--o1:#3b3226;--o2:#342c21;--boom:#c9353a;
-    --n1:#64b5f6;--n2:#81c784;--n3:#ef5350;--n4:#ce93d8;--n5:#ffb74d;--n6:#4dd0e1;--n7:#e0e0e0;--n8:#bdbdbd;
-    --shadow:0 6px 22px rgba(0,0,0,.45);
-    color-scheme:dark;
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script>
+/* ======================================================================
+   THEMES: colours only. Applied before the page draws, so there's no flash.
+   To add one: copy a block below and change its colours.
+   ====================================================================== */
+(() => {
+  const LIGHT = {n1:'#1976d2',n2:'#388e3c',n3:'#d32f2f',n4:'#7b1fa2',n5:'#e65100',n6:'#00838f',n7:'#37474f',n8:'#757575',
+    hclue:'#ffdf6e',hsafe:'#7fe0a0',hmine:'#ff9e9e',pole:'#3b2a1a',flag:'#ef3b2d',minec:'#1b1b1b',onaccent:'#fff',shade:'rgba(20,40,20,.10)'};
+  const DARK = {n1:'#6cb8ff',n2:'#7fd18a',n3:'#ff6b6b',n4:'#d59cf0',n5:'#ffb74d',n6:'#4dd6e6',n7:'#e0e0e0',n8:'#b0b0b0',
+    hclue:'#9a7612',hsafe:'#1f7d48',hmine:'#8c2b2b',pole:'#efe6d6',flag:'#ff5a4a',minec:'#f1f1f1',onaccent:'#fff',shade:'rgba(0,0,0,.45)'};
+  const T = {
+    meadow:  {name:'Meadow',  dark:0, v:{bg:'#eef5ec',panel:'#ffffff',ink:'#16241a',muted:'#5d6f61',line:'#d8e5d6',soft:'#e2eedf',accent:'#16a34a',hi:'#22c55e',edge:'#0b5a2a',h1:'#aad751',h2:'#a2d149',hh:'#bde568',o1:'#e5c29f',o2:'#d7b899',boom:'#e5484d',frame:'#5b8a2f'}},
+    night:   {name:'Night',   dark:1, v:{bg:'#0d1510',panel:'#17221b',ink:'#e6f2e7',muted:'#93a896',line:'#26362b',soft:'#1f2d24',accent:'#22c55e',hi:'#4ade80',edge:'#052e16',h1:'#4f7f2a',h2:'#487726',hh:'#5f9433',o1:'#3b3226',o2:'#342c21',boom:'#c9353a',frame:'#2f4f1c'}},
+    snow:    {name:'Snow',    dark:0, v:{bg:'#eef3f9',panel:'#ffffff',ink:'#17223a',muted:'#607089',line:'#d8e1ee',soft:'#e4ecf6',accent:'#2b7de9',hi:'#4a9bff',edge:'#123e7a',h1:'#bcd8f5',h2:'#b0d0f0',hh:'#d0e4fa',o1:'#ffffff',o2:'#f1f5fb',boom:'#e5484d',frame:'#7da2c9'}},
+    desert:  {name:'Desert',  dark:0, v:{bg:'#f8efe2',panel:'#fffaf3',ink:'#3a2714',muted:'#85674a',line:'#ecdcc6',soft:'#f3e5d2',accent:'#d9731a',hi:'#f08c2e',edge:'#7a3b06',h1:'#e9b872',h2:'#e2ae66',hh:'#f2c785',o1:'#fbecd6',o2:'#f4e1c6',boom:'#c8341f',frame:'#a86a2c'}},
+    ocean:   {name:'Ocean',   dark:0, v:{bg:'#e8f4f7',panel:'#ffffff',ink:'#0f2a33',muted:'#557580',line:'#cfe5ea',soft:'#dcedf1',accent:'#0e94a8',hi:'#18b4c9',edge:'#06505c',h1:'#5cc4d6',h2:'#52bbce',hh:'#7ad3e2',o1:'#f3e6c8',o2:'#eadbb9',boom:'#e5484d',frame:'#2b7d8c'}},
+    candy:   {name:'Candy',   dark:0, v:{bg:'#fbeff6',panel:'#ffffff',ink:'#3a1530',muted:'#8a5d7c',line:'#f0d6e6',soft:'#f6e2ee',accent:'#d63c91',hi:'#ee5aa8',edge:'#7a1650',h1:'#f5a8cf',h2:'#f09cc7',hh:'#f9bfdc',o1:'#fff6fb',o2:'#fbe8f2',boom:'#7c3aed',frame:'#c0558f'}},
+    midnight:{name:'Midnight',dark:1, v:{bg:'#0f0e1d',panel:'#1b1932',ink:'#ebe8ff',muted:'#9d98c4',line:'#2b2848',soft:'#24213f',accent:'#8b6cff',hi:'#a58cff',edge:'#2c1a7a',h1:'#3f3680',h2:'#393075',hh:'#4c4296',o1:'#211e3b',o2:'#1d1a35',boom:'#e5484d',frame:'#5a4fb0'}},
+    mono:    {name:'Mono',    dark:0, v:{bg:'#f2f2f2',panel:'#ffffff',ink:'#111111',muted:'#555555',line:'#d9d9d9',soft:'#e9e9e9',accent:'#1a1a1a',hi:'#3a3a3a',edge:'#000000',h1:'#bdbdbd',h2:'#b3b3b3',hh:'#cdcdcd',o1:'#fafafa',o2:'#efefef',boom:'#e5484d',frame:'#555555'}},
+  };
+  const ORDER = ['auto', 'meadow', 'night', 'snow', 'desert', 'ocean', 'candy', 'midnight', 'mono'];
+  const dm = matchMedia('(prefers-color-scheme: dark)');
+  const resolve = id => id === 'auto' || !T[id] ? (dm.matches ? 'night' : 'meadow') : id;
+  let current = 'auto';
+  function apply(id) {
+    current = T[id] || id === 'auto' ? id : 'auto';
+    const t = T[resolve(current)], root = document.documentElement;
+    for (const [k, v] of Object.entries(Object.assign({}, t.dark ? DARK : LIGHT, t.v))) root.style.setProperty('--' + k, v);
+    root.style.colorScheme = t.dark ? 'dark' : 'light';
+    root.classList.toggle('dk', !!t.dark);
+    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t.v.bg;
   }
-}
+  let saved = 'auto';
+  try { saved = (JSON.parse(localStorage.getItem('minesweeper-prefs')) || {}).theme || 'auto'; } catch {}
+  apply(saved);
+  dm.addEventListener('change', () => { if (current === 'auto') apply('auto'); });
+  window.MS_THEMES = {T, ORDER, LIGHT, DARK, apply, resolve, get current() { return current; }};
+})();
+</script>
+<style>
+:root{--ease:cubic-bezier(.2,.8,.2,1);--h3:color-mix(in srgb,var(--h1) 55%,var(--hh));--o3:color-mix(in srgb,var(--o1) 55%,var(--o2));
+  --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
 *{box-sizing:border-box}
-html,body{margin:0}
-body{
-  background:var(--bg);color:var(--ink);
-  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  min-height:100dvh;display:flex;justify-content:center;
-  padding:calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 20px);
-}
-.app{width:100%;max-width:1100px}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background-color .3s,color .3s;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.app{max-width:1100px;margin:0 auto;height:100%}
 .hidden{display:none!important}
-button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade)}
+.iconbtn:active{transform:scale(.94)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px color-mix(in srgb,var(--accent) 30%,transparent)}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
 
-/* ---------- home ---------- */
-.home{max-width:460px;margin:0 auto;padding-top:52px;text-align:center}
-.title{margin:0;font-family:Bungee,Impact,"Arial Black",sans-serif;font-weight:400;line-height:1;
-  font-size:clamp(2.1rem,11vw,3.2rem);letter-spacing:.02em;color:var(--accent);
-  text-shadow:0 4px 0 var(--accent-edge);transform:skewX(-6deg)}
-.tag{margin:12px 0 26px;color:var(--muted);font-weight:700}
-.levels{display:flex;flex-direction:column;gap:12px}
-.lvl{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;
-  background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
-  transition:transform .15s cubic-bezier(.2,.8,.2,1)}
-.lvl:active{transform:scale(.97)}
-@media (hover:hover){.lvl:hover{transform:translateY(-2px)}}
-.lvl:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.lvl .ic{flex-shrink:0;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
-  background:linear-gradient(135deg,var(--h1),var(--accent));color:#fff;font:400 1.2rem Bungee,Impact,sans-serif}
-.lvl .tx{flex:1;min-width:0}
-.lvl b{display:block;font-size:1.15rem;font-weight:800}
-.lvl small{display:block;color:var(--muted);font-weight:700;font-size:.88rem;margin-top:2px}
-.lvl .best{flex-shrink:0;font-size:.8rem;font-weight:800;background:var(--soft);padding:5px 10px;border-radius:999px;white-space:nowrap}
-.lvl.cont{background:linear-gradient(135deg,var(--accent),#0f9d58);color:#fff;border:0}
-.lvl.cont small{color:rgba(255,255,255,.85)}
-.lvl.cont .ic{background:rgba(255,255,255,.22)}
-.howto{margin:22px 0 0;color:var(--muted);font-size:.9rem;line-height:1.5;font-weight:600}
+/* ================= HOME ================= */
+.home{max-width:480px;margin:0 auto;height:100%;min-height:560px;display:flex;flex-direction:column;padding-top:54px}
+/* pixel title: every pixel is a little minefield tile */
+.ptitle{flex:none;display:block;margin:clamp(2px,1.5vh,16px) auto clamp(10px,2.4vh,26px);width:clamp(220px,min(88vw,42vh),400px);height:auto;overflow:visible;
+  /* the glow: two soft halos in the theme's colours, so the title stands out on any background */
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--hi) 65%,transparent)) drop-shadow(0 0 16px color-mix(in srgb,var(--accent) 40%,transparent));
+  animation:tglow 3.6s ease-in-out infinite}
+@keyframes tglow{50%{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--hi) 80%,transparent)) drop-shadow(0 0 24px color-mix(in srgb,var(--accent) 55%,transparent))}}
+.ptitle{--tg1:var(--hh);--tg2:var(--h1);--tg3:var(--h2)}
+/* dark themes: the tiles are dark, so the title uses brighter versions of the theme colour */
+.dk .ptitle{--tg1:color-mix(in srgb,var(--hi) 45%,#fff);--tg2:var(--hi);--tg3:var(--accent)}
+.ptitle .ol{fill:var(--edge)}
+.ptitle .sh{fill:var(--edge)}
+.ptitle .px{fill:url(#tgrad);stroke:var(--edge);stroke-opacity:.16;stroke-width:.05}
+.ptitle .lt{animation:pdrop .55s var(--ease) both;transform-box:fill-box;transform-origin:50% 100%}
+.ptitle .bomb{animation:pdrop .55s var(--ease) .35s both,bob 3.2s ease-in-out 1s infinite;transform-box:fill-box;transform-origin:50% 50%}
+.ptitle .spark{animation:spark .5s steps(2) infinite;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes spark{50%{opacity:.35;transform:scale(.7)}}
+@keyframes pdrop{from{opacity:0;transform:translateY(-60%) scale(.7)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-12%) rotate(8deg)}}
 
-/* ---------- game ---------- */
-.game{display:flex;flex-direction:column;align-items:center}
-.bar{width:100%;max-width:520px;display:grid;grid-template-columns:52px 1fr auto 1fr auto;align-items:center;gap:8px;margin-bottom:12px;min-height:44px}
-.chip{justify-self:center;display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
-  border-radius:999px;padding:6px 12px;font-weight:900;font-variant-numeric:tabular-nums;font-size:1.05rem;box-shadow:var(--shadow);min-width:76px;justify-content:center}
+/* mode cards you swipe between */
+.modes{position:relative;flex:1 1 0;min-height:150px;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 22% 12px;margin:0 -16px;
+  scrollbar-width:none;overscroll-behavior-x:contain;align-items:stretch}
+.modes::-webkit-scrollbar{display:none}
+@media (hover:hover) and (pointer:fine){.modes{cursor:grab}.modes.dragging{cursor:grabbing;scroll-snap-type:none}}
+.mode{flex:0 0 100%;scroll-snap-align:center;max-height:330px;align-self:center;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,18px);
+  background:var(--panel);border-radius:26px;box-shadow:0 6px 20px var(--shade);transition:transform .3s var(--ease),opacity .3s;position:relative}
+.mode.active{outline:2.5px solid var(--accent);outline-offset:-2.5px}
+.mode:not(.active){transform:scale(.84);opacity:.45}
+.mode h2{margin:0;font-size:clamp(1.15rem,3vh,1.55rem);font-weight:900}
+.mart{width:clamp(80px,18vh,150px);height:clamp(80px,18vh,150px)}
+.mode .tagx{position:absolute;top:12px;right:12px;font-size:.72rem;font-weight:900;background:var(--soft);color:var(--muted);padding:3px 8px;border-radius:99px;display:flex;gap:4px;align-items:center}
+.mode .tagx svg.ic{width:13px;height:13px}
+.modenav{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 0}
+.modearrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted)}
+.modearrow.l svg{transform:scaleX(-1)}
+.modearrow:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .25s var(--ease),background .25s}
+.dots i.on{width:22px;background:var(--accent)}
+/* sizes */
+.seg{flex:none;display:flex;gap:3px;padding:4px;margin-top:clamp(10px,2.2vh,20px);background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade)}
+.seg button{flex:1;min-width:0;padding:8px 0 7px;border-radius:10px;color:var(--muted);font-weight:800;font-size:.86rem;display:flex;flex-direction:column;align-items:center;gap:3px;transition:background .2s,color .2s}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+.seg .sz{display:grid;gap:1.5px;height:22px;align-content:center}.seg .sz i{width:4px;height:4px;border-radius:1px;background:currentColor;opacity:.75}
+.playrow{flex:none;margin-top:clamp(10px,1.8vh,16px);display:flex;gap:10px}
+.play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
+.play small{font-size:.75rem;font-weight:700;opacity:.88}
+.newg{flex:none;width:58px;border-radius:16px;background:var(--panel);color:var(--accent);display:grid;place-items:center;box-shadow:0 2px 8px var(--shade)}
+.best{flex:none;height:30px;display:flex;align-items:center;justify-content:center;gap:14px;font-size:.88rem;font-weight:800;color:var(--muted)}
+.best span{display:inline-flex;align-items:center;gap:5px}
+.best svg.ic{width:16px;height:16px}
+.best .gold{color:#d89b00}
+.tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
+.tile .tic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);transition:transform .2s;position:relative}
+@media (hover:hover){.tile:hover .tic{transform:translateY(-2px)}}
+.tic.th{grid-template-columns:repeat(3,1fr);gap:3px;padding:8px;place-items:stretch}
+.tic.th i{border-radius:3px;background:var(--h1)}.tic.th i:nth-child(even){background:var(--h2)}.tic.th i.o{background:var(--o1)}.tic.th i.a{background:var(--accent)}
+.badge{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--accent);color:var(--onaccent);font-size:.68rem;font-weight:900;display:grid;place-items:center}
+
+/* mode-card drawings */
+.a-h1{fill:var(--h1)}.a-h2{fill:var(--h2)}.a-h3{fill:var(--h3)}.a-o1{fill:var(--o1)}.a-o2{fill:var(--o2)}
+.a-t{font:900 19px Nunito,system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+.a-n1{fill:var(--n1)}.a-n2{fill:var(--n2)}.a-n3{fill:var(--n3)}
+.a-pole{stroke:var(--pole);stroke-width:2.6;stroke-linecap:round}.a-flag{fill:var(--flag)}
+.a-mine{fill:var(--minec)}.a-ring{fill:var(--panel);stroke:var(--accent);stroke-width:3.5}.a-hand{stroke:var(--accent);stroke-width:3.5;stroke-linecap:round;fill:none}
+.a-frame{fill:none;stroke:var(--frame);stroke-width:2.5;opacity:.6}
+
+/* ================= GAME ================= */
+.game{height:100%;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto}
+.ghead{flex:none;width:100%;max-width:560px;display:flex;align-items:center;gap:10px;padding-left:52px;min-height:44px}
+.gtitle{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.gtitle b{font-size:1.12rem;font-weight:900}
+.gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
+.stats{flex:none;display:flex;gap:10px;justify-content:center;margin:12px 0 10px;position:relative}
+.chip{position:relative;display:inline-flex;align-items:center;gap:7px;background:var(--panel);border-radius:999px;padding:7px 14px;font-weight:900;font-variant-numeric:tabular-nums;font-size:1.05rem;box-shadow:0 2px 8px var(--shade);min-width:84px;justify-content:center;transition:color .2s,background .2s}
 .chip svg{width:18px;height:18px}
-.face{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-size:1.5rem;line-height:1;
-  display:grid;place-items:center;box-shadow:var(--shadow);transition:transform .12s}
-.face:active{transform:scale(.9)}
-.menu-btn{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:9px 12px;font-weight:800;font-size:.9rem;box-shadow:var(--shadow)}
+.chip.low{color:#fff;background:var(--boom);animation:tick 1s steps(1) infinite}
+@keyframes tick{50%{filter:brightness(1.25)}}
+.float{position:absolute;top:-16px;left:50%;font-weight:900;font-size:1rem;pointer-events:none;animation:floatup 1.1s var(--ease) both;white-space:nowrap}
+.float.up{color:var(--accent)}.float.down{color:var(--boom)}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,6px) scale(.8)}20%{opacity:1;transform:translate(-50%,-6px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-30px)}}
+.wrap{flex:1 1 0;min-height:0;width:100%;overflow:auto;display:flex;padding:6px;-webkit-overflow-scrolling:touch}
 
-.boardwrap{width:100%;overflow:auto;display:flex;padding:4px;-webkit-overflow-scrolling:touch}
-.board{margin:0 auto;display:grid;border-radius:12px;overflow:hidden;box-shadow:var(--shadow),0 0 0 3px var(--accent-edge);
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
-.cell{width:var(--cs);height:var(--cs);border:0;padding:0;margin:0;border-radius:0;background:var(--h1);
+/* the board (square or hexagon) */
+.board{margin:auto;position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;flex-shrink:0}
+.board.sq{display:grid;border-radius:12px;overflow:hidden;box-shadow:0 0 0 3px var(--frame),0 8px 24px var(--shade)}
+.cell{position:relative;width:var(--cs);height:var(--cs);margin:0;padding:0;border:0;border-radius:0;background:var(--h1);color:inherit;
   display:flex;align-items:center;justify-content:center;font:900 calc(var(--cs) * .6)/1 Nunito,system-ui,sans-serif;
-  touch-action:manipulation;-webkit-user-select:none;user-select:none}
-.cell.alt{background:var(--h2)}
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;transition:background-color .15s}
+.board.sq .cell.t1{background:var(--h2)}
+.board.hex .cell{position:absolute;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);font-size:calc(var(--cs) * .52)}
+.board.hex .cell.t1{background:var(--h2)}.board.hex .cell.t2{background:var(--h3)}
 @media (hover:hover){.board:not(.done) .cell:not(.open):hover{background:var(--hh)}}
-.cell:focus-visible{outline:3px solid #fff;outline-offset:-3px;position:relative;z-index:1}
+.cell:focus-visible{outline:3px solid var(--ink);outline-offset:-3px;z-index:1}
 .cell.open{background:var(--o1);cursor:default}
-.cell.open.anim{animation:dig .28s cubic-bezier(.2,.8,.2,1.3) both;animation-delay:var(--d,0ms)}
-.cell.open.alt{background:var(--o2)}
+.board.sq .cell.open.t1,.board.hex .cell.open.t1{background:var(--o2)}.board.hex .cell.open.t2{background:var(--o3)}
+.cell.anim{animation:dig .3s cubic-bezier(.2,.8,.2,1.3) both;animation-delay:var(--d,0ms)}
 .cell.boom{background:var(--boom)!important}
-.cell.wrong{background:var(--o1)}
-.cell svg{width:66%;height:66%;pointer-events:none}
-.cell.flag.anim svg{animation:plant .25s cubic-bezier(.2,.8,.2,1.5)}
-.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}
-.n5{color:var(--n5)}.n6{color:var(--n6)}.n7{color:var(--n7)}.n8{color:var(--n8)}
-@keyframes dig{from{transform:scale(.55);filter:brightness(1.25)}to{transform:none;filter:none}}
-@keyframes plant{from{transform:translateY(-35%) scale(.6)}to{transform:none}}
+.cell svg{width:64%;height:64%;pointer-events:none}
+.cell.flag.anim svg{animation:plant .28s cubic-bezier(.2,.8,.2,1.6)}
+.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}.n5{color:var(--n5)}.n6{color:var(--n6)}.n7{color:var(--n7)}.n8{color:var(--n8)}
+.cell.harea{box-shadow:inset 0 0 0 999px rgba(255,255,255,.28)}
+.dk .cell.harea{box-shadow:inset 0 0 0 999px rgba(255,255,255,.12)}
+.cell.hclue{background:var(--hclue)!important}
+.cell.hsafe{background:var(--hsafe)!important;animation:glow 1.1s ease-in-out infinite}
+.cell.hmine{background:var(--hmine)!important;animation:glow 1.1s ease-in-out infinite}
+@keyframes glow{50%{filter:brightness(1.18)}}
+/* a ring fills while you hold a finger down to flag */
+.cell.holding::after{content:"";position:absolute;inset:16%;border-radius:50%;border:3px solid #fff;animation:hold .38s linear both;pointer-events:none}
+@keyframes hold{from{transform:scale(.25);opacity:.2}to{transform:scale(1);opacity:1}}
+/* "tap here" in How to play */
+.cell.tapme::before{content:"";position:absolute;inset:22%;border-radius:50%;background:#fff;opacity:.85;animation:tapme 1.3s ease-in-out infinite;pointer-events:none}
+@keyframes tapme{0%,100%{transform:scale(.45);opacity:.9}50%{transform:scale(1);opacity:.25}}
+@keyframes dig{from{transform:scale(.5);filter:brightness(1.3)}to{transform:none;filter:none}}
+@keyframes plant{from{transform:translateY(-40%) scale(.5)}to{transform:none}}
+.board.won .cell{animation:wave .5s var(--ease) both;animation-delay:var(--w,0ms)}
+@keyframes wave{40%{transform:scale(.82);filter:brightness(1.25)}}
 .board.shake{animation:shake .45s}
-@keyframes shake{0%,100%{translate:0}20%{translate:-6px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:3px 0}}
-/* Reduce motion follows the switch in the Settings menu */
-html.rz-reduce-motion .cell,html.rz-reduce-motion .cell svg,html.rz-reduce-motion .board.shake,html.rz-reduce-motion .result{animation:none!important}
-html.rz-reduce-motion .lvl,html.rz-reduce-motion .face{transition:none}
+@keyframes shake{0%,100%{translate:0}20%{translate:-7px 0}40%{translate:7px 0}60%{translate:-4px 0}80%{translate:3px 0}}
+.board.slidein{animation:slidein .4s var(--ease) both}
+@keyframes slidein{from{opacity:0;transform:translateX(40px) scale(.96)}}
 
-.foot{width:100%;max-width:520px;margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
-.modes{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
-.modes button{border:0;background:transparent;border-radius:999px;padding:10px 20px;font-weight:800;display:flex;align-items:center;gap:8px;color:var(--muted)}
-.modes button svg{width:20px;height:20px}
-.modes button[aria-pressed=true]{background:var(--accent);color:#fff}
-.hint{margin:0;color:var(--muted);font-size:.85rem;font-weight:700;text-align:center}
-.result{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;text-align:center;box-shadow:var(--shadow);
-  animation:rise .35s cubic-bezier(.2,.8,.2,1) both}
-.result h2{margin:0;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:1.5rem}
-.result.win h2{color:var(--accent)}
-.result.lose h2{color:var(--boom)}
-.result p{margin:6px 0 14px;color:var(--muted);font-weight:700}
-.result .new{display:inline-block;margin-left:6px;background:#ffd23f;color:#3a2c00;padding:2px 8px;border-radius:999px;font-size:.8rem}
-.result .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{border:0;border-radius:14px;padding:12px 20px;font-weight:800;font-size:1rem;background:var(--soft)}
-.btn.primary{background:linear-gradient(180deg,var(--accent-hi),var(--accent));color:#fff;box-shadow:0 4px 0 var(--accent-edge)}
-.btn:active{transform:translateY(2px)}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.tools{flex:none;width:100%;max-width:560px;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
+.dfseg{display:flex;background:var(--panel);border-radius:999px;padding:4px;box-shadow:0 2px 8px var(--shade)}
+.dfseg button{border-radius:999px;padding:10px 18px;font-weight:900;display:flex;align-items:center;gap:8px;color:var(--muted);transition:background .2s,color .2s}
+.dfseg button[aria-pressed=true]{background:var(--accent);color:var(--onaccent)}
+.dfseg svg{width:20px;height:20px}
+.hintbtn{height:50px;padding:0 18px;border-radius:999px;background:var(--panel);display:flex;align-items:center;gap:7px;font-weight:900;color:#c88a00;box-shadow:0 2px 8px var(--shade)}
+.dk .hintbtn{color:#ffd23f}
+.hintbtn .hc{font-size:.78rem;background:var(--soft);color:var(--muted);border-radius:99px;padding:1px 7px}
+.hintbar{flex:none;width:100%;max-width:560px;margin-top:12px;display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:18px;padding:10px 10px 10px 14px;box-shadow:0 2px 8px var(--shade);animation:rise .3s var(--ease) both}
+.hintbar .hi{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--hclue);color:#5b4300;flex-shrink:0}
+.dk .hintbar .hi{color:#fff4cc}
+.hintbar p{flex:1;margin:0;font-weight:800;font-size:.92rem;line-height:1.45}
+.hintbar p svg.ic{width:18px;height:18px;vertical-align:-4px}
+.hintbar .sw{display:inline-block;width:15px;height:15px;border-radius:4px;vertical-align:-2px;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.18)}
+.hintbar .doit{height:40px;padding:0 14px;border-radius:12px;font-weight:900;display:flex;align-items:center;gap:6px}
+.hintbar .x{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center;color:var(--muted)}
+.result{flex:none;width:100%;max-width:560px;margin-top:12px;background:var(--panel);border-radius:20px;padding:14px;box-shadow:0 4px 16px var(--shade);animation:rise .35s var(--ease) both;display:flex;flex-direction:column;gap:12px}
+.result .top{display:flex;align-items:center;gap:12px}
+.result .ri{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0;color:#fff}
+.result .ri svg.ic{width:28px;height:28px}
+.result.win .ri{background:linear-gradient(180deg,#ffcf3f,#e8a300)}
+.result.lose .ri{background:var(--boom)}
+.result.time .ri{background:linear-gradient(180deg,var(--hi),var(--accent))}
+.result h2{margin:0;font-size:1.35rem;font-weight:900}
+.result .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.result .chips span{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:.82rem;background:var(--soft);padding:4px 10px;border-radius:99px}
+.result .chips svg.ic{width:15px;height:15px}
+.result .chips .new{background:#ffd23f;color:#3a2c00}
+.result .row{display:flex;gap:10px}
+.result .row button{flex:1;padding:13px;border-radius:14px;font-weight:900;font-size:1rem}
+.result .row .sec{background:var(--soft)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+
+/* ================= PANELS (How to play, Themes, History) ================= */
+.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
+  transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
+.panel.show{transform:none;visibility:visible;transition:transform .38s var(--ease),visibility 0s}
+.panelin{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phead h1{flex:1;margin:0;text-align:center;font-size:1.3rem;font-weight:900}
+.phead .sp{width:42px;text-align:right;color:var(--muted);font-weight:800;font-size:.85rem}
+/* how to play */
+.how h2{margin:0 0 12px;font-size:1.3rem;font-weight:900;display:flex;align-items:center;gap:10px}
+.how h2 .hn{width:30px;height:30px;border-radius:10px;background:var(--accent);color:var(--onaccent);display:grid;place-items:center;font-size:.95rem}
+.stage{background:var(--panel);border-radius:20px;padding:16px;box-shadow:0 2px 10px var(--shade);min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.stage .board{margin:0 auto}
+.cap{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--panel);border-radius:14px;padding:12px 14px;font-weight:800;box-shadow:0 2px 8px var(--shade);min-height:56px;border-left:4px solid var(--accent)}
+.cap.done{border-left-color:#e8a300}
+.cap .ci{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--soft);color:var(--accent);flex-shrink:0}
+.cap.done .ci{background:#ffd23f;color:#3a2c00}
+.hownav{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
+.hownav button{min-width:96px;padding:12px 16px;border-radius:14px;font-weight:900}
+.hownav .sec{background:var(--soft)}
+.legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:99px;padding:6px 12px;font-weight:900;font-size:.9rem}
+.legend svg{width:18px;height:18px}
+.legend .up{color:var(--accent)}.legend .down{color:var(--boom)}
+.mini-tools{display:flex;gap:8px}
+.mini-tools span{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;background:var(--soft);font-weight:900;font-size:.9rem;color:var(--muted)}
+.mini-tools span.on{background:var(--accent);color:var(--onaccent)}
+.mini-tools span.bulb{color:#c88a00}
+.mini-tools svg{width:18px;height:18px}
+.pulse{animation:glow 1.1s ease-in-out infinite;box-shadow:0 0 0 3px #ffd23f}
+/* themes */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tcard{border-radius:16px;overflow:hidden;background:var(--panel);border:2px solid transparent;display:flex;flex-direction:column;text-align:left;box-shadow:0 2px 10px var(--shade);transition:transform .15s}
+.tcard:active{transform:scale(.97)}
+.tcard.on{border-color:var(--accent)}
+.tprev{height:104px;display:grid;place-items:center}
+.tprev svg{width:76px;height:76px}
+.tlabel{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-weight:900}
+.tlabel svg.ic{width:18px;height:18px;color:var(--accent)}
+/* history */
+.hfilt{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade);margin-bottom:12px}
+.hfilt button{flex:1;padding:9px 0;border-radius:10px;font-weight:800;font-size:.85rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.hfilt button.on{background:var(--accent);color:var(--onaccent)}
+.hfilt svg.ic{width:17px;height:17px}
+.hsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.hsum div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.hsum b{display:block;font-size:1.15rem;font-weight:900;font-variant-numeric:tabular-nums}
+.hsum span{display:flex;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-weight:800;font-size:.75rem;margin-top:2px}
+.hsum svg.ic{width:13px;height:13px}
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:14px;padding:10px 12px;box-shadow:0 2px 8px var(--shade)}
+.hrow .hb{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;color:#fff}
+.hrow .hb.w{background:var(--accent)}.hrow .hb.l{background:var(--boom)}.hrow .hb.t{background:linear-gradient(180deg,#ffcf3f,#e8a300)}
+.hrow .hb svg.ic{width:22px;height:22px}
+.hrow .hm{flex:1;min-width:0}
+.hrow .hm b{display:block;font-weight:900}
+.hrow .hm small{color:var(--muted);font-weight:700;font-size:.8rem}
+.hrow .hv{font-weight:900;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.hrow .hv svg.ic{width:16px;height:16px;color:#c88a00}
+.hempty{text-align:center;color:var(--muted);font-weight:800;padding:30px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hempty svg.ic{width:40px;height:40px;opacity:.6}
+.danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
+
+/* Reduce motion follows the switch in the Settings menu */
+html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *::after{animation:none!important;transition:none!important}
+html.rz-reduce-motion .cell.holding::after{opacity:1}
+
+.hl,.hr{display:contents}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ===== home: pick a size ===== -->
-  <section id="home" class="home">
-    <h1 class="title">MINESWEEPER</h1>
-    <p class="tag">Clear the field without digging up a mine</p>
-    <div class="levels" id="levels"></div>
-    <p class="howto">Each number tells you how many mines touch that square.<br>
-      <span id="howtoKeys"></span></p>
+  <!-- ================= HOME ================= -->
+  <section class="home" id="home">
+    <svg class="ptitle" id="ptitle" role="img" aria-label="Minesweeper"></svg>
+    <div class="hl">
+      <div class="modes" id="modes" aria-label="Mode"></div>
+      <div class="modenav">
+        <button class="modearrow l" id="modePrev" aria-label="Previous mode"></button>
+        <div class="dots" id="modeDots"></div>
+        <button class="modearrow" id="modeNext" aria-label="Next mode"></button>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="seg" id="sizeSeg" role="radiogroup" aria-label="Size"></div>
+      <div class="playrow">
+        <button class="primary play" id="playBtn"></button>
+        <button class="newg hidden" id="newBtnHome" aria-label="New game"></button>
+      </div>
+      <div class="best" id="modeBest"></div>
+      <div class="tiles">
+        <button class="tile" id="howBtn"><span class="tic" data-ic="help"></span>How to play</button>
+        <button class="tile" id="themesBtn"><span class="tic th" aria-hidden="true"><i></i><i></i><i class="o"></i><i></i><i class="a"></i><i></i><i class="o"></i><i></i><i></i></span>Themes</button>
+        <button class="tile" id="historyBtn"><span class="tic" data-ic="history"><b class="badge hidden" id="histBadge"></b></span>History</button>
+      </div>
+    </div>
   </section>
 
-  <!-- ===== the game ===== -->
-  <section id="game" class="game hidden">
-    <div class="bar">
-      <span></span><!-- room for the Rizzo menu button -->
-      <span class="chip" title="Mines left" aria-label="Mines left"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mine"/></svg><span id="minesLeft">10</span></span>
-      <button class="face" id="face" aria-label="New game">🙂</button>
-      <span class="chip" title="Time" aria-label="Time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span id="clock">0:00</span></span>
-      <button class="menu-btn" id="toMenu">Menu</button>
+  <!-- ================= GAME ================= -->
+  <section class="game hidden" id="game">
+    <div class="ghead">
+      <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
+      <div class="gtitle"><b id="gMode">Classic</b><small id="gSize">Small</small></div>
+      <button class="iconbtn" id="newBtn" aria-label="New game" data-ic="refresh"></button>
     </div>
-    <div class="boardwrap" id="wrap"><div class="board" id="board" role="grid" aria-label="Minefield"></div></div>
-    <div class="foot">
-      <div class="modes" id="modes" role="group" aria-label="What a tap does">
-        <button data-mode="dig" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4l6 6M17 7L7 17M5 15l4 4-3 1-2-2z"/></svg>Dig</button>
-        <button data-mode="flag" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flag"/></svg>Flag</button>
+    <div class="stats" id="stats">
+      <span class="chip" id="minesChip" aria-label="Mines left"><svg viewBox="0 0 24 24" aria-hidden="true" style="color:var(--ink)"><use href="#i-mine"/></svg><span id="minesLeft">10</span></span>
+      <span class="chip" id="clockChip" aria-label="Time"><span data-ic="clock"></span><span id="clockTxt">0:00</span></span>
+      <span class="chip hidden" id="scoreChip" aria-label="Boards cleared"></span>
+    </div>
+    <div class="wrap" id="wrap"><div class="board" id="board" role="grid" aria-label="Minefield"></div></div>
+    <div class="tools" id="tools">
+      <div class="dfseg" id="dfseg" role="group" aria-label="What a tap does">
+        <button data-mode="dig" aria-pressed="true"></button>
+        <button data-mode="flag" aria-pressed="false"></button>
       </div>
-      <p class="hint" id="hint"></p>
-      <div class="result hidden" id="result"></div>
+      <button class="hintbtn" id="hintBtn" aria-label="Hint"></button>
     </div>
+    <div class="hintbar hidden" id="hintbar"></div>
+    <div class="result hidden" id="result"></div>
   </section>
 </div>
 
+<!-- ================= PANELS ================= -->
+<div class="panel" id="howPanel" role="dialog" aria-label="How to play"><div class="panelin how">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp" id="howCount"></span></div>
+  <h2 id="howTitle"></h2>
+  <div class="stage" id="howStage"></div>
+  <div class="cap" id="howCap"></div>
+  <div class="hownav"><button class="sec" id="howPrev">Back</button><div class="dots" id="howDots"></div><button class="primary" id="howNext">Next</button></div>
+</div></div>
+
+<div class="panel" id="themePanel" role="dialog" aria-label="Themes"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Themes</h1><span class="sp"></span></div>
+  <div class="tgrid" id="tgrid"></div>
+</div></div>
+
+<div class="panel" id="histPanel" role="dialog" aria-label="History"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>History</h1><span class="sp"></span></div>
+  <div class="hfilt" id="hfilt"></div>
+  <div class="hsum" id="hsum"></div>
+  <div class="hlist" id="hlist"></div>
+  <button class="danger hidden" id="histClear">Clear history</button>
+</div></div>
+
 <!-- shared drawings -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V3.5" stroke="#3b2a1a" stroke-width="2.4" stroke-linecap="round"/><path d="M7 3.5l12 4.7L7 13z" fill="#ef3b2d"/><ellipse cx="6" cy="21" rx="4.5" ry="1.4" fill="#3b2a1a" opacity=".45"/></symbol>
-  <symbol id="i-mine" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v19M2.5 12h19M5.3 5.3l13.4 13.4M18.7 5.3L5.3 18.7"/></g><circle cx="12" cy="12" r="6.5" fill="currentColor"/><circle cx="9.7" cy="9.7" r="1.8" fill="#fff" opacity=".85"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6.5 21V3.5" stroke="var(--pole)" stroke-width="2.4" stroke-linecap="round"/><path d="M7.5 3.5l12 4.7-12 4.8z" fill="var(--flag)"/><ellipse cx="6.5" cy="21" rx="4.5" ry="1.4" fill="var(--pole)" opacity=".4"/></symbol>
+  <symbol id="i-mine" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v19M2.5 12h19M5.3 5.3l13.4 13.4M18.7 5.3L5.3 18.7"/></g><circle cx="12" cy="12" r="6.5" fill="currentColor"/><circle cx="9.7" cy="9.7" r="1.8" fill="#fff" opacity=".8"/></symbol>
 </svg>
 
 <script>
 /* ======================================================================
    MINESWEEPER for Rizzo Games
-   - First tap is always safe (and always opens up an area)
-   - Tap / left-click to dig, long-press / right-click to flag
-   - Tap a number whose mines are all flagged to dig its other neighbours
-   - Your game is saved as you play, so leaving or updating never loses it
+   Modes: Classic, Hexagon, Time Attack. Hints, themes, history, How to play.
+
+   How it's built:
+     Field      the rules: mines, numbers, digging, flags, and the hint solver
+     BoardView  draws a Field (square or hexagon) and turns taps into moves
+     Game       the current game: clock, Time Attack, winning and losing, saving
+     Home       the menu: pixel title, mode cards, sizes, Play
+     Panels     How to play, Themes, History
    ====================================================================== */
 const $ = s => document.querySelector(s);
 const RZ = window.RizzoGames || null;
-
-const LEVELS = {
-  beginner:     {name: 'Beginner',     rows: 9,  cols: 9,  mines: 10, icon: '9'},
-  intermediate: {name: 'Intermediate', rows: 16, cols: 16, mines: 40, icon: '16'},
-  expert:       {name: 'Expert',       rows: 16, cols: 30, mines: 99, icon: '30'},
-};
-const REC_KEY = 'minesweeper-records-v1';   // {beginner: {played, wins, best}, ...}  best = ms
-const SAVE_KEY = 'minesweeper-save-v1';
 const touchFirst = RZ && RZ.device ? RZ.device.touch : matchMedia('(pointer:coarse)').matches;
-
-const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
 const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
 const fmt = (ms, tenths) => {
   const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = t - m * 60;
   return m + ':' + (tenths ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0'));
 };
-const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+const vibrate = ms => { if (navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
 
-/* ---------- little sound effects (follow the shared Rizzo volume) ---------- */
+/* ---------- icons ---------- */
+const ICONS = {
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.5v.6"/><path d="M12 17.2v.1"/>',
+  history: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V9H8"/><path d="M12 7.5V12l3 2"/>',
+  clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7 10M17 6h2.5v1A3 3 0 0 1 17 10M12 13v4M8.5 20.5h7l-.8-3.5H9.3z"/>',
+  dig: '<path d="M13.5 3.5l7 7"/><path d="M17 7l-8.5 8.5"/><path d="M5.8 13.8l4.4 4.4-3.6 2.3a1.6 1.6 0 0 1-2-.2l-.9-.9a1.6 1.6 0 0 1-.2-2z"/>',
+  grid: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/>',
+  hex: '<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/>',
+  all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  fire: '<path d="M12 21c4 0 6.5-2.6 6.5-6.2 0-3.6-2.6-5.4-3.6-8.8-1.9 1.5-2.4 3.3-2.4 4.6-1-.6-1.8-2-1.8-3.6C8 9 5.5 11.4 5.5 14.8 5.5 18.4 8 21 12 21z"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  hand: '<path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.8-2.4L4 15.4a1.6 1.6 0 0 1 2.3-2.2L9 15.5"/>',
+};
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+const FLAG = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flag"/></svg>';
+const MINE = '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:var(--minec)"><use href="#i-mine"/></svg>';
+const MINE_INK = '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:currentColor"><use href="#i-mine"/></svg>';
+const CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flag"/><path d="M4 4l16 16M20 4L4 20" stroke="var(--boom)" stroke-width="2.8" stroke-linecap="round"/></svg>';
+function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
+
+/* ---------- sound effects (follow the shared Rizzo volume) ---------- */
 const Sound = (() => {
   let ctx = null;
   const vol = () => RZ ? RZ.level('sfx') : 0.6;
-  const ac = () => {
-    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
-    return ctx;
-  };
+  const ac = () => { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; };
   function tone(freq, dur, type = 'sine', gain = .2, delay = 0, slide = 0) {
     const v = vol(); if (!v) return;
     try {
       const c = ac(), t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
       o.type = type; o.frequency.setValueAtTime(freq, t);
       if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
-      g.gain.setValueAtTime(.0001, t);
-      g.gain.exponentialRampToValueAtTime(gain * v, t + .01);
-      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain * v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
       o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
     } catch {}
   }
@@ -232,357 +463,1071 @@ const Sound = (() => {
     } catch {}
   }
   return {
-    dig(n) { tone(n > 1 ? 560 : 460, .07, 'triangle', .2); if (n > 6) tone(700, .1, 'triangle', .12, .05); },
+    dig(n) { tone(n > 1 ? 560 : 460, .07, 'triangle', .2); if (n > 6) tone(720, .1, 'triangle', .12, .05); },
     flag(on) { tone(on ? 780 : 480, .07, 'square', .05); },
     boom() { noise(.7, .6); tone(140, .55, 'sawtooth', .12, 0, .3); },
+    small() { noise(.3, .35); tone(180, .25, 'sawtooth', .08, 0, .4); },
     win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .2, 'triangle', .18, i * .1)); },
+    board() { [659, 988].forEach((f, i) => tone(f, .14, 'triangle', .16, i * .08)); },
+    hint() { tone(880, .12, 'sine', .12); tone(1320, .16, 'sine', .08, .06); },
+    tick() { tone(1200, .03, 'square', .04); },
   };
 })();
 
-/* ---------- the game state ---------- */
-let G = null;          // the current game
-let mode = 'dig';      // what a plain tap does
-let cells = [];        // the square buttons on screen
-
-function makeGame(level, rows, cols) {
-  const L = LEVELS[level], n = rows * cols;
-  return {level, rows, cols, mines: L.mines, mine: new Uint8Array(n), count: new Uint8Array(n), state: new Uint8Array(n),
-    placed: false, over: false, won: false, boom: -1, flags: 0, opened: 0, elapsed: 0, startedAt: 0};
-}
-// 0 = hidden, 1 = dug, 2 = flagged
-function neighbours(i) {
-  const r = Math.floor(i / G.cols), c = i % G.cols, out = [];
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-    if (!dr && !dc) continue;
-    const rr = r + dr, cc = c + dc;
-    if (rr >= 0 && rr < G.rows && cc >= 0 && cc < G.cols) out.push(rr * G.cols + cc);
+/* ======================================================================
+   FIELD: the rules. Square boards have 8 neighbours, hexagons have 6.
+   state: 0 hidden, 1 dug, 2 flagged
+   ====================================================================== */
+class Field {
+  constructor({rows, cols, mines, hex}) {
+    Object.assign(this, {rows, cols, mines, hex: !!hex});
+    const n = this.n = rows * cols;
+    this.mine = new Uint8Array(n); this.count = new Uint8Array(n); this.state = new Uint8Array(n);
+    this.placed = false; this.over = false; this.won = false; this.boom = -1; this.flags = 0; this.opened = 0;
+    this.nb = [];
+    for (let i = 0; i < n; i++) this.nb.push(this.neighboursOf(i));
   }
-  return out;
-}
-function countAll() {
-  for (let i = 0; i < G.mine.length; i++) G.count[i] = neighbours(i).reduce((s, j) => s + G.mine[j], 0);
-}
-// Mines go in after the first tap, never on or next to it, so the first tap always opens an area
-function placeMines(safe) {
-  const near = new Set([safe, ...neighbours(safe)]);
-  let pool = [];
-  for (let i = 0; i < G.mine.length; i++) if (!near.has(i)) pool.push(i);
-  if (pool.length < G.mines) pool = [...Array(G.mine.length).keys()].filter(i => i !== safe);
-  for (let k = 0; k < G.mines; k++) {
-    const j = k + Math.floor(Math.random() * (pool.length - k));
-    [pool[k], pool[j]] = [pool[j], pool[k]];
-    G.mine[pool[k]] = 1;
+  neighboursOf(i) {
+    const r = Math.floor(i / this.cols), c = i % this.cols, out = [];
+    // hexagons: every other row is pushed half a tile right, so its neighbours above and below shift too
+    const offs = !this.hex ? [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]
+      : (r & 1) ? [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]] : [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]];
+    for (const [dr, dc] of offs) { const rr = r + dr, cc = c + dc; if (rr >= 0 && rr < this.rows && cc >= 0 && cc < this.cols) out.push(rr * this.cols + cc); }
+    return out;
   }
-  countAll();
-  G.placed = true;
-  G.startedAt = Date.now();
+  recount() { for (let i = 0; i < this.n; i++) { let s = 0; for (const j of this.nb[i]) s += this.mine[j]; this.count[i] = s; } }
+  setMines(list) { this.mine.fill(0); for (const i of list) this.mine[i] = 1; this.mines = list.length; this.recount(); this.placed = true; }
+  // Mines go in after the first dig, never on it or next to it, so the first dig always opens an area
+  place(safe) {
+    const near = new Set([safe, ...this.nb[safe]]);
+    let pool = [];
+    for (let i = 0; i < this.n; i++) if (!near.has(i)) pool.push(i);
+    if (pool.length < this.mines) pool = [...Array(this.n).keys()].filter(i => i !== safe);
+    for (let k = 0; k < this.mines; k++) { const j = k + Math.floor(Math.random() * (pool.length - k)); [pool[k], pool[j]] = [pool[j], pool[k]]; }
+    this.setMines(pool.slice(0, this.mines));
+  }
+  // returns {opened: [[cell, steps from the tap]], boom}
+  dig(i) {
+    if (this.over || this.state[i] !== 0) return null;
+    if (!this.placed) this.place(i);
+    if (this.mine[i]) { this.over = true; this.boom = i; return {opened: [], boom: i}; }
+    const opened = [], q = [[i, 0]];
+    this.state[i] = 1;
+    while (q.length) {
+      const [j, d] = q.shift();
+      this.opened++; opened.push([j, d]);
+      if (this.count[j] === 0) for (const k of this.nb[j]) if (this.state[k] === 0 && !this.mine[k]) { this.state[k] = 1; q.push([k, d + 1]); }
+    }
+    return {opened, boom: -1};
+  }
+  // tap a number whose mines are all flagged: dig the rest of its neighbours
+  canChord(i) {
+    if (this.state[i] !== 1 || !this.count[i]) return false;
+    const nb = this.nb[i];
+    return nb.filter(j => this.state[j] === 2).length === this.count[i] && nb.some(j => this.state[j] === 0);
+  }
+  chord(i) {
+    if (this.over || !this.canChord(i)) return null;
+    const hidden = this.nb[i].filter(j => this.state[j] === 0);
+    const hit = hidden.find(j => this.mine[j]);
+    if (hit !== undefined) { this.over = true; this.boom = hit; return {opened: [], boom: hit}; }
+    const out = {opened: [], boom: -1};
+    for (const j of hidden) { const r = this.dig(j); if (r) out.opened.push(...r.opened.map(([k, d]) => [k, d + 1])); }
+    return out;
+  }
+  toggleFlag(i) {
+    if (this.over || this.state[i] === 1) return null;
+    const on = this.state[i] === 0;
+    this.state[i] = on ? 2 : 0; this.flags += on ? 1 : -1;
+    return on;
+  }
+  checkWin() {
+    if (this.over || this.opened !== this.n - this.mines) return false;
+    this.over = true; this.won = true;
+    for (let i = 0; i < this.n; i++) if (this.mine[i] && this.state[i] !== 2) { this.state[i] = 2; this.flags++; }
+    return true;
+  }
+  /* The hint solver: finds the next move you can be sure of, and the numbers that prove it.
+     1. A wrong flag comes first (it would mislead everything else)
+     2. A number whose mines are all flagged: its other squares are safe
+     3. A number that needs every square it has left: they're all mines
+     4. Two numbers together: if one's squares sit inside the other's, the difference tells you
+     5. Nothing certain: it says so, and shows a safe square anyway */
+  hint() {
+    if (this.over) return null;
+    if (!this.placed) return {kind: 'start', targets: [], clues: []};
+    for (let i = 0; i < this.n; i++) if (this.state[i] === 2 && !this.mine[i]) return {kind: 'wrong', targets: [i], clues: []};
+    const clues = [];
+    for (let i = 0; i < this.n; i++) {
+      if (this.state[i] !== 1 || !this.count[i]) continue;
+      const hid = this.nb[i].filter(j => this.state[j] === 0);
+      if (!hid.length) continue;
+      clues.push({i, rem: this.count[i] - this.nb[i].filter(j => this.state[j] === 2).length, hid, set: new Set(hid)});
+    }
+    for (const c of clues) if (c.rem === 0) return {kind: 'safe', targets: c.hid, clues: [c.i]};
+    for (const c of clues) if (c.rem === c.hid.length) return {kind: 'mine', targets: c.hid, clues: [c.i]};
+    for (const a of clues) for (const b of clues) {
+      if (a === b || a.hid.length >= b.hid.length || !a.hid.every(j => b.set.has(j))) continue;
+      const diff = b.hid.filter(j => !a.set.has(j)), dm = b.rem - a.rem;
+      if (dm === 0) return {kind: 'safe', targets: diff, clues: [a.i, b.i]};
+      if (dm === diff.length) return {kind: 'mine', targets: diff, clues: [a.i, b.i]};
+    }
+    // no sure move: pick a safe square, next to the dug area if possible
+    const safe = [];
+    for (let i = 0; i < this.n; i++) if (this.state[i] === 0 && !this.mine[i]) safe.push(i);
+    const edge = safe.filter(i => this.nb[i].some(j => this.state[j] === 1));
+    const pick = (edge.length ? edge : safe);
+    return pick.length ? {kind: 'luck', targets: [pick[Math.floor(Math.random() * pick.length)]], clues: []} : null;
+  }
+  save() {
+    return {rows: this.rows, cols: this.cols, mines: this.mines, hex: this.hex, placed: this.placed,
+      mine: Array.from(this.mine).join(''), state: Array.from(this.state).join('')};
+  }
+  static load(s) {
+    const f = new Field(s);
+    if (!s.mine || s.mine.length !== f.n) return null;
+    for (let i = 0; i < f.n; i++) { f.mine[i] = +s.mine[i]; f.state[i] = +s.state[i]; }
+    f.placed = !!s.placed; f.recount();
+    f.flags = f.state.reduce((n, v) => n + (v === 2), 0);
+    f.opened = f.state.reduce((n, v) => n + (v === 1), 0);
+    return f;
+  }
 }
 
-/* ---------- the clock (stops while the menu is up, the app is in the background, or you're on the home screen) ---------- */
-const running = () => G && G.placed && !G.over && G.startedAt;
-const timeNow = () => !G ? 0 : G.elapsed + (running() ? Date.now() - G.startedAt : 0);
+/* ======================================================================
+   BOARDVIEW: draws a field and reports taps.
+   onAct(i, how): how is undefined for a tap/click, 'flag' for long-press / right-click / F
+   ====================================================================== */
+class BoardView {
+  constructor(el, opts = {}) { this.el = el; this.opts = opts; this.cells = []; this.bind(); }
+  setField(f) {
+    this.f = f;
+    const el = this.el;
+    el.innerHTML = '';
+    el.className = 'board ' + (f.hex ? 'hex' : 'sq');
+    el.style.gridTemplateColumns = f.hex ? '' : `repeat(${f.cols}, var(--cs))`;
+    const frag = document.createDocumentFragment();
+    this.cells = [];
+    for (let i = 0; i < f.n; i++) {
+      const r = Math.floor(i / f.cols), c = i % f.cols, b = document.createElement('button');
+      let t;
+      if (f.hex) { const q = c - (r - (r & 1)) / 2; t = (((q - r) % 3) + 3) % 3; }   // three shades, no two neighbours alike
+      else t = (r + c) % 2;
+      b.className = 'cell t' + t;
+      b.dataset.i = i;
+      b.tabIndex = i === 0 ? 0 : -1;
+      this.cells.push(b); frag.appendChild(b);
+    }
+    el.appendChild(frag);
+    this.paintAll();
+  }
+  // fit the board into W × H pixels
+  layout(W, H, min = 22, max = 46) {
+    const f = this.f; if (!f) return;
+    if (f.hex) {
+      const k = 2 / Math.sqrt(3);                      // a pointy hexagon is 1.155× taller than wide
+      let w = Math.min(W / (f.cols + .5), H / ((.75 * (f.rows - 1) + 1) * k));
+      w = Math.max(min, Math.min(max * 1.1, w));
+      const h = w * k, g = Math.max(1.5, w * .06);
+      this.el.style.width = (f.cols * w + w / 2) + 'px';
+      this.el.style.height = (h * (.75 * (f.rows - 1) + 1)) + 'px';
+      this.el.style.setProperty('--cs', (w - g) + 'px');
+      for (let i = 0; i < f.n; i++) {
+        const r = Math.floor(i / f.cols), c = i % f.cols, s = this.cells[i].style;
+        s.left = (c * w + (r & 1 ? w / 2 : 0) + g / 2) + 'px';
+        s.top = (r * .75 * h + g / 2) + 'px';
+        s.width = (w - g) + 'px'; s.height = (h - g) + 'px';
+      }
+    } else {
+      const cs = Math.max(min, Math.min(max, Math.floor(Math.min(W / f.cols, H / f.rows))));
+      this.el.style.width = this.el.style.height = '';
+      this.el.style.setProperty('--cs', cs + 'px');
+    }
+  }
+  paintAll() { for (let i = 0; i < this.f.n; i++) this.paint(i); }
+  paint(i, delay = 0, anim = false) {
+    const f = this.f, el = this.cells[i], s = f.state[i], lost = f.over && !f.won;
+    if (anim) el.classList.add('anim');
+    el.style.setProperty('--d', delay + 'ms');
+    el.classList.toggle('open', s === 1 || (lost && f.mine[i] && s !== 2));
+    el.classList.toggle('flag', s === 2);
+    el.classList.toggle('boom', i === f.boom);
+    for (let k = 1; k <= 8; k++) el.classList.remove('n' + k);
+    let html = '', label;
+    if (lost && f.mine[i] && s !== 2) { html = MINE; label = 'mine'; }
+    else if (lost && s === 2 && !f.mine[i]) { html = CROSS; label = 'wrong flag'; }
+    else if (s === 2) { html = FLAG; label = 'flag'; }
+    else if (s === 1) { const n = f.count[i]; if (n) { html = n; el.classList.add('n' + n); } label = n ? n + ' nearby' : 'clear'; }
+    else label = 'hidden';
+    if (el._h !== html) { el.innerHTML = html; el._h = html; }
+    el.setAttribute('aria-label', `Row ${Math.floor(i / f.cols) + 1}, column ${i % f.cols + 1}: ${label}`);
+  }
+  highlight(h) {
+    this.clearHighlight();
+    if (!h) return;
+    const area = new Set();
+    for (const c of h.clues) for (const j of this.f.nb[c]) area.add(j);
+    for (const j of area) this.cells[j].classList.add('harea');
+    for (const c of h.clues) this.cells[c].classList.add('hclue');
+    const cls = h.kind === 'mine' || h.kind === 'wrong' ? 'hmine' : 'hsafe';
+    for (const t of h.targets) this.cells[t].classList.add(cls);
+    this.hl = true;
+  }
+  clearHighlight() {
+    if (!this.hl) return;
+    for (const c of this.cells) c.classList.remove('harea', 'hclue', 'hsafe', 'hmine');
+    this.hl = false;
+  }
+  mark(i, cls, on = true) { if (this.cells[i]) this.cells[i].classList.toggle(cls, on); }
+  bind() {
+    const el = this.el;
+    let press = null;
+    const at = e => { const c = e.target.closest && e.target.closest('.cell'); return c && el.contains(c) ? +c.dataset.i : -1; };
+    const act = (i, how) => { if (this.opts.onAct) this.opts.onAct(i, how); };
+    const end = () => { if (press) { clearTimeout(press.timer); this.mark(press.i, 'holding', false); } press = null; };
+    el.addEventListener('contextmenu', e => e.preventDefault());
+    el.addEventListener('pointerdown', e => {
+      const i = at(e); if (i < 0 || !this.f || this.f.over || this.locked) return;
+      if (e.button === 2) { act(i, 'flag'); return; }
+      if (e.button !== 0) return;
+      press = {i, x: e.clientX, y: e.clientY, done: false, timer: 0};
+      if (e.pointerType !== 'mouse' && this.f.state[i] !== 1) {   // hold a finger down to flag
+        this.mark(i, 'holding');
+        press.timer = setTimeout(() => {
+          if (!press) return;
+          press.done = true; this.mark(press.i, 'holding', false);
+          act(press.i, 'flag');
+        }, 380);
+      }
+    });
+    el.addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 12) end(); });   // a scroll, not a tap
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') end(); });
+    el.addEventListener('pointerup', e => {
+      if (!press) return;
+      const p = press; end();
+      if (!p.done && at(e) === p.i) act(p.i);
+    });
+    // keyboard: arrows move, Enter/Space digs, F flags
+    el.addEventListener('click', e => { if (e.detail === 0) { const i = at(e); if (i >= 0) act(i); } });
+    el.addEventListener('keydown', e => {
+      const i = at(e); if (i < 0 || !this.f) return;
+      const f = this.f, r = Math.floor(i / f.cols), c = i % f.cols;
+      const mv = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]}[e.key];
+      if (mv) {
+        e.preventDefault();
+        const rr = Math.min(f.rows - 1, Math.max(0, r + mv[0])), cc = Math.min(f.cols - 1, Math.max(0, c + mv[1])), j = rr * f.cols + cc;
+        this.cells[i].tabIndex = -1; this.cells[j].tabIndex = 0; this.cells[j].focus();
+      } else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); act(i, 'flag'); }
+    });
+  }
+}
+
+/* ======================================================================
+   MODES and SIZES
+   ====================================================================== */
+const MODES = {
+  classic: {name: 'Classic', icon: 'grid', sizes: {
+    s: {label: 'Small',  rows: 9,  cols: 9,  mines: 10},
+    m: {label: 'Medium', rows: 16, cols: 16, mines: 40},
+    l: {label: 'Large',  rows: 16, cols: 30, mines: 99}}},
+  hex: {name: 'Hexagon', icon: 'hex', hex: true, sizes: {
+    s: {label: 'Small',  rows: 10, cols: 8,  mines: 11},
+    m: {label: 'Medium', rows: 14, cols: 10, mines: 24},
+    l: {label: 'Large',  rows: 20, cols: 13, mines: 48}}},
+  time: {name: 'Time Attack', icon: 'clock', sizes: {
+    60:  {label: '1 min', secs: 60},
+    120: {label: '2 min', secs: 120},
+    180: {label: '3 min', secs: 180}}},
+};
+const MODE_IDS = Object.keys(MODES);
+const TA = {rows: 8, cols: 8, start: 8, step: 2, max: 18, bonus: 5000, penalty: 10000, hintCost: 5000};
+const taMines = score => Math.min(TA.max, TA.start + TA.step * score);
+const sizeDots = k => { const n = {s: 2, m: 3, l: 4, 60: 2, 120: 3, 180: 4}[k] || 3;
+  return `<span class="sz" style="grid-template-columns:repeat(${n},4px)">${'<i></i>'.repeat(n * n)}</span>`; };
+
+/* ---------- saved data ---------- */
+const PREF_KEY = 'minesweeper-prefs', REC_KEY = 'minesweeper-records-v2', HIST_KEY = 'minesweeper-history-v1';
+const saveKey = m => 'minesweeper-save-v2-' + m;
+const prefs = Object.assign({mode: 'classic', size: {classic: 's', hex: 's', time: '120'}, theme: 'auto', histSeen: 0}, load(PREF_KEY, {}));
+prefs.size = Object.assign({classic: 's', hex: 's', time: '120'}, prefs.size);
+const savePrefs = () => keep(PREF_KEY, prefs);
+// records: {classic: {s: {played, wins, best, streak, bestStreak}}, time: {120: {played, best}}}
+const records = () => load(REC_KEY, {});
+const history = () => load(HIST_KEY, []);
+(function migrate() {   // the first version kept "beginner/intermediate/expert"
+  const old = load('minesweeper-records-v1', null), map = {beginner: 's', intermediate: 'm', expert: 'l'};
+  if (old) {
+    const r = records(); r.classic = r.classic || {};
+    for (const [k, v] of Object.entries(old)) if (map[k] && !r.classic[map[k]]) r.classic[map[k]] = {played: v.played || 0, wins: v.wins || 0, best: v.best || 0, streak: 0, bestStreak: 0};
+    keep(REC_KEY, r); keep('minesweeper-records-v1', null);
+  }
+  const s = load('minesweeper-save-v1', null);
+  if (s && map[s.level] && s.mine) {
+    keep(saveKey('classic'), {mode: 'classic', size: map[s.level], elapsed: s.elapsed || 0, hints: 0, bonus: 0, score: 0,
+      field: {rows: s.rows, cols: s.cols, mines: MODES.classic.sizes[map[s.level]].mines, hex: false, placed: true, mine: s.mine, state: s.state}});
+  }
+  keep('minesweeper-save-v1', null);
+})();
+
+/* ======================================================================
+   GAME
+   ====================================================================== */
+let G = null;          // the game being played
+let tapMode = 'dig';
+const view = new BoardView($('#board'), {onAct: (i, how) => onAct(i, how)});
+
+const timeNow = () => !G ? 0 : G.elapsed + (G.startedAt ? Date.now() - G.startedAt : 0);
+const taLeft = () => G.secs * 1000 + G.bonus - timeNow();
 function updatePaused() {
-  if (!G || !G.placed || G.over) return;
-  const paused = (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden');
+  if (!G || !G.started || G.ended) return;
+  const paused = (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show');
   if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
   else if (!paused && !G.startedAt) G.startedAt = Date.now();
 }
-setInterval(() => { if (G && !$('#game').classList.contains('hidden')) $('#clock').textContent = fmt(timeNow()); }, 250);
 document.addEventListener('visibilitychange', updatePaused);
 
-/* ---------- saving ---------- */
+function newGame(mode, size) {
+  const M = MODES[mode];
+  G = {mode, size, hints: 0, elapsed: 0, startedAt: 0, started: false, ended: false, bonus: 0, score: 0, busy: false};
+  if (mode === 'time') { G.secs = M.sizes[size].secs; G.field = new Field({rows: TA.rows, cols: TA.cols, mines: taMines(0)}); }
+  else {
+    let {rows, cols, mines} = M.sizes[size];
+    // turn the board so its long side runs along the screen's long side
+    const portrait = innerHeight > innerWidth;
+    if ((portrait && cols > rows) || (!portrait && rows > cols && innerWidth > 700)) [rows, cols] = [cols, rows];
+    G.field = new Field({rows, cols, mines, hex: M.hex});
+  }
+}
+function resumeGame(s) {
+  const f = Field.load(s.field); if (!f) return false;
+  G = {mode: s.mode, size: s.size, hints: s.hints || 0, elapsed: s.elapsed || 0, startedAt: 0, started: true, ended: false,
+    bonus: s.bonus || 0, score: s.score || 0, busy: false, field: f};
+  if (s.mode === 'time') G.secs = MODES.time.sizes[s.size].secs;
+  return true;
+}
 function saveGame() {
-  if (!G || !G.placed || G.over) { keep(SAVE_KEY, null); return; }
-  keep(SAVE_KEY, {level: G.level, rows: G.rows, cols: G.cols, elapsed: timeNow(),
-    mine: Array.from(G.mine).join(''), state: Array.from(G.state).join('')});
+  if (!G) return;
+  if (!G.started || G.ended) { keep(saveKey(G.mode), null); return; }
+  keep(saveKey(G.mode), {mode: G.mode, size: G.size, elapsed: timeNow(), hints: G.hints, bonus: G.bonus, score: G.score, field: G.field.save()});
 }
-function loadSave() {
-  const s = load(SAVE_KEY, null);
-  if (!s || !LEVELS[s.level] || s.mine.length !== s.rows * s.cols) return null;
-  const g = makeGame(s.level, s.rows, s.cols);
-  for (let i = 0; i < s.mine.length; i++) { g.mine[i] = +s.mine[i]; g.state[i] = +s.state[i]; }
-  g.placed = true; g.elapsed = s.elapsed || 0;
-  g.flags = g.state.reduce((n, v) => n + (v === 2), 0);
-  g.opened = g.state.reduce((n, v) => n + (v === 1), 0);
-  return g;
+
+function showGame() {
+  const M = MODES[G.mode];
+  $('#home').classList.add('hidden');
+  $('#game').classList.remove('hidden');
+  $('#gMode').textContent = M.name;
+  $('#gSize').textContent = M.sizes[G.size].label;
+  $('#scoreChip').classList.toggle('hidden', G.mode !== 'time');
+  $('#result').classList.add('hidden');
+  $('#tools').classList.remove('hidden');
+  closeHint();
+  setTapMode('dig');
+  view.setField(G.field);
+  view.locked = false;
+  layoutBoard();
+  updateHud();
+  updatePaused();
+  saveGame();
 }
-const records = () => load(REC_KEY, {});
-function record(won, ms) {
-  const all = records(), r = all[G.level] || {played: 0, wins: 0, best: 0};
-  r.played++;
-  let isBest = false;
-  if (won) { r.wins++; if (!r.best || ms < r.best) { r.best = ms; isBest = true; } }
-  all[G.level] = r; keep(REC_KEY, all);
-  return isBest;
+function layoutBoard() {
+  if (!G || $('#game').classList.contains('hidden')) return;
+  const w = $('#wrap');
+  view.layout(w.clientWidth - 12, w.clientHeight - 12);
+}
+addEventListener('resize', () => { layoutBoard(); scrollToMode(modeIdx, true); if (!$('#howPanel').classList.contains('show')) return; How.relayout(); });
+
+function updateHud() {
+  if (!G) return;
+  const f = G.field;
+  $('#minesLeft').textContent = f.mines - f.flags;
+  const t = G.mode === 'time' ? taLeft() : timeNow();
+  $('#clockTxt').textContent = fmt(G.mode === 'time' ? Math.ceil(t / 1000) * 1000 : t);
+  $('#clockChip').classList.toggle('low', G.mode === 'time' && G.started && !G.ended && t < 10000);
+  if (G.mode === 'time') $('#scoreChip').innerHTML = ic('grid') + `<span>${G.score}</span>`;
+  $('#hintBtn').innerHTML = ic('bulb') + '<span>Hint</span>' + (G.hints ? `<span class="hc">${G.hints}</span>` : '');
+}
+let lastSec = -1;
+setInterval(() => {
+  if (!G || $('#game').classList.contains('hidden')) return;
+  updateHud();
+  if (G.mode === 'time' && G.started && !G.ended) {
+    const left = taLeft(), sec = Math.ceil(left / 1000);
+    if (left < 10000 && sec !== lastSec && G.startedAt) Sound.tick();
+    lastSec = sec;
+    if (left <= 0) endTimeAttack();
+  }
+}, 100);
+
+function floatText(text, up) {
+  const s = document.createElement('span');
+  s.className = 'float ' + (up ? 'up' : 'down'); s.textContent = text;
+  $('#clockChip').appendChild(s); setTimeout(() => s.remove(), 1200);
 }
 
 /* ---------- moves ---------- */
-function dig(i) {
-  if (G.state[i] !== 0) return;
-  if (!G.placed) placeMines(i);
-  if (G.mine[i]) { lose(i); return; }
-  // open this square, and keep spreading while squares have no mines around them
-  const sr = Math.floor(i / G.cols), sc = i % G.cols, q = [i];
-  G.state[i] = 1;
-  let n = 0;
-  while (q.length) {
-    const j = q.shift();
-    G.opened++; n++;
-    const d = Math.max(Math.abs(Math.floor(j / G.cols) - sr), Math.abs(j % G.cols - sc));
-    paint(j, Math.min(d * 28, 420), true);
-    if (G.count[j] === 0) for (const k of neighbours(j)) if (G.state[k] === 0 && !G.mine[k]) { G.state[k] = 1; q.push(k); }
-  }
-  Sound.dig(n);
+function setTapMode(m) {
+  tapMode = m;
+  for (const b of $('#dfseg').children) b.setAttribute('aria-pressed', b.dataset.mode === m);
 }
-function toggleFlag(i) {
-  if (G.state[i] === 1) return;
-  const on = G.state[i] === 0;
-  G.state[i] = on ? 2 : 0;
-  G.flags += on ? 1 : -1;
-  paint(i, 0, true);
-  Sound.flag(on);
-  if (navigator.vibrate) try { navigator.vibrate(on ? 18 : 8); } catch {}
-  updateCounter();
-}
-// tap a number with all its mines flagged: dig the rest of its neighbours
-function chord(i) {
-  if (G.state[i] !== 1 || !G.count[i]) return false;
-  const nb = neighbours(i);
-  if (nb.filter(j => G.state[j] === 2).length !== G.count[i]) return false;
-  const hidden = nb.filter(j => G.state[j] === 0);
-  if (!hidden.length) return false;
-  const hit = hidden.find(j => G.mine[j]);
-  if (hit !== undefined) { lose(hit); return true; }
-  for (const j of hidden) dig(j);
-  return true;
-}
-function act(i, how) {
-  if (!G || G.over) return;
-  const s = G.state[i];
-  if (how === 'flag') toggleFlag(i);
-  else if (s === 1) chord(i);
-  else if (mode === 'flag' && how !== 'dig') toggleFlag(i);
-  else if (s === 0) dig(i);
+function onAct(i, how) {
+  if (!G || G.busy || G.ended) return;
+  const f = G.field; if (f.over) return;
+  closeHint();
+  const s = f.state[i];
+  let res = null;
+  if (how === 'flag') doFlag(i);
+  else if (s === 1) res = f.chord(i);
+  else if (tapMode === 'flag') doFlag(i);
+  else if (s === 0) res = f.dig(i);
+  if (res) applyDig(res);
   afterMove();
 }
+function doFlag(i) {
+  const on = G.field.toggleFlag(i);
+  if (on === null) return;
+  view.paint(i, 0, true); Sound.flag(on); vibrate(on ? 18 : 8);
+}
+function applyDig(res) {
+  if (!G.started) { G.started = true; G.startedAt = Date.now(); updatePaused(); }
+  for (const [j, d] of res.opened) view.paint(j, reduced() ? 0 : Math.min(d * 32, 480), true);
+  if (res.boom >= 0) hitMine(res.boom);
+  else if (res.opened.length) Sound.dig(res.opened.length);
+}
 function afterMove() {
-  if (!G.over && G.opened === G.rows * G.cols - G.mines) win();
-  updateCounter();
+  if (G.field.checkWin()) { G.mode === 'time' ? boardCleared() : endGame(true); }
+  updateHud();
   saveGame();
 }
 
 /* ---------- winning and losing ---------- */
-function win() {
-  const ms = timeNow();
-  G.over = true; G.won = true; G.elapsed = ms; G.startedAt = 0;
-  for (let i = 0; i < G.mine.length; i++) if (G.mine[i] && G.state[i] !== 2) { G.state[i] = 2; G.flags++; paint(i, 0, true); }
-  const best = record(true, ms);
-  $('#face').textContent = '😎';
+function revealAll(fromCell) {
+  const f = G.field, fr = Math.floor(fromCell / f.cols), fc = fromCell % f.cols;
+  for (let i = 0; i < f.n; i++) if (f.mine[i] || f.state[i] === 2) {
+    const d = Math.max(Math.abs(Math.floor(i / f.cols) - fr), Math.abs(i % f.cols - fc));
+    view.paint(i, reduced() ? 0 : Math.min(d * 45, 900), true);
+  }
+}
+function shake() { const b = $('#board'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+function hitMine(i) {
+  revealAll(i); shake(); vibrate([30, 40, 60]);
+  if (G.mode === 'time') {
+    Sound.small();
+    G.bonus -= TA.penalty; floatText('−10s', false);
+    G.busy = true; view.locked = true;
+    setTimeout(() => nextBoard(false), 900);
+  } else { Sound.boom(); endGame(false); }
+}
+function celebrate() {
+  const f = G.field, cr = f.rows / 2, cc = f.cols / 2;
+  for (let i = 0; i < f.n; i++) {
+    view.paint(i, 0, false);
+    const d = Math.hypot(Math.floor(i / f.cols) - cr, i % f.cols - cc);
+    view.cells[i].style.setProperty('--w', Math.round(d * 40) + 'ms');
+  }
+  $('#board').classList.add('won', 'done');
+}
+function boardCleared() {
+  G.score++; G.bonus += TA.bonus;
+  floatText('+5s', true); Sound.board(); vibrate(20);
+  celebrate();
+  G.busy = true; view.locked = true;
+  setTimeout(() => nextBoard(true), 650);
+}
+function nextBoard() {
+  if (!G || G.ended) return;
+  G.field = new Field({rows: TA.rows, cols: TA.cols, mines: taMines(G.score)});
+  view.setField(G.field);
+  layoutBoard();
+  const b = $('#board'); b.classList.add('slidein');
+  G.busy = false; view.locked = false;
+  updateHud(); saveGame();
+}
+function record(won) {
+  const all = records(), m = all[G.mode] = all[G.mode] || {}, r = m[G.size] = Object.assign({played: 0, wins: 0, best: 0, streak: 0, bestStreak: 0}, m[G.size]);
+  r.played++;
+  const ms = G.elapsed;
+  let isBest = false;
+  if (G.mode === 'time') { if (G.score > (r.best || 0)) { r.best = G.score; isBest = G.score > 0; } }
+  else if (won) {
+    r.wins++; r.streak++; r.bestStreak = Math.max(r.bestStreak, r.streak);
+    if (!G.hints && (!r.best || ms < r.best)) { r.best = ms; isBest = true; }   // best times only count without hints
+  } else r.streak = 0;
+  keep(REC_KEY, all);
+  const h = history();
+  h.unshift({m: G.mode, z: G.size, w: G.mode === 'time' ? 1 : won ? 1 : 0, ms, h: G.hints, sc: G.score, t: Date.now(), b: isBest ? 1 : 0});
+  keep(HIST_KEY, h.slice(0, 300));
+  return {isBest, r};
+}
+function endGame(won) {
+  G.elapsed = timeNow(); G.startedAt = 0; G.ended = true;
+  view.locked = true;
+  const {isBest, r} = record(won);
+  if (won) { celebrate(); Sound.win(); vibrate([20, 60, 20]); }
+  else $('#board').classList.add('done');
+  showResult(won ? 'win' : 'lose', won ? 'Field cleared!' : 'Boom!', [
+    `${ic('clock')}${fmt(G.elapsed, won)}`,
+    won && isBest ? `<span class="new">${ic('trophy')}New best!</span>` : r.best ? `${ic('trophy')}${fmt(r.best, true)}` : '',
+    won && r.streak > 1 ? `${ic('fire')}${r.streak}` : '',
+    G.hints ? `${ic('bulb')}${G.hints}` : '',
+  ]);
+}
+function endTimeAttack() {
+  G.elapsed = timeNow(); G.startedAt = 0; G.ended = true;
+  G.field.over = true; view.paintAll(); view.locked = true;
   $('#board').classList.add('done');
+  const {isBest, r} = record(true);
   Sound.win();
-  const r = records()[G.level];
-  showResult('win', 'Field cleared!',
-    `${LEVELS[G.level].name} in ${fmt(ms, true)}${best ? '<span class="new">New best!</span>' : ` · best ${fmt(r.best, true)}`}`);
+  showResult('time', `${G.score} board${G.score === 1 ? '' : 's'}`, [
+    `${ic('grid')}${G.score}`,
+    isBest ? `<span class="new">${ic('trophy')}New best!</span>` : `${ic('trophy')}${r.best || 0}`,
+    G.hints ? `${ic('bulb')}${G.hints}` : '',
+  ]);
+  updateHud();
 }
-function lose(hit) {
-  const ms = timeNow();
-  G.over = true; G.boom = hit; G.elapsed = ms; G.startedAt = 0;
-  record(false, ms);
-  $('#face').textContent = '😵';
-  $('#board').classList.add('done');
-  Sound.boom();
-  const b = $('#board');
-  b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
-  // show every mine, nearest to the blast first, and cross out wrong flags
-  const hr = Math.floor(hit / G.cols), hc = hit % G.cols;
-  for (let i = 0; i < G.mine.length; i++) {
-    if (G.mine[i] || G.state[i] === 2) {
-      const d = Math.max(Math.abs(Math.floor(i / G.cols) - hr), Math.abs(i % G.cols - hc));
-      paint(i, reduced() ? 0 : Math.min(d * 45, 900), true);
-    }
-  }
-  showResult('lose', 'Boom!', `You hit a mine after ${fmt(ms)}`);
-}
-function showResult(kind, title, text) {
-  const r = $('#result');
-  r.className = 'result ' + kind;
-  r.innerHTML = `<h2>${title}</h2><p>${text}</p><div class="row">
-    <button class="btn primary" id="again">Play again</button><button class="btn" id="resMenu">Change size</button></div>`;
-  $('#modes').classList.add('hidden'); $('#hint').classList.add('hidden');
-  $('#again').onclick = () => startGame(G.level);
-  $('#resMenu').onclick = showHome;
+function showResult(kind, title, chips) {
+  closeHint();
+  const icon = kind === 'win' ? 'trophy' : kind === 'time' ? 'clock' : null;
+  $('#result').className = 'result ' + kind;
+  $('#result').innerHTML = `<div class="top"><span class="ri">${icon ? ic(icon) : `<span style="width:30px;height:30px;color:#fff">${MINE_INK}</span>`}</span>
+    <div><h2>${title}</h2><div class="chips">${chips.filter(Boolean).map(c => c.startsWith('<span') ? c : `<span>${c}</span>`).join('')}</div></div></div>
+    <div class="row"><button class="primary" id="again">${ic('refresh')} Play again</button><button class="sec" id="resHome">Home</button></div>`;
+  $('#tools').classList.add('hidden');
+  $('#again').onclick = () => { newGame(G.mode, G.size); showGame(); };
+  $('#resHome').onclick = showHome;
   saveGame();
+  renderHistBadge();
 }
 
-/* ---------- drawing the board ---------- */
-const FLAG = '<svg viewBox="0 0 24 24"><use href="#i-flag"/></svg>';
-const MINE = '<svg viewBox="0 0 24 24" style="color:#1b1b1b"><use href="#i-mine"/></svg>';
-const CROSS = '<svg viewBox="0 0 24 24"><use href="#i-flag"/><path d="M4 4l16 16M20 4L4 20" stroke="#d32f2f" stroke-width="2.6" stroke-linecap="round"/></svg>';
-
-function buildBoard() {
-  const b = $('#board');
-  b.innerHTML = '';
-  b.className = 'board';
-  b.style.gridTemplateColumns = `repeat(${G.cols}, var(--cs))`;
-  const frag = document.createDocumentFragment();
-  cells = [];
-  for (let i = 0; i < G.rows * G.cols; i++) {
-    const r = Math.floor(i / G.cols), c = i % G.cols, el = document.createElement('button');
-    el.className = 'cell' + ((r + c) % 2 ? ' alt' : '');
-    el.dataset.i = i;
-    el.tabIndex = i === 0 ? 0 : -1;
-    cells.push(el); frag.appendChild(el);
+/* ---------- hints ---------- */
+let curHint = null;
+function showHint() {
+  if (!G || G.ended || G.busy) return;
+  const h = G.field.hint(); if (!h) return;
+  curHint = h;
+  if (h.kind !== 'start') {
+    G.hints++;
+    if (G.mode === 'time') { G.bonus -= TA.hintCost; floatText('−5s', false); }
   }
-  b.appendChild(frag);
-  for (let i = 0; i < cells.length; i++) paint(i);
-  sizeBoard();
+  view.highlight(h);
+  Sound.hint();
+  const sw = c => `<span class="sw" style="background:var(${c})"></span>`;
+  const n = h.clues.length ? G.field.count[h.clues[0]] : 0;
+  const T = {
+    start: () => `${ic('hand')} Tap anywhere. The first dig is always safe`,
+    safe: () => h.clues.length > 1 ? `${sw('--hclue')} These two numbers prove ${sw('--hsafe')} is safe` : `${sw('--hclue')} already has its ${n > 1 ? n + ' flags' : 'flag'}, so ${sw('--hsafe')} is safe`,
+    mine: () => h.clues.length > 1 ? `${sw('--hclue')} These two numbers prove ${sw('--hmine')} is a mine` : `${sw('--hclue')} has no other squares left, so ${sw('--hmine')} ${h.targets.length > 1 ? 'are mines' : 'is a mine'}`,
+    wrong: () => `${sw('--hmine')} This flag is wrong`,
+    luck: () => `No sure move. ${sw('--hsafe')} is safe`,
+  };
+  const text = T[h.kind]();
+  const doLabel = {start: 'Dig', safe: 'Dig', mine: 'Flag', wrong: 'Remove', luck: 'Dig'}[h.kind];
+  $('#hintbar').innerHTML = `<span class="hi">${ic('bulb')}</span><p>${text}</p>
+    <button class="primary doit" id="doHint">${ic('check')}${doLabel}</button><button class="x" id="closeHint" aria-label="Close">${ic('close')}</button>`;
+  $('#hintbar').classList.remove('hidden'); $('#tools').classList.add('hidden');
+  $('#doHint').onclick = applyHint;
+  $('#closeHint').onclick = closeHint;
+  updateHud(); saveGame();
 }
-function paint(i, delay = 0, anim = false) {
-  const el = cells[i], s = G.state[i];
-  if (anim) el.classList.add('anim');
-  el.classList.toggle('open', s === 1 || (G.over && !G.won && G.mine[i] && s !== 2));
-  el.classList.toggle('flag', s === 2);
-  el.classList.toggle('boom', i === G.boom);
-  el.style.setProperty('--d', delay + 'ms');
-  for (let k = 1; k <= 8; k++) el.classList.remove('n' + k);
-  let html = '', label;
-  const r = Math.floor(i / G.cols) + 1, c = i % G.cols + 1;
-  if (G.over && !G.won && G.mine[i] && s !== 2) { html = MINE; label = 'mine'; }
-  else if (G.over && !G.won && s === 2 && !G.mine[i]) { html = CROSS; label = 'wrong flag'; el.classList.add('wrong'); }
-  else if (s === 2) { html = FLAG; label = 'flagged'; }
-  else if (s === 1) {
-    const n = G.count[i];
-    if (n) { html = n; el.classList.add('n' + n); }
-    label = n ? n + ' mine' + (n > 1 ? 's' : '') + ' nearby' : 'empty';
-  } else label = 'hidden';
-  el.innerHTML = html;
-  el.setAttribute('aria-label', `Row ${r}, column ${c}, ${label}`);
+function applyHint() {
+  const h = curHint; if (!h || !G) return;
+  closeHint();
+  const f = G.field;
+  if (h.kind === 'start') { onAct(Math.floor(f.rows / 2) * f.cols + Math.floor(f.cols / 2)); return; }
+  if (h.kind === 'mine') { for (const t of h.targets) if (f.state[t] === 0) doFlag(t); afterMove(); return; }
+  if (h.kind === 'wrong') { doFlag(h.targets[0]); afterMove(); return; }
+  const out = {opened: [], boom: -1};
+  for (const t of h.targets) { const r = f.dig(t); if (r) out.opened.push(...r.opened); }
+  applyDig(out); afterMove();
 }
-function sizeBoard() {
-  if (!G) return;
-  const wrapW = $('#wrap').clientWidth - 8;
-  const availH = innerHeight - 230;
-  const byW = Math.floor(wrapW / G.cols), byH = Math.floor(availH / G.rows);
-  const cs = Math.max(22, Math.min(44, byW, Math.max(byH, 30)));
-  $('#board').style.setProperty('--cs', cs + 'px');
+function closeHint() {
+  curHint = null; view.clearHighlight();
+  if (!$('#hintbar').classList.contains('hidden')) {
+    $('#hintbar').classList.add('hidden');
+    if (!G || !G.ended) $('#tools').classList.remove('hidden');
+  }
 }
-addEventListener('resize', sizeBoard);
-function updateCounter() { $('#minesLeft').textContent = G ? G.mines - G.flags : 0; }
 
-/* ---------- taps, clicks and long-presses ---------- */
-(() => {
-  const board = $('#board');
-  let press = null;   // {i, x, y, timer, done}
-  const cellAt = e => { const el = e.target.closest('.cell'); return el ? +el.dataset.i : -1; };
-  board.addEventListener('contextmenu', e => e.preventDefault());
-  board.addEventListener('pointerdown', e => {
-    const i = cellAt(e); if (i < 0 || !G || G.over) return;
-    if (e.button === 2) { act(i, 'flag'); return; }
-    if (e.button !== 0) return;
-    if (G.state[i] !== 1) $('#face').textContent = '😮';
-    press = {i, x: e.clientX, y: e.clientY, done: false, timer: 0};
-    // hold a finger down to flag
-    if (e.pointerType !== 'mouse') press.timer = setTimeout(() => {
-      if (!press) return;
-      press.done = true;
-      $('#face').textContent = '🙂';
-      act(press.i, G.state[press.i] === 1 ? 'dig' : 'flag');
-    }, 380);
-  });
-  const cancel = () => { if (press) clearTimeout(press.timer); press = null; if (G && !G.over) $('#face').textContent = '🙂'; };
-  board.addEventListener('pointermove', e => {
-    if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 12) cancel();   // it's a scroll, not a tap
-  });
-  board.addEventListener('pointercancel', cancel);
-  board.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') cancel(); });
-  board.addEventListener('pointerup', e => {
-    if (!press) return;
-    const p = press; clearTimeout(p.timer); press = null;
-    if (G && !G.over) $('#face').textContent = '🙂';
-    if (p.done) return;
-    const i = cellAt(e);
-    if (i === p.i) act(i);
-  });
-  // keyboard: arrows move, Enter/Space digs, F flags
-  board.addEventListener('click', e => { if (e.detail === 0) { const i = cellAt(e); if (i >= 0) act(i); } });
-  board.addEventListener('keydown', e => {
-    const i = cellAt(e); if (i < 0 || !G) return;
-    const r = Math.floor(i / G.cols), c = i % G.cols;
-    const moves = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
-    if (moves[e.key]) {
-      e.preventDefault();
-      const rr = Math.min(G.rows - 1, Math.max(0, r + moves[e.key][0])), cc = Math.min(G.cols - 1, Math.max(0, c + moves[e.key][1]));
-      const j = rr * G.cols + cc;
-      cells[i].tabIndex = -1; cells[j].tabIndex = 0; cells[j].focus();
-    } else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); act(i, 'flag'); }
-  });
-})();
-
-$('#modes').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  mode = b.dataset.mode;
-  for (const x of $('#modes').children) x.setAttribute('aria-pressed', x === b);
+$('#dfseg').children[0].innerHTML = ic('dig') + 'Dig';
+$('#dfseg').children[1].innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flag"/></svg>Flag`;
+$('#dfseg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setTapMode(b.dataset.mode); });
+$('#hintBtn').onclick = showHint;
+$('#newBtn').onclick = () => { if (!G) return; if (G.started && !G.ended && G.mode !== 'time') { /* an unfinished game is just dropped */ } newGame(G.mode, G.size); showGame(); };
+$('#homeBtn').onclick = showHome;
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input')) return;
+  if (!$('#game').classList.contains('hidden') && !document.querySelector('.panel.show')) {
+    if (e.key === 'h' || e.key === 'H') showHint();
+    if (e.key === 'Escape' && curHint) { e.stopPropagation(); closeHint(); }
+  }
 });
-$('#face').onclick = () => { if (G) startGame(G.level); };
-$('#toMenu').onclick = showHome;
 
-/* ---------- screens ---------- */
-function startGame(level, resume) {
-  let rows = LEVELS[level].rows, cols = LEVELS[level].cols;
-  // Expert is wide: on a phone held upright, turn it on its side so it fits
-  if (rows < cols && innerWidth < 720 && innerHeight > innerWidth) [rows, cols] = [cols, rows];
-  G = resume || makeGame(level, rows, cols);
-  if (resume) countAll();
-  $('#home').classList.add('hidden');
-  $('#game').classList.remove('hidden');
-  $('#result').classList.add('hidden');
-  $('#modes').classList.remove('hidden'); $('#hint').classList.remove('hidden');
-  $('#face').textContent = '🙂';
-  $('#hint').textContent = touchFirst ? 'Hold a square to flag it · tap a number to clear around it'
-                                      : 'Right-click to flag · click a number to clear around it';
-  buildBoard();
-  updateCounter();
-  $('#clock').textContent = fmt(timeNow());
-  if (G.placed) G.startedAt = 0;
-  updatePaused();
-  saveGame();
-  scrollTo(0, 0);
+/* ======================================================================
+   HOME
+   ====================================================================== */
+// A chunky 5-row pixel font (just the letters we need)
+const FONT = {
+  M: ['10001','11011','10101','10001','10001'],
+  I: ['111','010','010','010','111'],
+  N: ['1001','1101','1011','1001','1001'],
+  E: ['1111','1000','1110','1000','1111'],
+  S: ['0111','1000','0110','0001','1110'],
+  W: ['10001','10001','10101','11011','10001'],
+  P: ['1110','1001','1110','1000','1000'],
+  R: ['1110','1001','1110','1010','1001'],
+};
+// The mine: drawn on a finer 17×17 grid, with shading, a shine, spikes with round tips, and a red light
+function bombPixels() {
+  const N = 17, c = 8, out = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const dx = x - c, dy = y - c, d = Math.hypot(dx, dy);
+    let k = null;
+    if (d <= 4.6) {
+      k = 'b1';                                                    // body
+      if (dx + dy > 3.2) k = 'b2';                                 // shadow side
+      if (d > 3.9 && dx + dy > 0) k = 'b3';                        // dark rim
+      const sh = Math.hypot(x - 6, y - 6);
+      if (sh < 2.2) k = 'b4';                                      // soft shine
+      if (sh < 1.1) k = 'b5';                                      // bright shine
+    } else {
+      const ax = dx === 0 || dy === 0, dg = Math.abs(dx) === Math.abs(dy);
+      if (ax && d <= 7.2) k = d > 6.2 ? 'tip' : 'sp';              // straight spikes
+      else if (dg && d <= 7.2) k = d > 6.2 ? 'tip' : 'sp';         // diagonal spikes
+      else if (ax || dg) {}
+      // round knobs on the straight spike tips
+      if (!k && ((Math.abs(dx) === 1 && Math.abs(dy) === 7) || (Math.abs(dy) === 1 && Math.abs(dx) === 7))) k = 'tip';
+    }
+    if (k) out.push([x, y, k]);
+  }
+  out.push([10, 10, 'led']);                                       // a little red light
+  return out;
 }
+const BOMB_COL = {b1: '#3a4050', b2: '#262a35', b3: '#171a22', b4: '#8b95ab', b5: '#ffffff', sp: '#2c313d', tip: '#454c5e', led: '#ff4d3d'};
+function drawTitle() {
+  const lines = [['M', 'I', 'N', 'E', '*'], ['S', 'W', 'E', 'E', 'P', 'E', 'R']];
+  const BS = .56, BW = 17 * BS;                                      // the mine's size in title pixels
+  const width = g => g === '*' ? BW : FONT[g][0].length;
+  const gap = g => g === '*' ? 1.4 : 1;
+  const lw = line => line.reduce((s, g, k) => s + width(g) + (k ? gap(g) : 0), 0);
+  const W = Math.max(...lines.map(lw)), top = 2, lineGap = 2.4;
+  let out = `<defs><linearGradient id="tgrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" style="stop-color:var(--tg1)"/><stop offset=".55" style="stop-color:var(--tg2)"/><stop offset="1" style="stop-color:var(--tg3)"/></linearGradient></defs>`;
+  let n = 0;
+  lines.forEach((line, li) => {
+    let x = (W - lw(line)) / 2;
+    const y0 = top + li * (5 + lineGap);
+    line.forEach((g, k) => {
+      if (k) x += gap(g);
+      if (g === '*') {
+        const bx = x, by = y0 + 2.5 - BW / 2;
+        let px = '';
+        for (const [X, Y, cls] of bombPixels())
+          px += `<rect${cls === 'led' ? ' class="spark"' : ''} x="${(bx + X * BS).toFixed(2)}" y="${(by + Y * BS).toFixed(2)}" width="${BS + .02}" height="${BS + .02}" fill="${BOMB_COL[cls]}"/>`;
+        out += `<g class="bomb">${px}</g>`;
+      } else {
+        // three layers: a drop shadow, a dark outline, then the shaded pixels
+        let sh = '', ol = '', px = '';
+        FONT[g].forEach((row, ry) => [...row].forEach((v, rx) => {
+          if (v !== '1') return;
+          const X = x + rx, Y = y0 + ry;
+          sh += `<rect class="sh" x="${X - .22}" y="${Y + .3}" width="1.44" height="1.44"/>`;
+          ol += `<rect class="ol" x="${X - .22}" y="${Y - .22}" width="1.44" height="1.44"/>`;
+          px += `<rect class="px" x="${X}" y="${Y}" width="1.02" height="1.02"/>`;
+        }));
+        out += `<g class="lt" style="animation-delay:${n++ * 45}ms">${sh}${ol}${px}</g>`;
+      }
+      x += width(g);
+    });
+  });
+  const H = top + 2 * 5 + lineGap + 1;
+  const svg = $('#ptitle');
+  svg.setAttribute('viewBox', `-.6 0 ${W + 1.2} ${H}`);
+  svg.innerHTML = out;
+}
+
+// mode card drawings
+const tile = (x, y, cls, s = 29) => `<rect class="${cls}" x="${x}" y="${y}" width="${s}" height="${s}" rx="5"/>`;
+const num = (x, y, n) => `<text class="a-t a-n${n}" x="${x}" y="${y}">${n}</text>`;
+const flagAt = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><path class="a-pole" d="M-3 9V-9"/><path class="a-flag" d="M-2-9l11 4.5L-2 0z"/></g>`;
+const mineAt = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})" class="a-mine"><path d="M0-10v20M-10 0h20M-7-7l14 14M7-7L-7 7" stroke="var(--minec)" stroke-width="2.4" stroke-linecap="round"/><circle r="6.5"/></g>`;
+const hexPath = (cx, cy, r) => { const p = []; for (let k = 0; k < 6; k++) { const a = Math.PI / 180 * (60 * k - 90); p.push((cx + r * Math.cos(a)).toFixed(1) + ',' + (cy + r * Math.sin(a)).toFixed(1)); } return p.join(' '); };
+const ART = {
+  classic: () => {
+    const L = [['o1', 1], ['o2', 2], ['h1'], ['o2', 1], ['h2', 'f'], ['h1'], ['o1', 0], ['o2', 1], ['h2']];
+    let s = '';
+    L.forEach(([c, v], k) => { const x = 4 + (k % 3) * 31, y = 4 + Math.floor(k / 3) * 31;
+      s += tile(x, y, 'a-' + c); if (v === 'f') s += flagAt(x + 13, y + 15); else if (v) s += num(x + 14.5, y + 15.5, v); });
+    return `<svg class="mart" viewBox="0 0 100 100" aria-hidden="true">${s}</svg>`;
+  },
+  hex: () => {
+    const r = 17, w = r * Math.sqrt(3), cells = [[50, 50, 'o1', 2], [50 - w / 2, 50 - 1.5 * r, 'o2', 1], [50 + w / 2, 50 - 1.5 * r, 'h1', 'f'],
+      [50 - w, 50, 'o2', 1], [50 + w, 50, 'h2'], [50 - w / 2, 50 + 1.5 * r, 'h3'], [50 + w / 2, 50 + 1.5 * r, 'h1', 'f']];
+    let s = '';
+    for (const [x, y, c, v] of cells) { s += `<polygon class="a-${c}" points="${hexPath(x, y, r - 1.2)}"/>`; if (v === 'f') s += flagAt(x - 1, y, .95); else if (v) s += num(x, y + .5, v); }
+    return `<svg class="mart" viewBox="0 0 100 100" aria-hidden="true">${s}</svg>`;
+  },
+  time: () => {
+    let s = '';
+    for (let k = 0; k < 9; k++) { const x = 4 + (k % 3) * 31, y = 4 + Math.floor(k / 3) * 31; s += tile(x, y, k === 0 || k === 1 || k === 3 ? 'a-o' + (1 + k % 2) : 'a-h' + (1 + k % 2)); }
+    s += num(19.5, 19.5, 1) + num(50.5, 19.5, 1) + num(19.5, 50.5, 2) + flagAt(48, 50);
+    s += `<circle class="a-ring" cx="72" cy="72" r="23"/><path class="a-hand" d="M72 58v14l9 6"/><path class="a-hand" d="M66 44.5h12"/>`;
+    return `<svg class="mart" viewBox="0 0 100 100" aria-hidden="true">${s}</svg>`;
+  },
+};
+
+let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
+function renderModes() {
+  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${MODES[id].name}">
+    ${ART[id]()}<h2>${MODES[id].name}</h2></button>`).join('');
+  $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
+  $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
+  requestAnimationFrame(() => scrollToMode(modeIdx, true));
+}
+function scrollToMode(k, instant) {
+  const card = $('#modes').children[k]; if (!card) return;
+  const m = $('#modes');
+  m.scrollTo({left: card.offsetLeft - (m.clientWidth - card.clientWidth) / 2, behavior: instant || reduced() ? 'auto' : 'smooth'});
+}
+function setMode(k) {
+  if (k === modeIdx && $('#modes').children[k].classList.contains('active')) return;
+  modeIdx = k;
+  [...$('#modes').children].forEach((c, j) => c.classList.toggle('active', j === k));
+  [...$('#modeDots').children].forEach((c, j) => c.classList.toggle('on', j === k));
+  $('#modePrev').disabled = k === 0; $('#modeNext').disabled = k === MODE_IDS.length - 1;
+  prefs.mode = MODE_IDS[k]; savePrefs();
+  renderSizes(); renderPlay();
+}
+(() => {   // swiping and dragging the mode cards
+  const m = $('#modes');
+  let t = 0;
+  m.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const mid = m.scrollLeft + m.clientWidth / 2;
+      let best = 0, bd = 1e9;
+      [...m.children].forEach((c, k) => { const d = Math.abs(c.offsetLeft + c.clientWidth / 2 - mid); if (d < bd) { bd = d; best = k; } });
+      setMode(best);
+    }, 60);
+  });
+  let drag = null;
+  m.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = {x: e.clientX, s: m.scrollLeft, moved: false}; });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 5) { drag.moved = true; m.classList.add('dragging'); }
+    if (drag.moved) m.scrollLeft = drag.s - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!drag) return;
+    const moved = drag.moved; drag = null; m.classList.remove('dragging');
+    if (moved) { m._noClick = true; setTimeout(() => m._noClick = false, 50); requestAnimationFrame(() => m.dispatchEvent(new Event('scroll'))); }
+  });
+  m.addEventListener('click', e => {
+    if (m._noClick) return;
+    const c = e.target.closest('.mode'); if (!c) return;
+    const k = +c.dataset.k;
+    if (k !== modeIdx) { scrollToMode(k); setMode(k); } else play();
+  });
+  $('#modePrev').onclick = () => { if (modeIdx > 0) { scrollToMode(modeIdx - 1); setMode(modeIdx - 1); } };
+  $('#modeNext').onclick = () => { if (modeIdx < MODE_IDS.length - 1) { scrollToMode(modeIdx + 1); setMode(modeIdx + 1); } };
+})();
+function renderSizes() {
+  const id = MODE_IDS[modeIdx], M = MODES[id], cur = prefs.size[id];
+  $('#sizeSeg').innerHTML = Object.entries(M.sizes).map(([k, s]) =>
+    `<button role="radio" aria-checked="${k === cur}" class="${k === cur ? 'on' : ''}" data-s="${k}">${sizeDots(k)}${s.label}</button>`).join('');
+}
+$('#sizeSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  prefs.size[MODE_IDS[modeIdx]] = b.dataset.s; savePrefs();
+  renderSizes(); renderPlay();
+});
+function renderPlay() {
+  const id = MODE_IDS[modeIdx], s = load(saveKey(id), null);
+  const r = (records()[id] || {})[prefs.size[id]];
+  if (s && MODES[id].sizes[s.size]) {
+    $('#playBtn').innerHTML = `<span>Continue</span><small>${MODES[id].sizes[s.size].label} · ${id === 'time' ? s.score + ' boards' : fmt(s.elapsed)}</small>`;
+    $('#newBtnHome').classList.remove('hidden');
+  } else {
+    $('#playBtn').innerHTML = `<span>Play</span>`;
+    $('#newBtnHome').classList.add('hidden');
+  }
+  let best = '';
+  if (r) {
+    if (id === 'time') best = r.best ? `<span>${ic('trophy', 'gold')}${r.best} boards</span>` : '';
+    else best = (r.best ? `<span>${ic('trophy', 'gold')}${fmt(r.best, true)}</span>` : '') + (r.wins ? `<span>${ic('check')}${r.wins}</span>` : '') + (r.streak > 1 ? `<span>${ic('fire')}${r.streak}</span>` : '');
+  }
+  $('#modeBest').innerHTML = best;
+}
+function play(fresh) {
+  const id = MODE_IDS[modeIdx], s = !fresh && load(saveKey(id), null);
+  if (s && resumeGame(s)) showGame();
+  else { newGame(id, prefs.size[id]); showGame(); }
+}
+$('#playBtn').onclick = () => play(false);
+$('#newBtnHome').innerHTML = ic('refresh');
+$('#newBtnHome').onclick = () => { keep(saveKey(MODE_IDS[modeIdx]), null); play(true); };
 function showHome() {
+  closeHint();
   $('#game').classList.add('hidden');
   $('#home').classList.remove('hidden');
+  updatePaused(); saveGame();
+  renderPlay(); renderHistBadge();
+  requestAnimationFrame(() => scrollToMode(modeIdx, true));
+}
+
+/* ======================================================================
+   PANELS
+   ====================================================================== */
+function openPanel(id) {
+  $('#' + id).classList.add('show');
   updatePaused();
-  renderHome();
+  setTimeout(() => { const b = $('#' + id + ' [data-close]'); if (b) b.focus({preventScroll: true}); }, 50);
 }
-function renderHome() {
-  const rec = records(), save = loadSave();
-  let html = '';
-  if (save) html += `<button class="lvl cont" data-resume="1"><span class="ic">▶</span><span class="tx"><b>Continue</b>
-    <small>${LEVELS[save.level].name} · ${fmt(save.elapsed)} in</small></span></button>`;
-  for (const [k, L] of Object.entries(LEVELS)) {
-    const r = rec[k];
-    const best = r && r.best ? '🏆 ' + fmt(r.best, true) : '';
-    html += `<button class="lvl" data-level="${k}"><span class="ic">${L.icon}</span><span class="tx"><b>${L.name}</b>
-      <small>${L.rows} × ${L.cols} · ${L.mines} mines${r && r.wins ? ` · ${r.wins} win${r.wins > 1 ? 's' : ''}` : ''}</small></span>
-      ${best ? `<span class="best">${best}</span>` : ''}</button>`;
-  }
-  $('#levels').innerHTML = html;
-  $('#howtoKeys').textContent = touchFirst ? 'Tap to dig, hold to plant a flag.' : 'Click to dig, right-click to plant a flag.';
+function closePanel(p) {
+  p = p || document.querySelector('.panel.show'); if (!p) return;
+  p.classList.remove('show');
+  if (p.id === 'howPanel') How.stop();
+  updatePaused();
 }
-$('#levels').addEventListener('click', e => {
-  const b = e.target.closest('.lvl'); if (!b) return;
-  if (b.dataset.resume) { const s = loadSave(); if (s) { startGame(s.level, s); return; } }
-  if (b.dataset.level) startGame(b.dataset.level);
+document.querySelectorAll('.panel [data-close]').forEach(b => b.onclick = () => closePanel(b.closest('.panel')));
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.panel.show')) { e.stopImmediatePropagation(); closePanel(); } }, true);
+// pull a panel down by its top to close it
+document.querySelectorAll('.panel').forEach(p => {
+  let y0 = null;
+  p.addEventListener('pointerdown', e => { if (p.scrollTop <= 0 && e.target.closest('.grab, .phead h1')) { y0 = e.clientY; p.classList.add('dragging'); p.style.transition = 'none'; } });
+  addEventListener('pointermove', e => { if (y0 != null) p.style.transform = `translateY(${Math.max(0, e.clientY - y0)}px)`; });
+  addEventListener('pointerup', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; y0 = null; p.style.transition = ''; p.style.transform = '';
+    if (dy > 90) closePanel(p);
+  });
 });
-renderHome();
+
+/* ---------- Themes ---------- */
+function themePreview(id) {
+  const TH = window.MS_THEMES, t = TH.T[TH.resolve(id)], v = Object.assign({}, t.dark ? TH.DARK : TH.LIGHT, t.v);
+  const L = [['o1', 1], ['o2', 2], ['h1'], ['o2', 1], ['h2', 'f'], ['h1'], ['h1'], ['h2'], ['h1']];
+  let s = '';
+  L.forEach(([c, n], k) => { const x = 4 + (k % 3) * 31, y = 4 + Math.floor(k / 3) * 31;
+    s += `<rect x="${x}" y="${y}" width="29" height="29" rx="5" fill="${v[c]}"/>`;
+    if (n === 'f') s += `<g transform="translate(${x + 13} ${y + 15})"><path d="M-3 9V-9" stroke="${v.pole}" stroke-width="2.6" stroke-linecap="round"/><path d="M-2-9l11 4.5L-2 0z" fill="${v.flag}"/></g>`;
+    else if (n) s += `<text x="${x + 14.5}" y="${y + 15.5}" fill="${v['n' + n]}" style="font:900 19px Nunito,system-ui,sans-serif;text-anchor:middle;dominant-baseline:central">${n}</text>`;
+  });
+  let bg = v.bg;
+  if (id === 'auto') { const a = TH.T.meadow.v.bg, b = TH.T.night.v.bg; bg = `linear-gradient(135deg,${a} 50%,${b} 50%)`; }
+  return `<div class="tprev" style="background:${bg}"><svg viewBox="0 0 100 100" aria-hidden="true">${s}</svg></div>`;
+}
+function renderThemes() {
+  const TH = window.MS_THEMES;
+  $('#tgrid').innerHTML = TH.ORDER.map(id => `<button class="tcard${prefs.theme === id ? ' on' : ''}" data-t="${id}" aria-pressed="${prefs.theme === id}">
+    ${themePreview(id)}<span class="tlabel">${id === 'auto' ? 'Auto' : TH.T[id].name}${prefs.theme === id ? ic('check') : ''}</span></button>`).join('');
+}
+$('#tgrid').addEventListener('click', e => {
+  const b = e.target.closest('.tcard'); if (!b) return;
+  prefs.theme = b.dataset.t; savePrefs();
+  window.MS_THEMES.apply(prefs.theme);
+  renderThemes();
+});
+$('#themesBtn').onclick = () => { renderThemes(); openPanel('themePanel'); };
+
+/* ---------- History ---------- */
+let histFilter = 'all';
+function renderHistBadge() {
+  const n = history().filter(h => h.t > (prefs.histSeen || 0)).length;
+  $('#histBadge').textContent = n > 99 ? '99+' : n;
+  $('#histBadge').classList.toggle('hidden', !n);
+}
+function renderHistory() {
+  $('#hfilt').innerHTML = [['all', 'all', 'All'], ...MODE_IDS.map(id => [id, MODES[id].icon, id === 'time' ? 'Time' : MODES[id].name])]
+    .map(([id, icon, label]) => `<button class="${histFilter === id ? 'on' : ''}" data-f="${id}">${ic(icon)}${label}</button>`).join('');
+  const all = history(), list = all.filter(h => histFilter === 'all' || h.m === histFilter);
+  // totals
+  const played = list.length, noTime = list.filter(h => h.m !== 'time'), wins = noTime.filter(h => h.w).length;
+  let streak = 0, run = 0;
+  for (const h of [...noTime].reverse()) { run = h.w ? run + 1 : 0; streak = Math.max(streak, run); }
+  const taBest = Math.max(0, ...list.filter(h => h.m === 'time').map(h => h.sc));
+  const tiles = [[played, ic('grid') + 'Played'], [noTime.length ? Math.round(wins / noTime.length * 100) + '%' : '–', ic('check') + 'Won'],
+    [streak || '–', ic('fire') + 'Streak'], [histFilter === 'time' || (histFilter === 'all' && taBest) ? taBest : wins, histFilter === 'time' || (histFilter === 'all' && taBest) ? ic('clock') + 'Boards' : ic('trophy') + 'Wins']];
+  $('#hsum').innerHTML = tiles.map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+  const day = t => { const d = new Date(t), now = new Date(); const y = new Date(now); y.setDate(now.getDate() - 1);
+    const same = (a, b) => a.toDateString() === b.toDateString();
+    return same(d, now) ? d.toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'}) : same(d, y) ? 'Yesterday' : d.toLocaleDateString(undefined, {day: 'numeric', month: 'short'}); };
+  $('#hlist').innerHTML = list.length ? list.slice(0, 150).map(h => {
+    const M = MODES[h.m] || MODES.classic, sz = M.sizes[h.z] || {label: ''};
+    const badge = h.m === 'time' ? 't' : h.w ? 'w' : 'l';
+    const val = h.m === 'time' ? `${h.sc} ${ic('grid')}` : h.w ? fmt(h.ms, true) : `<span style="color:var(--boom)">${fmt(h.ms)}</span>`;
+    return `<div class="hrow"><span class="hb ${badge}">${h.m === 'time' ? ic('clock') : h.w ? ic(M.icon) : ic('close')}</span>
+      <span class="hm"><b>${M.name}</b><small>${sz.label} · ${day(h.t)}</small></span>
+      <span class="hv">${h.b ? ic('trophy') : ''}${h.h ? ic('bulb') : ''}${val}</span></div>`;
+  }).join('') : `<p class="hempty">${ic('history')}No games yet</p>`;
+  $('#histClear').classList.toggle('hidden', !all.length);
+  $('#histClear').textContent = 'Clear history';
+}
+$('#hfilt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { histFilter = b.dataset.f; renderHistory(); } });
+$('#histClear').onclick = () => {
+  const b = $('#histClear');
+  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to clear'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Clear history'; }, 3000); return; }
+  delete b.dataset.sure; keep(HIST_KEY, []); renderHistory(); renderHistBadge();
+};
+$('#historyBtn').onclick = () => { prefs.histSeen = Date.now(); savePrefs(); renderHistBadge(); renderHistory(); openPanel('histPanel'); };
+
+/* ---------- How to play: little boards you can try ---------- */
+const How = (() => {
+  let step = 0, cleanup = null, demo = null;
+  const stage = () => $('#howStage');
+  const capTxt = (icon, html, done) => { const c = $('#howCap'); c.className = 'cap' + (done ? ' done' : ''); c.innerHTML = `<span class="ci">${icon}</span><span>${html}</span>`; };
+  const flagIcon = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><use href="#i-flag"/></svg>`;
+  // one 6×6 field shared by the first few steps
+  const MINES = [4, 11, 19, 30, 23];
+  const base = () => { const f = new Field({rows: 6, cols: 6, mines: MINES.length}); f.setMines(MINES); return f; };
+  const dug = () => { const f = base(); f.dig(27); return f; };
+  function makeBoard(f, onAct) {
+    stage().innerHTML = '<div class="board"></div>';
+    const v = new BoardView(stage().firstChild, {onAct});
+    v.setField(f); demo = v; relayout();
+    return v;
+  }
+  function relayout() { if (demo) { const w = Math.min(stage().clientWidth - 32, 330); demo.layout(w, 300, 20, 54); } }
+  // the first mine next to the dug area, and a number next to it that it completes
+  function flagSpot(f) {
+    for (const m of MINES) {
+      if (!f.nb[m].some(j => f.state[j] === 1)) continue;
+      for (const c of f.nb[m]) if (f.state[c] === 1 && f.count[c] === 1 && f.nb[c].some(j => f.state[j] === 0 && !f.mine[j])) return {m, c};
+    }
+    return null;
+  }
+  const STEPS = [
+    {title: 'Dig', run() {
+      const f = base();
+      const v = makeBoard(f, i => {
+        if (f.over) return;
+        const r = f.state[i] === 0 ? f.dig(i) : null; if (!r) return;
+        v.mark(27, 'tapme', false);
+        for (const [j, d] of r.opened) v.paint(j, Math.min(d * 40, 500), true);
+        if (r.boom >= 0) { v.paintAll(); capTxt(MINE_INK, 'Boom! Try the glowing square'); setTimeout(() => STEPS[0].run(), 1100); return; }
+        Sound.dig(r.opened.length);
+        capTxt(ic('check'), 'Empty areas open up by themselves', true);
+      });
+      v.mark(27, 'tapme');
+      capTxt(ic('hand'), touchFirst ? 'Tap a square to dig' : 'Click a square to dig');
+    }},
+    {title: 'Numbers', run() {
+      const f = dug(), v = makeBoard(f, () => {});
+      const nums = []; for (let i = 0; i < f.n; i++) if (f.state[i] === 1 && f.count[i]) nums.push(i);
+      let k = 0;
+      const show = () => {
+        const c = nums[k++ % nums.length];
+        v.highlight({kind: 'mine', clues: [c], targets: f.nb[c].filter(j => f.mine[j])});
+      };
+      show(); const t = setInterval(show, 1700);
+      capTxt(`<b class="n2" style="font-size:1.3rem">2</b>`, `= 2 mines touching it`);
+      return () => clearInterval(t);
+    }},
+    {title: 'Flag', run() {
+      const f = dug(), spot = flagSpot(f), v = makeBoard(f, i => {
+        if (i !== spot.m || f.state[i] === 2) return;
+        f.toggleFlag(i); v.paint(i, 0, true); v.mark(i, 'tapme', false); Sound.flag(true); vibrate(18);
+        capTxt(flagIcon, 'Flagged. Flags mark mines so you don\'t dig them', true);
+      });
+      v.highlight({kind: 'mine', clues: [spot.c], targets: []}); v.mark(spot.m, 'tapme');
+      capTxt(flagIcon, touchFirst ? 'Hold the glowing square to flag it' : 'Right-click the glowing square to flag it');
+    }},
+    {title: 'Clear around', run() {
+      const f = dug(), spot = flagSpot(f); f.toggleFlag(spot.m);
+      const v = makeBoard(f, i => {
+        if (i !== spot.c) return;
+        const r = f.chord(i); if (!r) return;
+        v.clearHighlight(); v.mark(spot.c, 'tapme', false);
+        for (const [j, d] of r.opened) v.paint(j, d * 50, true);
+        Sound.dig(r.opened.length);
+        capTxt(ic('check'), 'Its other squares are dug for you', true);
+      });
+      v.mark(spot.c, 'tapme');
+      capTxt(ic('hand'), `Tap a number once its flags are done`);
+    }},
+    {title: 'Stuck?', run() {
+      const f = dug(), spot = flagSpot(f); f.toggleFlag(spot.m);
+      const h = f.hint();
+      const v = makeBoard(f, i => {
+        if (!h.targets.includes(i) || h.kind !== 'safe') return;
+        const r = f.dig(i); if (!r) return;
+        for (const [j, d] of r.opened) v.paint(j, d * 40, true);
+        v.mark(i, 'hsafe', false); h.targets = h.targets.filter(t => t !== i);
+        Sound.dig(1);
+        if (!h.targets.length) { v.clearHighlight(); capTxt(ic('check'), 'Use hints any time. Best times only count without them', true); }
+      });
+      stage().insertAdjacentHTML('beforeend', `<div class="mini-tools"><span class="bulb pulse">${ic('bulb')}Hint</span></div>`);
+      setTimeout(() => { v.highlight(h); Sound.hint(); }, 700);
+      capTxt(ic('bulb'), `<span><span class="sw" style="display:inline-block;width:14px;height:14px;border-radius:4px;background:var(--hclue);vertical-align:middle"></span> proves <span class="sw" style="display:inline-block;width:14px;height:14px;border-radius:4px;background:var(--hsafe);vertical-align:middle"></span> is safe. Tap it</span>`);
+    }},
+    {title: 'Hexagon', run() {
+      const f = new Field({rows: 5, cols: 5, mines: 2, hex: true});
+      f.setMines([7, 16]);
+      for (let i = 0; i < f.n; i++) if (!f.mine[i]) f.state[i] = 1;
+      f.opened = f.n - 2;
+      const v = makeBoard(f, () => {});
+      v.highlight({kind: 'mine', clues: [12], targets: [7, 16]});
+      capTxt(ic('hex'), `Six neighbours instead of eight`);
+    }},
+    {title: 'Time Attack', run() {
+      stage().innerHTML = `<div class="stats" style="margin:0"><span class="chip" id="hwClock"></span><span class="chip" id="hwScore"></span></div><div class="board"></div>
+        <div class="legend"><span class="up">${ic('grid')}+5s</span><span class="down"><svg viewBox="0 0 24 24" style="color:var(--boom)"><use href="#i-mine"/></svg>−10s</span><span class="down">${ic('bulb')}−5s</span></div>`;
+      const v = new BoardView(stage().querySelector('.board'), {}); demo = v;
+      let score = 0, t = 60, f;
+      const fresh = () => { f = new Field({rows: 5, cols: 5, mines: 3}); f.place(12); f.state.fill(0); f.opened = 0; v.setField(f); relayout(); };
+      fresh();
+      const draw = () => { $('#hwClock').innerHTML = ic('clock') + fmt(t * 1000); $('#hwScore').innerHTML = ic('grid') + score; };
+      draw();
+      let order = [];
+      const tick = setInterval(() => {
+        if (!order.length) { order = []; for (let i = 0; i < f.n; i++) if (!f.mine[i]) order.push(i); }
+        const i = order.shift();
+        if (f.state[i] === 0) { const r = f.dig(i); if (r) for (const [j, d] of r.opened) v.paint(j, d * 30, true); }
+        if (f.opened === f.n - f.mines) {
+          f.checkWin(); v.paintAll(); score++; t += 5; draw(); order = [];
+          const b = v.el; b.classList.remove('slidein'); setTimeout(() => { fresh(); b.classList.remove('slidein'); void b.offsetWidth; b.classList.add('slidein'); }, 500);
+        }
+      }, 260);
+      const clock = setInterval(() => { t = t > 1 ? t - 1 : 60; draw(); }, 1000);
+      capTxt(ic('clock'), 'Clear as many boards as you can');
+      return () => { clearInterval(tick); clearInterval(clock); };
+    }},
+  ];
+  function go(k) {
+    if (cleanup) { cleanup(); cleanup = null; }
+    demo = null;
+    step = Math.max(0, Math.min(STEPS.length - 1, k));
+    $('#howTitle').innerHTML = `<span class="hn">${step + 1}</span>${STEPS[step].title}`;
+    $('#howCount').textContent = `${step + 1} / ${STEPS.length}`;
+    $('#howDots').innerHTML = STEPS.map((_, j) => `<i class="${j === step ? 'on' : ''}"></i>`).join('');
+    $('#howPrev').style.visibility = step ? 'visible' : 'hidden';
+    $('#howNext').textContent = step === STEPS.length - 1 ? 'Play' : 'Next';
+    cleanup = STEPS[step].run() || null;
+  }
+  $('#howPrev').onclick = () => go(step - 1);
+  $('#howNext').onclick = () => { if (step === STEPS.length - 1) { closePanel($('#howPanel')); if (!$('#home').classList.contains('hidden')) play(false); } else go(step + 1); };
+  return {
+    open() { openPanel('howPanel'); requestAnimationFrame(() => go(0)); },
+    stop() { if (cleanup) { cleanup(); cleanup = null; } },
+    relayout,
+  };
+})();
+$('#howBtn').onclick = () => How.open();
+
+/* ---------- start ---------- */
+fillIcons();
+drawTitle();
+renderModes(); setMode(modeIdx); renderSizes(); renderPlay(); renderHistBadge();
+$('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
 
 /* ---------- Rizzo Games hooks (menu, updates) ---------- */
+if (RZ) RZ.onChange(() => {});
 window.RizzoHooks = {
-  onMenuOpen: () => updatePaused(),             // the clock stops while the menu is up
+  onMenuOpen: () => updatePaused(),
   onMenuClose: () => updatePaused(),
-  previewSound: () => Sound.dig(2),             // let go of a slider: hear the new level
-  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over}; },
-  afterReload(info) { const s = info && info.inGame && loadSave(); if (s) startGame(s.level, s); },
+  previewSound: () => Sound.dig(2),
+  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.ended ? G.mode : null}; },
+  afterReload(info) { const s = info && info.inGame && load(saveKey(info.inGame), null); if (s && resumeGame(s)) showGame(); },
 };
 </script>
 </body>
