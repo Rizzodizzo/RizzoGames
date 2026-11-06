@@ -144,13 +144,16 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 
 /* ================= GAME ================= */
 .game{height:100%;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto}
-.ghead{flex:none;width:100%;max-width:560px;display:flex;align-items:center;gap:10px;padding-left:52px;min-height:44px}
+.ghead{flex:none;width:100%;max-width:560px;display:flex;align-items:center;gap:10px;padding:0 52px;min-height:44px;box-sizing:border-box}   /* equal room both sides (the R button sits on the left), so the title is centred */
 .gtitle{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.1}
 .gtitle b{font-size:1.12rem;font-weight:900}
 .gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
 .stats{flex:none;display:flex;gap:10px;justify-content:center;margin:12px 0 10px;position:relative}
 .chip{position:relative;display:inline-flex;align-items:center;gap:7px;background:var(--panel);border-radius:999px;padding:7px 14px;font-weight:900;font-variant-numeric:tabular-nums;font-size:1.05rem;box-shadow:0 2px 8px var(--shade);min-width:84px;justify-content:center;transition:color .2s,background .2s}
 .chip svg{width:18px;height:18px}
+#fastChip svg{color:#f5a623}
+#fastChip.pop{animation:fastpop .5s ease}
+@keyframes fastpop{40%{transform:scale(1.15)}}
 .chip.low{color:#fff;background:var(--boom);animation:tick 1s steps(1) infinite}
 @keyframes tick{50%{filter:brightness(1.25)}}
 .float{position:absolute;top:-16px;left:50%;font-weight:900;font-size:1rem;pointer-events:none;animation:floatup 1.1s var(--ease) both;white-space:nowrap}
@@ -290,6 +293,25 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .hrow .hm small{color:var(--muted);font-weight:700;font-size:.8rem}
 .hrow .hv{font-weight:900;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
 .hrow .hv svg.ic{width:16px;height:16px;color:#c88a00}
+.hrow.rp{cursor:pointer}
+.hrow .hplay{display:grid;place-items:center;width:28px;height:28px;margin-left:4px;border-radius:50%;background:var(--accent);font-style:normal}
+.hrow .hv .hplay svg.ic{width:14px;height:14px;color:var(--onaccent)}
+/* timelapse */
+#rpPanel .panelin{display:flex;flex-direction:column;min-height:100%;box-sizing:border-box}
+.rpsub{margin:-8px 0 10px;text-align:center;color:var(--muted);font-weight:800;font-size:.85rem}
+.rpwrap{flex:1 1 0;min-height:220px;display:flex;align-items:center;justify-content:center;position:relative}
+#rpBoard{pointer-events:none}
+.rpctl{display:flex;align-items:center;gap:10px;margin:14px 0 10px}
+.rpctl .rpplay{width:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center;flex:none}
+.rpctl .rpplay svg.ic{width:22px;height:22px}
+#rpScrub{flex:1;min-width:0;accent-color:var(--accent)}
+.rpspeed{flex:none;min-width:52px;padding:10px 8px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:900;font-variant-numeric:tabular-nums}
+.rpstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rpstats div{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.rpstats span{display:block;font-size:.72rem;font-weight:800;color:var(--muted)}
+.rpstats b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+.rpstats .hidden{display:none}
+.rpstats:has(.hidden){grid-template-columns:repeat(3,1fr)}
 .hempty{text-align:center;color:var(--muted);font-weight:800;padding:30px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .hempty svg.ic{width:40px;height:40px;opacity:.6}
 .danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
@@ -341,6 +363,7 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
       <span class="chip" id="minesChip" aria-label="Mines left"><svg viewBox="0 0 24 24" aria-hidden="true" style="color:var(--ink)"><use href="#i-mine"/></svg><span id="minesLeft">10</span></span>
       <span class="chip" id="clockChip" aria-label="Time"><span data-ic="clock"></span><span id="clockTxt">0:00</span></span>
       <span class="chip hidden" id="scoreChip" aria-label="Boards cleared"></span>
+      <span class="chip hidden" id="fastChip" aria-label="Fastest board this run"></span>
     </div>
     <div class="wrap" id="wrap"><div class="board" id="board" role="grid" aria-label="Minefield"></div></div>
     <div class="tools" id="tools">
@@ -378,6 +401,15 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
   <div class="hsum" id="hsum"></div>
   <div class="hlist" id="hlist"></div>
   <button class="danger hidden" id="histClear">Clear history</button>
+</div></div>
+
+<div class="panel" id="rpPanel" role="dialog" aria-label="Timelapse"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Back"></button><h1 id="rpTitle">Timelapse</h1><span class="sp"></span></div>
+  <p class="rpsub" id="rpSub"></p>
+  <div class="rpwrap" id="rpWrap"><div class="board" id="rpBoard" aria-label="Timelapse board"></div></div>
+  <div class="rpctl"><button class="primary rpplay" id="rpPlay" aria-label="Play"></button><input type="range" id="rpScrub" min="0" max="1000" step="1" value="0" aria-label="Timelapse position"><button class="rpspeed" id="rpSpeed" aria-label="Speed">1×</button></div>
+  <div class="rpstats"><div><span>Time</span><b id="rpTime">0:00</b></div><div><span>Moves</span><b id="rpMoves">0</b></div><div><span>Flags</span><b id="rpFlags">0</b></div><div><span>Board</span><b id="rpBoards">1</b></div></div>
 </div></div>
 
 <!-- shared drawings -->
@@ -419,6 +451,7 @@ const ICONS = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.5v.6"/><path d="M12 17.2v.1"/>',
   history: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V9H8"/><path d="M12 7.5V12l3 2"/>',
   clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',
+  bolt: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7 10M17 6h2.5v1A3 3 0 0 1 17 10M12 13v4M8.5 20.5h7l-.8-3.5H9.3z"/>',
@@ -428,6 +461,7 @@ const ICONS = {
   all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   fire: '<path d="M12 21c4 0 6.5-2.6 6.5-6.2 0-3.6-2.6-5.4-3.6-8.8-1.9 1.5-2.4 3.3-2.4 4.6-1-.6-1.8-2-1.8-3.6C8 9 5.5 11.4 5.5 14.8 5.5 18.4 8 21 12 21z"/>',
   play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="3"/>',
   hand: '<path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.8-2.4L4 15.4a1.6 1.6 0 0 1 2.3-2.2L9 15.5"/>',
 };
 const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
@@ -789,7 +823,7 @@ document.addEventListener('visibilitychange', updatePaused);
 
 function newGame(mode, size) {
   const M = MODES[mode];
-  G = {mode, size, hints: 0, elapsed: 0, startedAt: 0, started: false, ended: false, bonus: 0, score: 0, busy: false};
+  G = {mode, size, hints: 0, elapsed: 0, startedAt: 0, started: false, ended: false, bonus: 0, score: 0, busy: false, boardT0: 0, fastest: 0, rp: [], log: []};
   if (mode === 'time') { G.secs = M.sizes[size].secs; G.field = new Field({rows: TA.rows, cols: TA.cols, mines: taMines(0)}); }
   else {
     let {rows, cols, mines} = M.sizes[size];
@@ -802,14 +836,15 @@ function newGame(mode, size) {
 function resumeGame(s) {
   const f = Field.load(s.field); if (!f) return false;
   G = {mode: s.mode, size: s.size, hints: s.hints || 0, elapsed: s.elapsed || 0, startedAt: 0, started: true, ended: false,
-    bonus: s.bonus || 0, score: s.score || 0, busy: false, field: f};
+    bonus: s.bonus || 0, score: s.score || 0, busy: false, field: f, fastest: s.fastest || 0, boardT0: s.boardT0 != null ? s.boardT0 : (s.elapsed || 0),
+    rp: Array.isArray(s.rp) ? s.rp : [], log: Array.isArray(s.log) ? s.log : []};
   if (s.mode === 'time') G.secs = MODES.time.sizes[s.size].secs;
   return true;
 }
 function saveGame() {
   if (!G) return;
   if (!G.started || G.ended) { keep(saveKey(G.mode), null); return; }
-  keep(saveKey(G.mode), {mode: G.mode, size: G.size, elapsed: timeNow(), hints: G.hints, bonus: G.bonus, score: G.score, field: G.field.save()});
+  keep(saveKey(G.mode), {mode: G.mode, size: G.size, elapsed: timeNow(), hints: G.hints, bonus: G.bonus, score: G.score, fastest: G.fastest, boardT0: G.boardT0, rp: G.rp, log: G.log, field: G.field.save()});
 }
 
 function showGame() {
@@ -819,6 +854,7 @@ function showGame() {
   $('#gMode').textContent = M.name;
   $('#gSize').textContent = M.sizes[G.size].label;
   $('#scoreChip').classList.toggle('hidden', G.mode !== 'time');
+  $('#fastChip').classList.toggle('hidden', G.mode !== 'time');
   $('#result').classList.add('hidden');
   $('#tools').classList.remove('hidden');
   closeHint();
@@ -844,7 +880,10 @@ function updateHud() {
   const t = G.mode === 'time' ? taLeft() : timeNow();
   $('#clockTxt').textContent = fmt(G.mode === 'time' ? Math.ceil(t / 1000) * 1000 : t);
   $('#clockChip').classList.toggle('low', G.mode === 'time' && G.started && !G.ended && t < 10000);
-  if (G.mode === 'time') $('#scoreChip').innerHTML = ic('grid') + `<span>${G.score}</span>`;
+  if (G.mode === 'time') {
+    $('#scoreChip').innerHTML = ic('grid') + `<span>${G.score}</span>`;
+    $('#fastChip').innerHTML = ic('bolt') + `<span>${G.fastest ? fmt(G.fastest, true) : '–'}</span>`;
+  }
   $('#hintBtn').innerHTML = ic('bulb') + '<span>Hint</span>' + (G.hints ? `<span class="hc">${G.hints}</span>` : '');
 }
 let lastSec = -1;
@@ -877,15 +916,23 @@ function onAct(i, how) {
   const s = f.state[i];
   let res = null;
   if (how === 'flag') doFlag(i);
-  else if (s === 1) res = f.chord(i);
+  else if (s === 1) { res = f.chord(i); if (res) logMove('c', i); }
   else if (tapMode === 'flag') doFlag(i);
-  else if (s === 0) res = f.dig(i);
+  else if (s === 0) { res = f.dig(i); if (res) logMove('d', i); }
   if (res) applyDig(res);
   afterMove();
+}
+/* ---------- timelapse recording: every move, with the time it happened ---------- */
+function logMove(k, i) { if (G && G.log) G.log.push([Math.round(timeNow()), k, i]); }
+// a board is done (cleared, blown up, or the run ended): keep its mines and moves for the timelapse
+function closeBoard() {
+  if (!G || !G.log || !G.log.length || !G.field.placed) return;
+  G.rp.push({mine: Array.from(G.field.mine).join(''), log: G.log}); G.log = [];
 }
 function doFlag(i) {
   const on = G.field.toggleFlag(i);
   if (on === null) return;
+  logMove('f', i);
   view.paint(i, 0, true); Sound.flag(on); vibrate(on ? 18 : 8);
 }
 function applyDig(res) {
@@ -928,6 +975,8 @@ function celebrate() {
   $('#board').classList.add('won', 'done');
 }
 function boardCleared() {
+  const took = timeNow() - (G.boardT0 || 0);
+  if (took > 0 && (!G.fastest || took < G.fastest)) { G.fastest = took; const c = $('#fastChip'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
   G.score++; G.bonus += TA.bonus;
   floatText('+5s', true); Sound.board(); vibrate(20);
   celebrate();
@@ -936,7 +985,9 @@ function boardCleared() {
 }
 function nextBoard() {
   if (!G || G.ended) return;
+  closeBoard();
   G.field = new Field({rows: TA.rows, cols: TA.cols, mines: taMines(G.score)});
+  G.boardT0 = timeNow();
   view.setField(G.field);
   layoutBoard();
   const b = $('#board'); b.classList.add('slidein');
@@ -944,6 +995,7 @@ function nextBoard() {
   updateHud(); saveGame();
 }
 function record(won) {
+  closeBoard();
   const all = records(), m = all[G.mode] = all[G.mode] || {}, r = m[G.size] = Object.assign({played: 0, wins: 0, best: 0, streak: 0, bestStreak: 0}, m[G.size]);
   r.played++;
   const ms = G.elapsed;
@@ -955,7 +1007,9 @@ function record(won) {
   } else r.streak = 0;
   keep(REC_KEY, all);
   const h = history();
-  h.unshift({m: G.mode, z: G.size, w: G.mode === 'time' ? 1 : won ? 1 : 0, ms, h: G.hints, sc: G.score, t: Date.now(), b: isBest ? 1 : 0});
+  const f = G.field, rp = G.rp.length ? {rows: f.rows, cols: f.cols, hex: f.hex ? 1 : 0, boards: G.rp} : null;
+  h.unshift({m: G.mode, z: G.size, w: G.mode === 'time' ? 1 : won ? 1 : 0, ms, h: G.hints, sc: G.score, t: Date.now(), b: isBest ? 1 : 0, rp});
+  h.forEach((e, k) => { if (k >= 60) delete e.rp; });     // timelapses are kept for the latest 60 games
   keep(HIST_KEY, h.slice(0, 300));
   return {isBest, r};
 }
@@ -980,6 +1034,7 @@ function endTimeAttack() {
   Sound.win();
   showResult('time', `${G.score} board${G.score === 1 ? '' : 's'}`, [
     `${ic('grid')}${G.score}`,
+    G.fastest ? `${ic('bolt')}${fmt(G.fastest, true)}` : '',
     isBest ? `<span class="new">${ic('trophy')}New best!</span>` : `${ic('trophy')}${r.best || 0}`,
     G.hints ? `${ic('bulb')}${G.hints}` : '',
   ]);
@@ -1037,7 +1092,7 @@ function applyHint() {
   if (h.kind === 'mine') { for (const t of h.targets) if (f.state[t] === 0) doFlag(t); afterMove(); return; }
   if (h.kind === 'wrong') { doFlag(h.targets[0]); afterMove(); return; }
   const out = {opened: [], boom: -1};
-  for (const t of h.targets) { const r = f.dig(t); if (r) out.opened.push(...r.opened); }
+  for (const t of h.targets) { const r = f.dig(t); if (r) { out.opened.push(...r.opened); logMove('d', t); } }
   applyDig(out); afterMove();
 }
 function closeHint() {
@@ -1284,9 +1339,10 @@ function openPanel(id) {
   setTimeout(() => { const b = $('#' + id + ' [data-close]'); if (b) b.focus({preventScroll: true}); }, 50);
 }
 function closePanel(p) {
-  p = p || document.querySelector('.panel.show'); if (!p) return;
+  p = p || [...document.querySelectorAll('.panel.show')].pop(); if (!p) return;
   p.classList.remove('show');
   if (p.id === 'howPanel') How.stop();
+  if (p.id === 'rpPanel') RP.stop();
   updatePaused();
 }
 document.querySelectorAll('.panel [data-close]').forEach(b => b.onclick = () => closePanel(b.closest('.panel')));
@@ -1356,9 +1412,9 @@ function renderHistory() {
     const M = MODES[h.m] || MODES.classic, sz = M.sizes[h.z] || {label: ''};
     const badge = h.m === 'time' ? 't' : h.w ? 'w' : 'l';
     const val = h.m === 'time' ? `${h.sc} ${ic('grid')}` : h.w ? fmt(h.ms, true) : `<span style="color:var(--boom)">${fmt(h.ms)}</span>`;
-    return `<div class="hrow"><span class="hb ${badge}">${h.m === 'time' ? ic('clock') : h.w ? ic(M.icon) : ic('close')}</span>
+    return `<div class="hrow${h.rp ? ' rp' : ''}"${h.rp ? ` data-t="${h.t}" role="button" tabindex="0" aria-label="Watch timelapse"` : ''}><span class="hb ${badge}">${h.m === 'time' ? ic('clock') : h.w ? ic(M.icon) : ic('close')}</span>
       <span class="hm"><b>${M.name}</b><small>${sz.label} · ${day(h.t)}</small></span>
-      <span class="hv">${h.b ? ic('trophy') : ''}${h.h ? ic('bulb') : ''}${val}</span></div>`;
+      <span class="hv">${h.b ? ic('trophy') : ''}${h.h ? ic('bulb') : ''}${val}${h.rp ? `<i class="hplay">${ic('play')}</i>` : ''}</span></div>`;
   }).join('') : `<p class="hempty">${ic('history')}No games yet</p>`;
   $('#histClear').classList.toggle('hidden', !all.length);
   $('#histClear').textContent = 'Clear history';
@@ -1370,6 +1426,83 @@ $('#histClear').onclick = () => {
   delete b.dataset.sure; keep(HIST_KEY, []); renderHistory(); renderHistBadge();
 };
 $('#historyBtn').onclick = () => { prefs.histSeen = Date.now(); savePrefs(); renderHistBadge(); renderHistory(); openPanel('histPanel'); };
+
+
+/* ---------- Timelapse: watch a finished game play back ---------- */
+const RP = (() => {
+  let e = null, ev = [], P = [], end = 0, head = 0, playing = false, last = 0, raf = 0, speed = 1, shownK = -1, f = null, fb = -1;
+  const v = new BoardView($('#rpBoard'));
+  v.locked = true;
+  const SPEEDS = [1, 2, 4, 8];
+  function open(t) {
+    e = history().find(h => h.t === t); if (!e || !e.rp) return;
+    const M = MODES[e.m] || MODES.classic;
+    $('#rpTitle').textContent = M.name;
+    $('#rpSub').textContent = (M.sizes[e.z] ? M.sizes[e.z].label + ' · ' : '') + new Date(e.t).toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'});
+    ev = []; e.rp.boards.forEach((b, bi) => b.log.forEach(([t, k, i]) => ev.push({b: bi, t, k, i})));
+    // playback timing: real gaps, but long thinks are squeezed and each new board gets a beat
+    P = []; let pt = 700;                     // a moment to see the untouched field first
+    ev.forEach((x, j) => { if (j) { const p = ev[j - 1]; pt += x.b !== p.b ? 900 : Math.min(1100, Math.max(90, x.t - p.t)); } P.push(pt); });
+    end = pt + 1400; head = 0; shownK = -1; fb = -1; speed = 1;
+    $('#rpSpeed').textContent = '1×';
+    $('#rpBoards').parentElement.classList.toggle('hidden', e.rp.boards.length < 2);
+    openPanel('rpPanel');
+    requestAnimationFrame(() => { seek(0, true); play(true); });
+  }
+  const fieldFor = bi => {
+    const b = e.rp.boards[bi], g = new Field({rows: e.rp.rows, cols: e.rp.cols, mines: 0, hex: !!e.rp.hex});
+    const list = []; for (let i = 0; i < b.mine.length; i++) if (b.mine[i] === '1') list.push(i);
+    g.setMines(list); return g;
+  };
+  const apply = (g, x) => { const r = x.k === 'f' ? (g.toggleFlag(x.i), null) : x.k === 'c' ? g.chord(x.i) : g.dig(x.i); if (!g.over) g.checkWin(); return r; };
+  const movesAt = h => { let lo = 0, hi = P.length; while (lo < hi) { const m = (lo + hi) >> 1; if (P[m] <= h) lo = m + 1; else hi = m; } return lo; };
+  function seek(h, force) {
+    head = Math.max(0, Math.min(end, h));
+    const k = movesAt(head), bi = k ? ev[k - 1].b : 0;
+    if (force || k !== shownK) {
+      if (!force && f && k === shownK + 1 && ev[k - 1].b === fb) {
+        // one more move on the same board: play it with the dig animation
+        const x = ev[k - 1], r = apply(f, x);
+        if (x.k === 'f') v.paint(x.i, 0, true);
+        else if (r) { for (const [j, d] of r.opened) v.paint(j, reduced() ? 0 : Math.min(d * 32 / speed, 400), true); if (r.boom >= 0 || f.won) v.paintAll(); }
+        if (f.won) v.paintAll();
+      } else {
+        f = fieldFor(bi);
+        for (let j = 0; j < k; j++) if (ev[j].b === bi) apply(f, ev[j]);
+        if (fb !== bi) { v.setField(f); v.locked = true; layout(); } else { v.f = f; v.paintAll(); }
+        fb = bi;
+      }
+      shownK = k;
+      $('#rpBoard').classList.toggle('done', f.over);
+    }
+    $('#rpScrub').value = Math.round(head / end * 1000);
+    const now = k ? ev[k - 1].t : 0;
+    $('#rpTime').textContent = fmt(e.m === 'time' ? now : Math.min(now, e.ms), false);
+    $('#rpMoves').textContent = k;
+    $('#rpFlags').textContent = f ? f.flags : 0;
+    $('#rpBoards').textContent = (bi + 1) + ' / ' + e.rp.boards.length;
+  }
+  function layout() { const w = $('#rpWrap'); if (v.f) v.layout(w.clientWidth - 8, w.clientHeight - 8, 10, 40); }
+  function tick(ts) {
+    if (!playing) return;
+    const dt = Math.min(100, ts - (last || ts)); last = ts;
+    seek(head + dt * speed);
+    if (head >= end) { play(false); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function play(on) {
+    playing = on; cancelAnimationFrame(raf); last = 0;
+    $('#rpPlay').innerHTML = ic(on ? 'pause' : 'play'); $('#rpPlay').setAttribute('aria-label', on ? 'Pause' : 'Play');
+    if (on) { if (head >= end) seek(0, true); raf = requestAnimationFrame(tick); }
+  }
+  $('#rpPlay').onclick = () => play(!playing);
+  $('#rpScrub').addEventListener('input', () => { play(false); seek($('#rpScrub').value / 1000 * end); });
+  $('#rpSpeed').onclick = () => { speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]; $('#rpSpeed').textContent = speed + '×'; };
+  addEventListener('resize', () => { if ($('#rpPanel').classList.contains('show')) layout(); });
+  return {open, stop: () => play(false)};
+})();
+$('#hlist').addEventListener('click', ev => { const r = ev.target.closest('.hrow.rp'); if (r) RP.open(+r.dataset.t); });
+$('#hlist').addEventListener('keydown', ev => { if (ev.key === 'Enter') { const r = ev.target.closest('.hrow.rp'); if (r) RP.open(+r.dataset.t); } });
 
 /* ---------- How to play: little boards you can try ---------- */
 const How = (() => {
