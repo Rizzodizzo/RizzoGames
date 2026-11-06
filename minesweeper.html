@@ -213,7 +213,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 
 /* ================= GAME ================= */
 .game{height:100%;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto}
-.ghead{flex:none;width:100%;max-width:560px;display:flex;align-items:center;gap:10px;padding:0 52px;min-height:44px;box-sizing:border-box}   /* equal room both sides (the R button sits on the left), so the title is centred */
+.ghead{flex:none;width:100%;max-width:560px;display:flex;align-items:center;gap:10px;padding:0 0 0 52px;min-height:44px;box-sizing:border-box}   /* R + back on the left, new + settings on the right: the title stays centred */
+.homeset{position:fixed;z-index:2;top:calc(env(safe-area-inset-top,0px) + 16px);right:16px}
 .gtitle{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.1}
 .gtitle b{font-size:1.12rem;font-weight:900}
 .gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
@@ -255,7 +256,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .cell.hmine{background:var(--hmine)!important;animation:glow 1.1s ease-in-out infinite}
 @keyframes glow{50%{filter:brightness(1.18)}}
 /* a ring fills while you hold a finger down to flag */
-.cell.holding::after{content:"";position:absolute;inset:16%;border-radius:50%;border:3px solid #fff;animation:hold .38s linear both;pointer-events:none}
+.cell.holding::after{content:"";position:absolute;inset:16%;border-radius:50%;border:3px solid #fff;animation:hold var(--hold,.38s) linear both;pointer-events:none}
 @keyframes hold{from{transform:scale(.25);opacity:.2}to{transform:scale(1);opacity:1}}
 /* "tap here" in How to play */
 .cell.tapme::before{content:"";position:absolute;inset:22%;border-radius:50%;background:#fff;opacity:.85;animation:tapme 1.3s ease-in-out infinite;pointer-events:none}
@@ -492,6 +493,31 @@ body[data-fx=gold] .tbar i{background:var(--gm)}
 @keyframes twiggle{25%{translate:-5px 0}50%{translate:5px 0}75%{translate:-3px 0}}
 .result .chips .unl{background:var(--accent);color:var(--onaccent)}
 
+/* settings */
+.sgh{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sgh:first-of-type{margin-top:4px}
+.sgroup{background:var(--panel);border-radius:16px;box-shadow:0 2px 8px var(--shade);overflow:hidden}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);cursor:pointer}
+.srow:last-child{border-bottom:0}
+.srow .sl{display:flex;flex-direction:column;min-width:0;gap:2px}
+.srow b{font-weight:800}
+.srow small,.scol>small{font-size:.78rem;font-weight:700;color:var(--muted)}
+.srow .sr{display:flex;align-items:center;gap:4px;color:var(--muted);font-weight:800;font-size:.88rem;flex-shrink:0}
+.srow .sr svg.ic{width:18px;height:18px}
+.scol{flex-direction:column;align-items:stretch;cursor:default;gap:8px}
+.scol.off{opacity:.45;pointer-events:none}
+.shead{display:flex;justify-content:space-between;align-items:center}
+.sval{font-weight:900;font-variant-numeric:tabular-nums;color:var(--accent)}
+.sline{display:flex;align-items:center;gap:8px}
+.sline input{flex:1;min-width:0;accent-color:var(--accent)}
+.sk{font-size:.72rem;font-weight:800;color:var(--muted)}
+.tryme{--cs:46px;flex:none;margin-left:6px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px var(--frame)}
+.switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+.snote{margin:8px 4px 0;text-align:center;font-weight:800;font-size:.82rem;color:var(--muted);min-height:1em}
+
 /* Reduce motion follows the switch in the Settings menu */
 html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *::after{animation:none!important;transition:none!important}
 html.rz-reduce-motion .cell.holding::after{opacity:1}
@@ -506,6 +532,7 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
 
   <!-- ================= HOME ================= -->
   <section class="home" id="home">
+    <button class="iconbtn homeset" id="setBtnHome" aria-label="Settings" data-ic="settings"></button>
     <svg class="ptitle" id="ptitle" role="img" aria-label="Minesweeper"></svg>
     <div class="hl">
       <div class="modes" id="modes" aria-label="Mode"></div>
@@ -536,6 +563,7 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
       <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
       <div class="gtitle"><b id="gMode">Classic</b><small id="gSize">Small</small></div>
       <button class="iconbtn" id="newBtn" aria-label="New game" data-ic="refresh"></button>
+      <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
     </div>
     <div class="stats" id="stats">
       <span class="chip" id="minesChip" aria-label="Mines left"><svg viewBox="0 0 24 24" aria-hidden="true" style="color:var(--ink)"><use href="#i-mine"/></svg><span id="minesLeft">10</span></span>
@@ -564,6 +592,36 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
   <div class="stage" id="howStage"></div>
   <div class="cap" id="howCap"></div>
   <div class="hownav"><button class="sec" id="howPrev">Back</button><div class="dots" id="howDots"></div><button class="primary" id="howNext">Next</button></div>
+</div></div>
+
+<div class="panel" id="setPanel" role="dialog" aria-label="Settings"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Settings</h1><span class="sp"></span></div>
+  <h3 class="sgh">Every game</h3>
+  <div class="sgroup">
+    <button class="srow" id="sMenu"><span class="sl"><b>Sound, motion &amp; updates</b></span><span class="sr"><span data-ic="chevron"></span></span></button>
+  </div>
+  <h3 class="sgh">Look</h3>
+  <div class="sgroup">
+    <button class="srow" id="sThemes"><span class="sl"><b>Themes</b></span><span class="sr"><span id="sThemeNow"></span><span data-ic="chevron"></span></span></button>
+    <label class="srow"><span class="sl"><b>Background animations</b></span><input type="checkbox" class="switch" data-p="fx"></label>
+  </div>
+  <h3 class="sgh">Controls</h3>
+  <div class="sgroup">
+    <label class="srow"><span class="sl"><b>Hold to flag</b></span><input type="checkbox" class="switch" data-p="hold"></label>
+    <div class="srow scol" id="sHoldRow">
+      <div class="shead"><b>How long to hold</b><span class="sval" id="sHoldVal"></span></div>
+      <div class="sline">
+        <span class="sk">Quick</span><input type="range" id="sHold" min="150" max="1000" step="10" aria-label="How long to hold to flag"><span class="sk">Slow</span>
+        <button class="cell tryme" id="sTry" aria-label="Practice square: hold to flag"></button>
+      </div>
+    </div>
+    <label class="srow"><span class="sl"><b>Tap numbers to clear</b></span><input type="checkbox" class="switch" data-p="chord"></label>
+    <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
+  </div>
+  <h3 class="sgh">Data</h3>
+  <button class="danger" id="sReset">Reset records &amp; best times</button>
+  <p class="snote" id="sResetNote"></p>
 </div></div>
 
 <div class="panel" id="themePanel" role="dialog" aria-label="Themes"><div class="panelin">
@@ -627,11 +685,13 @@ const fmt = (ms, tenths) => {
   const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = t - m * 60;
   return m + ':' + (tenths ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0'));
 };
-const vibrate = ms => { if (navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+const CTRL = {hold: true, holdMs: 380, buzz: true};    // set from Settings (prefs) once they're loaded
+const vibrate = ms => { if (CTRL.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
 
 /* ---------- icons ---------- */
 const ICONS = {
   back: '<path d="M15 5l-7 7 7 7"/>',
+  settings: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
   chevron: '<path d="M9 5l7 7-7 7"/>',
   refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
   bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>',
@@ -915,13 +975,13 @@ class BoardView {
       if (e.button === 2) { act(i, 'flag'); return; }
       if (e.button !== 0) return;
       press = {i, x: e.clientX, y: e.clientY, done: false, timer: 0};
-      if (e.pointerType !== 'mouse' && this.f.state[i] !== 1) {   // hold a finger down to flag
+      if (e.pointerType !== 'mouse' && CTRL.hold && this.f.state[i] !== 1) {   // hold a finger down to flag (how long: Settings)
         this.mark(i, 'holding');
         press.timer = setTimeout(() => {
           if (!press) return;
           press.done = true; this.mark(press.i, 'holding', false);
           act(press.i, 'flag');
-        }, 380);
+        }, CTRL.holdMs);
       }
     });
     el.addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 12) end(); });   // a scroll, not a tap
@@ -1145,7 +1205,7 @@ function onAct(i, how) {
   const s = f.state[i];
   let res = null;
   if (how === 'flag') doFlag(i);
-  else if (s === 1) { res = f.chord(i); if (res) logMove('c', i); }
+  else if (s === 1) { if (prefs.chord === false) return; res = f.chord(i); if (res) logMove('c', i); }
   else if (tapMode === 'flag') doFlag(i);
   else if (s === 0) { res = f.dig(i); if (res) logMove('d', i); }
   if (res) applyDig(res);
@@ -1602,6 +1662,60 @@ document.querySelectorAll('.panel').forEach(p => {
   });
 });
 
+/* ---------- Settings ---------- */
+const SET_DEFAULTS = {fx: true, hold: true, holdMs: 380, chord: true, buzz: true};
+for (const [k, v] of Object.entries(SET_DEFAULTS)) if (prefs[k] === undefined) prefs[k] = v;
+function useControls() {
+  Object.assign(CTRL, {hold: prefs.hold, holdMs: prefs.holdMs, buzz: prefs.buzz});
+  document.documentElement.style.setProperty('--hold', (prefs.holdMs / 1000) + 's');
+}
+useControls();
+const holdText = ms => (ms / 1000).toFixed(2).replace(/0$/, '') + 's';
+function renderSettings() {
+  document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = prefs[el.dataset.p] !== false);
+  $('#sThemeNow').textContent = themeName(prefs.theme in RZT.THEMES || prefs.theme === 'auto' ? prefs.theme : 'auto');
+  $('#sHold').value = prefs.holdMs; $('#sHoldVal').textContent = holdText(prefs.holdMs);
+  $('#sHoldRow').classList.toggle('off', !prefs.hold);
+  $('#sBuzzRow').classList.toggle('hidden', !navigator.vibrate);       // iPhones don't let web pages vibrate
+  $('#sResetNote').textContent = '';
+  resetArmed = false; $('#sReset').textContent = 'Reset records & best times';
+  tryFlag(false);
+}
+document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () => {
+  prefs[el.dataset.p] = el.checked; savePrefs(); useControls(); renderSettings();
+  if (el.dataset.p === 'fx') applyTheme();
+});
+$('#sHold').oninput = e => { prefs.holdMs = +e.target.value; $('#sHoldVal').textContent = holdText(prefs.holdMs); useControls(); };
+$('#sHold').onchange = () => savePrefs();
+// a practice square: hold it to see how the timing feels
+let tryTimer = 0, tryOn = false;
+function tryFlag(on) { tryOn = on; const t = $('#sTry'); t.innerHTML = on ? FLAG : ''; t.classList.toggle('flag', on); }
+$('#sTry').addEventListener('contextmenu', e => e.preventDefault());
+$('#sTry').addEventListener('pointerdown', e => {
+  const t = $('#sTry');
+  if (tryOn) { tryFlag(false); Sound.flag(false); return; }
+  t.classList.add('holding');
+  clearTimeout(tryTimer);
+  tryTimer = setTimeout(() => { t.classList.remove('holding'); tryFlag(true); t.classList.remove('anim'); void t.offsetWidth; t.classList.add('anim'); Sound.flag(true); vibrate(18); }, prefs.holdMs);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => $('#sTry').addEventListener(ev, () => { clearTimeout(tryTimer); $('#sTry').classList.remove('holding'); }));
+$('#sMenu').onclick = () => RZ && RZ.openMenu();
+$('#sThemes').onclick = () => $('#themesBtn').onclick();
+let resetArmed = false;
+$('#sReset').onclick = () => {
+  if (!resetArmed) {
+    resetArmed = true; $('#sReset').textContent = 'Tap again to reset';
+    $('#sResetNote').textContent = 'Special themes will lock again.';
+    return;
+  }
+  keep(REC_KEY, null);
+  applyTheme(); renderPlay(); renderSettings();
+  $('#sResetNote').textContent = 'Records reset.';
+};
+const openSettings = () => { renderSettings(); openPanel('setPanel'); };
+$('#setBtnHome').onclick = openSettings;
+$('#setBtnGame').onclick = openSettings;
+
 /* ---------- Themes (the same themes as Sudoku: themes.js) ---------- */
 const TH = window.MS_THEMES;
 const themeName = id => id === 'auto' ? 'Auto' : RZT.THEMES[id].name;
@@ -1700,6 +1814,7 @@ $('#tPages').addEventListener('click', e => {
   applyTheme();
   renderThemes();
   RZT.burst(b.querySelector('.tprev'), 12, 60);
+  if ($('#setPanel').classList.contains('show')) renderSettings();
 });
 $('#themesBtn').onclick = () => {
   renderThemes(); openPanel('themePanel');
@@ -1973,7 +2088,7 @@ const How = (() => {
 $('#howBtn').onclick = () => How.open();
 
 /* ---------- start ---------- */
-RZT.config({theme: () => TH.resolved, fxOn: () => !reduced(), reduceMotion: reduced, sound: k => Sound[k] && Sound[k]()});
+RZT.config({theme: () => TH.resolved, fxOn: () => !reduced() && prefs.fx !== false, reduceMotion: reduced, sound: k => Sound[k] && Sound[k]()});
 TH.ready = true;
 applyTheme();
 fillIcons();
