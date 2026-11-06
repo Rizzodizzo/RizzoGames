@@ -116,6 +116,10 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .t{width:var(--ts,56px);height:var(--ts,56px);border-radius:calc(var(--ts,56px) * .14);border:2px solid var(--tline);background:var(--tile);display:grid;place-items:center;
   font-weight:900;font-size:calc(var(--ts,56px) * .56);text-transform:uppercase;color:var(--ink);position:relative;transition:border-color .1s}
 .t.full{border-color:var(--tfull)}
+.t.cur{border-color:var(--tfull)}
+.t.cur::before{content:'';position:absolute;left:22%;right:22%;bottom:12%;height:3px;border-radius:2px;background:var(--ink);opacity:.55;animation:blink 1.1s steps(2) infinite}
+@keyframes blink{50%{opacity:.12}}
+.board:not(.rp) .row .t{cursor:default}
 .t.pop{animation:tpop .12s ease-out}
 @keyframes tpop{50%{transform:scale(1.1)}}
 .t.ghost::after{content:attr(data-g);position:absolute;inset:0;display:grid;place-items:center;color:var(--ok);opacity:.45}
@@ -580,7 +584,7 @@ function randomWord(n) {
   return w;
 }
 function newGame(m, n, day = today()) {
-  G = {m, n, day, word: m === 'daily' ? dailyWord(n, day) : randomWord(n), rows: ROWS[n], guesses: [], cur: '', hints: [], hard: !!prefs.hard,
+  G = {m, n, day, word: m === 'daily' ? dailyWord(n, day) : randomWord(n), rows: ROWS[n], guesses: [], cur: '', pos: 0, hints: [], hard: !!prefs.hard,
     over: false, won: false, elapsed: 0, startedAt: 0, log: []};
   saveGame();
 }
@@ -598,7 +602,7 @@ function updatePaused() {
   if (!G || G.over) return;
   const paused = (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show');
   if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
-  else if (!paused && !G.startedAt && (G.guesses.length || G.cur)) G.startedAt = Date.now();
+  else if (!paused && !G.startedAt && (G.guesses.length || (G.cur || '').trim())) G.startedAt = Date.now();
 }
 document.addEventListener('visibilitychange', updatePaused);
 
@@ -629,8 +633,8 @@ function paintRow(r, anim) {
   } else if (r === G.guesses.length && !G.over) {
     const greens = {}; G.hints.forEach(i => greens[i] = G.word[i]);
     [...row.children].forEach((t, i) => {
-      const ch = G.cur[i] || '';
-      t.textContent = ch; t.className = 't' + (ch ? ' full' : '') + (!ch && greens[i] ? ' ghost' : '');
+      const ch = (G.cur[i] || ' ').trim();
+      t.textContent = ch; t.className = 't' + (ch ? ' full' : '') + (!ch && greens[i] ? ' ghost' : '') + (i === G.pos ? ' cur' : '');
       if (greens[i]) t.dataset.g = greens[i]; else t.removeAttribute('data-g');
     });
     if (anim != null && row.children[anim]) { const t = row.children[anim]; t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
@@ -654,19 +658,45 @@ function paintKeys() {
   if (G) G.guesses.forEach(g => score(g, G.word).forEach((s, i) => { if ((rank[s] || 0) > (rank[st[g[i]]] || 0)) st[g[i]] = s; }));
   document.querySelectorAll('#kbd .key').forEach(k => { const s = st[k.dataset.k]; k.className = 'key' + (k.classList.contains('wide') ? ' wide' : '') + (s ? ' ' + s : ''); });
 }
+/* Typing: letters go into the square with the cursor, then it hops to the next empty square.
+   Tap any square in your row to put the cursor there, so you can fill in letters you're sure of first. */
+const padRow = () => { G.cur = (G.cur || '').padEnd(G.n, ' ').slice(0, G.n); if (G.pos == null || G.pos > G.n) G.pos = G.cur.indexOf(' ') < 0 ? G.n : G.cur.indexOf(' '); };
+const setAt = (i, ch) => { G.cur = G.cur.slice(0, i) + ch + G.cur.slice(i + 1); };
+function nextEmpty(from) {
+  for (let k = 0; k < G.n; k++) { const i = (from + k) % G.n; if (G.cur[i] === ' ') return i; }
+  return G.n;   // the row is full
+}
 function press(k) {
   if (!G || G.over || busy) return;
+  padRow();
   if (k === 'enter') return submit();
-  if (k === 'back') { if (!G.cur) return; G.cur = G.cur.slice(0, -1); paintRow(G.guesses.length); Sound.back(); saveGame(); return; }
-  if (!/^[a-z]$/.test(k) || G.cur.length >= G.n) return;
+  if (k === 'left' || k === 'right') { G.pos = Math.max(0, Math.min(G.n - 1, (G.pos >= G.n ? G.n : G.pos) + (k === 'left' ? -1 : 1))); paintRow(G.guesses.length); return; }
+  if (k === 'back') {
+    let i = G.pos < G.n && G.cur[G.pos] !== ' ' ? G.pos : -1;           // the square with the cursor, if it has a letter
+    if (i < 0) for (let j = Math.min(G.pos, G.n) - 1; j >= 0; j--) if (G.cur[j] !== ' ') { i = j; break; }   // otherwise the one before it
+    if (i < 0) return;
+    setAt(i, ' '); G.pos = i; paintRow(G.guesses.length); Sound.back(); saveGame(); return;
+  }
+  if (!/^[a-z]$/.test(k)) return;
+  if (G.pos >= G.n) { G.pos = nextEmpty(0); if (G.pos >= G.n) return; }   // full: nothing to fill
   if (!G.startedAt) G.startedAt = Date.now();
-  G.cur += k; paintRow(G.guesses.length, G.cur.length - 1); Sound.type(); vibrate(6); saveGame();
+  const at = G.pos;
+  setAt(at, k); G.pos = nextEmpty(at + 1 < G.n ? at + 1 : 0);
+  paintRow(G.guesses.length, at); Sound.type(); vibrate(6); saveGame();
 }
+// tap a square in the row you're on to move the cursor there
+board.addEventListener('click', e => {
+  const t = e.target.closest('.t'); if (!t || !G || G.over || busy) return;
+  const row = t.parentNode;
+  if ([...board.children].indexOf(row) !== G.guesses.length) return;
+  padRow(); G.pos = [...row.children].indexOf(t); paintRow(G.guesses.length); vibrate(4);
+});
 $('#kbd').addEventListener('click', e => { const b = e.target.closest('.key'); if (b) press(b.dataset.k); });
 addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey || $('#game').classList.contains('hidden') || document.querySelector('.panel.show') || (RZ && RZ.menuOpen)) return;
   if (e.key === 'Enter') { e.preventDefault(); press('enter'); }
   else if (e.key === 'Backspace') { e.preventDefault(); press('back'); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); press(e.key === 'ArrowLeft' ? 'left' : 'right'); }
   else if (/^[a-zA-Z]$/.test(e.key)) press(e.key.toLowerCase());
 });
 // on phones the letter under your thumb pops up above it, like a phone keyboard
@@ -703,10 +733,10 @@ function hardProblem(guess) {
 }
 function submit() {
   const g = G.cur;
-  if (g.length < G.n) { shakeRow(); toast('Not enough letters'); return; }
+  if (g.includes(' ') || g.length < G.n) { shakeRow(); toast('Not enough letters'); return; }
   if (!VALID[G.n].has(g)) { shakeRow(); toast('Not in word list'); return; }
   if (G.hard) { const p = hardProblem(g); if (p) { shakeRow(); toast(p); return; } }
-  G.guesses.push(g); G.cur = ''; G.log.push(timeNow());
+  G.guesses.push(g); G.cur = ''; G.pos = 0; G.log.push(timeNow());
   const r = G.guesses.length - 1, res = score(g, G.word), row = board.children[r], step = reduced() ? 0 : 280;
   busy = true; saveGame();
   [...row.children].forEach((t, i) => {
@@ -1119,7 +1149,7 @@ const How = (() => {
   const reveal = (row, delay = 300) => [...row.children].forEach((t, i) => at(delay + i * 260, () => { if (t.dataset.r) { t.className = 't ' + t.dataset.r + ' flip'; Sound.flip(i, t.dataset.r); } }));
   const sw = c => `<span class="sw" style="background:var(--${c})"></span>`;
   const STEPS = [
-    {title: 'Guess the word', cap: () => `<span>Type a word and press <b>Enter</b>. You get ${ROWS[5]} tries for a 5 letter word, and more for longer ones.</span>`,
+    {title: 'Guess the word', cap: () => `<span>Type a word and press <b>Enter</b>. Tap any square to put a letter there first. You get ${ROWS[5]} tries for a 5 letter word, more for longer ones.</span>`,
       run(stage) {
         stage.innerHTML = `<div class="board">${rowHTML('     ')}${rowHTML('     ')}</div>`;
         const row = stage.querySelector('.row');
