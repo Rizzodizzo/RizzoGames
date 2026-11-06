@@ -235,6 +235,20 @@ const GAMES = [
       return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : 'No wins yet';
     },
   },
+  {
+    id: 'rizzle',
+    name: 'Rizzle',
+    file: 'rizzle.html',
+    blurb: 'Guess the hidden word! A new Daily word every day, Unlimited play and 4 to 7 letters.',
+    colors: ['#ea580c', '#fbbf24'],
+    art: 'words',
+    stat() {
+      let st = {};
+      try { st = JSON.parse(localStorage.getItem('rizzle-stats-v1')) || {}; } catch {}
+      const wins = Object.values(st).reduce((n, r) => n + ((r && r.wins) || 0), 0);
+      return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : 'No wins yet';
+    },
+  },
 ];
 
 /* ---------- card art (simple inline drawings, no image files needed) ---------- */
@@ -271,6 +285,14 @@ const ART = {
     <g transform="translate(76 48)"><g stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"><path d="M0-11v22M-11 0h22M-8-8l16 16M8-8L-8 8"/></g>
       <circle r="7.5" fill="#1b1b1b"/><circle cx="-2.6" cy="-2.6" r="2" fill="#fff" opacity=".85"/></g>
     <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#2f5a1a" stroke-width="3" opacity=".5"/></svg>`,
+  // three rows of letter tiles, the last one solved
+  words: `<svg viewBox="0 0 96 96" aria-hidden="true"><g font-family="Nunito,system-ui,sans-serif" font-weight="900" font-size="15" text-anchor="middle" fill="#fff">
+    <rect x="8" y="10" width="24" height="24" rx="5" fill="#878c95"/><rect x="36" y="10" width="24" height="24" rx="5" fill="#d9a92c"/><rect x="64" y="10" width="24" height="24" rx="5" fill="#878c95"/>
+    <text x="20" y="27.5">T</text><text x="48" y="27.5">W</text><text x="76" y="27.5">O</text>
+    <rect x="8" y="38" width="24" height="24" rx="5" fill="#878c95"/><rect x="36" y="38" width="24" height="24" rx="5" fill="#4aa564"/><rect x="64" y="38" width="24" height="24" rx="5" fill="#4aa564"/>
+    <text x="20" y="55.5">S</text><text x="48" y="55.5">A</text><text x="76" y="55.5">X</text>
+    <rect x="8" y="66" width="24" height="24" rx="5" fill="#4aa564"/><rect x="36" y="66" width="24" height="24" rx="5" fill="#4aa564"/><rect x="64" y="66" width="24" height="24" rx="5" fill="#4aa564"/>
+    <text x="20" y="83.5">W</text><text x="48" y="83.5">A</text><text x="76" y="83.5">X</text></g></svg>`,
 };
 const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
 const plus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
