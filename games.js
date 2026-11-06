@@ -116,6 +116,9 @@
   early.textContent = `
 /* no iPhone rubber-band bounce that shows what's underneath the page */
 html,body{overscroll-behavior:none}
+/* no zooming in when you tap quickly (double or triple taps). Pinching to zoom still works, and anything that
+   sets its own touch-action (swipe areas, the race track) keeps it, since this is the weakest possible rule */
+*{touch-action:manipulation}
 @view-transition{navigation:auto}
 ::view-transition-group(*){animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.3s}
