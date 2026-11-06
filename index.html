@@ -136,10 +136,9 @@ header{text-align:center;margin:18px 0 26px}
 .info:active{transform:scale(.88)}
 .info:focus-visible{outline:3px solid #fff;outline-offset:2px}
 li.open .info{background:#fff;color:var(--ink)}
-.desc{position:absolute;left:0;right:0;top:0;height:128px;z-index:2;box-sizing:border-box;padding:14px 56px 12px 56px;border-radius:20px 20px 0 0;display:flex;flex-direction:column;justify-content:center;
+.desc{position:absolute;left:0;right:0;top:0;height:128px;z-index:2;box-sizing:border-box;padding:52px 14px 10px;border-radius:20px 20px 0 0;display:flex;flex-direction:column;justify-content:center;
   background:rgba(8,12,30,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .2s,visibility 0s .2s;cursor:pointer}
-.desc b{font-size:.95rem;font-weight:800}
-.desc p{margin:4px 0 0;font-size:.88rem;line-height:1.35;color:rgba(255,255,255,.88)}
+.desc p{margin:0;font-size:.84rem;font-weight:600;line-height:1.3;color:rgba(255,255,255,.94)}
 li.open .desc{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
 html.rz-reduce-motion .desc{transition:none}
 /* favourite star: sits on the card's picture, fills in gold when the game is a favourite */
@@ -195,7 +194,7 @@ const GAMES = [
     id: 'sudoku',
     name: 'Sudoku',
     file: 'sudoku.html',
-    blurb: 'Classic, Killer and Paper modes, with hints that teach you.',
+    blurb: 'The classic number puzzle! Killer and Paper modes, helpful hints and themes to unlock.',
     colors: ['#3b6fe0', '#7ea6ff'],
     art: 'sudoku',
     // A little line under the description, read from the game's own saved data
@@ -210,7 +209,7 @@ const GAMES = [
     id: 'ethereal-equus',
     name: 'Ethereal Equus Examination',
     file: 'ethereal-equus.html',
-    blurb: 'Answer fast to stay fuelled and race to the finish.',
+    blurb: 'A racing quiz! Answer fast to stay fuelled, then unlock new cars and planes.',
     colors: ['#7c3aed', '#f472b6'],
     art: 'equus',
     stat() {
@@ -224,7 +223,7 @@ const GAMES = [
     id: 'minesweeper',
     name: 'Minesweeper',
     file: 'minesweeper.html',
-    blurb: 'Classic, Hexagon and Time Attack, with hints that show you why.',
+    blurb: 'Classic Minesweeper! Hexagon boards, Time Attack and themes to unlock.',
     colors: ['#16a34a', '#86efac'],
     art: 'mines',
     stat() {
@@ -302,7 +301,7 @@ function render(still) {
         <span class="go">${arrow}</span>
       </div></a>
       <button class="info" data-id="${esc(g.id)}" aria-expanded="false" aria-label="About ${esc(g.name)}">${infoIc}</button>
-      <div class="desc" role="note"><b>${esc(g.name)}</b><p>${esc(g.blurb)}</p></div>
+      <div class="desc" role="note"><p>${esc(g.blurb)}</p></div>
       <button class="fav" data-id="${esc(g.id)}" aria-pressed="${f}" aria-label="${f ? 'Remove ' + esc(g.name) + ' from favourites' : 'Add ' + esc(g.name) + ' to favourites'}" style="view-transition-name:rz-fav-${g.id}">${star}</button></li>`;
   }).join('') + `<li class="soon" style="animation-delay:${list.length * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>`;
 }
