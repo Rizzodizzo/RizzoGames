@@ -231,6 +231,23 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .rpstats div{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
 .rpstats span{display:block;font-size:.72rem;font-weight:800;color:var(--muted)}
 .rpstats b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+.cal{background:var(--panel);border-radius:18px;padding:12px 12px 14px;box-shadow:0 2px 8px var(--shade)}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead b{font-size:1.05rem;font-weight:900}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calgrid .wd{font-size:.72rem;font-weight:900;color:var(--muted);text-align:center;padding-bottom:2px}
+.cday{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;font-weight:900;font-size:.95rem;background:var(--soft);color:var(--ink);position:relative;font-variant-numeric:tabular-nums}
+.cday.win{background:var(--ok);color:var(--onok)}
+.cday.lost{background:var(--no);color:#fff}
+.cday.part{box-shadow:inset 0 0 0 2.5px var(--mid)}
+.cday.today{outline:2.5px solid var(--accent);outline-offset:2px}
+.cday.off{background:none;color:var(--muted);opacity:.35;cursor:default}
+.cday:not(.off):active{transform:scale(.92)}
+.cnote{margin:12px 4px 8px;text-align:center;font-weight:800;font-size:.88rem;color:var(--muted)}
+.calkey{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;font-weight:800;font-size:.78rem;color:var(--muted)}
+.calkey span{display:inline-flex;align-items:center;gap:6px}
+.calkey i{width:14px;height:14px;border-radius:4px;background:var(--soft)}
+.calkey i.win{background:var(--ok)}.calkey i.lost{background:var(--no)}.calkey i.part{box-shadow:inset 0 0 0 2px var(--mid)}
 /* settings */
 .sgh{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .sgh:first-of-type{margin-top:4px}
@@ -305,6 +322,7 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
       <div class="playrow">
         <button class="primary play" id="playBtn"></button>
         <button class="newg hidden" id="newBtnHome" aria-label="New word"></button>
+        <button class="newg hidden" id="calBtnHome" aria-label="Calendar of daily words" data-ic="calendar"></button>
       </div>
       <div class="best" id="modeBest"></div>
       <div class="tiles">
@@ -321,6 +339,7 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
       <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
       <div class="gtitle"><b id="gMode">Daily</b><small id="gSub">5 letters</small></div>
       <button class="iconbtn" id="newBtn" aria-label="New word" data-ic="refresh"></button>
+      <button class="iconbtn hidden" id="calBtnGame" aria-label="Calendar of daily words" data-ic="calendar"></button>
       <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
     </div>
     <div class="bwrap" id="bwrap"><div class="board" id="board" role="grid" aria-label="Guesses"></div></div>
@@ -361,6 +380,18 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
   <div class="stage" id="howStage"></div>
   <div class="cap" id="howCap"></div>
   <div class="hownav"><button class="sec" id="howPrev">Back</button><div class="dots" id="howDots"></div><button class="primary" id="howNext">Next</button></div>
+</div></div>
+
+<div class="panel" id="calPanel" role="dialog" aria-label="Calendar"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Daily words</h1><span class="sp"></span></div>
+  <div class="hfilt" id="cLen"></div>
+  <div class="cal">
+    <div class="calhead"><button class="modearrow l" id="cPrev" aria-label="Previous month"></button><b id="cMonth"></b><button class="modearrow" id="cNext" aria-label="Next month"></button></div>
+    <div class="calgrid" id="cGrid"></div>
+  </div>
+  <p class="cnote" id="cNote"></p>
+  <div class="calkey"><span><i class="win"></i>Solved</span><span><i class="lost"></i>Missed the word</span><span><i class="part"></i>Started</span><span><i></i>Not played</span></div>
 </div></div>
 
 <div class="panel" id="statsPanel" role="dialog" aria-label="Stats"><div class="panelin">
@@ -507,7 +538,23 @@ const Sound = (() => {
 
 /* ---------- saved data ---------- */
 const PREF_KEY = 'rizzle-prefs', STATS_KEY = 'rizzle-stats-v1', HIST_KEY = 'rizzle-history-v1', DONE_KEY = 'rizzle-daily-v1', RECENT_KEY = 'rizzle-recent-v1';
-const saveKey = (m, n) => `rizzle-save-v1-${m}-${n}`;
+const DAYS_KEY = 'rizzle-days-v1';
+// today's daily (and Unlimited) keep one save each; a missed day you're catching up on has its own
+const saveKey = (m, n, day) => m === 'daily' && day && day !== today() ? `rizzle-save-v1-daily-${n}-d${day}` : `rizzle-save-v1-${m}-${n}`;
+// every daily you've finished: {length: {day: {word, g, w, hd, ms}}}
+const allDays = () => load(DAYS_KEY, {});
+(() => {   // the first version only kept today's
+  const old = load(DONE_KEY, null); if (!old) return;
+  const d = allDays();
+  for (const [n, x] of Object.entries(old)) if (x && x.day) { d[n] = d[n] || {}; d[n][x.day] = d[n][x.day] || {word: x.word, g: x.g, w: x.w, hd: x.hd, ms: x.ms}; }
+  keep(DAYS_KEY, d); keep(DONE_KEY, null);
+})();
+const dayDone = (n, day) => ((allDays()[n] || {})[day]) || null;
+// a daily left half-done when midnight came moves to its own day's save, so you can finish it from the calendar
+function tidySaves(n) {
+  const s = load(saveKey('daily', n), null);
+  if (s && s.day && s.day !== today()) { keep(saveKey('daily', n, s.day), s); keep(saveKey('daily', n), null); }
+}
 const prefs = Object.assign({mode: 'daily', len: 5, histSeen: 0, hard: false, cb: false, keypop: true, buzz: true}, load(PREF_KEY, {}));
 if (!LENS.includes(prefs.len)) prefs.len = 5;
 const savePrefs = () => keep(PREF_KEY, prefs);
@@ -532,21 +579,20 @@ function randomWord(n) {
   recent[n] = [w, ...(recent[n] || [])].slice(0, 400); keep(RECENT_KEY, recent);
   return w;
 }
-function newGame(m, n) {
-  const day = today();
+function newGame(m, n, day = today()) {
   G = {m, n, day, word: m === 'daily' ? dailyWord(n, day) : randomWord(n), rows: ROWS[n], guesses: [], cur: '', hints: [], hard: !!prefs.hard,
     over: false, won: false, elapsed: 0, startedAt: 0, log: []};
   saveGame();
 }
-function resumeGame(s) {
-  if (!s || !s.word || !ROWS[s.n] || (s.m === 'daily' && s.day !== today())) return false;
+function resumeGame(s, day) {
+  if (!s || !s.word || !ROWS[s.n] || (s.m === 'daily' && s.day !== (day || today()))) return false;
   G = Object.assign({log: [], cur: ''}, s, {hints: [], startedAt: 0});
   return true;
 }
 function saveGame() {
   if (!G) return;
-  if (G.over) keep(saveKey(G.m, G.n), null);
-  else keep(saveKey(G.m, G.n), Object.assign({}, G, {elapsed: timeNow(), startedAt: 0}));
+  if (G.over) keep(saveKey(G.m, G.n, G.day), null);
+  else keep(saveKey(G.m, G.n, G.day), Object.assign({}, G, {elapsed: timeNow(), startedAt: 0}));
 }
 function updatePaused() {
   if (!G || G.over) return;
@@ -685,18 +731,21 @@ function submit() {
 /* ---------- winning and losing ---------- */
 function record() {
   const all = allStats(), key = G.m + ':' + G.n, st = all[key] = Object.assign({played: 0, wins: 0, streak: 0, best: 0, dist: {}, last: 0}, all[key]);
+  const past = G.m === 'daily' && G.day < today();   // a missed day from the calendar: it counts, but your streak stays as it is
   st.played++;
   if (G.won) {
     st.wins++; st.dist[G.guesses.length] = (st.dist[G.guesses.length] || 0) + 1;
-    st.streak = G.m === 'daily' ? ((st.last === G.day - 1 ? st.streak : 0) + 1) : st.streak + 1;
-    if (G.m === 'daily') st.last = G.day;
-    st.best = Math.max(st.best, st.streak);
-  } else st.streak = 0;
+    if (!past) {
+      st.streak = G.m === 'daily' ? ((st.last === G.day - 1 ? st.streak : 0) + 1) : st.streak + 1;
+      if (G.m === 'daily') st.last = G.day;
+      st.best = Math.max(st.best, st.streak);
+    }
+  } else if (!past) st.streak = 0;
   keep(STATS_KEY, all);
   const h = history();
   h.unshift({m: G.m, n: G.n, w: G.won ? 1 : 0, word: G.word, g: G.guesses, log: G.log, ms: G.elapsed, h: G.hints.length, hd: G.hard ? 1 : 0, day: G.day, t: Date.now()});
   keep(HIST_KEY, h.slice(0, 400));
-  if (G.m === 'daily') { const done = load(DONE_KEY, {}); done[G.n] = {day: G.day, word: G.word, g: G.guesses, w: G.won ? 1 : 0, hi: G.hints, hd: G.hard ? 1 : 0, ms: G.elapsed}; keep(DONE_KEY, done); }
+  if (G.m === 'daily') { const d = allDays(); d[G.n] = d[G.n] || {}; d[G.n][G.day] = {word: G.word, g: G.guesses, w: G.won ? 1 : 0, hd: G.hard ? 1 : 0, ms: G.elapsed}; keep(DAYS_KEY, d); }
   return st;
 }
 function endGame(won) {
@@ -711,17 +760,19 @@ function showResult(st) {
   if (!G || !G.over) return;
   const R = $('#result');
   R.className = 'result ' + (G.won ? 'win' : 'lose');
+  const past = G.m === 'daily' && G.day < today();
   const chips = [`${ic('grid')}${G.won ? G.guesses.length : 'X'}/${G.rows}`, G.elapsed ? `${ic('clock')}${fmt(G.elapsed)}` : '',
-    st && st.streak > 1 ? `${ic('fire')}${st.streak} streak` : '', G.hard ? 'Hard mode' : ''].filter(Boolean);
+    !past && st && st.streak > 1 ? `${ic('fire')}${st.streak} streak` : '', G.hard ? 'Hard mode' : ''].filter(Boolean);
   R.innerHTML = `<div class="top"><span class="ri">${ic(G.won ? 'trophy' : 'close')}</span>
     <div><h2>${G.won ? (G.guesses.length === 1 ? 'First try!' : `Got it in ${G.guesses.length}!`) : `It was <span class="word">${G.word.toUpperCase()}</span>`}</h2>
     <div class="chips">${chips.map(c => `<span>${c}</span>`).join('')}</div></div></div>
     <div class="row2"><button class="sec" id="shareBtn">${ic('share')}Share</button>
-    <button class="primary" id="nextBtn">${G.m === 'daily' ? ic('infinity') + 'Unlimited' : ic('refresh') + 'Next word'}</button></div>
-    ${G.m === 'daily' ? `<p class="next" id="nextDaily"></p>` : ''}`;
+    <button class="primary" id="nextBtn">${past ? ic('calendar') + 'Calendar' : G.m === 'daily' ? ic('infinity') + 'Unlimited' : ic('refresh') + 'Next word'}</button></div>
+    ${G.m === 'daily' && !past ? `<p class="next" id="nextDaily"></p>` : ''}`;
   $('#kbd').classList.add('hidden'); R.classList.remove('hidden');
   $('#shareBtn').onclick = share;
   $('#nextBtn').onclick = () => {
+    if (past) { Cal.open(G.n, G.day); return; }
     if (G.m === 'daily') { modeIdx = 1; prefs.mode = 'free'; savePrefs(); renderModes(); renderLens(); }
     const s = load(saveKey('free', G.n), null);
     if (!(s && resumeGame(s))) newGame('free', G.n);
@@ -740,11 +791,19 @@ function share() {
 }
 
 /* ---------- moving between screens ---------- */
+const dateOf = day => new Date(START.getFullYear(), START.getMonth(), START.getDate() + day - 1);
+const dayOf = d => Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - START) / 864e5) + 1;
+const shortDate = day => dateOf(day).toLocaleDateString(undefined, {day: 'numeric', month: 'short'});
+function showSub() {
+  const past = G.m === 'daily' && G.day < today();
+  $('#gSub').textContent = `${G.n} letters${past ? ' · ' + shortDate(G.day) : ''}${G.hard ? ' · hard' : ''}`;
+}
 function showGame() {
   $('#home').classList.add('hidden'); $('#game').classList.remove('hidden');
   $('#gMode').textContent = G.m === 'daily' ? `Daily #${G.day}` : 'Unlimited';
-  $('#gSub').textContent = `${G.n} letters${G.hard ? ' · hard' : ''}`;
+  showSub();
   $('#newBtn').classList.toggle('hidden', G.m === 'daily');
+  $('#calBtnGame').classList.toggle('hidden', G.m !== 'daily');
   $('#result').classList.add('hidden'); $('#kbd').classList.remove('hidden', 'locked');
   buildBoard(board, G.n, G.rows); paintAll(); layoutGame();
   busy = false; updatePaused(); saveGame();
@@ -837,23 +896,30 @@ function renderLens() {
     <span class="ln">${'<i></i>'.repeat(n)}</span>${n} letters</button>`).join('');
 }
 $('#lenSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.len = +b.dataset.n; savePrefs(); renderLens(); renderPlay(); });
-const dailyDone = n => { const d = load(DONE_KEY, {})[n]; return d && d.day === today() ? d : null; };
+const dailyDone = n => dayDone(n, today());
 function renderPlay() {
+  tidySaves(prefs.len);
   const m = MODE_IDS[modeIdx], n = prefs.len, s = load(saveKey(m, n), null), live = s && (m !== 'daily' || s.day === today()) && s.word && s.guesses.length > 0;
   const done = m === 'daily' && dailyDone(n);
   if (done) $('#playBtn').innerHTML = `<span>${done.w ? 'Solved today' : 'Done for today'}</span><small>See your board · next word in ${untilTomorrow()}</small>`;
   else if (live) $('#playBtn').innerHTML = `<span>Continue</span><small>${s.guesses.length} of ${ROWS[n]} guesses</small>`;
   else $('#playBtn').innerHTML = `<span>Play</span>${m === 'daily' ? `<small>Puzzle #${today()}</small>` : ''}`;
   $('#newBtnHome').classList.toggle('hidden', !(m === 'free' && live));
+  $('#calBtnHome').classList.toggle('hidden', m !== 'daily');
   const st = allStats()[m + ':' + n], streak = liveStreak(st, m);
   $('#modeBest').innerHTML = st && st.played ? `<span>${ic('check')}${st.wins} won</span><span>${Math.round(st.wins / st.played * 100)}%</span>${streak ? `<span class="fire">${ic('fire')}${streak}</span>` : ''}` : '';
 }
+// open one day's daily word: its finished board, the game you started, or a fresh one
+function playDay(n, day) {
+  const done = dayDone(n, day);
+  if (done) { G = {m: 'daily', n, day, word: done.word, rows: ROWS[n], guesses: done.g, cur: '', hints: [], hard: !!done.hd, over: true, won: !!done.w, elapsed: done.ms || 0, startedAt: 0, log: []}; showGame(); return; }
+  const s = load(saveKey('daily', n, day), null);
+  if (!(s && resumeGame(s, day))) newGame('daily', n, day);
+  showGame();
+}
 function play(fresh) {
-  const m = MODE_IDS[modeIdx], n = prefs.len, done = m === 'daily' && dailyDone(n);
-  if (done) {   // look at today's finished board
-    G = {m, n, day: done.day, word: done.word, rows: ROWS[n], guesses: done.g, cur: '', hints: done.hi || [], hard: !!done.hd, over: true, won: !!done.w, elapsed: done.ms || 0, startedAt: 0, log: []};
-    showGame(); return;
-  }
+  const m = MODE_IDS[modeIdx], n = prefs.len;
+  if (m === 'daily') { tidySaves(n); playDay(n, today()); return; }
   const s = !fresh && load(saveKey(m, n), null);
   if (!(s && resumeGame(s))) newGame(m, n);
   showGame();
@@ -904,7 +970,7 @@ document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () =
   // hard mode can be switched for the word you're on until you've made a guess; after that it starts with the next one
   if (el.dataset.p === 'hard' && G && !G.over) {
     if (G.guesses.length) toast('Hard mode changes with your next word');
-    else { G.hard = el.checked; saveGame(); $('#gSub').textContent = `${G.n} letters${G.hard ? ' · hard' : ''}`; }
+    else { G.hard = el.checked; saveGame(); showSub(); }
   }
 });
 $('#sMenu').onclick = () => RZ && RZ.openMenu();
@@ -915,6 +981,48 @@ $('#sReset').onclick = () => {
 };
 const openSettings = () => { renderSettings(); openPanel('setPanel'); };
 $('#setBtnHome').onclick = openSettings; $('#setBtnGame').onclick = openSettings;
+
+/* ---------- Calendar: every daily word so far, so you can catch up on days you missed ---------- */
+const Cal = (() => {
+  let n = 5, y = 0, mo = 0;
+  const first = dateOf(1);
+  function render() {
+    $('#cLen').innerHTML = LENS.map(k => `<button class="${k === n ? 'on' : ''}" data-n="${k}">${k} letters</button>`).join('');
+    const start = new Date(y, mo, 1), days = new Date(y, mo + 1, 0).getDate(), lead = (start.getDay() + 6) % 7, now = today(), done = allDays()[n] || {};
+    $('#cMonth').textContent = start.toLocaleDateString(undefined, {month: 'long', year: 'numeric'});
+    let html = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<span class="wd">${d}</span>`).join('') + '<span></span>'.repeat(lead);
+    for (let d = 1; d <= days; d++) {
+      const day = dayOf(new Date(y, mo, d)), x = done[day], off = day < 1 || day > now;
+      const s = !off && !x && load(saveKey('daily', n, day), null), started = s && s.day === day && s.guesses && s.guesses.length;
+      const cls = off ? 'off' : x ? (x.w ? 'win' : 'lost') : started ? 'part' : '';
+      const label = off ? '' : `Daily #${day}, ${x ? (x.w ? `solved in ${x.g.length}` : 'missed') : started ? 'started' : 'not played'}`;
+      html += `<button class="cday ${cls}${day === now ? ' today' : ''}"${off ? ' disabled tabindex="-1"' : ` data-day="${day}" aria-label="${label}"`}>${d}</button>`;
+    }
+    $('#cGrid').innerHTML = html;
+    const total = now, solved = Object.entries(done).filter(([d, x]) => +d <= now && x.w).length;
+    $('#cNote').textContent = `${solved} of ${total} daily word${total === 1 ? '' : 's'} solved. Catching up on a missed day doesn't change your streak.`;
+    $('#cPrev').disabled = y < first.getFullYear() || (y === first.getFullYear() && mo <= first.getMonth());
+    const t = new Date(); $('#cNext').disabled = y > t.getFullYear() || (y === t.getFullYear() && mo >= t.getMonth());
+  }
+  function open(len = prefs.len, day = today()) {
+    n = len; const d = dateOf(day); y = d.getFullYear(); mo = d.getMonth();
+    render(); openPanel('calPanel');
+  }
+  $('#cPrev').innerHTML = $('#cNext').innerHTML = ic('chevron');
+  $('#cPrev').onclick = () => { if (--mo < 0) { mo = 11; y--; } render(); };
+  $('#cNext').onclick = () => { if (++mo > 11) { mo = 0; y++; } render(); };
+  $('#cLen').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { n = +b.dataset.n; render(); } });
+  $('#cGrid').addEventListener('click', e => {
+    const b = e.target.closest('.cday[data-day]'); if (!b) return;
+    if (G && !G.over) saveGame();
+    prefs.len = n; prefs.mode = 'daily'; savePrefs(); modeIdx = 0; renderLens();
+    closePanel($('#calPanel'));
+    playDay(n, +b.dataset.day);
+  });
+  return {open};
+})();
+$('#calBtnHome').onclick = () => Cal.open();
+$('#calBtnGame').onclick = () => Cal.open(G ? G.n : prefs.len, G ? G.day : today());
 
 /* ---------- Stats ---------- */
 let sfMode = prefs.mode, sfLen = prefs.len;
@@ -1057,8 +1165,8 @@ window.RizzoHooks = {
   onMenuOpen: () => updatePaused(),
   onMenuClose: () => updatePaused(),
   previewSound: () => Sound.type(),
-  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over ? [G.m, G.n] : null}; },
-  afterReload(info) { const s = info && info.inGame && load(saveKey(info.inGame[0], info.inGame[1]), null); if (s && resumeGame(s)) showGame(); },
+  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over ? [G.m, G.n, G.day] : null}; },
+  afterReload(info) { const g = info && info.inGame, s = g && load(saveKey(g[0], g[1], g[2]), null); if (s && resumeGame(s, g[2])) showGame(); },
 };
 </script>
 </body>
