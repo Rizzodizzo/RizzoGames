@@ -410,8 +410,12 @@ body[data-fx=space] #board.hex{filter:drop-shadow(0 0 16px rgba(143,162,255,.4))
 body[data-fx=space] #board .cell.open{text-shadow:0 0 8px rgba(255,216,107,.45)}
 body[data-fx=snow] #board.sq{box-shadow:0 0 0 3px #e3eefa,0 12px 30px rgba(0,0,0,.35)}
 body[data-fx=snow] #board.hex{filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}
-body[data-fx=snow] #boardWrap::before{content:'';position:absolute;left:-10px;right:-10px;top:-16px;height:32px;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 32' preserveAspectRatio='none'%3E%3Cpath d='M3 22C1 15 6 10 14 10C20 3 36 2 46 9C55 5 66 5 75 9C87 1 109 0 121 8C131 4 144 5 152 9C164 1 184 0 195 8C203 4 215 4 223 8C235 0 257 1 267 9C275 5 287 5 295 9C307 1 325 1 335 8C344 4 356 5 364 9C374 6 386 6 392 11C398 14 399 19 397 23C396 27 393 29 390 28.5C387 28 386 25 385.5 22C381 19 372 17 362 17L38 17C28 17 19 19 14.5 22C14 25 13 28 10 28.5C7 29 4 27 3 22Z' fill='%23ffffff'/%3E%3Cpath d='M14.5 22C19 19 28 17 38 17L362 17C372 17 381 19 385.5 22C380 19.8 371 18.4 362 18.4L38 18.4C29 18.4 20 19.8 14.5 22Z' fill='%23cfe1f3'/%3E%3Cpath d='M5 23.5C6 26.5 8 28 10.5 28M395 23.5C394 26.5 392 28 389.5 28' stroke='%23d6e6f5' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3Cpath d='M27 9c5-3 11-3 15 0M101 5c6-3 12-3 17 1M176 5c6-3 12-3 16 1M246 5c6-3 12-3 17 1M316 5c5-3 11-3 15 1' stroke='%23eaf3ff' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;filter:drop-shadow(0 1px 1px rgba(10,30,60,.28))}
-body[data-fx=snow] #boardWrap::after{content:'';position:absolute;left:8px;right:8px;top:calc(100% - 1px);height:18px;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20'%3E%3Cpath d='M0 0h120v2.5H0z' fill='%23eef6ff'/%3E%3Cpath d='M4 2q3.5 6 3.5 14Q8.5 8 11 2zM18 2q2 3 2 7 0-4 2-7zM29 2q3 8 3 17 0-9 3-17zM44 2q2 4 2 8 0-4 2-8zM55 2q3 6 3 12 0-6 3-12zM69 2q2.5 7 2.5 15Q72 9 74 2zM84 2q2 3 2 7 0-4 2-7zM95 2q3 7 3 14 0-7 3-14zM109 2q2.5 4 2.5 10 0-6 2.5-10z' fill='%23eaf4ff' stroke='%23a9c8e6' stroke-width='.5' stroke-linejoin='round'/%3E%3Cpath d='M30.6 4l.9 9M56.6 4l.7 6M96.6 4l.7 7M70.6 4l.7 8M5.6 4l.7 6' stroke='%23ffffff' stroke-width='.9'/%3E%3C/svg%3E") 0 0/120px 20px repeat-x;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+/* the hexagon board: a snow cap on each top hexagon and icicles under each bottom one (drawn by hexSnow) */
+.hexsnow{position:absolute;left:0;top:0;z-index:2;pointer-events:none;overflow:visible;filter:drop-shadow(0 1px 1px rgba(10,30,60,.3)) drop-shadow(0 0 5px var(--glow))}
+.hexsnow .ice{animation:icedrip 5s ease-in-out infinite;animation-delay:var(--dl);transform-box:fill-box;transform-origin:50% 0}
+@keyframes icedrip{0%,86%,100%{transform:none}92%{transform:scaleY(1.08)}}
+body[data-fx=snow] #boardWrap:has(#board.sq)::before{content:'';position:absolute;left:-10px;right:-10px;top:-16px;height:32px;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 32' preserveAspectRatio='none'%3E%3Cpath d='M3 22C1 15 6 10 14 10C20 3 36 2 46 9C55 5 66 5 75 9C87 1 109 0 121 8C131 4 144 5 152 9C164 1 184 0 195 8C203 4 215 4 223 8C235 0 257 1 267 9C275 5 287 5 295 9C307 1 325 1 335 8C344 4 356 5 364 9C374 6 386 6 392 11C398 14 399 19 397 23C396 27 393 29 390 28.5C387 28 386 25 385.5 22C381 19 372 17 362 17L38 17C28 17 19 19 14.5 22C14 25 13 28 10 28.5C7 29 4 27 3 22Z' fill='%23ffffff'/%3E%3Cpath d='M14.5 22C19 19 28 17 38 17L362 17C372 17 381 19 385.5 22C380 19.8 371 18.4 362 18.4L38 18.4C29 18.4 20 19.8 14.5 22Z' fill='%23cfe1f3'/%3E%3Cpath d='M5 23.5C6 26.5 8 28 10.5 28M395 23.5C394 26.5 392 28 389.5 28' stroke='%23d6e6f5' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3Cpath d='M27 9c5-3 11-3 15 0M101 5c6-3 12-3 17 1M176 5c6-3 12-3 16 1M246 5c6-3 12-3 17 1M316 5c5-3 11-3 15 1' stroke='%23eaf3ff' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;filter:drop-shadow(0 1px 1px rgba(10,30,60,.28))}
+body[data-fx=snow] #boardWrap:has(#board.sq)::after{content:'';position:absolute;left:8px;right:8px;top:calc(100% - 1px);height:18px;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20'%3E%3Cpath d='M0 0h120v2.5H0z' fill='%23eef6ff'/%3E%3Cpath d='M4 2q3.5 6 3.5 14Q8.5 8 11 2zM18 2q2 3 2 7 0-4 2-7zM29 2q3 8 3 17 0-9 3-17zM44 2q2 4 2 8 0-4 2-8zM55 2q3 6 3 12 0-6 3-12zM69 2q2.5 7 2.5 15Q72 9 74 2zM84 2q2 3 2 7 0-4 2-7zM95 2q3 7 3 14 0-7 3-14zM109 2q2.5 4 2.5 10 0-6 2.5-10z' fill='%23eaf4ff' stroke='%23a9c8e6' stroke-width='.5' stroke-linejoin='round'/%3E%3Cpath d='M30.6 4l.9 9M56.6 4l.7 6M96.6 4l.7 7M70.6 4l.7 8M5.6 4l.7 6' stroke='%23ffffff' stroke-width='.9'/%3E%3C/svg%3E") 0 0/120px 20px repeat-x;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
 body[data-fx=snow] #boardWrap::before{filter:drop-shadow(0 1px 1px rgba(10,30,60,.28)) drop-shadow(0 0 6px var(--glow))}
 body[data-fx=snow] #boardWrap::after{filter:drop-shadow(0 0 4px var(--glow))}
 /* Candy: a candy-cane striped frame */
@@ -1057,6 +1061,44 @@ function layoutBoard() {
   const w = $('#wrap'), pad = getComputedStyle($('#bpad'));
   const px = parseFloat(pad.paddingLeft) + parseFloat(pad.paddingRight), py = parseFloat(pad.paddingTop) + parseFloat(pad.paddingBottom);
   view.layout(w.clientWidth - 12 - px, w.clientHeight - 12 - py);
+  hexSnow();
+}
+// Snowfall on the hexagon board: snow settles on the slopes of each top hexagon, icicles hang under each bottom one
+function hexSnow() {
+  const wrap = $('#boardWrap');
+  wrap.querySelectorAll('.hexsnow').forEach(x => x.remove());
+  if (document.body.dataset.fx !== 'snow' || !G || !G.field || !G.field.hex || !view.cells.length) return;
+  const f = G.field, board = $('#board'), W = board.offsetWidth, H = board.offsetHeight;
+  if (!W) return;
+  const box = i => { const st = view.cells[i].style; return [parseFloat(st.left), parseFloat(st.top), parseFloat(st.width), parseFloat(st.height)]; };
+  const P = (x, y) => x.toFixed(1) + ' ' + y.toFixed(1);
+  let caps = '', ice = '', n = 0;
+  for (let c = 0; c < f.cols; c++) {
+    const [x, y, w, h] = box(c), t = h * .21, q = h / 4;
+    // along the two top edges, a little above them, then back underneath with soft lumps
+    caps += `<path d="M${P(x - 1.5, y + q + 1)} L${P(x + w / 2, y - 2.2)} L${P(x + w + 1.5, y + q + 1)}
+      Q${P(x + w + 1, y + q + t * 1.1)} ${P(x + w * .84, y + q * .62 + t * .9)}
+      Q${P(x + w * .72, y + q * .4 + t * 1.5)} ${P(x + w * .62, y + q * .25 + t * .85)}
+      Q${P(x + w / 2, y + t * 1.2)} ${P(x + w * .38, y + q * .25 + t * .85)}
+      Q${P(x + w * .26, y + q * .45 + t * 1.45)} ${P(x + w * .14, y + q * .62 + t * .9)}
+      Q${P(x - 1, y + q + t * 1.2)} ${P(x - 1.5, y + q + 1)}Z" fill="#f6fbff"/>
+      <path d="M${P(x + w * .2, y + q * .55)} L${P(x + w / 2, y + .5)}" stroke="#fff" stroke-width="${(h * .05).toFixed(1)}" stroke-linecap="round" opacity=".9"/>`;
+  }
+  const r = f.rows - 1;
+  for (let c = 0; c < f.cols; c++) {
+    const [x, y, w, h] = box(r * f.cols + c), b = y + h, s = y + h * .75;
+    ice += `<path d="M${P(x, s)} L${P(x + w / 2, b)} L${P(x + w, s)}" stroke="#eaf5ff" stroke-width="${Math.max(1.5, h * .06).toFixed(1)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    // icicles along both lower edges; lengths vary but repeat the same way every time
+    [.18, .42, .66, .9].forEach((u, k) => {
+      const left = u < .5, e = left ? u * 2 : (u - .5) * 2;
+      const px = x + u * w, py = left ? s + (b - s) * e : b - (b - s) * e;
+      const len = h * (.12 + ((c * 7 + k * 5) % 9) / 9 * .2), wd = Math.max(1.6, w * .06);
+      ice += `<path class="ice" style="--dl:${(-((c * 3 + k) % 7) * .7).toFixed(1)}s" d="M${P(px - wd, py - 1)} Q${P(px, py + len * .5)} ${P(px, py + len)} Q${P(px + wd * .2, py + len * .4)} ${P(px + wd, py - 1)}Z" fill="#dcefff" opacity=".95"/>`;
+      n++;
+    });
+  }
+  const svg = `<svg class="hexsnow" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${ice}${caps}</svg>`;
+  wrap.insertAdjacentHTML('beforeend', svg);
 }
 addEventListener('resize', () => { layoutBoard(); scrollToMode(modeIdx, true); if (!$('#howPanel').classList.contains('show')) return; How.relayout(); });
 
@@ -1649,6 +1691,7 @@ document.querySelectorAll('.ttab').forEach(b => b.onclick = () => setThemeTab(+b
 function applyTheme() {
   if (!TH.isUnlocked(prefs.theme)) { prefs.theme = 'auto'; savePrefs(); }
   TH.apply(prefs.theme);
+  if (typeof G !== 'undefined') hexSnow();
 }
 $('#tPages').addEventListener('click', e => {
   const b = e.target.closest('.tcard'); if (!b) return;
