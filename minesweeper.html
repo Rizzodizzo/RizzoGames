@@ -973,23 +973,26 @@ class BoardView {
     let press = null;
     const at = e => { const c = e.target.closest && e.target.closest('.cell'); return c && el.contains(c) ? +c.dataset.i : -1; };
     const act = (i, how) => { if (this.opts.onAct) this.opts.onAct(i, how); };
-    const end = () => { if (press) { clearTimeout(press.timer); this.mark(press.i, 'holding', false); } press = null; };
+    const fingers = new Set();    // two fingers on the board means a pinch-zoom, never a tap or a hold
+    const end = () => { if (press) clearTimeout(press.timer); press = null; };
     el.addEventListener('contextmenu', e => e.preventDefault());
     el.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse') { fingers.add(e.pointerId); if (fingers.size > 1) { end(); return; } }
       const i = at(e); if (i < 0 || !this.f || this.f.over || this.locked) return;
       if (e.button === 2) { act(i, 'flag'); return; }
       if (e.button !== 0) return;
       press = {i, x: e.clientX, y: e.clientY, done: false, timer: 0};
       if (e.pointerType !== 'mouse' && CTRL.hold && this.f.state[i] !== 1) {   // hold a finger down to flag (how long: Settings)
-        this.mark(i, 'holding');
         press.timer = setTimeout(() => {
           if (!press) return;
-          press.done = true; this.mark(press.i, 'holding', false);
+          press.done = true;
           act(press.i, 'flag');
         }, CTRL.holdMs);
       }
     });
     el.addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 12) end(); });   // a scroll, not a tap
+    const lift = e => fingers.delete(e.pointerId);
+    addEventListener('pointerup', lift, true); addEventListener('pointercancel', lift, true);
     el.addEventListener('pointercancel', end);
     el.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') end(); });
     el.addEventListener('pointerup', e => {
