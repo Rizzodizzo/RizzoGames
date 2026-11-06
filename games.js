@@ -205,19 +205,31 @@ html,body{overscroll-behavior:none}
   })();
   // iPhone Safari can leave a locked page scrolled a little after the phone is turned: it still looks right,
   // but every tap lands lower than the button you see. After each turn or resize, snap everything back.
+  // Only for pages that are locked in place (a game screen). A page you can scroll, like the launcher, is left
+  // alone, and it only happens when the phone actually turns, not when Safari's address bar grows or shrinks.
+  const locked = () => {
+    try {
+      const h = getComputedStyle(document.documentElement), b = getComputedStyle(document.body);
+      return h.overflowY === 'hidden' || b.position === 'fixed' || (b.overflowY === 'hidden' && h.overflowY !== 'auto');
+    } catch { return false; }
+  };
   const unshift = () => {
+    if (!locked()) return;
     try {
       if (scrollX || scrollY) scrollTo(0, 0);
       const se = document.scrollingElement || document.documentElement;
       if (se.scrollTop || se.scrollLeft) { se.scrollTop = 0; se.scrollLeft = 0; }
-      if (document.body && (document.body.scrollTop && getComputedStyle(document.body).overflowY === 'hidden')) document.body.scrollTop = 0;
     } catch {}
   };
-  const unshiftSoon = () => { unshift(); requestAnimationFrame(unshift); setTimeout(unshift, 120); setTimeout(unshift, 450); };
-  addEventListener('orientationchange', unshiftSoon);
-  addEventListener('resize', unshiftSoon);
-  if (window.visualViewport) visualViewport.addEventListener('resize', unshiftSoon);
-  addEventListener('pageshow', unshiftSoon);
+  let wasWide = innerWidth > innerHeight;
+  const turned = () => {
+    const wide = innerWidth > innerHeight;
+    if (wide === wasWide) return;
+    wasWide = wide;
+    unshift(); requestAnimationFrame(unshift); setTimeout(unshift, 120); setTimeout(unshift, 450);
+  };
+  addEventListener('orientationchange', () => setTimeout(turned, 50));
+  addEventListener('resize', turned);
   document.documentElement.classList.toggle('rz-touch', device.touch);
   document.documentElement.classList.toggle('rz-phone', device.phone);
 
