@@ -256,8 +256,9 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .cell.hmine{background:var(--hmine)!important;animation:glow 1.1s ease-in-out infinite}
 @keyframes glow{50%{filter:brightness(1.18)}}
 /* a ring fills while you hold a finger down to flag */
-.cell.holding::after{content:"";position:absolute;inset:16%;border-radius:50%;border:3px solid #fff;animation:hold var(--hold,.38s) linear both;pointer-events:none}
-@keyframes hold{from{transform:scale(.25);opacity:.2}to{transform:scale(1);opacity:1}}
+.cell.holding::after{content:"";position:absolute;inset:16%;border-radius:50%;border:3px solid #fff;animation:hold calc(var(--hold,.38s) * .55) linear calc(var(--hold,.38s) * .45) both;pointer-events:none}
+/* a quick tap never shows the ring: it only starts growing once you have held for a moment */
+@keyframes hold{from{transform:scale(.25);opacity:0}to{transform:scale(1);opacity:1}}
 /* "tap here" in How to play */
 .cell.tapme::before{content:"";position:absolute;inset:22%;border-radius:50%;background:#fff;opacity:.85;animation:tapme 1.3s ease-in-out infinite;pointer-events:none}
 @keyframes tapme{0%,100%{transform:scale(.45);opacity:.9}50%{transform:scale(1);opacity:.25}}
@@ -509,7 +510,11 @@ body[data-fx=gold] .tbar i{background:var(--gm)}
 .shead{display:flex;justify-content:space-between;align-items:center}
 .sval{font-weight:900;font-variant-numeric:tabular-nums;color:var(--accent)}
 .sline{display:flex;align-items:center;gap:8px}
-.sline input{flex:1;min-width:0;accent-color:var(--accent)}
+.sline input{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:28px;background:none;margin:0}
+.sline input::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent) var(--fill,30%),var(--line) var(--fill,30%))}
+.sline input::-moz-range-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent) var(--fill,30%),var(--line) var(--fill,30%))}
+.sline input::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9px;border-radius:50%;background:#fff;border:0;box-shadow:0 1px 4px rgba(0,0,0,.3),0 0 0 3px var(--accent)}
+.sline input::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:0;box-shadow:0 1px 4px rgba(0,0,0,.3),0 0 0 3px var(--accent)}
 .sk{font-size:.72rem;font-weight:800;color:var(--muted)}
 .tryme{--cs:46px;flex:none;margin-left:6px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px var(--frame)}
 .switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
@@ -1674,7 +1679,7 @@ const holdText = ms => (ms / 1000).toFixed(2).replace(/0$/, '') + 's';
 function renderSettings() {
   document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = prefs[el.dataset.p] !== false);
   $('#sThemeNow').textContent = themeName(prefs.theme in RZT.THEMES || prefs.theme === 'auto' ? prefs.theme : 'auto');
-  $('#sHold').value = prefs.holdMs; $('#sHoldVal').textContent = holdText(prefs.holdMs);
+  $('#sHold').value = prefs.holdMs; $('#sHoldVal').textContent = holdText(prefs.holdMs); holdFill();
   $('#sHoldRow').classList.toggle('off', !prefs.hold);
   $('#sBuzzRow').classList.toggle('hidden', !navigator.vibrate);       // iPhones don't let web pages vibrate
   $('#sResetNote').textContent = '';
@@ -1685,7 +1690,8 @@ document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () =
   prefs[el.dataset.p] = el.checked; savePrefs(); useControls(); renderSettings();
   if (el.dataset.p === 'fx') applyTheme();
 });
-$('#sHold').oninput = e => { prefs.holdMs = +e.target.value; $('#sHoldVal').textContent = holdText(prefs.holdMs); useControls(); };
+const holdFill = () => { const r = $('#sHold'); r.style.setProperty('--fill', ((r.value - r.min) / (r.max - r.min) * 100) + '%'); };
+$('#sHold').oninput = e => { prefs.holdMs = +e.target.value; $('#sHoldVal').textContent = holdText(prefs.holdMs); holdFill(); useControls(); };
 $('#sHold').onchange = () => savePrefs();
 // a practice square: hold it to see how the timing feels
 let tryTimer = 0, tryOn = false;

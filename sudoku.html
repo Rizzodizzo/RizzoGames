@@ -110,6 +110,11 @@ header button{white-space:nowrap;flex-shrink:0}
 #notesBtn.on{background:var(--accent);color:var(--onaccent)}
 .pad{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
 .pad button{padding:10px 0;font-size:1.4rem;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.keypop{position:fixed;z-index:20;pointer-events:none;display:flex;align-items:center;justify-content:center;border-radius:14px;background:var(--panel);color:var(--entry);font-size:2.2rem;font-weight:600;
+  box-shadow:0 8px 22px rgba(0,0,0,.28),0 0 0 1px var(--thin);opacity:0;transform:translateY(8px) scale(.85);transition:opacity .07s,transform .09s}
+.keypop.show{opacity:1;transform:none}
+.keypop svg{width:auto;height:60%}
+html.rz-reduce-motion .keypop{transition:none}
 .pad button small{font-size:.65rem;color:var(--muted)}
 .pad button.full{opacity:.3}
 
@@ -423,6 +428,14 @@ html.rm .updicon{animation-duration:2.4s}
 .swatch i{width:36px;height:36px;border-radius:50%;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--thin);font-size:.95rem;cursor:pointer}
 .setrow:last-child{border-bottom:none}
+/* settings come in rounded boxes, one per group */
+#settingsOverlay .sheet{background:var(--bg)}
+#settingsOverlay .sheethead{background:var(--bg)}
+.setgroup{background:var(--panel);border-radius:14px;padding:0 14px;border:1px solid color-mix(in srgb,var(--thin) 55%,transparent);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.setgroup .setrow{padding:13px 0}
+.setgroup .linkrow{text-align:left;gap:12px}
+.setgroup .lr-l{flex:1;min-width:0}
+.setgroup .lr-r{flex-shrink:0;white-space:nowrap}
 .setsub{display:block;font-size:.78rem;color:var(--muted);margin-top:2px}
 .switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--thin);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
 .switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
@@ -904,17 +917,25 @@ html.rm .board.replay.pb .cell.sel::after{animation:none}
     <div class="grab"></div>
     <div class="sheethead"><h2>Settings</h2><button class="primary" id="settingsDone">Done</button></div>
     <h3>Every game</h3>
-    <button class="setrow linkrow" id="openRizzo"><span class="lr-l"><i data-icon="settings"></i>Sound, motion &amp; updates</span><span class="lr-r"><span>Settings menu</span><i data-icon="chevron"></i></span></button>
+    <div class="setgroup">
+      <button class="setrow linkrow" id="openRizzo"><span class="lr-l"><i data-icon="settings"></i>Sound, motion &amp; updates</span><span class="lr-r"><i data-icon="chevron"></i></span></button>
+    </div>
     <h3>Look</h3>
-    <button class="setrow linkrow" id="openThemes"><span class="lr-l"><i data-icon="palette"></i>Themes</span><span class="lr-r"><span id="themeNow"></span><i data-icon="chevron"></i></span></button>
-    <label class="setrow"><span>Paper mode look<small class="setsub">Handwritten numbers and pen circles</small></span><input type="checkbox" class="switch" data-set="paperLook"></label>
+    <div class="setgroup">
+      <button class="setrow linkrow" id="openThemes"><span class="lr-l"><i data-icon="palette"></i>Themes</span><span class="lr-r"><span id="themeNow"></span><i data-icon="chevron"></i></span></button>
+      <label class="setrow"><span>Paper mode look<small class="setsub">Handwritten numbers and pen circles</small></span><input type="checkbox" class="switch" data-set="paperLook"></label>
+    </div>
     <h3>Board</h3>
-    <label class="setrow"><span>Highlight row, column &amp; box</span><input type="checkbox" class="switch" data-set="hlPeers"></label>
-    <label class="setrow"><span>Highlight matching numbers</span><input type="checkbox" class="switch" data-set="hlSame"></label>
-    <label class="setrow"><span>Show numbers left on the pad</span><input type="checkbox" class="switch" data-set="showCounts"></label>
-    <label class="setrow"><span>Show timer</span><input type="checkbox" class="switch" data-set="showTimer"></label>
+    <div class="setgroup">
+      <label class="setrow"><span>Highlight row, column &amp; box</span><input type="checkbox" class="switch" data-set="hlPeers"></label>
+      <label class="setrow"><span>Highlight matching numbers</span><input type="checkbox" class="switch" data-set="hlSame"></label>
+      <label class="setrow"><span>Show numbers left on the pad</span><input type="checkbox" class="switch" data-set="showCounts"></label>
+      <label class="setrow"><span>Show timer</span><input type="checkbox" class="switch" data-set="showTimer"></label>
+    </div>
     <h3>Motion</h3>
-    <label class="setrow"><span>Background animations<small class="setsub" id="bgNote">Petals, fish, cats and more</small></span><input type="checkbox" class="switch" data-set="bgMotion"></label>
+    <div class="setgroup">
+      <label class="setrow"><span>Background animations<small class="setsub" id="bgNote">Petals, fish, cats and more</small></span><input type="checkbox" class="switch" data-set="bgMotion"></label>
+    </div>
     <h3>Data</h3>
     <button class="danger" id="resetBtn">Reset scores &amp; best times</button>
   </div>
@@ -2702,6 +2723,22 @@ for (let d = 1; d <= 9; d++) {
   b.addEventListener('click', () => input(d));
   padEl.appendChild(b); padBtns.push(b);
 }
+// On phones and tablets, the number under your thumb pops up above it while you hold it (like a phone keyboard)
+const keyPop = document.createElement('div');
+keyPop.className = 'keypop'; keyPop.setAttribute('aria-hidden', 'true');
+document.body.appendChild(keyPop);
+const hideKeyPop = () => keyPop.classList.remove('show');
+padBtns.forEach((b, k) => {
+  b.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    const r = b.getBoundingClientRect(), w = Math.max(r.width * 1.4, 52), h = Math.max(r.height * 1.2, 60);
+    keyPop.innerHTML = penOn() ? penD(k + 1) : String(k + 1);
+    keyPop.classList.toggle('pen', penOn());
+    keyPop.style.cssText = `width:${w}px;height:${h}px;left:${Math.min(innerWidth - w - 4, Math.max(4, r.left + r.width / 2 - w / 2))}px;top:${Math.max(4, r.top - h - 8)}px`;
+    keyPop.classList.add('show');
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, hideKeyPop));
+});
 
 function render() {
   logMoves();
