@@ -1,7 +1,7 @@
 {
   "name": "Rizzo Games",
   "short_name": "Rizzo Games",
-  "description": "All our games in one app: Sudoku, Ethereal Equus Examination and more",
+  "description": "All our games in one app: Sudoku, Ethereal Equus Examination, Minesweeper and more",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

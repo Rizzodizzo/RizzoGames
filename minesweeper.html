@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minesweeper</title>
+<meta name="theme-color" content="#eef5ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1510" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="minesweeper" data-show-when="#home:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Minesweeper">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Light or dark follows the device setting automatically */
+:root{
+  --bg:#eef5ec;--panel:#fff;--ink:#16241a;--muted:#5d6f61;--line:#d5e3d4;--soft:#e3eee1;
+  --accent:#16a34a;--accent-hi:#22c55e;--accent-edge:#0b5a2a;
+  /* the field: grass tiles still hidden, sand tiles dug up (a checkerboard of two shades each) */
+  --h1:#aad751;--h2:#a2d149;--hh:#bfe36a;--o1:#e5c29f;--o2:#d7b899;--boom:#e5484d;
+  --n1:#1976d2;--n2:#388e3c;--n3:#d32f2f;--n4:#7b1fa2;--n5:#ff8f00;--n6:#0097a7;--n7:#424242;--n8:#9e9e9e;
+  --shadow:0 6px 22px rgba(20,60,30,.10);
+  color-scheme:light;
+  /* the Rizzo menu button takes on the game's green */
+  --rz-btn-bg:linear-gradient(180deg,#34d058,#15803d);--rz-btn-border:1.5px solid rgba(255,255,255,.4);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1510;--panel:#16211a;--ink:#e6f2e7;--muted:#93a896;--line:#25352a;--soft:#1c2a21;
+    --accent:#22c55e;--accent-hi:#4ade80;--accent-edge:#052e16;
+    --h1:#4f7f2a;--h2:#487726;--hh:#5d9132;--o1:#3b3226;--o2:#342c21;--boom:#c9353a;
+    --n1:#64b5f6;--n2:#81c784;--n3:#ef5350;--n4:#ce93d8;--n5:#ffb74d;--n6:#4dd0e1;--n7:#e0e0e0;--n8:#bdbdbd;
+    --shadow:0 6px 22px rgba(0,0,0,.45);
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  min-height:100dvh;display:flex;justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 20px);
+}
+.app{width:100%;max-width:1100px}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* ---------- home ---------- */
+.home{max-width:460px;margin:0 auto;padding-top:52px;text-align:center}
+.title{margin:0;font-family:Bungee,Impact,"Arial Black",sans-serif;font-weight:400;line-height:1;
+  font-size:clamp(2.1rem,11vw,3.2rem);letter-spacing:.02em;color:var(--accent);
+  text-shadow:0 4px 0 var(--accent-edge);transform:skewX(-6deg)}
+.tag{margin:12px 0 26px;color:var(--muted);font-weight:700}
+.levels{display:flex;flex-direction:column;gap:12px}
+.lvl{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  transition:transform .15s cubic-bezier(.2,.8,.2,1)}
+.lvl:active{transform:scale(.97)}
+@media (hover:hover){.lvl:hover{transform:translateY(-2px)}}
+.lvl:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.lvl .ic{flex-shrink:0;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--h1),var(--accent));color:#fff;font:400 1.2rem Bungee,Impact,sans-serif}
+.lvl .tx{flex:1;min-width:0}
+.lvl b{display:block;font-size:1.15rem;font-weight:800}
+.lvl small{display:block;color:var(--muted);font-weight:700;font-size:.88rem;margin-top:2px}
+.lvl .best{flex-shrink:0;font-size:.8rem;font-weight:800;background:var(--soft);padding:5px 10px;border-radius:999px;white-space:nowrap}
+.lvl.cont{background:linear-gradient(135deg,var(--accent),#0f9d58);color:#fff;border:0}
+.lvl.cont small{color:rgba(255,255,255,.85)}
+.lvl.cont .ic{background:rgba(255,255,255,.22)}
+.howto{margin:22px 0 0;color:var(--muted);font-size:.9rem;line-height:1.5;font-weight:600}
+
+/* ---------- game ---------- */
+.game{display:flex;flex-direction:column;align-items:center}
+.bar{width:100%;max-width:520px;display:grid;grid-template-columns:52px 1fr auto 1fr auto;align-items:center;gap:8px;margin-bottom:12px;min-height:44px}
+.chip{justify-self:center;display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
+  border-radius:999px;padding:6px 12px;font-weight:900;font-variant-numeric:tabular-nums;font-size:1.05rem;box-shadow:var(--shadow);min-width:76px;justify-content:center}
+.chip svg{width:18px;height:18px}
+.face{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-size:1.5rem;line-height:1;
+  display:grid;place-items:center;box-shadow:var(--shadow);transition:transform .12s}
+.face:active{transform:scale(.9)}
+.menu-btn{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:9px 12px;font-weight:800;font-size:.9rem;box-shadow:var(--shadow)}
+
+.boardwrap{width:100%;overflow:auto;display:flex;padding:4px;-webkit-overflow-scrolling:touch}
+.board{margin:0 auto;display:grid;border-radius:12px;overflow:hidden;box-shadow:var(--shadow),0 0 0 3px var(--accent-edge);
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.cell{width:var(--cs);height:var(--cs);border:0;padding:0;margin:0;border-radius:0;background:var(--h1);
+  display:flex;align-items:center;justify-content:center;font:900 calc(var(--cs) * .6)/1 Nunito,system-ui,sans-serif;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.cell.alt{background:var(--h2)}
+@media (hover:hover){.board:not(.done) .cell:not(.open):hover{background:var(--hh)}}
+.cell:focus-visible{outline:3px solid #fff;outline-offset:-3px;position:relative;z-index:1}
+.cell.open{background:var(--o1);cursor:default}
+.cell.open.anim{animation:dig .28s cubic-bezier(.2,.8,.2,1.3) both;animation-delay:var(--d,0ms)}
+.cell.open.alt{background:var(--o2)}
+.cell.boom{background:var(--boom)!important}
+.cell.wrong{background:var(--o1)}
+.cell svg{width:66%;height:66%;pointer-events:none}
+.cell.flag.anim svg{animation:plant .25s cubic-bezier(.2,.8,.2,1.5)}
+.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}
+.n5{color:var(--n5)}.n6{color:var(--n6)}.n7{color:var(--n7)}.n8{color:var(--n8)}
+@keyframes dig{from{transform:scale(.55);filter:brightness(1.25)}to{transform:none;filter:none}}
+@keyframes plant{from{transform:translateY(-35%) scale(.6)}to{transform:none}}
+.board.shake{animation:shake .45s}
+@keyframes shake{0%,100%{translate:0}20%{translate:-6px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:3px 0}}
+/* Reduce motion follows the switch in the Settings menu */
+html.rz-reduce-motion .cell,html.rz-reduce-motion .cell svg,html.rz-reduce-motion .board.shake,html.rz-reduce-motion .result{animation:none!important}
+html.rz-reduce-motion .lvl,html.rz-reduce-motion .face{transition:none}
+
+.foot{width:100%;max-width:520px;margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.modes{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.modes button{border:0;background:transparent;border-radius:999px;padding:10px 20px;font-weight:800;display:flex;align-items:center;gap:8px;color:var(--muted)}
+.modes button svg{width:20px;height:20px}
+.modes button[aria-pressed=true]{background:var(--accent);color:#fff}
+.hint{margin:0;color:var(--muted);font-size:.85rem;font-weight:700;text-align:center}
+.result{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;text-align:center;box-shadow:var(--shadow);
+  animation:rise .35s cubic-bezier(.2,.8,.2,1) both}
+.result h2{margin:0;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:1.5rem}
+.result.win h2{color:var(--accent)}
+.result.lose h2{color:var(--boom)}
+.result p{margin:6px 0 14px;color:var(--muted);font-weight:700}
+.result .new{display:inline-block;margin-left:6px;background:#ffd23f;color:#3a2c00;padding:2px 8px;border-radius:999px;font-size:.8rem}
+.result .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:12px 20px;font-weight:800;font-size:1rem;background:var(--soft)}
+.btn.primary{background:linear-gradient(180deg,var(--accent-hi),var(--accent));color:#fff;box-shadow:0 4px 0 var(--accent-edge)}
+.btn:active{transform:translateY(2px)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== home: pick a size ===== -->
+  <section id="home" class="home">
+    <h1 class="title">MINESWEEPER</h1>
+    <p class="tag">Clear the field without digging up a mine</p>
+    <div class="levels" id="levels"></div>
+    <p class="howto">Each number tells you how many mines touch that square.<br>
+      <span id="howtoKeys"></span></p>
+  </section>
+
+  <!-- ===== the game ===== -->
+  <section id="game" class="game hidden">
+    <div class="bar">
+      <span></span><!-- room for the Rizzo menu button -->
+      <span class="chip" title="Mines left" aria-label="Mines left"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mine"/></svg><span id="minesLeft">10</span></span>
+      <button class="face" id="face" aria-label="New game">🙂</button>
+      <span class="chip" title="Time" aria-label="Time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span id="clock">0:00</span></span>
+      <button class="menu-btn" id="toMenu">Menu</button>
+    </div>
+    <div class="boardwrap" id="wrap"><div class="board" id="board" role="grid" aria-label="Minefield"></div></div>
+    <div class="foot">
+      <div class="modes" id="modes" role="group" aria-label="What a tap does">
+        <button data-mode="dig" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4l6 6M17 7L7 17M5 15l4 4-3 1-2-2z"/></svg>Dig</button>
+        <button data-mode="flag" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flag"/></svg>Flag</button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div class="result hidden" id="result"></div>
+    </div>
+  </section>
+</div>
+
+<!-- shared drawings -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V3.5" stroke="#3b2a1a" stroke-width="2.4" stroke-linecap="round"/><path d="M7 3.5l12 4.7L7 13z" fill="#ef3b2d"/><ellipse cx="6" cy="21" rx="4.5" ry="1.4" fill="#3b2a1a" opacity=".45"/></symbol>
+  <symbol id="i-mine" viewBox="0 0 24 24"><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v19M2.5 12h19M5.3 5.3l13.4 13.4M18.7 5.3L5.3 18.7"/></g><circle cx="12" cy="12" r="6.5" fill="currentColor"/><circle cx="9.7" cy="9.7" r="1.8" fill="#fff" opacity=".85"/></symbol>
+</svg>
+
+<script>
+/* ======================================================================
+   MINESWEEPER for Rizzo Games
+   - First tap is always safe (and always opens up an area)
+   - Tap / left-click to dig, long-press / right-click to flag
+   - Tap a number whose mines are all flagged to dig its other neighbours
+   - Your game is saved as you play, so leaving or updating never loses it
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const RZ = window.RizzoGames || null;
+
+const LEVELS = {
+  beginner:     {name: 'Beginner',     rows: 9,  cols: 9,  mines: 10, icon: '9'},
+  intermediate: {name: 'Intermediate', rows: 16, cols: 16, mines: 40, icon: '16'},
+  expert:       {name: 'Expert',       rows: 16, cols: 30, mines: 99, icon: '30'},
+};
+const REC_KEY = 'minesweeper-records-v1';   // {beginner: {played, wins, best}, ...}  best = ms
+const SAVE_KEY = 'minesweeper-save-v1';
+const touchFirst = RZ && RZ.device ? RZ.device.touch : matchMedia('(pointer:coarse)').matches;
+
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const fmt = (ms, tenths) => {
+  const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = t - m * 60;
+  return m + ':' + (tenths ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0'));
+};
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+
+/* ---------- little sound effects (follow the shared Rizzo volume) ---------- */
+const Sound = (() => {
+  let ctx = null;
+  const vol = () => RZ ? RZ.level('sfx') : 0.6;
+  const ac = () => {
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  function tone(freq, dur, type = 'sine', gain = .2, delay = 0, slide = 0) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac(), t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(gain * v, t + .01);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+    } catch {}
+  }
+  function noise(dur, gain) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac(), len = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      f.type = 'lowpass'; f.frequency.value = 900; g.gain.value = gain * v;
+      src.buffer = buf; src.connect(f).connect(g).connect(c.destination); src.start();
+    } catch {}
+  }
+  return {
+    dig(n) { tone(n > 1 ? 560 : 460, .07, 'triangle', .2); if (n > 6) tone(700, .1, 'triangle', .12, .05); },
+    flag(on) { tone(on ? 780 : 480, .07, 'square', .05); },
+    boom() { noise(.7, .6); tone(140, .55, 'sawtooth', .12, 0, .3); },
+    win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .2, 'triangle', .18, i * .1)); },
+  };
+})();
+
+/* ---------- the game state ---------- */
+let G = null;          // the current game
+let mode = 'dig';      // what a plain tap does
+let cells = [];        // the square buttons on screen
+
+function makeGame(level, rows, cols) {
+  const L = LEVELS[level], n = rows * cols;
+  return {level, rows, cols, mines: L.mines, mine: new Uint8Array(n), count: new Uint8Array(n), state: new Uint8Array(n),
+    placed: false, over: false, won: false, boom: -1, flags: 0, opened: 0, elapsed: 0, startedAt: 0};
+}
+// 0 = hidden, 1 = dug, 2 = flagged
+function neighbours(i) {
+  const r = Math.floor(i / G.cols), c = i % G.cols, out = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue;
+    const rr = r + dr, cc = c + dc;
+    if (rr >= 0 && rr < G.rows && cc >= 0 && cc < G.cols) out.push(rr * G.cols + cc);
+  }
+  return out;
+}
+function countAll() {
+  for (let i = 0; i < G.mine.length; i++) G.count[i] = neighbours(i).reduce((s, j) => s + G.mine[j], 0);
+}
+// Mines go in after the first tap, never on or next to it, so the first tap always opens an area
+function placeMines(safe) {
+  const near = new Set([safe, ...neighbours(safe)]);
+  let pool = [];
+  for (let i = 0; i < G.mine.length; i++) if (!near.has(i)) pool.push(i);
+  if (pool.length < G.mines) pool = [...Array(G.mine.length).keys()].filter(i => i !== safe);
+  for (let k = 0; k < G.mines; k++) {
+    const j = k + Math.floor(Math.random() * (pool.length - k));
+    [pool[k], pool[j]] = [pool[j], pool[k]];
+    G.mine[pool[k]] = 1;
+  }
+  countAll();
+  G.placed = true;
+  G.startedAt = Date.now();
+}
+
+/* ---------- the clock (stops while the menu is up, the app is in the background, or you're on the home screen) ---------- */
+const running = () => G && G.placed && !G.over && G.startedAt;
+const timeNow = () => !G ? 0 : G.elapsed + (running() ? Date.now() - G.startedAt : 0);
+function updatePaused() {
+  if (!G || !G.placed || G.over) return;
+  const paused = (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden');
+  if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
+  else if (!paused && !G.startedAt) G.startedAt = Date.now();
+}
+setInterval(() => { if (G && !$('#game').classList.contains('hidden')) $('#clock').textContent = fmt(timeNow()); }, 250);
+document.addEventListener('visibilitychange', updatePaused);
+
+/* ---------- saving ---------- */
+function saveGame() {
+  if (!G || !G.placed || G.over) { keep(SAVE_KEY, null); return; }
+  keep(SAVE_KEY, {level: G.level, rows: G.rows, cols: G.cols, elapsed: timeNow(),
+    mine: Array.from(G.mine).join(''), state: Array.from(G.state).join('')});
+}
+function loadSave() {
+  const s = load(SAVE_KEY, null);
+  if (!s || !LEVELS[s.level] || s.mine.length !== s.rows * s.cols) return null;
+  const g = makeGame(s.level, s.rows, s.cols);
+  for (let i = 0; i < s.mine.length; i++) { g.mine[i] = +s.mine[i]; g.state[i] = +s.state[i]; }
+  g.placed = true; g.elapsed = s.elapsed || 0;
+  g.flags = g.state.reduce((n, v) => n + (v === 2), 0);
+  g.opened = g.state.reduce((n, v) => n + (v === 1), 0);
+  return g;
+}
+const records = () => load(REC_KEY, {});
+function record(won, ms) {
+  const all = records(), r = all[G.level] || {played: 0, wins: 0, best: 0};
+  r.played++;
+  let isBest = false;
+  if (won) { r.wins++; if (!r.best || ms < r.best) { r.best = ms; isBest = true; } }
+  all[G.level] = r; keep(REC_KEY, all);
+  return isBest;
+}
+
+/* ---------- moves ---------- */
+function dig(i) {
+  if (G.state[i] !== 0) return;
+  if (!G.placed) placeMines(i);
+  if (G.mine[i]) { lose(i); return; }
+  // open this square, and keep spreading while squares have no mines around them
+  const sr = Math.floor(i / G.cols), sc = i % G.cols, q = [i];
+  G.state[i] = 1;
+  let n = 0;
+  while (q.length) {
+    const j = q.shift();
+    G.opened++; n++;
+    const d = Math.max(Math.abs(Math.floor(j / G.cols) - sr), Math.abs(j % G.cols - sc));
+    paint(j, Math.min(d * 28, 420), true);
+    if (G.count[j] === 0) for (const k of neighbours(j)) if (G.state[k] === 0 && !G.mine[k]) { G.state[k] = 1; q.push(k); }
+  }
+  Sound.dig(n);
+}
+function toggleFlag(i) {
+  if (G.state[i] === 1) return;
+  const on = G.state[i] === 0;
+  G.state[i] = on ? 2 : 0;
+  G.flags += on ? 1 : -1;
+  paint(i, 0, true);
+  Sound.flag(on);
+  if (navigator.vibrate) try { navigator.vibrate(on ? 18 : 8); } catch {}
+  updateCounter();
+}
+// tap a number with all its mines flagged: dig the rest of its neighbours
+function chord(i) {
+  if (G.state[i] !== 1 || !G.count[i]) return false;
+  const nb = neighbours(i);
+  if (nb.filter(j => G.state[j] === 2).length !== G.count[i]) return false;
+  const hidden = nb.filter(j => G.state[j] === 0);
+  if (!hidden.length) return false;
+  const hit = hidden.find(j => G.mine[j]);
+  if (hit !== undefined) { lose(hit); return true; }
+  for (const j of hidden) dig(j);
+  return true;
+}
+function act(i, how) {
+  if (!G || G.over) return;
+  const s = G.state[i];
+  if (how === 'flag') toggleFlag(i);
+  else if (s === 1) chord(i);
+  else if (mode === 'flag' && how !== 'dig') toggleFlag(i);
+  else if (s === 0) dig(i);
+  afterMove();
+}
+function afterMove() {
+  if (!G.over && G.opened === G.rows * G.cols - G.mines) win();
+  updateCounter();
+  saveGame();
+}
+
+/* ---------- winning and losing ---------- */
+function win() {
+  const ms = timeNow();
+  G.over = true; G.won = true; G.elapsed = ms; G.startedAt = 0;
+  for (let i = 0; i < G.mine.length; i++) if (G.mine[i] && G.state[i] !== 2) { G.state[i] = 2; G.flags++; paint(i, 0, true); }
+  const best = record(true, ms);
+  $('#face').textContent = '😎';
+  $('#board').classList.add('done');
+  Sound.win();
+  const r = records()[G.level];
+  showResult('win', 'Field cleared!',
+    `${LEVELS[G.level].name} in ${fmt(ms, true)}${best ? '<span class="new">New best!</span>' : ` · best ${fmt(r.best, true)}`}`);
+}
+function lose(hit) {
+  const ms = timeNow();
+  G.over = true; G.boom = hit; G.elapsed = ms; G.startedAt = 0;
+  record(false, ms);
+  $('#face').textContent = '😵';
+  $('#board').classList.add('done');
+  Sound.boom();
+  const b = $('#board');
+  b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+  // show every mine, nearest to the blast first, and cross out wrong flags
+  const hr = Math.floor(hit / G.cols), hc = hit % G.cols;
+  for (let i = 0; i < G.mine.length; i++) {
+    if (G.mine[i] || G.state[i] === 2) {
+      const d = Math.max(Math.abs(Math.floor(i / G.cols) - hr), Math.abs(i % G.cols - hc));
+      paint(i, reduced() ? 0 : Math.min(d * 45, 900), true);
+    }
+  }
+  showResult('lose', 'Boom!', `You hit a mine after ${fmt(ms)}`);
+}
+function showResult(kind, title, text) {
+  const r = $('#result');
+  r.className = 'result ' + kind;
+  r.innerHTML = `<h2>${title}</h2><p>${text}</p><div class="row">
+    <button class="btn primary" id="again">Play again</button><button class="btn" id="resMenu">Change size</button></div>`;
+  $('#modes').classList.add('hidden'); $('#hint').classList.add('hidden');
+  $('#again').onclick = () => startGame(G.level);
+  $('#resMenu').onclick = showHome;
+  saveGame();
+}
+
+/* ---------- drawing the board ---------- */
+const FLAG = '<svg viewBox="0 0 24 24"><use href="#i-flag"/></svg>';
+const MINE = '<svg viewBox="0 0 24 24" style="color:#1b1b1b"><use href="#i-mine"/></svg>';
+const CROSS = '<svg viewBox="0 0 24 24"><use href="#i-flag"/><path d="M4 4l16 16M20 4L4 20" stroke="#d32f2f" stroke-width="2.6" stroke-linecap="round"/></svg>';
+
+function buildBoard() {
+  const b = $('#board');
+  b.innerHTML = '';
+  b.className = 'board';
+  b.style.gridTemplateColumns = `repeat(${G.cols}, var(--cs))`;
+  const frag = document.createDocumentFragment();
+  cells = [];
+  for (let i = 0; i < G.rows * G.cols; i++) {
+    const r = Math.floor(i / G.cols), c = i % G.cols, el = document.createElement('button');
+    el.className = 'cell' + ((r + c) % 2 ? ' alt' : '');
+    el.dataset.i = i;
+    el.tabIndex = i === 0 ? 0 : -1;
+    cells.push(el); frag.appendChild(el);
+  }
+  b.appendChild(frag);
+  for (let i = 0; i < cells.length; i++) paint(i);
+  sizeBoard();
+}
+function paint(i, delay = 0, anim = false) {
+  const el = cells[i], s = G.state[i];
+  if (anim) el.classList.add('anim');
+  el.classList.toggle('open', s === 1 || (G.over && !G.won && G.mine[i] && s !== 2));
+  el.classList.toggle('flag', s === 2);
+  el.classList.toggle('boom', i === G.boom);
+  el.style.setProperty('--d', delay + 'ms');
+  for (let k = 1; k <= 8; k++) el.classList.remove('n' + k);
+  let html = '', label;
+  const r = Math.floor(i / G.cols) + 1, c = i % G.cols + 1;
+  if (G.over && !G.won && G.mine[i] && s !== 2) { html = MINE; label = 'mine'; }
+  else if (G.over && !G.won && s === 2 && !G.mine[i]) { html = CROSS; label = 'wrong flag'; el.classList.add('wrong'); }
+  else if (s === 2) { html = FLAG; label = 'flagged'; }
+  else if (s === 1) {
+    const n = G.count[i];
+    if (n) { html = n; el.classList.add('n' + n); }
+    label = n ? n + ' mine' + (n > 1 ? 's' : '') + ' nearby' : 'empty';
+  } else label = 'hidden';
+  el.innerHTML = html;
+  el.setAttribute('aria-label', `Row ${r}, column ${c}, ${label}`);
+}
+function sizeBoard() {
+  if (!G) return;
+  const wrapW = $('#wrap').clientWidth - 8;
+  const availH = innerHeight - 230;
+  const byW = Math.floor(wrapW / G.cols), byH = Math.floor(availH / G.rows);
+  const cs = Math.max(22, Math.min(44, byW, Math.max(byH, 30)));
+  $('#board').style.setProperty('--cs', cs + 'px');
+}
+addEventListener('resize', sizeBoard);
+function updateCounter() { $('#minesLeft').textContent = G ? G.mines - G.flags : 0; }
+
+/* ---------- taps, clicks and long-presses ---------- */
+(() => {
+  const board = $('#board');
+  let press = null;   // {i, x, y, timer, done}
+  const cellAt = e => { const el = e.target.closest('.cell'); return el ? +el.dataset.i : -1; };
+  board.addEventListener('contextmenu', e => e.preventDefault());
+  board.addEventListener('pointerdown', e => {
+    const i = cellAt(e); if (i < 0 || !G || G.over) return;
+    if (e.button === 2) { act(i, 'flag'); return; }
+    if (e.button !== 0) return;
+    if (G.state[i] !== 1) $('#face').textContent = '😮';
+    press = {i, x: e.clientX, y: e.clientY, done: false, timer: 0};
+    // hold a finger down to flag
+    if (e.pointerType !== 'mouse') press.timer = setTimeout(() => {
+      if (!press) return;
+      press.done = true;
+      $('#face').textContent = '🙂';
+      act(press.i, G.state[press.i] === 1 ? 'dig' : 'flag');
+    }, 380);
+  });
+  const cancel = () => { if (press) clearTimeout(press.timer); press = null; if (G && !G.over) $('#face').textContent = '🙂'; };
+  board.addEventListener('pointermove', e => {
+    if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 12) cancel();   // it's a scroll, not a tap
+  });
+  board.addEventListener('pointercancel', cancel);
+  board.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') cancel(); });
+  board.addEventListener('pointerup', e => {
+    if (!press) return;
+    const p = press; clearTimeout(p.timer); press = null;
+    if (G && !G.over) $('#face').textContent = '🙂';
+    if (p.done) return;
+    const i = cellAt(e);
+    if (i === p.i) act(i);
+  });
+  // keyboard: arrows move, Enter/Space digs, F flags
+  board.addEventListener('click', e => { if (e.detail === 0) { const i = cellAt(e); if (i >= 0) act(i); } });
+  board.addEventListener('keydown', e => {
+    const i = cellAt(e); if (i < 0 || !G) return;
+    const r = Math.floor(i / G.cols), c = i % G.cols;
+    const moves = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
+    if (moves[e.key]) {
+      e.preventDefault();
+      const rr = Math.min(G.rows - 1, Math.max(0, r + moves[e.key][0])), cc = Math.min(G.cols - 1, Math.max(0, c + moves[e.key][1]));
+      const j = rr * G.cols + cc;
+      cells[i].tabIndex = -1; cells[j].tabIndex = 0; cells[j].focus();
+    } else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); act(i, 'flag'); }
+  });
+})();
+
+$('#modes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  mode = b.dataset.mode;
+  for (const x of $('#modes').children) x.setAttribute('aria-pressed', x === b);
+});
+$('#face').onclick = () => { if (G) startGame(G.level); };
+$('#toMenu').onclick = showHome;
+
+/* ---------- screens ---------- */
+function startGame(level, resume) {
+  let rows = LEVELS[level].rows, cols = LEVELS[level].cols;
+  // Expert is wide: on a phone held upright, turn it on its side so it fits
+  if (rows < cols && innerWidth < 720 && innerHeight > innerWidth) [rows, cols] = [cols, rows];
+  G = resume || makeGame(level, rows, cols);
+  if (resume) countAll();
+  $('#home').classList.add('hidden');
+  $('#game').classList.remove('hidden');
+  $('#result').classList.add('hidden');
+  $('#modes').classList.remove('hidden'); $('#hint').classList.remove('hidden');
+  $('#face').textContent = '🙂';
+  $('#hint').textContent = touchFirst ? 'Hold a square to flag it · tap a number to clear around it'
+                                      : 'Right-click to flag · click a number to clear around it';
+  buildBoard();
+  updateCounter();
+  $('#clock').textContent = fmt(timeNow());
+  if (G.placed) G.startedAt = 0;
+  updatePaused();
+  saveGame();
+  scrollTo(0, 0);
+}
+function showHome() {
+  $('#game').classList.add('hidden');
+  $('#home').classList.remove('hidden');
+  updatePaused();
+  renderHome();
+}
+function renderHome() {
+  const rec = records(), save = loadSave();
+  let html = '';
+  if (save) html += `<button class="lvl cont" data-resume="1"><span class="ic">▶</span><span class="tx"><b>Continue</b>
+    <small>${LEVELS[save.level].name} · ${fmt(save.elapsed)} in</small></span></button>`;
+  for (const [k, L] of Object.entries(LEVELS)) {
+    const r = rec[k];
+    const best = r && r.best ? '🏆 ' + fmt(r.best, true) : '';
+    html += `<button class="lvl" data-level="${k}"><span class="ic">${L.icon}</span><span class="tx"><b>${L.name}</b>
+      <small>${L.rows} × ${L.cols} · ${L.mines} mines${r && r.wins ? ` · ${r.wins} win${r.wins > 1 ? 's' : ''}` : ''}</small></span>
+      ${best ? `<span class="best">${best}</span>` : ''}</button>`;
+  }
+  $('#levels').innerHTML = html;
+  $('#howtoKeys').textContent = touchFirst ? 'Tap to dig, hold to plant a flag.' : 'Click to dig, right-click to plant a flag.';
+}
+$('#levels').addEventListener('click', e => {
+  const b = e.target.closest('.lvl'); if (!b) return;
+  if (b.dataset.resume) { const s = loadSave(); if (s) { startGame(s.level, s); return; } }
+  if (b.dataset.level) startGame(b.dataset.level);
+});
+renderHome();
+
+/* ---------- Rizzo Games hooks (menu, updates) ---------- */
+window.RizzoHooks = {
+  onMenuOpen: () => updatePaused(),             // the clock stops while the menu is up
+  onMenuClose: () => updatePaused(),
+  previewSound: () => Sound.dig(2),             // let go of a slider: hear the new level
+  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over}; },
+  afterReload(info) { const s = info && info.inGame && loadSave(); if (s) startGame(s.level, s); },
+};
+</script>
+</body>
+</html>
