@@ -16,43 +16,112 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="themes.js"></script>
 <script>
 /* ======================================================================
-   THEMES: colours only. Applied before the page draws, so there's no flash.
-   To add one: copy a block below and change its colours.
+   THEMES: the same themes as Sudoku, from themes.js (shared by every game).
+   Light and Dark keep Minesweeper's own green; every other theme uses the shared
+   colours, turned into grass tiles, dug tiles and numbers here.
+   Applied before the page draws, so there's no flash.
    ====================================================================== */
 (() => {
+  const R = window.RZT;
+  // number, flag and hint colours for light and dark themes
   const LIGHT = {n1:'#1976d2',n2:'#388e3c',n3:'#d32f2f',n4:'#7b1fa2',n5:'#e65100',n6:'#00838f',n7:'#37474f',n8:'#757575',
-    hclue:'#ffdf6e',hsafe:'#7fe0a0',hmine:'#ff9e9e',pole:'#3b2a1a',flag:'#ef3b2d',minec:'#1b1b1b',onaccent:'#fff',shade:'rgba(20,40,20,.10)'};
+    hclue:'#ffdf6e',hsafe:'#7fe0a0',hmine:'#ff9e9e',pole:'#3b2a1a',flag:'#ef3b2d',minec:'#1b1b1b',shade:'rgba(20,40,20,.10)'};
   const DARK = {n1:'#6cb8ff',n2:'#7fd18a',n3:'#ff6b6b',n4:'#d59cf0',n5:'#ffb74d',n6:'#4dd6e6',n7:'#e0e0e0',n8:'#b0b0b0',
-    hclue:'#9a7612',hsafe:'#1f7d48',hmine:'#8c2b2b',pole:'#efe6d6',flag:'#ff5a4a',minec:'#f1f1f1',onaccent:'#fff',shade:'rgba(0,0,0,.45)'};
-  const T = {
-    meadow:  {name:'Meadow',  dark:0, v:{bg:'#eef5ec',panel:'#ffffff',ink:'#16241a',muted:'#5d6f61',line:'#d8e5d6',soft:'#e2eedf',accent:'#16a34a',hi:'#22c55e',edge:'#0b5a2a',h1:'#aad751',h2:'#a2d149',hh:'#bde568',o1:'#e5c29f',o2:'#d7b899',boom:'#e5484d',frame:'#5b8a2f'}},
-    night:   {name:'Night',   dark:1, v:{bg:'#0d1510',panel:'#17221b',ink:'#e6f2e7',muted:'#93a896',line:'#26362b',soft:'#1f2d24',accent:'#22c55e',hi:'#4ade80',edge:'#052e16',h1:'#4f7f2a',h2:'#487726',hh:'#5f9433',o1:'#3b3226',o2:'#342c21',boom:'#c9353a',frame:'#2f4f1c'}},
-    snow:    {name:'Snow',    dark:0, v:{bg:'#eef3f9',panel:'#ffffff',ink:'#17223a',muted:'#607089',line:'#d8e1ee',soft:'#e4ecf6',accent:'#2b7de9',hi:'#4a9bff',edge:'#123e7a',h1:'#bcd8f5',h2:'#b0d0f0',hh:'#d0e4fa',o1:'#ffffff',o2:'#f1f5fb',boom:'#e5484d',frame:'#7da2c9'}},
-    desert:  {name:'Desert',  dark:0, v:{bg:'#f8efe2',panel:'#fffaf3',ink:'#3a2714',muted:'#85674a',line:'#ecdcc6',soft:'#f3e5d2',accent:'#d9731a',hi:'#f08c2e',edge:'#7a3b06',h1:'#e9b872',h2:'#e2ae66',hh:'#f2c785',o1:'#fbecd6',o2:'#f4e1c6',boom:'#c8341f',frame:'#a86a2c'}},
-    ocean:   {name:'Ocean',   dark:0, v:{bg:'#e8f4f7',panel:'#ffffff',ink:'#0f2a33',muted:'#557580',line:'#cfe5ea',soft:'#dcedf1',accent:'#0e94a8',hi:'#18b4c9',edge:'#06505c',h1:'#5cc4d6',h2:'#52bbce',hh:'#7ad3e2',o1:'#f3e6c8',o2:'#eadbb9',boom:'#e5484d',frame:'#2b7d8c'}},
-    candy:   {name:'Candy',   dark:0, v:{bg:'#fbeff6',panel:'#ffffff',ink:'#3a1530',muted:'#8a5d7c',line:'#f0d6e6',soft:'#f6e2ee',accent:'#d63c91',hi:'#ee5aa8',edge:'#7a1650',h1:'#f5a8cf',h2:'#f09cc7',hh:'#f9bfdc',o1:'#fff6fb',o2:'#fbe8f2',boom:'#7c3aed',frame:'#c0558f'}},
-    midnight:{name:'Midnight',dark:1, v:{bg:'#0f0e1d',panel:'#1b1932',ink:'#ebe8ff',muted:'#9d98c4',line:'#2b2848',soft:'#24213f',accent:'#8b6cff',hi:'#a58cff',edge:'#2c1a7a',h1:'#3f3680',h2:'#393075',hh:'#4c4296',o1:'#211e3b',o2:'#1d1a35',boom:'#e5484d',frame:'#5a4fb0'}},
-    mono:    {name:'Mono',    dark:0, v:{bg:'#f2f2f2',panel:'#ffffff',ink:'#111111',muted:'#555555',line:'#d9d9d9',soft:'#e9e9e9',accent:'#1a1a1a',hi:'#3a3a3a',edge:'#000000',h1:'#bdbdbd',h2:'#b3b3b3',hh:'#cdcdcd',o1:'#fafafa',o2:'#efefef',boom:'#e5484d',frame:'#555555'}},
+    hclue:'#9a7612',hsafe:'#1f7d48',hmine:'#8c2b2b',pole:'#efe6d6',flag:'#ff5a4a',minec:'#f1f1f1',shade:'rgba(0,0,0,.45)'};
+  // Minesweeper's own green for Light and Dark
+  const OWN = {
+    light: {bg:'#eef5ec',panel:'#ffffff',ink:'#16241a',muted:'#5d6f61',line:'#d8e5d6',soft:'#e2eedf',accent:'#16a34a',hi:'#22c55e',edge:'#0b5a2a',h1:'#aad751',h2:'#a2d149',hh:'#bde568',o1:'#e5c29f',o2:'#d7b899',boom:'#e5484d',frame:'#5b8a2f',onaccent:'#ffffff'},
+    dark:  {bg:'#0d1510',panel:'#17221b',ink:'#e6f2e7',muted:'#93a896',line:'#26362b',soft:'#1f2d24',accent:'#22c55e',hi:'#4ade80',edge:'#052e16',h1:'#4f7f2a',h2:'#487726',hh:'#5f9433',o1:'#3b3226',o2:'#342c21',boom:'#c9353a',frame:'#2f4f1c',onaccent:'#ffffff'},
   };
-  const ORDER = ['auto', 'meadow', 'night', 'snow', 'desert', 'ocean', 'candy', 'midnight', 'mono'];
-  const dm = matchMedia('(prefers-color-scheme: dark)');
-  const resolve = id => id === 'auto' || !T[id] ? (dm.matches ? 'night' : 'meadow') : id;
-  let current = 'auto';
-  function apply(id) {
-    current = T[id] || id === 'auto' ? id : 'auto';
-    const t = T[resolve(current)], root = document.documentElement;
-    for (const [k, v] of Object.entries(Object.assign({}, t.dark ? DARK : LIGHT, t.v))) root.style.setProperty('--' + k, v);
-    root.style.colorScheme = t.dark ? 'dark' : 'light';
-    root.classList.toggle('dk', !!t.dark);
-    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = t.v.bg;
+  // a few themes need a hand with their tiles
+  const TWEAK = {
+    contrast: {h1:'#a8a8a8',h2:'#9c9c9c',hh:'#c4c4c4',o1:'#ffffff',o2:'#f0f0f0',frame:'#000000',soft:'#e6e6e6'},
+    gold: {h1:'#6f5414',h2:'#664d12',hh:'#86661c',frame:'#d4af37'},
+    neon: {h1:'#3a1a5c',h2:'#331752',hh:'#4a2373',frame:'#ff2fd6',n1:'#2ff3ff',n2:'#3dff9a',n3:'#ff2fd6',n4:'#ffe74c',n5:'#ff8a3d',n6:'#7aa2ff',n7:'#f4f4ff',n8:'#b8b8d8'},
+    xmas: {bg:'#8fd6f7',h1:'#7cc96a',h2:'#72bf60',hh:'#95d983',frame:'#2f7d4f'},
+    sakura: {h1:'#f6b4cb',h2:'#f2aac3'},
+  };
+  const hx = c => { c = c.replace('#', ''); if (c.length === 3) c = [...c].map(x => x + x).join(''); return [0, 2, 4].map(i => parseInt(c.substr(i, 2), 16)); };
+  const mix = (a, b, t) => { const A = hx(a), B = hx(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  // turn a shared theme into Minesweeper's colours: grass tiles from the theme's highlight colour, dug tiles from its panels
+  function derive(p, dark) {
+    const tile = p.sel;
+    return {bg: p.bg, panel: p.panel, ink: p.ink, muted: p.muted, line: p.thin, soft: p.btn, accent: p.accent, onaccent: p.onaccent,
+      hi: mix(p.accent, '#ffffff', dark ? .18 : .22), edge: mix(p.accent, '#000000', dark ? .55 : .45),
+      h1: tile, h2: mix(tile, p.ink, .07), hh: mix(tile, '#ffffff', dark ? .12 : .3),
+      o1: dark ? mix(p.panel, p.bg, .25) : mix(p.panel, tile, .14), o2: dark ? mix(p.panel, p.bg, .6) : mix(p.panel, tile, .24),
+      boom: p.bad, frame: mix(tile, p.ink, .35)};
   }
-  let saved = 'auto';
-  try { saved = (JSON.parse(localStorage.getItem('minesweeper-prefs')) || {}).theme || 'auto'; } catch {}
-  apply(saved);
-  dm.addEventListener('change', () => { if (current === 'auto') apply('auto'); });
-  window.MS_THEMES = {T, ORDER, LIGHT, DARK, apply, resolve, get current() { return current; }};
+  const vars = id => {
+    const dark = R.isDark(id);
+    return Object.assign({}, dark ? DARK : LIGHT, OWN[id] || derive(R.THEMES[id], dark), TWEAK[id] || {});
+  };
+
+  /* ---------- which themes you have ---------- */
+  const ORDER = R.THEME_ORDER;                                          // Auto, Light, Dark, Ocean ... High contrast
+  const SPECIAL = ['sakura', 'sea', 'candy', 'autumn', 'snow', 'space', 'neon', 'gold'];
+  const SEASONAL = R.SEASONAL_ORDER;
+  const TA_GOAL = 8;
+  const rec = () => { try { return JSON.parse(localStorage.getItem('minesweeper-records-v2')) || {}; } catch { return {}; } };
+  const won = (r, m, z) => !!(r[m] && r[m][z] && r[m][z].wins > 0);
+  // Minesweeper's own challenges (Sudoku has its own)
+  const UNLOCKS = {
+    sakura: {text: 'Win Classic Small',  ok: r => won(r, 'classic', 's')},
+    sea:    {text: 'Win Classic Medium', ok: r => won(r, 'classic', 'm')},
+    candy:  {text: 'Win Hexagon Small',  ok: r => won(r, 'hex', 's')},
+    autumn: {text: 'Win Classic Large',  ok: r => won(r, 'classic', 'l')},
+    snow:   {text: 'Win Hexagon Medium', ok: r => won(r, 'hex', 'm')},
+    space:  {text: `Clear ${TA_GOAL} boards in one Time Attack`, ok: r => Object.values(r.time || {}).some(x => (x.best || 0) >= TA_GOAL)},
+    neon:   {text: 'Win Hexagon Large',  ok: r => won(r, 'hex', 'l')},
+    gold:   {text: 'Win Large in Classic and Hexagon', ok: r => won(r, 'classic', 'l') && won(r, 'hex', 'l')},
+  };
+  const loadPrefs = () => { try { return JSON.parse(localStorage.getItem('minesweeper-prefs')) || {}; } catch { return {}; } };
+  const savePrefs = p => { try { localStorage.setItem('minesweeper-prefs', JSON.stringify(p)); } catch {} };
+  // the old Minesweeper themes move to their matching shared ones (Snow and Candy stay unlocked as a gift)
+  (() => {
+    const p = loadPrefs(), MOVE = {meadow: 'light', night: 'dark', desert: 'sunset', mono: 'contrast', snow: 'snow', candy: 'candy'};
+    let changed = false;
+    if (/unlockall/i.test(location.hash + location.search)) { p.devUnlock = true; changed = true; }
+    if (p.theme && MOVE[p.theme] && !p.themesMoved) {
+      if (p.theme === 'snow' || p.theme === 'candy') p.gifts = [...new Set([...(p.gifts || []), p.theme])];
+      p.theme = MOVE[p.theme]; changed = true;
+    }
+    if (!p.themesMoved) { p.themesMoved = 1; changed = true; }
+    if (changed) savePrefs(p);
+  })();
+  const isUnlocked = id => {
+    if (ORDER.includes(id)) return true;
+    const p = loadPrefs();
+    if (SEASONAL.includes(id)) return !!p.devUnlock || R.inSeason(id);
+    if (!UNLOCKS[id]) return false;
+    return !!p.devUnlock || (p.gifts || []).includes(id) || UNLOCKS[id].ok(rec());
+  };
+
+  const dm = matchMedia('(prefers-color-scheme: dark)');
+  const resolve = id => id === 'auto' || !isUnlocked(id) || !R.THEMES[id] ? (dm.matches ? 'dark' : 'light') : id;
+  let current = 'auto', resolved = 'light';
+  function apply(id) {
+    current = id || 'auto';
+    resolved = resolve(current);
+    const v = vars(resolved), root = document.documentElement, dark = R.isDark(resolved);
+    for (const [k, c] of Object.entries(v)) root.style.setProperty('--' + k, c);
+    root.style.setProperty('--glow', (R.SPECIALS[resolved] && R.SPECIALS[resolved].glow) || 'transparent');
+    root.style.colorScheme = dark ? 'dark' : 'light';
+    root.classList.toggle('dk', dark);
+    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = v.bg;
+    if (window.MS_THEMES && MS_THEMES.ready) {
+      R.decorate(resolved);
+      // the iPhone tints the status bar from the top of the page, which gradient themes paint themselves
+      requestAnimationFrame(() => { const top = R.topColour(v.bg); if (m) m.content = top; document.body.style.backgroundColor = top; });
+    }
+  }
+  apply(loadPrefs().theme || 'auto');
+  dm.addEventListener('change', () => { if (current === 'auto' || resolved !== current) apply(current); });
+  window.MS_THEMES = {ORDER, SPECIAL, SEASONAL, UNLOCKS, vars, apply, resolve, isUnlocked, ready: false,
+    get current() { return current; }, get resolved() { return resolved; }};
 })();
 </script>
 <style>
@@ -316,6 +385,109 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .hempty svg.ic{width:40px;height:40px;opacity:.6}
 .danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
 
+/* ================= SPECIAL & SEASONAL THEMES (the decorations come from themes.js) ================= */
+.app{position:relative;z-index:1}
+/* room round the board for decorations: cats and the bunny sit on top, borders go all the way round */
+.bpad{margin:auto;flex-shrink:0;padding:var(--dt,0px) var(--dx,0px) var(--db,0px)}
+.boardwrap{position:relative;width:max-content}
+.boardwrap>#board{margin:0}
+body[data-fx=xmas] .bpad{--dt:40px;--dx:20px;--db:22px}
+body[data-fx=anzac] .bpad{--dt:40px;--dx:24px;--db:26px}
+body[data-fx=easter] .bpad{--dt:84px}
+body[data-fx=spooky] .bpad{--dt:58px}
+body[data-fx=snow] .bpad{--dt:18px;--db:18px;--dx:10px}
+body[data-fx=gold] .bpad{--dt:14px;--db:14px;--dx:14px}
+body[data-fx=candy] .bpad,body[data-fx=autumn] .bpad{--dt:8px;--db:8px;--dx:8px}
+/* glows: a square board gets a box-shadow, the hexagon board a drop-shadow so it hugs the shape */
+body[data-fx=sakura] #board.sq{box-shadow:0 0 0 3px var(--frame),0 10px 30px rgba(224,90,140,.3)}
+body[data-fx=sakura] #board.hex{filter:drop-shadow(0 8px 18px rgba(224,90,140,.3))}
+body[data-fx=sea] #board.sq{box-shadow:0 0 0 3px rgba(79,209,232,.55),0 0 30px rgba(79,209,232,.3)}
+body[data-fx=sea] #board.hex{filter:drop-shadow(0 0 14px rgba(79,209,232,.4))}
+body[data-fx=autumn] #board.sq{box-shadow:0 0 0 6px #8a4b22,0 0 0 7px #5e3115,0 10px 26px rgba(138,75,34,.35)}
+body[data-fx=autumn] #board.hex{filter:drop-shadow(0 8px 16px rgba(138,75,34,.35))}
+body[data-fx=space] #board.sq{box-shadow:0 0 0 3px var(--frame),0 0 34px rgba(143,162,255,.35)}
+body[data-fx=space] #board.hex{filter:drop-shadow(0 0 16px rgba(143,162,255,.4))}
+body[data-fx=space] #board .cell.open{text-shadow:0 0 8px rgba(255,216,107,.45)}
+body[data-fx=snow] #board.sq{box-shadow:0 0 0 3px #e3eefa,0 12px 30px rgba(0,0,0,.35)}
+body[data-fx=snow] #board.hex{filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}
+body[data-fx=snow] #boardWrap::before{content:'';position:absolute;left:-10px;right:-10px;top:-16px;height:32px;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 32' preserveAspectRatio='none'%3E%3Cpath d='M3 22C1 15 6 10 14 10C20 3 36 2 46 9C55 5 66 5 75 9C87 1 109 0 121 8C131 4 144 5 152 9C164 1 184 0 195 8C203 4 215 4 223 8C235 0 257 1 267 9C275 5 287 5 295 9C307 1 325 1 335 8C344 4 356 5 364 9C374 6 386 6 392 11C398 14 399 19 397 23C396 27 393 29 390 28.5C387 28 386 25 385.5 22C381 19 372 17 362 17L38 17C28 17 19 19 14.5 22C14 25 13 28 10 28.5C7 29 4 27 3 22Z' fill='%23ffffff'/%3E%3Cpath d='M14.5 22C19 19 28 17 38 17L362 17C372 17 381 19 385.5 22C380 19.8 371 18.4 362 18.4L38 18.4C29 18.4 20 19.8 14.5 22Z' fill='%23cfe1f3'/%3E%3Cpath d='M5 23.5C6 26.5 8 28 10.5 28M395 23.5C394 26.5 392 28 389.5 28' stroke='%23d6e6f5' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3Cpath d='M27 9c5-3 11-3 15 0M101 5c6-3 12-3 17 1M176 5c6-3 12-3 16 1M246 5c6-3 12-3 17 1M316 5c5-3 11-3 15 1' stroke='%23eaf3ff' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;filter:drop-shadow(0 1px 1px rgba(10,30,60,.28))}
+body[data-fx=snow] #boardWrap::after{content:'';position:absolute;left:8px;right:8px;top:calc(100% - 1px);height:18px;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20'%3E%3Cpath d='M0 0h120v2.5H0z' fill='%23eef6ff'/%3E%3Cpath d='M4 2q3.5 6 3.5 14Q8.5 8 11 2zM18 2q2 3 2 7 0-4 2-7zM29 2q3 8 3 17 0-9 3-17zM44 2q2 4 2 8 0-4 2-8zM55 2q3 6 3 12 0-6 3-12zM69 2q2.5 7 2.5 15Q72 9 74 2zM84 2q2 3 2 7 0-4 2-7zM95 2q3 7 3 14 0-7 3-14zM109 2q2.5 4 2.5 10 0-6 2.5-10z' fill='%23eaf4ff' stroke='%23a9c8e6' stroke-width='.5' stroke-linejoin='round'/%3E%3Cpath d='M30.6 4l.9 9M56.6 4l.7 6M96.6 4l.7 7M70.6 4l.7 8M5.6 4l.7 6' stroke='%23ffffff' stroke-width='.9'/%3E%3C/svg%3E") 0 0/120px 20px repeat-x;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+body[data-fx=snow] #boardWrap::before{filter:drop-shadow(0 1px 1px rgba(10,30,60,.28)) drop-shadow(0 0 6px var(--glow))}
+body[data-fx=snow] #boardWrap::after{filter:drop-shadow(0 0 4px var(--glow))}
+/* Candy: a candy-cane striped frame */
+body[data-fx=candy] #board{z-index:1}
+body[data-fx=candy] #board.sq{box-shadow:0 0 18px rgba(255,95,162,.35)}
+body[data-fx=candy] #board.hex{filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px rgba(255,95,162,.55))}
+body[data-fx=candy] #boardWrap:has(#board.sq)::before{content:'';position:absolute;inset:-7px;border-radius:18px;z-index:0;pointer-events:none;background:repeating-linear-gradient(45deg,#ff5fa2 0 9px,#fff 9px 18px);box-shadow:0 6px 18px rgba(255,95,162,.3)}
+/* Neon Arcade: glowing edges and numbers (the scanlines come from themes.js) */
+body[data-fx=neon] #board.sq{box-shadow:0 0 0 2px var(--accent),0 0 18px rgba(255,47,214,.6),0 0 40px rgba(47,243,255,.15)}
+body[data-fx=neon] #board.hex{filter:drop-shadow(0 0 6px rgba(255,47,214,.7))}
+body[data-fx=neon] #board .cell.open{text-shadow:0 0 6px currentColor,0 0 14px currentColor}
+body[data-fx=neon] .primary{box-shadow:0 4px 0 var(--edge),0 0 16px rgba(255,47,214,.6)}
+/* Royal Gold: a polished gold frame with studs, gold buttons */
+body[data-fx=gold] #board{z-index:1}
+body[data-fx=gold] #board.sq{box-shadow:0 0 0 1px #000,0 0 36px rgba(212,175,55,.4),0 16px 40px rgba(0,0,0,.7)}
+body[data-fx=gold] #board.hex{filter:drop-shadow(0 0 1.5px #f2cf5b) drop-shadow(0 0 14px rgba(212,175,55,.45))}
+body[data-fx=gold] #boardWrap:has(#board.sq)::before{content:'';position:absolute;inset:-7px;border-radius:18px;z-index:0;pointer-events:none;background:var(--gm)}
+body[data-fx=gold] #boardWrap:has(#board.sq)::after{content:'';position:absolute;inset:-13px;z-index:2;pointer-events:none;background:radial-gradient(circle,#fffbe0 0 1.5px,#f2cf5b 2.5px,#9a7418 5px,transparent 6px) 0 0/14px 14px no-repeat,radial-gradient(circle,#fffbe0 0 1.5px,#f2cf5b 2.5px,#9a7418 5px,transparent 6px) 100% 0/14px 14px no-repeat,radial-gradient(circle,#fffbe0 0 1.5px,#f2cf5b 2.5px,#9a7418 5px,transparent 6px) 0 100%/14px 14px no-repeat,radial-gradient(circle,#fffbe0 0 1.5px,#f2cf5b 2.5px,#9a7418 5px,transparent 6px) 100% 100%/14px 14px no-repeat}
+body[data-fx=gold] #board .cell.open{text-shadow:0 0 8px rgba(242,207,91,.4)}
+body[data-fx=gold] .primary{background:var(--gm);background-size:220% 220%;color:#1a1205;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:0 4px 0 #6b4f10,0 3px 14px rgba(212,175,55,.4);animation:goldsheen 6s ease-in-out infinite}
+body[data-fx=gold] .mode,body[data-fx=gold] .tile,body[data-fx=gold] .chip,body[data-fx=gold] .tcard,body[data-fx=gold] .result{box-shadow:0 0 0 1px rgba(212,175,55,.55),0 8px 24px rgba(0,0,0,.5)}
+@keyframes goldsheen{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+/* Seasonal */
+body[data-fx=xmas] #board.sq{box-shadow:0 0 0 3px var(--frame),0 10px 28px rgba(198,47,54,.18)}
+body[data-fx=xmas] #boardWrap::after{content:'';position:absolute;left:-27px;top:-37px;width:40px;height:33px;z-index:3;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 50'%3E%3Cpath d='M10 40C14 22 24 8 40 6c8-1 14 3 16 9-6-3-12-2-15 2-5 6-7 14-8 23z' fill='%23d62f3a' stroke='%239e1f26' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M22 18c6-6 12-8 18-8' stroke='%23ef5a63' stroke-width='3' fill='none' stroke-linecap='round' opacity='.6'/%3E%3Crect x='4' y='36' width='38' height='11' rx='5.5' fill='%23fffdf7' stroke='%23d9d0c0' stroke-width='1.2'/%3E%3Ccircle cx='55' cy='17' r='5' fill='%23fffdf7' stroke='%23d9d0c0' stroke-width='1.2'/%3E%3C/svg%3E") center/contain no-repeat;transform:rotate(-24deg);filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+body[data-fx=xmas] #board.hex{filter:drop-shadow(0 8px 16px rgba(198,47,54,.2))}
+body[data-fx=matariki] #board.sq{box-shadow:0 0 0 3px var(--frame),0 0 30px rgba(159,179,255,.25)}
+body[data-fx=matariki] #board.hex{filter:drop-shadow(0 0 14px rgba(159,179,255,.35))}
+body[data-fx=spooky] #board.sq{box-shadow:0 0 0 3px var(--frame),0 0 26px rgba(255,138,42,.22)}
+body[data-fx=spooky] #board.hex{filter:drop-shadow(0 0 12px rgba(255,138,42,.3))}
+body[data-fx=easter] #board{z-index:1}
+body[data-fx=easter] #board.hex{filter:drop-shadow(0 2px 3px rgba(90,70,160,.22))}
+body[data-fx=anzac] #board.hex{filter:drop-shadow(0 2px 3px rgba(90,40,30,.2))}
+body[data-fx=easter] #board.sq{box-shadow:0 0 0 3px var(--frame),0 10px 26px rgba(138,106,214,.2)}
+body[data-fx=anzac] #board.sq{box-shadow:0 0 0 3px var(--frame),0 10px 28px rgba(90,40,30,.18)}
+/* sideways phones are short: the creatures that sit on top of the board make way for the board */
+@media (max-height:500px){
+  body[data-fx=easter] .bpad,body[data-fx=spooky] .bpad{--dt:0px}
+  body[data-fx=easter] .bunnylayer,body[data-fx=spooky] .catlayer{display:none}
+  body[data-fx=xmas] .bpad,body[data-fx=anzac] .bpad{--dt:24px}
+}
+/* decorations stay still with Reduce motion on */
+html.rz-reduce-motion #fx,html.rz-reduce-motion #bursts{display:none}
+/* theme tabs: Standard, Special, Seasonal. The pages slide with the highlight */
+.ttabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel);border-radius:14px;padding:4px;margin:0 0 14px;box-shadow:0 2px 8px var(--shade)}
+.ttab{position:relative;z-index:1;padding:9px 0;border-radius:10px;font-weight:800;font-size:.9rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;transition:color .25s}
+.ttab.on{color:var(--onaccent)}
+.tcount{font-size:.7rem;font-weight:900;padding:1px 6px;border-radius:9px;background:rgba(0,0,0,.12)}
+.ttab:not(.on) .tcount{background:var(--soft)}
+.tpill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 3);border-radius:10px;background:var(--accent);will-change:transform}
+.tpages{overflow:hidden;margin:0 -16px;transition:height .35s var(--ease)}
+.ttrack{display:flex;align-items:flex-start;will-change:transform}
+.tpage{flex:0 0 100%;min-width:0;padding:0 16px 4px}
+.tprog{background:var(--panel);border-radius:14px;padding:10px 12px;margin-bottom:12px;box-shadow:0 2px 8px var(--shade)}
+.tbar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.tbar i{display:block;height:100%;border-radius:4px;background:var(--accent);transition:width .4s var(--ease)}
+body[data-fx=gold] .tbar i{background:var(--gm)}
+.tprog p,.tnote{margin:8px 0 0;font-weight:800;font-size:.84rem;color:var(--muted);text-align:center}
+.tnote{margin:0 0 12px}
+.tprev{position:relative;overflow:hidden}
+.tspr{position:absolute;width:14px;height:14px;opacity:.9}
+.tspr svg{width:100%;height:100%;display:block}
+.tbadge{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;z-index:2}
+.tbadge svg.ic{width:16px;height:16px}
+.tlabel>span{display:flex;flex-direction:column;min-width:0}
+.tlabel small{margin-top:3px;font-size:.72rem;font-weight:800;color:var(--muted);line-height:1.25}
+.tlabel small.season{align-self:flex-start;color:var(--accent);background:var(--soft);padding:1px 7px;border-radius:8px}
+.tcard.locked .tprev>*:not(.tlock){filter:grayscale(1);opacity:.35}
+.tcard.locked .tprev{background:var(--soft)!important}
+.tcard.locked .tlabel b{color:var(--muted)}
+.tlock{position:absolute;inset:0;display:grid;place-items:center;z-index:3;color:var(--muted)}
+.tlock svg.ic{width:30px;height:30px}
+.tcard.wiggle{animation:twiggle .4s}
+@keyframes twiggle{25%{translate:-5px 0}50%{translate:5px 0}75%{translate:-3px 0}}
+.result .chips .unl{background:var(--accent);color:var(--onaccent)}
+
 /* Reduce motion follows the switch in the Settings menu */
 html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *::after{animation:none!important;transition:none!important}
 html.rz-reduce-motion .cell.holding::after{opacity:1}
@@ -324,6 +496,8 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
 </style>
 </head>
 <body>
+<div id="fx" aria-hidden="true"></div>
+<div id="bursts" aria-hidden="true"></div>
 <div class="app">
 
   <!-- ================= HOME ================= -->
@@ -365,7 +539,7 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
       <span class="chip hidden" id="scoreChip" aria-label="Boards cleared"></span>
       <span class="chip hidden" id="fastChip" aria-label="Fastest board this run"></span>
     </div>
-    <div class="wrap" id="wrap"><div class="board" id="board" role="grid" aria-label="Minefield"></div></div>
+    <div class="wrap" id="wrap"><div class="bpad" id="bpad"><div class="boardwrap" id="boardWrap"><div class="board" id="board" role="grid" aria-label="Minefield"></div></div></div></div>
     <div class="tools" id="tools">
       <div class="dfseg" id="dfseg" role="group" aria-label="What a tap does">
         <button data-mode="dig" aria-pressed="true"></button>
@@ -391,7 +565,16 @@ html.rz-reduce-motion .cell.holding::after{opacity:1}
 <div class="panel" id="themePanel" role="dialog" aria-label="Themes"><div class="panelin">
   <div class="grab"></div>
   <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Themes</h1><span class="sp"></span></div>
-  <div class="tgrid" id="tgrid"></div>
+  <div class="ttabs" role="tablist" aria-label="Kind of theme"><span class="tpill" id="tPill"></span>
+    <button class="ttab on" data-tab="0" role="tab" aria-selected="true">Standard</button>
+    <button class="ttab" data-tab="1" role="tab" aria-selected="false">Special <span class="tcount" id="tCount"></span></button>
+    <button class="ttab" data-tab="2" role="tab" aria-selected="false">Seasonal</button>
+  </div>
+  <div class="tpages" id="tPages"><div class="ttrack" id="tTrack">
+    <div class="tpage"><div class="tgrid" id="tgridStd"></div></div>
+    <div class="tpage"><div class="tprog"><div class="tbar"><i id="tBar"></i></div><p id="tHint"></p></div><div class="tgrid" id="tgridSp"></div></div>
+    <div class="tpage"><p class="tnote" id="tSeasonNote"></p><div class="tgrid" id="tgridSe"></div></div>
+  </div></div>
 </div></div>
 
 <div class="panel" id="histPanel" role="dialog" aria-label="History"><div class="panelin">
@@ -464,6 +647,7 @@ const ICONS = {
   pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="3"/>',
   hand: '<path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.6a6 6 0 0 1-4.8-2.4L4 15.4a1.6 1.6 0 0 1 2.3-2.2L9 15.5"/>',
 };
+Object.assign(ICONS, Object.fromEntries(Object.entries(RZT.BADGES).filter(([k]) => !ICONS[k])));   // theme badges and the lock
 const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 const FLAG = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flag"/></svg>';
 const MINE = '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:var(--minec)"><use href="#i-mine"/></svg>';
@@ -497,6 +681,8 @@ const Sound = (() => {
     } catch {}
   }
   return {
+    boing() { tone(330, .22, 'sine', .16, 0, 2.2); },
+    mrrp() { tone(420, .08, 'triangle', .12); tone(560, .14, 'triangle', .1, .07, .8); },
     dig(n) { tone(n > 1 ? 560 : 460, .07, 'triangle', .2); if (n > 6) tone(720, .1, 'triangle', .12, .05); },
     flag(on) { tone(on ? 780 : 480, .07, 'square', .05); },
     boom() { noise(.7, .6); tone(140, .55, 'sawtooth', .12, 0, .3); },
@@ -868,8 +1054,9 @@ function showGame() {
 }
 function layoutBoard() {
   if (!G || $('#game').classList.contains('hidden')) return;
-  const w = $('#wrap');
-  view.layout(w.clientWidth - 12, w.clientHeight - 12);
+  const w = $('#wrap'), pad = getComputedStyle($('#bpad'));
+  const px = parseFloat(pad.paddingLeft) + parseFloat(pad.paddingRight), py = parseFloat(pad.paddingTop) + parseFloat(pad.paddingBottom);
+  view.layout(w.clientWidth - 12 - px, w.clientHeight - 12 - py);
 }
 addEventListener('resize', () => { layoutBoard(); scrollToMode(modeIdx, true); if (!$('#howPanel').classList.contains('show')) return; How.relayout(); });
 
@@ -974,12 +1161,21 @@ function celebrate() {
   }
   $('#board').classList.add('won', 'done');
 }
+// special themes: a shower of the theme's particles, and the cats / bunny wake up
+function winBurst(big) {
+  const c = view.cells, n = c.length;
+  if (big) {
+    [0, .25, .5, .75, 1].forEach((q, k) => setTimeout(() => RZT.burst(c[Math.round(q * (n - 1))], 6, 60), k * 140));
+    setTimeout(() => RZT.burst($('#board'), 26, 140), 300);
+    RZT.wakeCats();
+  } else { RZT.burst($('#board'), 12, 90); RZT.bunnyHop(); }
+}
 function boardCleared() {
   const took = timeNow() - (G.boardT0 || 0);
   if (took > 0 && (!G.fastest || took < G.fastest)) { G.fastest = took; const c = $('#fastChip'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
   G.score++; G.bonus += TA.bonus;
   floatText('+5s', true); Sound.board(); vibrate(20);
-  celebrate();
+  celebrate(); winBurst(false);
   G.busy = true; view.locked = true;
   setTimeout(() => nextBoard(true), 650);
 }
@@ -1016,27 +1212,32 @@ function record(won) {
 function endGame(won) {
   G.elapsed = timeNow(); G.startedAt = 0; G.ended = true;
   view.locked = true;
-  const {isBest, r} = record(won);
-  if (won) { celebrate(); Sound.win(); vibrate([20, 60, 20]); }
+  const before = unlockedNow(), {isBest, r} = record(won), fresh = newThemes(before);
+  if (won) { celebrate(); winBurst(true); Sound.win(); vibrate([20, 60, 20]); }
   else $('#board').classList.add('done');
   showResult(won ? 'win' : 'lose', won ? 'Field cleared!' : 'Boom!', [
     `${ic('clock')}${fmt(G.elapsed, won)}`,
     won && isBest ? `<span class="new">${ic('trophy')}New best!</span>` : r.best ? `${ic('trophy')}${fmt(r.best, true)}` : '',
     won && r.streak > 1 ? `${ic('fire')}${r.streak}` : '',
     G.hints ? `${ic('bulb')}${G.hints}` : '',
+    ...fresh,
   ]);
 }
+// a chip for each special theme this game just unlocked
+const newThemes = before => unlockedNow().filter(id => !before.includes(id))
+  .map(id => `<span class="unl">${ic(RZT.SPECIALS[id].badge)}${RZT.SPECIALS[id].name} theme unlocked</span>`);
 function endTimeAttack() {
   G.elapsed = timeNow(); G.startedAt = 0; G.ended = true;
   G.field.over = true; view.paintAll(); view.locked = true;
   $('#board').classList.add('done');
-  const {isBest, r} = record(true);
+  const before = unlockedNow(), {isBest, r} = record(true), fresh = newThemes(before);
   Sound.win();
   showResult('time', `${G.score} board${G.score === 1 ? '' : 's'}`, [
     `${ic('grid')}${G.score}`,
     G.fastest ? `${ic('bolt')}${fmt(G.fastest, true)}` : '',
     isBest ? `<span class="new">${ic('trophy')}New best!</span>` : `${ic('trophy')}${r.best || 0}`,
     G.hints ? `${ic('bulb')}${G.hints}` : '',
+    ...fresh,
   ]);
   updateHud();
 }
@@ -1359,9 +1560,11 @@ document.querySelectorAll('.panel').forEach(p => {
   });
 });
 
-/* ---------- Themes ---------- */
+/* ---------- Themes (the same themes as Sudoku: themes.js) ---------- */
+const TH = window.MS_THEMES;
+const themeName = id => id === 'auto' ? 'Auto' : RZT.THEMES[id].name;
 function themePreview(id) {
-  const TH = window.MS_THEMES, t = TH.T[TH.resolve(id)], v = Object.assign({}, t.dark ? TH.DARK : TH.LIGHT, t.v);
+  const v = TH.vars(id === 'auto' ? 'light' : id), sp = RZT.SPECIALS[id];
   const L = [['o1', 1], ['o2', 2], ['h1'], ['o2', 1], ['h2', 'f'], ['h1'], ['h1'], ['h2'], ['h1']];
   let s = '';
   L.forEach(([c, n], k) => { const x = 4 + (k % 3) * 31, y = 4 + Math.floor(k / 3) * 31;
@@ -1370,21 +1573,98 @@ function themePreview(id) {
     else if (n) s += `<text x="${x + 14.5}" y="${y + 15.5}" fill="${v['n' + n]}" style="font:900 19px Nunito,system-ui,sans-serif;text-anchor:middle;dominant-baseline:central">${n}</text>`;
   });
   let bg = v.bg;
-  if (id === 'auto') { const a = TH.T.meadow.v.bg, b = TH.T.night.v.bg; bg = `linear-gradient(135deg,${a} 50%,${b} 50%)`; }
-  return `<div class="tprev" style="background:${bg}"><svg viewBox="0 0 100 100" aria-hidden="true">${s}</svg></div>`;
+  if (id === 'auto') bg = `linear-gradient(135deg,${TH.vars('light').bg} 50%,${TH.vars('dark').bg} 50%)`;
+  let extra = '';
+  if (sp) {
+    const shape = sp.fx[0].shape === 'snow' || sp.fx[0].shape === 'bubble' ? sp.fx[0].shape : sp.burst.shape;
+    extra = [[8, 14], [80, 70], [14, 74], [72, 12], [44, 84]].map(([x, y], k) =>
+      `<span class="tspr" style="left:${x}%;top:${y}%;transform:rotate(${k * 47}deg)">${RZT.particleSVG(shape, sp.burst.colors[k % sp.burst.colors.length])}</span>`).join('') +
+      `<span class="tbadge" style="background:${v.panel};color:${v.accent}">${ic(sp.badge)}</span>`;
+  }
+  return `<div class="tprev" style="background:${bg}">${extra}<svg viewBox="0 0 100 100" aria-hidden="true">${s}</svg></div>`;
+}
+function themeCard(id) {
+  const open = TH.isUnlocked(id), on = prefs.theme === id, sp = RZT.SPECIALS[id];
+  let sub = '';
+  if (sp && sp.season) sub = `<small class="season">${RZT.seasonText(id)}</small>`;
+  else if (sp && !open) sub = `<small>${TH.UNLOCKS[id].text}</small>`;
+  return `<button class="tcard${on ? ' on' : ''}${open ? '' : ' locked'}" data-t="${id}" aria-pressed="${on}" aria-label="${themeName(id)}${open ? '' : ', locked'}">
+    <div style="position:relative">${themePreview(id)}${open ? '' : `<span class="tlock">${ic('lock')}</span>`}</div>
+    <span class="tlabel"><span><b>${themeName(id)}</b>${sub}</span>${on ? ic('check') : ''}</span></button>`;
 }
 function renderThemes() {
-  const TH = window.MS_THEMES;
-  $('#tgrid').innerHTML = TH.ORDER.map(id => `<button class="tcard${prefs.theme === id ? ' on' : ''}" data-t="${id}" aria-pressed="${prefs.theme === id}">
-    ${themePreview(id)}<span class="tlabel">${id === 'auto' ? 'Auto' : TH.T[id].name}${prefs.theme === id ? ic('check') : ''}</span></button>`).join('');
+  const got = TH.SPECIAL.filter(TH.isUnlocked).length, all = TH.SPECIAL.length;
+  $('#tCount').textContent = `${got}/${all}`;
+  $('#tBar').style.width = (got / all * 100) + '%';
+  $('#tHint').textContent = got === all ? 'Every special theme unlocked. Nice work!' : 'Win games to unlock themes with extra flair.';
+  $('#tgridStd').innerHTML = TH.ORDER.map(themeCard).join('');
+  $('#tgridSp').innerHTML = TH.SPECIAL.map(themeCard).join('');
+  $('#tgridSe').innerHTML = TH.SEASONAL.map(themeCard).join('');
+  const now = TH.SEASONAL.filter(id => RZT.inSeason(id));
+  $('#tSeasonNote').textContent = prefs.devUnlock ? 'Testing mode: every seasonal theme is open.'
+    : now.length ? `${now.map(themeName).join(' and ')} ${now.length > 1 ? 'are' : 'is'} here this month only.` : 'Each one comes out in its own months. Check back then!';
+  requestAnimationFrame(fitTabHeight);
 }
-$('#tgrid').addEventListener('click', e => {
+// tabs: the page track and the highlight pill always move together
+let themeTab = 0;
+const TAB_EASE = 'transform .38s cubic-bezier(.22,.8,.24,1)';
+function placeTabs(pos, animate) {
+  const track = $('#tTrack'), pill = $('#tPill');
+  track.style.transition = pill.style.transition = animate ? TAB_EASE : 'none';
+  track.style.transform = `translateX(${-pos * 100}%)`;
+  pill.style.transform = `translateX(${pos * 100}%)`;
+}
+function fitTabHeight() { const page = $('#tTrack').children[themeTab]; if (page) $('#tPages').style.height = page.offsetHeight + 'px'; }
+function setThemeTab(k, animate = true) {
+  themeTab = k;
+  document.querySelectorAll('.ttab').forEach((b, j) => { b.classList.toggle('on', j === k); b.setAttribute('aria-selected', j === k); });
+  placeTabs(k, animate); fitTabHeight();
+}
+document.querySelectorAll('.ttab').forEach(b => b.onclick = () => setThemeTab(+b.dataset.tab));
+(() => {   // swipe the pages sideways: they follow your finger, then settle on the nearest tab
+  const area = $('#tPages'), last = 2;
+  let x0 = null, y0 = 0, t0 = 0, dx = 0, mode = null;
+  area.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); dx = 0; mode = null; }, {passive: true});
+  area.addEventListener('touchmove', e => {
+    if (x0 === null) return;
+    const ddx = e.touches[0].clientX - x0, ddy = e.touches[0].clientY - y0;
+    if (!mode) { if (Math.abs(ddx) < 6 && Math.abs(ddy) < 6) return; mode = Math.abs(ddx) > Math.abs(ddy) ? 'swipe' : 'scroll'; }
+    if (mode !== 'swipe') return;
+    e.preventDefault(); dx = ddx;
+    let pos = themeTab - dx / area.clientWidth;
+    if (pos < 0) pos /= 3; else if (pos > last) pos = last + (pos - last) / 3;   // rubber-band at the ends
+    placeTabs(pos, false);
+  }, {passive: false});
+  const end = () => {
+    if (x0 === null) return; x0 = null;
+    if (mode !== 'swipe') return;
+    const w = area.clientWidth, flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > 0.4 && Math.abs(dx) > 30;
+    let k = themeTab;
+    if (dx < -w * 0.25 || (flick && dx < 0)) k = Math.min(last, k + 1);
+    if (dx > w * 0.25 || (flick && dx > 0)) k = Math.max(0, k - 1);
+    setThemeTab(k, true);
+  };
+  area.addEventListener('touchend', end); area.addEventListener('touchcancel', end);
+})();
+function applyTheme() {
+  if (!TH.isUnlocked(prefs.theme)) { prefs.theme = 'auto'; savePrefs(); }
+  TH.apply(prefs.theme);
+}
+$('#tPages').addEventListener('click', e => {
   const b = e.target.closest('.tcard'); if (!b) return;
+  if (b.classList.contains('locked')) { b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle'); vibrate(10); return; }
   prefs.theme = b.dataset.t; savePrefs();
-  window.MS_THEMES.apply(prefs.theme);
+  applyTheme();
   renderThemes();
+  RZT.burst(b.querySelector('.tprev'), 12, 60);
 });
-$('#themesBtn').onclick = () => { renderThemes(); openPanel('themePanel'); };
+$('#themesBtn').onclick = () => {
+  renderThemes(); openPanel('themePanel');
+  const id = prefs.theme;
+  requestAnimationFrame(() => setThemeTab(TH.SEASONAL.includes(id) ? 2 : TH.SPECIAL.includes(id) ? 1 : 0, false));
+};
+// themes you've just unlocked by winning (shown on the result card)
+const unlockedNow = () => TH.SPECIAL.filter(TH.isUnlocked);
 
 /* ---------- History ---------- */
 let histFilter = 'all';
@@ -1441,9 +1721,11 @@ const RP = (() => {
     $('#rpSub').textContent = (M.sizes[e.z] ? M.sizes[e.z].label + ' · ' : '') + new Date(e.t).toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'});
     ev = []; e.rp.boards.forEach((b, bi) => b.log.forEach(([t, k, i]) => ev.push({b: bi, t, k, i})));
     // playback timing: real gaps, but long thinks are squeezed and each new board gets a beat
-    P = []; let pt = 700;                     // a moment to see the untouched field first
-    ev.forEach((x, j) => { if (j) { const p = ev[j - 1]; pt += x.b !== p.b ? 900 : Math.min(1100, Math.max(90, x.t - p.t)); } P.push(pt); });
-    end = pt + 1400; head = 0; shownK = -1; fb = -1; speed = 1;
+    // a typical game plays back in about 5 seconds: real rhythm, squeezed hard, so it looks satisfyingly quick
+    const raw = ev.length ? ev[ev.length - 1].t - ev[0].t : 0, squeeze = raw ? Math.min(1, 5000 / raw) : 1;
+    P = []; let pt = 450;                     // a moment to see the untouched field first
+    ev.forEach((x, j) => { if (j) { const p = ev[j - 1]; pt += x.b !== p.b ? 550 : Math.min(320, Math.max(35, (x.t - p.t) * squeeze)); } P.push(pt); });
+    end = pt + 900; head = 0; shownK = -1; fb = -1; speed = 1;
     $('#rpSpeed').textContent = '1×';
     $('#rpBoards').parentElement.classList.toggle('hidden', e.rp.boards.length < 2);
     openPanel('rpPanel');
@@ -1464,7 +1746,7 @@ const RP = (() => {
         // one more move on the same board: play it with the dig animation
         const x = ev[k - 1], r = apply(f, x);
         if (x.k === 'f') v.paint(x.i, 0, true);
-        else if (r) { for (const [j, d] of r.opened) v.paint(j, reduced() ? 0 : Math.min(d * 32 / speed, 400), true); if (r.boom >= 0 || f.won) v.paintAll(); }
+        else if (r) { for (const [j, d] of r.opened) v.paint(j, reduced() ? 0 : Math.min(d * 18 / speed, 220), true); if (r.boom >= 0 || f.won) v.paintAll(); }
         if (f.won) v.paintAll();
       } else {
         f = fieldFor(bi);
@@ -1648,13 +1930,16 @@ const How = (() => {
 $('#howBtn').onclick = () => How.open();
 
 /* ---------- start ---------- */
+RZT.config({theme: () => TH.resolved, fxOn: () => !reduced(), reduceMotion: reduced, sound: k => Sound[k] && Sound[k]()});
+TH.ready = true;
+applyTheme();
 fillIcons();
 drawTitle();
 renderModes(); setMode(modeIdx); renderSizes(); renderPlay(); renderHistBadge();
 $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
 
 /* ---------- Rizzo Games hooks (menu, updates) ---------- */
-if (RZ) RZ.onChange(() => {});
+if (RZ) RZ.onChange(() => applyTheme());   // e.g. Reduce motion switched off: bring the decorations back
 window.RizzoHooks = {
   onMenuOpen: () => updatePaused(),
   onMenuClose: () => updatePaused(),
