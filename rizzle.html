@@ -24,13 +24,13 @@
    ====================================================================== */
 :root{--ease:cubic-bezier(.2,.8,.2,1);
   --bg:#f6f5f1;--panel:#ffffff;--ink:#1f2328;--muted:#6b7078;--line:#dedfe3;--soft:#ecebe6;
-  --accent:#e8650a;--hi:#fb8a3c;--edge:#9a3f05;--onaccent:#ffffff;--shade:rgba(40,30,10,.10);--boom:#d6453d;
+  --accent:#3b3f47;--hi:#5a5f69;--edge:#1c1e23;--onaccent:#ffffff;--shade:rgba(40,30,10,.10);--boom:#d6453d;
   --ok:#4aa564;--mid:#d9a92c;--no:#878c95;--onok:#ffffff;
   --tile:#ffffff;--tline:#d5d7dc;--tfull:#8b8f97;--key:#e3e5e9;--keyink:#1f2328;
   --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
 @media (prefers-color-scheme:dark){:root{color-scheme:dark;
   --bg:#121317;--panel:#1d1f25;--ink:#eceef2;--muted:#9aa0aa;--line:#2e3139;--soft:#272a32;
-  --accent:#fb8a3c;--hi:#ffa45c;--edge:#a8470a;--onaccent:#1c0e03;--shade:rgba(0,0,0,.45);--boom:#ef5a52;
+  --accent:#d6d9df;--hi:#f1f2f5;--edge:#7d828c;--onaccent:#16181d;--shade:rgba(0,0,0,.45);--boom:#ef5a52;
   --ok:#3f9358;--mid:#c29627;--no:#3b3e46;
   --tile:transparent;--tline:#3a3d46;--tfull:#62666f;--key:#3b3e47;--keyink:#eceef2}}
 /* colour-blind friendly colours (Settings) */
@@ -47,7 +47,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade)}
 .iconbtn:active{transform:scale(.94)}
-.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px color-mix(in srgb,var(--accent) 30%,transparent)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade)}
 .primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
 
 /* ================= HOME ================= */
@@ -70,8 +70,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .mode.active{outline:2.5px solid var(--accent);outline-offset:-2.5px}
 .mode:not(.active){transform:scale(.84);opacity:.45}
 .mode h2{margin:0;font-size:clamp(1.15rem,3vh,1.55rem);font-weight:900}
-.mode p{margin:-6px 0 0;color:var(--muted);font-weight:800;font-size:.85rem}
-.mart{width:clamp(120px,26vh,200px);height:auto}
+.mode p{margin:-4px 12px 0;color:var(--muted);font-weight:800;font-size:.85rem;text-align:center}
+.mart{width:clamp(130px,min(52vw,27vh),220px);height:auto;flex:none}
 .modenav{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 0}
 .modearrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted)}
 .modearrow.l svg{transform:scaleX(-1)}
@@ -127,9 +127,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 @keyframes shake{0%,100%{translate:0}20%{translate:-7px 0}40%{translate:7px 0}60%{translate:-4px 0}80%{translate:3px 0}}
 .t.win{animation:win .6s var(--ease) both;animation-delay:var(--d,0ms)}
 @keyframes win{30%{transform:translateY(-38%)}55%{transform:translateY(6%)}75%{transform:translateY(-8%)}}
-/* the hint strip above the board */
-.hintline{flex:none;height:22px;margin-top:8px;display:flex;align-items:center;gap:6px;font-weight:800;font-size:.84rem;color:var(--muted)}
-.hintline svg.ic{width:16px;height:16px;color:#d39300}
 /* keyboard */
 .kbd{flex:none;width:100%;max-width:520px;display:flex;flex-direction:column;gap:7px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .krow{display:flex;gap:5px;justify-content:center}
@@ -142,10 +139,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .dk .key.no{opacity:.6}
 .kbd.locked .key{pointer-events:none}
 .tools{flex:none;display:flex;justify-content:center;gap:10px;margin:10px 0 10px}
-.hintbtn{height:42px;padding:0 16px;border-radius:999px;background:var(--panel);display:flex;align-items:center;gap:7px;font-weight:900;color:#c88a00;box-shadow:0 2px 8px var(--shade)}
-@media (prefers-color-scheme:dark){.hintbtn{color:#ffd23f}}
-.hintbtn .hc{font-size:.78rem;background:var(--soft);color:var(--muted);border-radius:99px;padding:1px 7px}
-.hintbtn:disabled{opacity:.4}
 /* a number of the key under your thumb, like a phone keyboard */
 .keypop{position:fixed;z-index:20;pointer-events:none;display:grid;place-items:center;border-radius:12px;background:var(--panel);color:var(--ink);font-size:2rem;font-weight:900;text-transform:uppercase;
   box-shadow:0 8px 22px rgba(0,0,0,.28),0 0 0 1px var(--line);opacity:0;transform:translateY(8px) scale(.85);transition:opacity .07s,transform .09s}
@@ -279,10 +272,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .tile .tic svg.ic{width:18px;height:18px}
   .game{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:18px;align-items:center}
   .ghead{grid-column:1;grid-row:1;max-width:none}
-  .hintline{grid-column:1;grid-row:2;justify-self:center;margin-top:2px}
-  .bwrap{grid-column:1;grid-row:3/5;height:100%;padding:4px 0}
-  .tools{grid-column:2;grid-row:1/3;margin:0}
-  .kbd,.result{grid-column:2;grid-row:3/5;align-self:center}
+  .bwrap{grid-column:1;grid-row:2/5;height:100%;padding:4px 0}
+  .kbd,.result{grid-column:2;grid-row:1/5;align-self:center}
   .key{height:clamp(36px,13vh,50px)}
   .result{padding:12px;gap:10px}
   .result .ri{width:42px;height:42px;border-radius:13px}
@@ -332,9 +323,7 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
       <button class="iconbtn" id="newBtn" aria-label="New word" data-ic="refresh"></button>
       <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
     </div>
-    <div class="hintline" id="hintline"></div>
     <div class="bwrap" id="bwrap"><div class="board" id="board" role="grid" aria-label="Guesses"></div></div>
-    <div class="tools" id="tools"><button class="hintbtn" id="hintBtn" aria-label="Hint"></button></div>
     <div class="kbd" id="kbd" aria-label="Keyboard"></div>
     <div class="result hidden" id="result"></div>
   </section>
@@ -397,7 +386,7 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
   <p class="rpsub" id="rpSub"></p>
   <div class="rpwrap" id="rpWrap"><div class="board" id="rpBoard" aria-label="Timelapse board"></div></div>
   <div class="rpctl"><button class="rpbtn" id="rpAgain" aria-label="Watch again"></button><button class="primary rpplay" id="rpPlay" aria-label="Play"></button><button class="rpbtn" id="rpSpeed" aria-label="Speed">1×</button></div>
-  <div class="rpstats"><div><span>Guesses</span><b id="rpGuesses">0</b></div><div><span>Time</span><b id="rpTime">0:00</b></div><div><span>Hints</span><b id="rpHints">0</b></div></div>
+  <div class="rpstats"><div><span>Guesses</span><b id="rpGuesses">0</b></div><div><span>Time</span><b id="rpTime">0:00</b></div><div><span>Result</span><b id="rpRes">–</b></div></div>
 </div></div>
 
 <div class="keypop" id="keypop" aria-hidden="true"></div>
@@ -409,7 +398,7 @@ const WORDS = {"4":{"a":"ableacheacidacreafaragedahoyaidealasallyalmsalsoamenane
 /* ======================================================================
    RIZZLE for Rizzo Games: guess the hidden word.
    Modes: Daily (everyone gets the same word each day) and Unlimited, each with
-   4, 5, 6 or 7 letter words. Hints, stats, history with timelapses, How to play.
+   4, 5, 6 or 7 letter words. Stats, history with timelapses, How to play.
 
    How it's built:
      Words      the answer lists and the words you're allowed to guess (WORDS, above)
@@ -509,7 +498,6 @@ const Sound = (() => {
     back() { tone(330, .05, 'triangle', .1); },
     bad() { tone(200, .14, 'square', .07); tone(160, .16, 'square', .06, .08); },
     flip(k, res) { tone(res === 'ok' ? 660 + k * 40 : res === 'mid' ? 520 + k * 30 : 300, .09, 'triangle', .13); },
-    hint() { tone(880, .1, 'sine', .14); tone(1175, .16, 'sine', .12, .08); },
     win() { [523, 659, 784, 1047].forEach((f, k) => tone(f, .18, 'triangle', .16, k * .09)); },
     lose() { tone(330, .25, 'sine', .14, 0, .7); tone(247, .35, 'sine', .12, .2, .7); },
   };
@@ -550,7 +538,7 @@ function newGame(m, n) {
 }
 function resumeGame(s) {
   if (!s || !s.word || !ROWS[s.n] || (s.m === 'daily' && s.day !== today())) return false;
-  G = Object.assign({hints: [], log: [], cur: ''}, s, {startedAt: 0});
+  G = Object.assign({log: [], cur: ''}, s, {hints: [], startedAt: 0});
   return true;
 }
 function saveGame() {
@@ -578,11 +566,10 @@ function fitBoard(el, wrap, n, rows, max = 64) {
   el.style.setProperty('--ts', ts + 'px'); el.style.setProperty('--g', g + 'px');
 }
 const tileAt = (el, r, c) => el.children[r] && el.children[r].children[c];
-// the letters you know are green (from guesses and hints), by position
+// the letters you know are green, by position (hard mode must keep them)
 function knownGreens() {
   const k = {};
   G.guesses.forEach(g => score(g, G.word).forEach((s, i) => { if (s === 'ok') k[i] = g[i]; }));
-  G.hints.forEach(i => k[i] = G.word[i]);
   return k;
 }
 function paintRow(r, anim) {
@@ -601,7 +588,7 @@ function paintRow(r, anim) {
     if (anim != null && row.children[anim]) { const t = row.children[anim]; t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
   } else [...row.children].forEach(t => { t.textContent = ''; t.className = 't'; t.removeAttribute('data-g'); });
 }
-const paintAll = () => { for (let r = 0; r < G.rows; r++) paintRow(r); paintKeys(); renderHints(); };
+const paintAll = () => { for (let r = 0; r < G.rows; r++) paintRow(r); paintKeys(); };
 function layoutGame() {
   if (!G || $('#game').classList.contains('hidden')) return;
   fitBoard(board, $('#bwrap'), G.n, G.rows);
@@ -693,23 +680,6 @@ function submit() {
   }, G.n * step + (step ? 260 : 0));
 }
 
-/* ---------- hints: show one letter in its place ---------- */
-function hint() {
-  if (!G || G.over || busy) return;
-  const greens = knownGreens(), free = [...Array(G.n).keys()].filter(i => greens[i] == null);
-  if (free.length <= 1) { toast(free.length ? 'You can find the last letter!' : 'You have every letter'); return; }
-  const i = free[0];
-  G.hints.push(i); saveGame();
-  paintRow(G.guesses.length); renderHints(); Sound.hint(); vibrate(12);
-  toast(`${nth(i)} letter is ${G.word[i].toUpperCase()}`);
-}
-$('#hintBtn').onclick = hint;
-function renderHints() {
-  const n = G ? G.hints.length : 0;
-  $('#hintBtn').innerHTML = ic('bulb') + '<span>Hint</span>' + (n ? `<span class="hc">${n}</span>` : '');
-  $('#hintline').innerHTML = n ? ic('bulb') + G.word.split('').map((ch, i) => G.hints.includes(i) ? ch.toUpperCase() : '_').join(' ') : '';
-}
-
 /* ---------- winning and losing ---------- */
 function record() {
   const all = allStats(), key = G.m + ':' + G.n, st = all[key] = Object.assign({played: 0, wins: 0, streak: 0, best: 0, dist: {}, last: 0}, all[key]);
@@ -740,14 +710,14 @@ function showResult(st) {
   const R = $('#result');
   R.className = 'result ' + (G.won ? 'win' : 'lose');
   const chips = [`${ic('grid')}${G.won ? G.guesses.length : 'X'}/${G.rows}`, G.elapsed ? `${ic('clock')}${fmt(G.elapsed)}` : '',
-    st && st.streak > 1 ? `${ic('fire')}${st.streak} streak` : '', G.hints.length ? `${ic('bulb')}${G.hints.length}` : '', G.hard ? 'Hard mode' : ''].filter(Boolean);
+    st && st.streak > 1 ? `${ic('fire')}${st.streak} streak` : '', G.hard ? 'Hard mode' : ''].filter(Boolean);
   R.innerHTML = `<div class="top"><span class="ri">${ic(G.won ? 'trophy' : 'close')}</span>
     <div><h2>${G.won ? (G.guesses.length === 1 ? 'First try!' : `Got it in ${G.guesses.length}!`) : `It was <span class="word">${G.word.toUpperCase()}</span>`}</h2>
     <div class="chips">${chips.map(c => `<span>${c}</span>`).join('')}</div></div></div>
     <div class="row2"><button class="sec" id="shareBtn">${ic('share')}Share</button>
     <button class="primary" id="nextBtn">${G.m === 'daily' ? ic('infinity') + 'Unlimited' : ic('refresh') + 'Next word'}</button></div>
     ${G.m === 'daily' ? `<p class="next" id="nextDaily"></p>` : ''}`;
-  $('#kbd').classList.add('hidden'); $('#tools').classList.add('hidden'); R.classList.remove('hidden');
+  $('#kbd').classList.add('hidden'); R.classList.remove('hidden');
   $('#shareBtn').onclick = share;
   $('#nextBtn').onclick = () => {
     if (G.m === 'daily') { modeIdx = 1; prefs.mode = 'free'; savePrefs(); renderModes(); renderLens(); }
@@ -761,7 +731,7 @@ function showResult(st) {
 }
 function share() {
   const sq = {ok: prefs.cb ? '🟧' : '🟩', mid: prefs.cb ? '🟦' : '🟨', no: dark.matches ? '⬛' : '⬜'};
-  const head = (G.m === 'daily' ? `Rizzle Daily #${G.day}` : 'Rizzle Unlimited') + ` · ${G.n} letters · ${G.won ? G.guesses.length : 'X'}/${G.rows}${G.hard ? '*' : ''}${G.hints.length ? ' 💡' + G.hints.length : ''}`;
+  const head = (G.m === 'daily' ? `Rizzle Daily #${G.day}` : 'Rizzle Unlimited') + ` · ${G.n} letters · ${G.won ? G.guesses.length : 'X'}/${G.rows}${G.hard ? '*' : ''}`;
   const text = head + '\n\n' + G.guesses.map(g => score(g, G.word).map(s => sq[s]).join('')).join('\n');
   if (navigator.share && touchFirst) navigator.share({text}).catch(() => {});
   else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard'), () => toast('Couldn’t copy'));
@@ -773,7 +743,7 @@ function showGame() {
   $('#gMode').textContent = G.m === 'daily' ? `Daily #${G.day}` : 'Unlimited';
   $('#gSub').textContent = `${G.n} letters${G.hard ? ' · hard' : ''}`;
   $('#newBtn').classList.toggle('hidden', G.m === 'daily');
-  $('#result').classList.add('hidden'); $('#kbd').classList.remove('hidden', 'locked'); $('#tools').classList.remove('hidden');
+  $('#result').classList.add('hidden'); $('#kbd').classList.remove('hidden', 'locked');
   buildBoard(board, G.n, G.rows); paintAll(); layoutGame();
   busy = false; updatePaused(); saveGame();
   if (G.over) { $('#kbd').classList.add('locked'); showResult(allStats()[G.m + ':' + G.n]); }
@@ -799,13 +769,11 @@ $('#wtitle').innerHTML = TITLE.map(([ch, c], k) => `<span class="${c}" style="--
 const T = (x, y, c, ch, s = 26) => `<rect class="a-${c}" x="${x}" y="${y}" width="${s}" height="${s}" rx="5"/>${ch ? `<text class="a-t${c === 'e' ? ' a-te' : ''}" x="${x + s / 2}" y="${y + s / 2 + 1}">${ch}</text>` : ''}`;
 const ART = {
   daily: () => { const R = [['H', 'no'], ['E', 'mid'], ['A', 'no'], ['R', 'no'], ['T', 'ok'], ['S', 'ok'], ['M', 'ok'], ['I', 'mid'], ['L', 'no'], ['E', 'mid'], ['S', 'ok'], ['M', 'ok'], ['O', 'ok'], ['K', 'ok'], ['E', 'ok']];
-    return `<svg class="mart" viewBox="0 0 150 128" aria-hidden="true">${R.map(([ch, c], k) => T(4 + (k % 5) * 29, 4 + Math.floor(k / 5) * 29, c, ch)).join('')}
-    <rect class="a-badge" x="45" y="96" width="60" height="28" rx="14"/><text class="a-bt" x="75" y="110.5">#${today()}</text></svg>`; },
+    return `<svg class="mart" viewBox="0 0 150 90" aria-hidden="true">${R.map(([ch, c], k) => T(4 + (k % 5) * 29, 4 + Math.floor(k / 5) * 29, c, ch)).join('')}</svg>`; },
   free: () => { const R = [['P', 'mid'], ['L', 'no'], ['A', 'ok'], ['Y', 'no'], ['', 'no'], ['G', 'ok'], ['O', 'ok'], ['', 'e'], ['', 'e'], ['', 'e'], ['', 'e'], ['', 'e'], ['', 'e'], ['', 'e'], ['', 'e']];
-    return `<svg class="mart" viewBox="0 0 150 128" aria-hidden="true">${R.map(([ch, c], k) => k === 4 ? T(120, 4, 'mid', 'S') : T(4 + (k % 5) * 29, 4 + Math.floor(k / 5) * 29, c, ch)).join('')}
-    <rect class="a-badge" x="45" y="96" width="60" height="28" rx="14"/><g transform="translate(63 98)" stroke="var(--onaccent)" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M12 12c-2-2.7-3.6-4-5.5-4a4 4 0 0 0 0 8c1.9 0 3.5-1.3 5.5-4zm0 0c2 2.7 3.6 4 5.5 4a4 4 0 0 0 0-8c-1.9 0-3.5 1.3-5.5 4z"/></g></svg>`; },
+    return `<svg class="mart" viewBox="0 0 150 90" aria-hidden="true">${R.map(([ch, c], k) => k === 4 ? T(120, 4, 'mid', 'S') : T(4 + (k % 5) * 29, 4 + Math.floor(k / 5) * 29, c, ch)).join('')}</svg>`; },
 };
-const SUB = {daily: () => `Puzzle #${today()} · new word every day`, free: () => 'As many words as you like'};
+const SUB = {daily: () => `Puzzle #${today()}`, free: () => 'As many as you like'};
 let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
 function renderModes() {
   $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${MODES[id].name}">
@@ -869,7 +837,7 @@ function renderLens() {
 $('#lenSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.len = +b.dataset.n; savePrefs(); renderLens(); renderPlay(); });
 const dailyDone = n => { const d = load(DONE_KEY, {})[n]; return d && d.day === today() ? d : null; };
 function renderPlay() {
-  const m = MODE_IDS[modeIdx], n = prefs.len, s = load(saveKey(m, n), null), live = s && (m !== 'daily' || s.day === today()) && s.word;
+  const m = MODE_IDS[modeIdx], n = prefs.len, s = load(saveKey(m, n), null), live = s && (m !== 'daily' || s.day === today()) && s.word && s.guesses.length > 0;
   const done = m === 'daily' && dailyDone(n);
   if (done) $('#playBtn').innerHTML = `<span>${done.w ? 'Solved today' : 'Done for today'}</span><small>See your board · next word in ${untilTomorrow()}</small>`;
   else if (live) $('#playBtn').innerHTML = `<span>Continue</span><small>${s.guesses.length} of ${ROWS[n]} guesses</small>`;
@@ -981,7 +949,7 @@ function renderHistory() {
   $('#hlist').innerHTML = list.length ? list.slice(0, 200).map(h => `<div class="hrow" data-t="${h.t}" role="button" tabindex="0" aria-label="Watch timelapse">
       <span class="hw">${h.word.split('').map(ch => `<i class="${h.w ? 'ok' : ''}">${ch}</i>`).join('')}</span>
       <span class="hm"><b>${h.m === 'daily' ? `Daily #${h.day}` : 'Unlimited'}</b><small>${h.n} letters · ${day(h.t)}</small></span>
-      <span class="hv">${h.h ? ic('bulb') : ''}<span class="${h.w ? '' : 'lose'}">${h.w ? h.g.length : 'X'}/${ROWS[h.n]}</span><i class="hplay">${ic('play')}</i></span></div>`).join('')
+      <span class="hv"><span class="${h.w ? '' : 'lose'}">${h.w ? h.g.length : 'X'}/${ROWS[h.n]}</span><i class="hplay">${ic('play')}</i></span></div>`).join('')
     : `<p class="hempty">${ic('history')}No games yet</p>`;
   $('#histClear').classList.toggle('hidden', !all.length);
   $('#histClear').textContent = 'Clear history';
@@ -1020,7 +988,7 @@ const RP = (() => {
     $('#rpTitle').textContent = h.m === 'daily' ? `Daily #${h.day}` : 'Unlimited';
     $('#rpSub').textContent = `${h.n} letters · ${h.w ? `solved in ${h.g.length}` : `the word was ${h.word.toUpperCase()}`}`;
     $('#rpGuesses').textContent = `${h.w ? h.g.length : 'X'}/${ROWS[h.n]}`;
-    $('#rpTime').textContent = fmt(h.ms || 0); $('#rpHints').textContent = h.h || 0;
+    $('#rpTime').textContent = fmt(h.ms || 0); $('#rpRes').textContent = h.w ? 'Solved' : 'Missed';
     openPanel('rpPanel');
     requestAnimationFrame(() => requestAnimationFrame(run));
   }
@@ -1054,8 +1022,8 @@ const How = (() => {
       run(stage) { stage.innerHTML = `<div class="board">${rowHTML('plant', ['', '', 'mid'])}</div>`; reveal(stage.querySelector('.row')); }},
     {title: 'Grey', cap: () => `${sw('no')} <span><b>Grey</b> means the letter isn't in the word at all, so don't use it again.</span>`,
       run(stage) { stage.innerHTML = `<div class="board">${rowHTML('mouse', ['no', 'no', 'no', 'no', 'no'])}</div>`; reveal(stage.querySelector('.row')); }},
-    {title: 'Daily, Unlimited and hints', cap: () => `<span>Solve the <b>Daily</b> word every day to build your streak. Stuck? A <b>hint</b> shows one letter in its place.</span>`,
-      run(stage) { stage.innerHTML = `<div class="howkeys"><span>${ic('calendar')}Daily: the same word for everyone</span><span>${ic('infinity')}Unlimited: as many as you like</span><span>${ic('grid')}4 to 7 letters</span><span>${ic('bulb')}Hints</span></div>`; }},
+    {title: 'Daily and Unlimited', cap: () => `<span>Solve the <b>Daily</b> word every day to build your streak, or play <b>Unlimited</b> words whenever you like.</span>`,
+      run(stage) { stage.innerHTML = `<div class="howkeys"><span>${ic('calendar')}Daily: the same word for everyone</span><span>${ic('infinity')}Unlimited: as many as you like</span><span>${ic('grid')}4 to 7 letters</span></div>`; }},
   ];
   function go(k) {
     clear(); step = Math.max(0, Math.min(STEPS.length - 1, k));
@@ -1076,7 +1044,7 @@ $('#howBtn').onclick = () => How.open();
 
 /* ---------- start ---------- */
 fillIcons();
-renderModes(); renderLens(); renderPlay(); renderHistBadge(); renderHints();
+renderModes(); renderLens(); renderPlay(); renderHistBadge();
 if (!load('rizzle-seen-how', 0)) { keep('rizzle-seen-how', 1); setTimeout(() => How.open(), 700); }
 // the daily word changes at midnight: refresh the home screen when you come back to it
 let lastDay = today();
