@@ -525,7 +525,8 @@ body[data-fx=gold] .tbar i{background:var(--gm)}
 
 /* ================= SIDEWAYS PHONES: two columns, nothing to scroll ================= */
 @media (orientation:landscape) and (max-height:520px){
-  body{padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(16px,env(safe-area-inset-left,0px));overflow:hidden}
+  /* the left edge lines up with the R button, which sits 16px in from the notch */
+  body{padding:calc(env(safe-area-inset-top,0px) + 15px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) calc(env(safe-area-inset-left,0px) + 16px);overflow:hidden}
   /* home: title and modes on the left, sizes, Play and the tiles on the right */
   .home{max-width:860px;min-height:0;padding:0 56px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr);column-gap:clamp(16px,4vw,40px);align-items:center}
   .ptitle{grid-column:1;grid-row:1;width:min(100%,clamp(170px,30vw,300px),46vh);margin:0 auto 6px}
@@ -549,7 +550,7 @@ body[data-fx=gold] .tbar i{background:var(--gm)}
   .tic.th{padding:6px;gap:2px}
   /* game: the board fills the right, everything else sits in a column on the left */
   .game{max-width:none;display:grid;grid-template-columns:minmax(200px,232px) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);column-gap:14px;align-items:start}
-  .ghead{grid-column:1;grid-row:1;max-width:none;padding:0 0 0 50px;gap:4px}
+  .ghead{grid-column:1;grid-row:1;max-width:none;padding:0 0 0 52px;gap:4px}
   .ghead .iconbtn{width:36px;height:36px;border-radius:11px}
   .ghead .iconbtn svg.ic{width:19px;height:19px}
   .gtitle b{font-size:.95rem}
