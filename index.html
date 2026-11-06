@@ -121,7 +121,27 @@ header{text-align:center;margin:18px 0 26px}
 .soon b{color:var(--ink);font-size:1rem}
 .soon svg{width:28px;height:28px;opacity:.7}
 
-.games>li{position:relative}
+.games>li{position:relative;display:flex}
+.games>li>.game{flex:1}
+/* every card the same height: one row per pair, the title has room for two lines */
+.games{grid-auto-rows:1fr}
+.body{padding:10px 12px 12px 16px;align-items:center}
+.txt h2{font-size:1.15rem;line-height:1.2;min-height:2.4em;display:flex;align-items:center}
+.stat{margin-top:4px}
+@media (max-width:599px){.txt h2{min-height:0}}
+/* the description: tap (i) and it covers the picture; tap again, or anywhere else, to close */
+.info{position:absolute;top:10px;left:10px;z-index:3;width:36px;height:36px;padding:0;border:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  background:rgba(10,16,40,.28);color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;transition:background .2s,transform .15s}
+.info svg{width:20px;height:20px}
+.info:active{transform:scale(.88)}
+.info:focus-visible{outline:3px solid #fff;outline-offset:2px}
+li.open .info{background:#fff;color:var(--ink)}
+.desc{position:absolute;left:0;right:0;top:0;height:128px;z-index:2;box-sizing:border-box;padding:14px 56px 12px 56px;border-radius:20px 20px 0 0;display:flex;flex-direction:column;justify-content:center;
+  background:rgba(8,12,30,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .2s,visibility 0s .2s;cursor:pointer}
+.desc b{font-size:.95rem;font-weight:800}
+.desc p{margin:4px 0 0;font-size:.88rem;line-height:1.35;color:rgba(255,255,255,.88)}
+li.open .desc{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+html.rz-reduce-motion .desc{transition:none}
 /* favourite star: sits on the card's picture, fills in gold when the game is a favourite */
 .fav{position:absolute;top:10px;right:10px;z-index:2;width:40px;height:40px;padding:0;border:0;border-radius:50%;cursor:pointer;
   display:flex;align-items:center;justify-content:center;background:rgba(10,16,40,.28);color:#fff;-webkit-tap-highlight-color:transparent;
@@ -259,6 +279,7 @@ const lastPlayed = id => +(localStorage.getItem('hub-last-' + id) || 0);
 // Favourites: starred games always stay at the top
 const FAV_KEY = 'hub-favs';
 const loadFavs = () => { try { const f = JSON.parse(localStorage.getItem(FAV_KEY)); return Array.isArray(f) ? f : []; } catch { return []; } };
+const infoIc = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 10.8v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.5" fill="currentColor"/></svg>`;
 const star = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>`;
 
 function render(still) {
@@ -275,13 +296,24 @@ function render(still) {
     return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]};view-transition-name:rz-card-${g.id}" aria-label="Play ${esc(g.name)}">
       <div class="art" style="background:linear-gradient(135deg,${g.colors[0]},${g.colors[1]})">${ART[g.art] || ''}</div>
       <div class="body">
-        <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.blurb)}</p><span class="stat">${esc(stat)}</span></div>
+        <div class="txt"><h2>${esc(g.name)}</h2><span class="stat">${esc(stat)}</span></div>
         <span class="go">${arrow}</span>
       </div></a>
+      <button class="info" data-id="${esc(g.id)}" aria-expanded="false" aria-label="About ${esc(g.name)}">${infoIc}</button>
+      <div class="desc" role="note"><b>${esc(g.name)}</b><p>${esc(g.blurb)}</p></div>
       <button class="fav" data-id="${esc(g.id)}" aria-pressed="${f}" aria-label="${f ? 'Remove ' + esc(g.name) + ' from favourites' : 'Add ' + esc(g.name) + ' to favourites'}" style="view-transition-name:rz-fav-${g.id}">${star}</button></li>`;
   }).join('') + `<li class="soon" style="animation-delay:${list.length * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>`;
 }
+const closeDesc = except => document.querySelectorAll('.games>li.open').forEach(li => { if (li !== except) { li.classList.remove('open'); li.querySelector('.info').setAttribute('aria-expanded', 'false'); } });
 document.getElementById('games').addEventListener('click', e => {
+  const inf = e.target.closest('.info');
+  if (inf) {
+    e.preventDefault(); e.stopPropagation();
+    const li = inf.closest('li'), on = !li.classList.contains('open');
+    closeDesc(li); li.classList.toggle('open', on); inf.setAttribute('aria-expanded', on);
+    return;
+  }
+  if (e.target.closest('.desc')) { e.preventDefault(); closeDesc(); return; }
   const b = e.target.closest('.fav'); if (!b) return;
   e.preventDefault(); e.stopPropagation();
   const id = b.dataset.id, favs = loadFavs(), on = !favs.includes(id);
@@ -296,6 +328,8 @@ document.getElementById('games').addEventListener('click', e => {
   if (document.startViewTransition && !document.documentElement.classList.contains('rz-reduce-motion')) document.startViewTransition(redo);
   else redo();
 });
+document.addEventListener('click', e => { if (!e.target.closest('.info, .desc')) closeDesc(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDesc(); });
 render();
 // Coming back from a game (or the app waking up) refreshes the stats and the order
 addEventListener('pageshow', () => render());
