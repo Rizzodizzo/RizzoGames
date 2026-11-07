@@ -112,6 +112,26 @@
   /* ======================= smooth moves between the launcher and the games ======================= */
   // Page transitions: the launcher's card for this game and the game's splash share a name, so the browser
   // grows one into the other (and back again). Everything else cross-fades. Reduce motion makes it instant.
+  /* ---------- no double-tap zoom on iPhones ----------
+     iPhones can still zoom in when you tap twice quickly, even with the touch-action rule below (tapping the
+     Solitaire stock or Minesweeper squares fast did it). So a quick second tap in the same spot has its zoom
+     cancelled, and the click it would have made is sent on by hand. Games read taps and drags with pointer
+     events, which this doesn't touch. Pinching to zoom still works. */
+  (() => {
+    let last = 0, lx = 0, ly = 0;
+    const typing = 'input:not([type]),input[type=text],input[type=search],input[type=email],input[type=number],input[type=password],textarea,select,[contenteditable]';
+    document.addEventListener('touchend', e => {
+      if (e.touches.length || e.changedTouches.length !== 1) { last = 0; return; }
+      const t = e.changedTouches[0], now = Date.now();
+      const quick = now - last < 360 && Math.hypot(t.clientX - lx, t.clientY - ly) < 48;
+      last = now; lx = t.clientX; ly = t.clientY;
+      if (!quick || e.defaultPrevented || !e.target.closest || e.target.closest(typing)) return;
+      const el = document.elementFromPoint(t.clientX, t.clientY) || e.target;   // what's under the finger now, like a real tap
+      e.preventDefault();
+      el.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true, view: window, detail: 1, clientX: t.clientX, clientY: t.clientY, screenX: t.screenX, screenY: t.screenY}));
+    }, {passive: false});
+  })();
+
   const card = 'rz-card-' + String(id).replace(/[^\w-]/g, '');
   const early = document.createElement('style');
   early.textContent = `
