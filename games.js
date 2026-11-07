@@ -56,6 +56,7 @@
      canReload()                   return true when it's safe to reload into an update (default: on the menu)
      beforeReload()                save first; whatever it returns is handed to afterReload
      afterReload(x)                runs once the new version has loaded, e.g. to put the player back in
+     hubSize(size)                 the launcher only: the game boxes were set to 'large' or 'small'
      loud()                        return true to always show "Checking…" / "Up to date" notes
    ========================================================================================== */
 (() => {
@@ -342,6 +343,11 @@ html,body{overscroll-behavior:none}
 .rz-sw:focus-visible,.rz-btn:focus-visible,.rz-x:focus-visible,.rz-leave:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
 .rz-ui .rz-btn{flex-shrink:0;border:0;border-radius:10px;padding:8px 13px;background:var(--rz-soft);color:var(--rz-ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .rz-ui .rz-btn:active{transform:none;translate:0 1px}
+.rz-seg{flex-shrink:0;display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--rz-soft)}
+.rz-ui .rz-seg button{border:0;border-radius:8px;padding:7px 11px;background:none;color:var(--rz-muted);font:inherit;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background-color .2s,color .2s}
+.rz-ui .rz-seg button[aria-checked=true]{background:var(--rz-blue);color:#fff}
+.rz-seg svg{width:16px;height:16px}
+.rz-seg button:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
 .rz-foot{margin:16px 4px 0;color:var(--rz-muted);font-size:12.5px;text-align:center}
 /* update note */
 .rz-pill{position:fixed;left:50%;z-index:2147483004;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 32px);
@@ -382,6 +388,12 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     <span><b>Settings</b><small>${isHub ? 'Every game' : gameName.replace(/[&<>"]/g, '')}</small></span>
     <button class="rz-x" type="button" aria-label="Close menu">${CLOSE}</button></div>
   ${isHub ? '' : `<a class="rz-leave" href="./">${ARROW}<span>All games</span></a><p class="rz-warn" aria-live="polite"></p>`}
+  ${isHub ? `<h3>Home screen</h3>
+  <div class="rz-card">
+    <div class="rz-row"><span class="rz-l">Game boxes</span><span class="rz-seg" role="radiogroup" aria-label="Game box size">
+      <button type="button" role="radio" data-size="large"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2.5" fill="currentColor"/></svg>Large</button>
+      <button type="button" role="radio" data-size="small"><svg viewBox="0 0 16 16" aria-hidden="true"><g fill="currentColor"><rect x="1.5" y="1.5" width="5.8" height="5.8" rx="1.6"/><rect x="8.7" y="1.5" width="5.8" height="5.8" rx="1.6"/><rect x="1.5" y="8.7" width="5.8" height="5.8" rx="1.6"/><rect x="8.7" y="8.7" width="5.8" height="5.8" rx="1.6"/></g></svg>Small</button></span></div>
+  </div>` : ''}
   <h3>Sound</h3>
   <div class="rz-card">
     <label class="rz-row"><span class="rz-l">Sound</span><input type="checkbox" class="rz-sw" data-k="sound" aria-label="Sound on"></label>
@@ -430,6 +442,8 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
         if (el.type === 'checkbox') el.checked = k === 'sound' ? !settings.muted : !!settings[k];
         else { el.value = Math.round(settings[k] * 100); el.nextElementSibling.textContent = el.value + '%'; }
       });
+      const size = read('hub-size') === 'small' ? 'small' : 'large';
+      ui.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-checked', b.dataset.size === size));
       ui.querySelectorAll('.rz-slide').forEach(row => {
         if (!row.querySelector('input').disabled) row.style.opacity = settings.muted ? '.5' : '';
       });
@@ -528,6 +542,8 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
 
     /* ---------- menu buttons ---------- */
     ui.addEventListener('click', async e => {
+      const sz = e.target.closest('[data-size]');
+      if (sz) { store('hub-size', sz.dataset.size); syncMenu(); call('hubSize', sz.dataset.size); return; }
       const b = e.target.closest('[data-act]');
       if (!b) return;
       const act = b.dataset.act;

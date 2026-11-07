@@ -92,6 +92,7 @@ header{text-align:center;margin:18px 0 26px}
 /* ---------- categories ---------- */
 .cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 16px;padding:2px 16px 4px;-webkit-overflow-scrolling:touch}
 .cats::-webkit-scrollbar{display:none}
+.cats[hidden]{display:none}
 @media (min-width:600px){.cats{justify-content:center;flex-wrap:wrap}}
 .cat{flex:none;display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
   font:inherit;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:var(--shadow);-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,transform .15s}
@@ -173,6 +174,26 @@ html.rz-reduce-motion .desc{transition:none}
 html.rz-reduce-motion .fav.pop svg{animation:none}
 .nofx .game,.nofx .soon{animation:none}
 
+/* small boxes (Settings menu → Game boxes): two to a row, three on wide screens */
+#games.small .games{grid-template-columns:1fr 1fr;gap:12px}
+@media (min-width:600px){#games.small .games{grid-template-columns:repeat(3,1fr)}}
+#games.small .game{border-radius:18px}
+#games.small .art{height:92px}
+#games.small .art svg{width:68px;height:68px}
+#games.small .body{padding:9px 11px 11px}
+#games.small .txt h2{font-size:.98rem;min-height:0;line-height:1.2}
+#games.small .stat{font-size:.72rem;padding:3px 8px;margin-top:5px}
+#games.small .go{display:none}
+#games.small .info{top:7px;left:7px;width:30px;height:30px}
+#games.small .info svg{width:17px;height:17px}
+#games.small .fav{top:7px;right:7px;width:32px;height:32px}
+#games.small .fav svg{width:18px;height:18px}
+#games.small .desc{height:auto;bottom:0;border-radius:18px;padding:42px 10px 10px;justify-content:flex-start}
+#games.small .desc p{font-size:.76rem;line-height:1.28}
+#games.small .soon{min-height:0;padding:14px 10px;border-radius:18px;gap:4px}
+#games.small .soon b{font-size:.9rem}
+#games.small .soon span{font-size:.78rem}
+#games.small .soon svg{width:22px;height:22px}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 /* Reduce motion follows the switch in the Settings menu (off unless the player turns it on), not the phone setting */
 html.rz-reduce-motion .game,html.rz-reduce-motion .soon,html.rz-reduce-motion .rz::after,html.rz-reduce-motion .spark{animation:none}
@@ -397,6 +418,11 @@ const CATS = [
 const CAT_KEY = 'hub-cat';
 const allIc = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
 const starIc = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>';
+// Categories only show once there are enough games to fill them; until then it's one list
+const CATS_FROM = 10;
+const showCats = () => GAMES.length >= CATS_FROM;
+// Big boxes (one to a row on phones) or small ones (two to a row): Settings menu → Game boxes
+const boxSize = () => { try { return localStorage.getItem('hub-size') === 'small' ? 'small' : 'large'; } catch { return 'large'; } };
 let cat = (() => { try { return localStorage.getItem(CAT_KEY) || 'all'; } catch { return 'all'; } })();
 
 function card(g, n, isFav) {
@@ -416,20 +442,23 @@ function card(g, n, isFav) {
 function render(still) {
   const favs = loadFavs(), isFav = id => favs.includes(id);
   // the chips: All, then each category that has games in it
-  const used = CATS.filter(c => GAMES.some(g => g.cat === c.id));
+  const used = showCats() ? CATS.filter(c => GAMES.some(g => g.cat === c.id)) : [];
   if (cat !== 'all' && !used.some(c => c.id === cat)) cat = 'all';
+  document.getElementById('cats').hidden = !showCats();
   document.getElementById('cats').innerHTML = [{id: 'all', name: 'All', icon: allIc}, ...used].map(c =>
     `<button class="cat" data-cat="${c.id}" aria-pressed="${cat === c.id}">${c.icon}${c.name}${c.id === 'all' ? '' : `<small>${GAMES.filter(g => g.cat === c.id).length}</small>`}</button>`).join('');
   // most recently played first, favourites before the rest
   const order = list => list.map(g => ({...g, k: GAMES.indexOf(g)})).sort((a, b) => (isFav(b.id) - isFav(a.id)) || lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
   const sections = [];
-  if (cat === 'all') {
+  if (!showCats()) sections.push({head: '', games: order(GAMES)});   // favourites first, then the most recently played
+  else if (cat === 'all') {
     const fav = order(GAMES.filter(g => isFav(g.id)));
     if (fav.length) sections.push({head: `<h3 class="sech favh">${starIc}Favourites</h3>`, games: fav});
     used.forEach(c => { const gs = order(GAMES.filter(g => g.cat === c.id && !isFav(g.id))); if (gs.length) sections.push({head: `<h3 class="sech">${c.icon}${c.name}</h3>`, games: gs}); });
   } else sections.push({head: '', games: order(GAMES.filter(g => g.cat === cat))});
   const el = document.getElementById('games');
-  el.classList.toggle('nofx', !!still);           // re-sorting after a tap shouldn't replay the slide-in
+  el.classList.toggle('nofx', !!still);
+  el.classList.toggle('small', boxSize() === 'small');           // re-sorting after a tap shouldn't replay the slide-in
   let n = 0;
   el.innerHTML = sections.map((s, k) => `<section class="sec">${s.head}<ul class="games">${s.games.map(g => card(g, n++, isFav)).join('')}${
     k === sections.length - 1 && cat === 'all' ? `<li class="soon" style="animation-delay:${n * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>` : ''}</ul></section>`).join('');
@@ -469,6 +498,14 @@ document.getElementById('games').addEventListener('click', e => {
 document.addEventListener('click', e => { if (!e.target.closest('.info, .desc')) closeDesc(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDesc(); });
 render();
+// Changing the box size in the Settings menu: the cards glide to their new size
+window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
+  hubSize() {
+    const redo = () => render(true);
+    if (document.startViewTransition && !document.documentElement.classList.contains('rz-reduce-motion')) document.startViewTransition(redo);
+    else redo();
+  },
+});
 // Coming back from a game (or the app waking up) refreshes the stats and the order
 addEventListener('pageshow', () => render());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(true); });
