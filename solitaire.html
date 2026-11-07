@@ -713,13 +713,14 @@ function Table(el, opts) {
 /* ---------- saved data ---------- */
 const PREF_KEY = 'solitaire-prefs', STATS_KEY = 'solitaire-stats-v1', HIST_KEY = 'solitaire-history-v1';
 const saveKey = m => `solitaire-save-v1-${m}`;
-const prefs = Object.assign({mode: 'd1', histSeen: 0, undo: true, hint: true, auto: true, lefty: false, buzz: true}, load(PREF_KEY, {}));
+const prefs = Object.assign({mode: 'd3', histSeen: 0, undo: true, hint: true, auto: true, lefty: false, buzz: true}, load(PREF_KEY, {}));
 const savePrefs = () => keep(PREF_KEY, prefs);
 const allStats = () => load(STATS_KEY, {});
 const hist = () => load(HIST_KEY, []);
 const MODES = {d1: {name: 'Draw 1', draw: 1, icon: 'one'}, d3: {name: 'Draw 3', draw: 3, icon: 'three'}};
 const MODE_IDS = Object.keys(MODES);
-if (!MODES[prefs.mode]) prefs.mode = 'd1';
+if (!MODES[prefs.mode]) prefs.mode = 'd3';
+if (!prefs.d3) { prefs.mode = 'd3'; prefs.d3 = 1; keep(PREF_KEY, prefs); }   // Draw 3 became the default (once, for anyone who'd already played)
 const statOf = m => Object.assign({played: 0, wins: 0, streak: 0, bestStreak: 0, bestTime: 0, fewest: 0, bestScore: 0, home: {}}, allStats()[m]);
 CTRL.buzz = prefs.buzz;
 
@@ -1009,12 +1010,10 @@ function modeArt(m) {
   s += svgCard(12, 62, 0, true) + svgCard(12, 72, 37) + svgCard(48, 62, 23) + svgCard(48, 74, 9) + svgCard(84, 62, 38);
   return `<svg class="mart" viewBox="0 0 120 120" aria-hidden="true">${s}</svg>`;
 }
-const SUB = {d1: 'Turn one card at a time', d3: 'Three at a time: harder'};
-const subFor = m => { const st = statOf(m); return st.wins ? `${num(st.wins)} win${st.wins > 1 ? 's' : ''} · best ${fmt(st.bestTime)}` : SUB[m]; };
 let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
 function renderModes() {
   $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${MODES[id].name}">
-    ${modeArt(id)}<h2>${MODES[id].name}</h2><p>${subFor(id)}</p></button>`).join('');
+    ${modeArt(id)}<h2>${MODES[id].name}</h2></button>`).join('');
   $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
   $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
   $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
