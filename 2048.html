@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2048</title>
+<meta name="theme-color" content="#f3f6fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10131b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="2048" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="2048">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   COLOURS: light or dark, following the device. The tiles keep the classic
+   2048 colours: pale for small numbers, warming up to gold at 2048.
+   ====================================================================== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);
+  --bg:#f3f6fb;--panel:#ffffff;--ink:#1f2a44;--muted:#6b7894;--line:#dde3ee;--soft:#e8edf6;
+  --accent:#4361d8;--hi:#5b8def;--edge:#2a3f9e;--onaccent:#ffffff;--shade:rgba(30,45,90,.10);--boom:#e5484d;--ok:#3fa36b;
+  --board:#c9d3e3;--cell:#dce3ef;--t2:#eef2fa;--t4:#dbe6fb;--tsmall:#3d4a63;
+  --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;
+  --bg:#10131b;--panel:#1a1f2b;--ink:#e8eefc;--muted:#97a3bd;--line:#2a3244;--soft:#232a39;
+  --accent:#8fb8ff;--hi:#b3cdff;--edge:#3a5bb8;--onaccent:#0d1424;--shade:rgba(0,0,0,.45);--boom:#ef5a52;--ok:#3f9358;
+  --board:#1f2636;--cell:#2b3346;--t2:#3a4560;--t4:#4a5a80;--tsmall:#e8eefc}}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.app{max-width:1100px;margin:0 auto;height:100%}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade)}
+.iconbtn:active{transform:scale(.94)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade)}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+
+/* tile colours, by value: cool blues warming up through purple and coral to gold */
+.v2{background:var(--t2);color:var(--tsmall)}.v4{background:var(--t4);color:var(--tsmall)}
+.v8{background:#8fb8ff;color:#fff}.v16{background:#5b8def;color:#fff}.v32{background:#4361d8;color:#fff}.v64{background:#7a4fd6;color:#fff}
+.v128{background:#c04fc4;color:#fff}.v256{background:#ec4f8a;color:#fff}.v512{background:#ff6b5a;color:#fff}.v1024{background:#ff9a3d;color:#fff}
+.v2048{background:#f5c518;color:#fff;box-shadow:0 0 22px rgba(245,197,24,.55)}
+.vbig{background:#1f2a44;color:#fff}
+@media (prefers-color-scheme:dark){.vbig{background:#eef2fa;color:#1f2a44}}
+
+/* the title: four tiles */
+.ttitle{flex:none;display:flex;justify-content:center;gap:clamp(5px,1.4vw,9px);margin:clamp(4px,2vh,22px) 0 clamp(12px,3vh,30px)}
+.ttitle span{width:clamp(48px,min(17vw,8vh),76px);aspect-ratio:1;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:clamp(1.9rem,min(10vw,5vh),3rem);
+  box-shadow:0 4px 0 rgba(0,0,0,.14);animation:tin .55s var(--ease) both,tbob 4.5s ease-in-out infinite;animation-delay:calc(var(--k) * 110ms),calc(1s + var(--k) * 200ms)}
+@keyframes tin{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes tbob{0%,92%,100%{translate:0 0}96%{translate:0 -3px}}
+/* ================= HOME ================= */
+.home{max-width:480px;margin:0 auto;height:100%;min-height:560px;display:flex;flex-direction:column;padding-top:54px}
+.homeset{position:fixed;z-index:2;top:calc(env(safe-area-inset-top,0px) + 16px);right:16px}
+/* mode cards you swipe between */
+.modes{position:relative;flex:1 1 0;min-height:150px;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px 22% 12px;margin:0 -16px;
+  scrollbar-width:none;overscroll-behavior-x:contain;align-items:stretch}
+.modes::-webkit-scrollbar{display:none}
+@media (hover:hover) and (pointer:fine){.modes{cursor:grab}.modes.dragging{cursor:grabbing;scroll-snap-type:none}}
+.mode{container-type:size;flex:0 0 100%;scroll-snap-align:center;max-height:330px;align-self:center;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);
+  background:var(--panel);border-radius:26px;box-shadow:0 6px 20px var(--shade);transition:transform .3s var(--ease),opacity .3s;position:relative}
+.mode.active{outline:2.5px solid var(--accent);outline-offset:-2.5px}
+.mode:not(.active){transform:scale(.84);opacity:.45}
+.mode h2{margin:0;font-size:clamp(1.15rem,3vh,1.55rem);font-weight:900}
+.mode p{margin:-4px 12px 0;color:var(--muted);font-weight:800;font-size:.85rem;text-align:center}
+.mart{width:min(clamp(100px,min(46vw,24vh),200px),calc(100cqh - 120px));height:auto;flex:none;min-width:56px}
+.modenav{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 0}
+.modearrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted)}
+.modearrow.l svg{transform:scaleX(-1)}
+.modearrow:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .25s var(--ease),background .25s}
+.dots i.on{width:22px;background:var(--accent)}
+/* board size */
+.seg{flex:none;display:flex;gap:3px;padding:4px;margin-top:clamp(10px,2.2vh,20px);background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade)}
+.seg button{flex:1;min-width:0;padding:8px 0 7px;border-radius:10px;color:var(--muted);font-weight:800;font-size:.86rem;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background .2s,color .2s}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+.seg .gd{display:grid;gap:1.5px;width:18px;height:18px}.seg .gd i{border-radius:1.5px;background:currentColor;opacity:.8}
+.playrow{flex:none;margin-top:clamp(10px,1.8vh,16px);display:flex;gap:10px}
+.play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
+.play small{font-size:.75rem;font-weight:700;opacity:.88}
+.newg{flex:none;width:58px;border-radius:16px;background:var(--panel);color:var(--accent);display:grid;place-items:center;box-shadow:0 2px 8px var(--shade)}
+.tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:clamp(14px,2.4vh,22px)}   /* room below Play's shadow */
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
+.tile .tic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);transition:transform .2s;position:relative}
+@media (hover:hover){.tile:hover .tic{transform:translateY(-2px)}}
+.badge{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--accent);color:var(--onaccent);font-size:.68rem;font-weight:900;display:grid;place-items:center}
+
+
+
+/* ================= GAME ================= */
+.game{height:100%;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto}
+.ghead{flex:none;width:100%;max-width:560px;display:flex;align-items:center;gap:10px;padding:0 0 0 52px;min-height:44px}   /* R + back on the left, new + settings on the right */
+.gtitle{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.gtitle b{font-size:1.12rem;font-weight:900}
+.gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
+.stats{flex:none;display:flex;gap:8px;margin-top:12px;justify-content:center}
+.chip{min-width:84px;padding:6px 14px 7px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;align-items:center;position:relative}
+.chip span{font-size:.68rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chip b{font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15}
+.chip.low b{color:var(--boom)}
+.plus{position:absolute;left:50%;top:6px;transform:translateX(-50%);font-weight:900;color:var(--accent);pointer-events:none;animation:plus .8s ease-out forwards}
+@keyframes plus{to{transform:translate(-50%,-34px);opacity:0}}
+.bwrap{flex:1 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;padding:12px 0;position:relative;touch-action:none}
+/* the board: empty squares underneath, sliding tiles on top */
+.grid{position:relative;background:var(--board);border-radius:var(--br,14px);touch-action:none;user-select:none;-webkit-user-select:none;flex:none}
+.grid .cell{position:absolute;background:var(--cell);border-radius:var(--tr,8px)}
+.tl{position:absolute;left:0;top:0;width:var(--ts);height:var(--ts);border-radius:var(--tr,8px);display:grid;place-items:center;font-weight:900;z-index:2;
+  translate:var(--at);transition:translate var(--mv,110ms) ease-in-out;font-variant-numeric:tabular-nums;will-change:translate}
+.tl.new{animation:appear .12s ease-out var(--mv,110ms) backwards}
+.tl.merge{animation:mpop .12s ease-out;z-index:3}
+@keyframes appear{from{scale:.6;opacity:0}to{scale:1;opacity:1}}
+@keyframes mpop{0%{scale:1}50%{scale:1.07}100%{scale:1}}
+.grid.restore .tl{animation:fade .25s ease both}
+@keyframes fade{from{opacity:0}}
+/* reached the goal: a gold veil over the board with two choices */
+.winbox{position:absolute;inset:0;z-index:5;border-radius:inherit;background:rgba(245,197,24,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fade .4s ease both;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.winbox h2{margin:0;font-size:clamp(1.6rem,7vw,2.4rem);font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(120,80,0,.4)}
+.winbox .row2{display:flex;gap:10px}
+.winbox button{padding:12px 18px;border-radius:14px;font-weight:900}
+.winbox .sec{background:rgba(255,255,255,.9);color:#5e4f42}
+.tools{flex:none;display:flex;justify-content:center;gap:10px;margin:0 0 10px}
+.undo{height:44px;padding:0 18px;border-radius:999px;background:var(--panel);display:flex;align-items:center;gap:7px;font-weight:900;box-shadow:0 2px 8px var(--shade)}
+.undo:disabled{opacity:.4}
+.swipehint{color:var(--muted);font-weight:800;font-size:.85rem;display:flex;align-items:center;gap:6px}
+/* toasts */
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);z-index:9;transform:translate(-50%,-10px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);
+  font-weight:900;padding:10px 16px;border-radius:12px;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* result card */
+.result{flex:none;width:100%;max-width:520px;margin-bottom:6px;background:var(--panel);border-radius:20px;padding:14px;box-shadow:0 4px 16px var(--shade);animation:rise .35s var(--ease) both;display:flex;flex-direction:column;gap:12px}
+.result .top{display:flex;align-items:center;gap:12px}
+.result .ri{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0;font-weight:900;font-size:1rem}
+.result h2{margin:0;font-size:1.3rem;font-weight:900}
+.result .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.result .chips span{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:.82rem;background:var(--soft);padding:4px 10px;border-radius:99px}
+.result .chips svg.ic{width:15px;height:15px}
+.result .chips .new{background:#ffd23f;color:#3a2c00}
+.result .row2{display:flex;gap:10px}
+.result .row2 button{flex:1;padding:13px 8px;border-radius:14px;font-weight:900;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:6px}
+.result .row2 .sec{background:var(--soft)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+
+/* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
+.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
+  transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
+.panel.show{transform:none;visibility:visible;transition:transform .38s var(--ease),visibility 0s}
+.panelin{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phead h1{flex:1;margin:0;text-align:center;font-size:1.3rem;font-weight:900}
+.phead .sp{width:42px;text-align:right;color:var(--muted);font-weight:800;font-size:.85rem}
+/* how to play */
+.how h2{margin:0 0 12px;font-size:1.25rem;font-weight:900;display:flex;align-items:center;gap:10px}
+.how h2 .hn{width:30px;height:30px;border-radius:10px;background:var(--accent);color:var(--onaccent);display:grid;place-items:center;font-size:.95rem}
+.stage{background:var(--panel);border-radius:20px;padding:18px 12px;box-shadow:0 2px 10px var(--shade);min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;--ts:46px;--g:5px}
+.cap{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--panel);border-radius:14px;padding:12px 14px;font-weight:800;box-shadow:0 2px 8px var(--shade);min-height:56px;border-left:4px solid var(--accent);line-height:1.4}
+.cap .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.hownav{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
+.hownav button{min-width:96px;padding:12px 16px;border-radius:14px;font-weight:900}
+.hownav .sec{background:var(--soft)}
+.howkeys{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.howkeys span{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:99px;padding:7px 12px;font-weight:900;font-size:.88rem}
+.howkeys svg.ic{width:17px;height:17px;color:var(--accent)}
+/* filters shared by Stats and History */
+.hfilt{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade);margin-bottom:10px}
+.hfilt button{flex:1;padding:9px 0;border-radius:10px;font-weight:800;font-size:.85rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.hfilt button.on{background:var(--accent);color:var(--onaccent)}
+.hfilt svg.ic{width:17px;height:17px}
+.hsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 14px}
+.hsum div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.hsum b{display:block;font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums}
+.hsum span{display:block;color:var(--muted);font-weight:800;font-size:.72rem;margin-top:2px}
+/* stats: how many guesses each win took */
+.dist{background:var(--panel);border-radius:16px;padding:12px 14px;box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;gap:6px}
+.dist h3{margin:0 0 4px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:14px;text-align:center;color:var(--muted)}
+.dbar i{display:flex;justify-content:flex-end;align-items:center;min-width:26px;height:24px;padding:0 8px;border-radius:6px;background:var(--no);color:#fff;font-style:normal;font-size:.85rem;transition:width .5s var(--ease)}
+.snote{margin:10px 4px 0;text-align:center;font-weight:800;font-size:.82rem;color:var(--muted);min-height:1em}
+/* history */
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:14px;padding:10px 12px;box-shadow:0 2px 8px var(--shade);cursor:pointer}
+.hrow .hm{flex:1;min-width:0}
+.hrow .hm b{display:block;font-weight:900}
+.hrow .hm small{color:var(--muted);font-weight:700;font-size:.8rem}
+.hrow .hv{font-weight:900;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.hrow .hv svg.ic{width:16px;height:16px;color:#c88a00}
+.hrow .hv .lose{color:var(--boom)}
+.hplay{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);font-style:normal}
+.hrow .hv .hplay svg.ic{width:14px;height:14px;color:var(--onaccent)}
+.hempty{text-align:center;color:var(--muted);font-weight:800;padding:30px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hempty svg.ic{width:40px;height:40px;opacity:.6}
+.danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
+/* timelapse */
+#rpPanel .panelin{display:flex;flex-direction:column;min-height:100%}
+.rpsub{margin:-8px 0 10px;text-align:center;color:var(--muted);font-weight:800;font-size:.85rem}
+.rpwrap{flex:1 1 0;min-height:240px;display:flex;align-items:center;justify-content:center}
+.rpctl{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 10px}
+.rpctl .rpplay{width:52px;height:52px;padding:0;border-radius:50%;display:grid;place-items:center}
+.rpctl .rpbtn{height:44px;min-width:52px;padding:0 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:900;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.rpstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rpstats div{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.rpstats span{display:block;font-size:.72rem;font-weight:800;color:var(--muted)}
+.rpstats b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+/* settings */
+.sgh{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sgh:first-of-type{margin-top:4px}
+.sgroup{background:var(--panel);border-radius:16px;box-shadow:0 2px 8px var(--shade);overflow:hidden}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);cursor:pointer}
+.srow:last-child{border-bottom:0}
+.srow .sl{display:flex;flex-direction:column;min-width:0;gap:2px}
+.srow b{font-weight:800}
+.srow small{font-size:.78rem;font-weight:700;color:var(--muted)}
+.srow .sr{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.srow .sr svg.ic{width:18px;height:18px}
+.switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+
+
+
+.dbar i{background:var(--accent);color:var(--onaccent)}
+/* stats: the biggest tile each game reached */
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:46px;flex:none;height:24px;border-radius:6px;display:grid;place-items:center;font-size:.78rem}
+.hrow .ht{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.9rem}
+.mini{display:grid;gap:5px;padding:5px;border-radius:12px;background:var(--board)}
+.mini i{width:44px;height:44px;border-radius:7px;background:var(--cell);display:grid;place-items:center;font-style:normal;font-weight:900;font-size:1.25rem}
+.chain{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:300px}
+.chain i{width:52px;height:52px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:1rem}
+.arrows{display:flex;gap:8px}.arrows span{width:38px;height:38px;border-radius:10px;background:var(--soft);display:grid;place-items:center;color:var(--accent)}
+
+/* ================= SIDEWAYS PHONES: controls on the left, the board on the right ================= */
+@media (orientation:landscape) and (max-height:520px){
+  body{padding:calc(env(safe-area-inset-top,0px) + 15px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) calc(env(safe-area-inset-left,0px) + 16px);overflow:hidden}
+  .home{max-width:860px;min-height:0;padding:0 56px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr);column-gap:clamp(16px,4vw,40px);align-items:center}
+  .ttitle{grid-column:1;grid-row:1;margin:0 0 8px}
+  .ttitle span{width:clamp(34px,6vw,48px);font-size:clamp(1.3rem,3.4vw,1.9rem);border-radius:9px}
+  .home>.hl{display:flex;flex-direction:column;grid-column:1;grid-row:2;height:100%;min-height:0}
+  .modes{min-height:0;padding:18px 20% 6px}
+  .mode{max-height:none;gap:6px;border-radius:20px}
+  .mart{width:min(clamp(80px,30vh,140px),calc(100cqh - 96px))}
+  .mode h2{font-size:clamp(1rem,4.5vh,1.3rem)}
+  .modenav{margin:0}
+  .modearrow{width:30px;height:30px}
+  .home>.hr{display:flex;flex-direction:column;grid-column:2;grid-row:1/3;justify-content:center;min-height:0}
+  .seg{margin-top:0}
+  .seg button{padding:6px 0 5px}
+  .playrow{margin-top:10px}
+  .play{padding:11px}
+  .tiles{margin-top:14px;gap:8px}
+  .tile{flex-direction:row;justify-content:center;padding:8px 6px;gap:6px;font-size:.8rem}
+  .tile .tic{width:34px;height:34px;border-radius:10px}
+  .tile .tic svg.ic{width:18px;height:18px}
+  .game{max-width:none;display:grid;grid-template-columns:minmax(250px,1fr) minmax(0,1.2fr);grid-template-rows:auto auto 1fr auto;column-gap:18px;align-items:center}
+  .ghead{grid-column:1;grid-row:1;max-width:none;padding:0 0 0 52px}
+  .stats{grid-column:1;grid-row:2;margin-top:10px}
+  .bwrap{grid-column:2;grid-row:1/5;height:100%;padding:0}
+  .tools,.result{grid-column:1;grid-row:3/5;align-self:center;margin:0}
+  .result{padding:12px;gap:10px}
+  .result .ri{width:42px;height:42px;border-radius:13px}
+  .result h2{font-size:1.15rem}
+}
+
+/* Reduce motion follows the switch in the Settings menu */
+html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *::after{animation:none!important;transition:none!important}
+.hl,.hr{display:contents}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= HOME ================= -->
+  <section class="home" id="home">
+    <button class="iconbtn homeset" id="setBtnHome" aria-label="Settings" data-ic="settings"></button>
+    <div class="ttitle" id="ttitle" role="img" aria-label="2048"></div>
+    <div class="hl">
+      <div class="modes" id="modes" aria-label="Mode"></div>
+      <div class="modenav">
+        <button class="modearrow l" id="modePrev" aria-label="Previous mode"></button>
+        <div class="dots" id="modeDots"></div>
+        <button class="modearrow" id="modeNext" aria-label="Next mode"></button>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="seg" id="sizeSeg" role="radiogroup" aria-label="Board size"></div>
+      <div class="playrow">
+        <button class="primary play" id="playBtn"></button>
+        <button class="newg hidden" id="newBtnHome" aria-label="New game"></button>
+      </div>
+      <div class="tiles">
+        <button class="tile" id="howBtn"><span class="tic" data-ic="help"></span>How to play</button>
+        <button class="tile" id="statsBtn"><span class="tic" data-ic="chart"></span>Stats</button>
+        <button class="tile" id="historyBtn"><span class="tic" data-ic="history"><b class="badge hidden" id="histBadge"></b></span>History</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="game hidden" id="game">
+    <div class="ghead">
+      <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
+      <div class="gtitle"><b id="gMode">Classic</b><small id="gSub">4 × 4</small></div>
+      <button class="iconbtn" id="newBtn" aria-label="New game" data-ic="refresh"></button>
+      <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
+    </div>
+    <div class="stats">
+      <div class="chip" id="scoreChip"><span>Score</span><b id="score">0</b></div>
+      <div class="chip"><span>Best</span><b id="best">0</b></div>
+      <div class="chip" id="timeChip"><span id="timeLbl">Time</span><b id="time">0:00</b></div>
+    </div>
+    <div class="bwrap" id="bwrap"><div class="grid" id="grid" role="grid" aria-label="Board: swipe or use the arrow keys"></div></div>
+    <div class="tools" id="tools"><button class="undo" id="undoBtn" aria-label="Undo the last move"></button></div>
+    <div class="result hidden" id="result"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ================= PANELS ================= -->
+<div class="panel" id="setPanel" role="dialog" aria-label="Settings"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Settings</h1><span class="sp"></span></div>
+  <h3 class="sgh">Every game</h3>
+  <div class="sgroup">
+    <button class="srow" id="sMenu"><span class="sl"><b>Sound, motion &amp; updates</b></span><span class="sr"><span data-ic="chevron"></span></span></button>
+  </div>
+  <h3 class="sgh">Game</h3>
+  <div class="sgroup">
+    <label class="srow"><span class="sl"><b>Undo button</b></span><input type="checkbox" class="switch" data-p="undo"></label>
+  </div>
+  <h3 class="sgh">Controls</h3>
+  <div class="sgroup">
+    <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
+  </div>
+  <h3 class="sgh">Data</h3>
+  <button class="danger" id="sReset">Reset stats &amp; best scores</button>
+  <p class="snote" id="sResetNote"></p>
+</div></div>
+
+<div class="panel" id="howPanel" role="dialog" aria-label="How to play"><div class="panelin how">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp" id="howCount"></span></div>
+  <h2 id="howTitle"></h2>
+  <div class="stage" id="howStage"></div>
+  <div class="cap" id="howCap"></div>
+  <div class="hownav"><button class="sec" id="howPrev">Back</button><div class="dots" id="howDots"></div><button class="primary" id="howNext">Next</button></div>
+</div></div>
+
+<div class="panel" id="statsPanel" role="dialog" aria-label="Stats"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Stats</h1><span class="sp"></span></div>
+  <div class="hfilt" id="sfMode"></div>
+  <div class="hfilt" id="sfSize"></div>
+  <div class="hsum" id="ssum"></div>
+  <div class="dist" id="sdist"></div>
+</div></div>
+
+<div class="panel" id="histPanel" role="dialog" aria-label="History"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>History</h1><span class="sp"></span></div>
+  <div class="hfilt" id="hfilt"></div>
+  <div class="hlist" id="hlist"></div>
+  <button class="danger hidden" id="histClear">Clear history</button>
+</div></div>
+
+<div class="panel" id="rpPanel" role="dialog" aria-label="Timelapse"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Back"></button><h1 id="rpTitle">Timelapse</h1><span class="sp"></span></div>
+  <p class="rpsub" id="rpSub"></p>
+  <div class="rpwrap" id="rpWrap"><div class="grid" id="rpGrid" aria-label="Timelapse board"></div></div>
+  <div class="rpctl"><button class="rpbtn" id="rpAgain" aria-label="Watch again"></button><button class="primary rpplay" id="rpPlay" aria-label="Play"></button><button class="rpbtn" id="rpSpeed" aria-label="Speed">1×</button></div>
+  <div class="rpstats"><div><span>Score</span><b id="rpScore">0</b></div><div><span>Moves</span><b id="rpMoves">0</b></div><div><span>Biggest</span><b id="rpMax">0</b></div></div>
+</div></div>
+<script>
+/* ======================================================================
+   2048 for Rizzo Games: slide the tiles, join matching numbers, reach 2048.
+   Modes: Classic (play as long as you can) and Timed (3 minutes, highest score),
+   on boards from 3 × 3 to 6 × 6. Undo, stats, history with timelapses, How to play.
+
+   How it's built:
+     Board      the sliding-tile engine (also used by How to play and the timelapse)
+     Game       the game you're playing: moves, score, the clock, winning, saving
+     Home       the menu: title, mode cards, board size, Play
+     Panels     How to play, Stats, History, Timelapse, Settings
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const RZ = window.RizzoGames || null;
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+const fmt = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = Math.floor(t - m * 60); return m + ':' + String(s).padStart(2, '0'); };
+const num = n => (n || 0).toLocaleString();
+const CTRL = {buzz: true};
+const vibrate = ms => { if (CTRL.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+const tileClass = v => v > 2048 ? 'vbig' : 'v' + v;
+
+/* ---------- icons ---------- */
+const ICONS = {
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  settings: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.5v.6"/><path d="M12 17.2v.1"/>',
+  chart: '<path d="M5 20V11M12 20V5M19 20v-6"/><path d="M3 20.5h18"/>',
+  history: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V9H8"/><path d="M12 7.5V12l3 2"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7 10M17 6h2.5v1A3 3 0 0 1 17 10M12 13v4M8.5 20.5h7l-.8-3.5H9.3z"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="3"/>',
+  again: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/>',
+  clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 13V8.5M9.5 2.5h5M19 6l1.5-1.5"/>',
+  grid: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/>',
+  moves: '<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+  all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', left: '<path d="M19 12H5M11 6l-6 6 6 6"/>', right: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+};
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
+
+/* ---------- sound effects (follow the shared Rizzo volume) ---------- */
+const Sound = (() => {
+  let ctx = null;
+  const vol = () => RZ ? RZ.level('sfx') : 0.6;
+  const ac = () => { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+  function tone(freq, dur, type = 'sine', gain = .2, delay = 0, slide = 0) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac(), t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain * v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+    } catch {}
+  }
+  return {
+    slide() { tone(260, .07, 'triangle', .07, 0, .8); },
+    merge(v) { const k = Math.log2(v); tone(300 + k * 45, .11, 'triangle', .15); tone(450 + k * 60, .1, 'sine', .08, .04); },
+    bump() { tone(140, .06, 'square', .04); },
+    undo() { tone(500, .07, 'triangle', .1, 0, .6); },
+    win() { [523, 659, 784, 1047, 1319].forEach((f, k) => tone(f, .2, 'triangle', .16, k * .09)); },
+    over() { tone(330, .25, 'sine', .14, 0, .7); tone(247, .35, 'sine', .12, .2, .7); },
+  };
+})();
+
+/* ======================================================================
+   BOARD: tiles slide on a grid. Used by the game, How to play and timelapses.
+   ====================================================================== */
+const DIRS = {L: [0, -1], R: [0, 1], U: [-1, 0], D: [1, 0]};
+function Board(el, n) {
+  let cells = Array(n * n).fill(null), nextId = 1, pending = [], pt = 0, geo = {ts: 60, gap: 8};
+  const xy = i => [geo.gap + (i % n) * (geo.ts + geo.gap), geo.gap + Math.floor(i / n) * (geo.ts + geo.gap)];
+  const fontFor = v => geo.ts * (v < 100 ? .5 : v < 1000 ? .42 : v < 10000 ? .34 : .28);
+  function place(t) { const [x, y] = xy(t.i); t.el.style.setProperty('--at', `${x}px ${y}px`); }
+  function paint(t) { t.el.className = 'tl ' + tileClass(t.v); t.el.textContent = t.v; t.el.style.fontSize = fontFor(t.v) + 'px'; }
+  function layout(size) {
+    const gap = Math.max(4, Math.round(size * (n >= 6 ? .022 : .028))), ts = (size - gap * (n + 1)) / n;
+    geo = {ts, gap};
+    el.style.width = el.style.height = size + 'px';
+    el.style.setProperty('--ts', ts + 'px'); el.style.setProperty('--tr', Math.max(4, ts * .1) + 'px'); el.style.setProperty('--br', Math.max(8, gap * 1.6) + 'px');
+    el.querySelectorAll('.cell').forEach(c => c.remove());
+    for (let i = 0; i < n * n; i++) { const [x, y] = xy(i), c = document.createElement('div'); c.className = 'cell'; c.style.cssText = `left:${x}px;top:${y}px;width:${ts}px;height:${ts}px`; el.prepend(c); }
+    cells.forEach(t => { if (t) { place(t); t.el.style.fontSize = fontFor(t.v) + 'px'; } });
+  }
+  function add(i, v, cls) {
+    const t = {id: nextId++, v, i, el: document.createElement('div')};
+    paint(t); if (cls) t.el.classList.add(cls); place(t); el.appendChild(t.el); cells[i] = t; return t;
+  }
+  function flush() { clearTimeout(pt); const p = pending; pending = []; p.forEach(f => f()); }
+  function setVals(vals, restore) {
+    flush(); el.querySelectorAll('.tl').forEach(x => x.remove()); cells = Array(n * n).fill(null);
+    vals.forEach((v, i) => { if (v) add(i, v); });
+    if (restore) { el.classList.remove('restore'); void el.offsetWidth; el.classList.add('restore'); }
+  }
+  // slide everything one way; returns what happened (the new tile is added separately)
+  function move(d) {
+    flush();
+    const [dr, dc] = DIRS[d], next = Array(n * n).fill(null), merges = [];
+    let moved = false, gained = 0;
+    for (let line = 0; line < n; line++) {
+      const idx = [];
+      for (let k = 0; k < n; k++) {   // the squares of this line, starting from the edge the tiles slide towards
+        const p = dr ? (dr > 0 ? n - 1 - k : k) : line, q = dc ? (dc > 0 ? n - 1 - k : k) : line;
+        idx.push(dr ? p * n + line : line * n + q);
+      }
+      let t = 0, prev = null;
+      for (const i of idx) {
+        const tile = cells[i]; if (!tile) continue;
+        if (prev && prev.v === tile.v && !prev.joined) {          // join: this tile slides onto the one before
+          prev.v *= 2; prev.joined = true; gained += prev.v; tile.i = prev.i; moved = true;
+          merges.push([prev, tile]);
+        } else { const to = idx[t++]; if (to !== i) moved = true; tile.i = to; next[to] = tile; prev = tile; }
+      }
+    }
+    if (!moved) return {moved: false, gained: 0, merges: []};
+    cells.forEach(t => { if (t) place(t); });
+    cells = next;
+    const ms = reduced() ? 0 : parseFloat(getComputedStyle(el).getPropertyValue('--mv')) || 110;
+    pending.push(() => {
+      merges.forEach(([keepT, gone]) => { gone.el.remove(); keepT.joined = false; paint(keepT); place(keepT); void keepT.el.offsetWidth; keepT.el.classList.add('merge'); });
+      cells.forEach(t => { if (t) t.joined = false; });
+    });
+    pt = setTimeout(flush, ms);
+    return {moved: true, gained, merges: merges.map(([k]) => k.v)};
+  }
+  const empties = () => cells.map((t, i) => t ? -1 : i).filter(i => i >= 0);
+  function canMove() {
+    if (cells.some(t => !t)) return true;
+    for (let i = 0; i < n * n; i++) { const v = cells[i].v; if ((i % n < n - 1 && cells[i + 1].v === v) || (i + n < n * n && cells[i + n].v === v)) return true; }
+    return false;
+  }
+  return {n, el, layout, setVals, move, flush, empties, canMove, spawn: (i, v) => add(i, v, 'new'),
+    values: () => cells.map(t => t ? t.v : 0), max: () => Math.max(0, ...cells.map(t => t ? t.v : 0))};
+}
+const fitBoard = (b, wrap, max = 560) => b.layout(Math.max(160, Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight - 4, max))));
+
+/* ---------- saved data ---------- */
+const SIZES = [3, 4, 5, 6];
+const GOAL = {3: 512, 4: 2048, 5: 4096, 6: 8192};      // the tile that counts as a win on each board
+const TIMED_MS = 3 * 60 * 1000;
+const PREF_KEY = '2048-prefs', STATS_KEY = '2048-stats-v1', HIST_KEY = '2048-history-v1';
+const saveKey = (m, n) => `2048-save-v1-${m}-${n}`;
+const prefs = Object.assign({mode: 'classic', size: 4, histSeen: 0, undo: true, buzz: true}, load(PREF_KEY, {}));
+if (!SIZES.includes(prefs.size)) prefs.size = 4;
+const savePrefs = () => keep(PREF_KEY, prefs);
+const allStats = () => load(STATS_KEY, {});
+const history = () => load(HIST_KEY, []);
+const MODES = {classic: {name: 'Classic', icon: 'grid'}, timed: {name: 'Timed', icon: 'timer'}};
+const MODE_IDS = Object.keys(MODES);
+const sizeName = n => `${n} × ${n}`;
+const bestOf = (m, n) => ((allStats()[m + ':' + n] || {}).best) || 0;
+CTRL.buzz = prefs.buzz;
+
+/* ======================================================================
+   GAME
+   ====================================================================== */
+let G = null, B = null, prev = null, tick = 0, newArmed = 0;
+const timeNow = () => G ? G.elapsed + (G.startedAt ? Date.now() - G.startedAt : 0) : 0;
+const code36 = i => i.toString(36);
+function randomSpawn() {
+  const e = B.empties(); if (!e.length) return null;
+  return [e[Math.floor(Math.random() * e.length)], Math.random() < .9 ? 2 : 4];
+}
+function newGame(m, n) {
+  G = {m, n, vals: Array(n * n).fill(0), score: 0, moves: 0, undos: 0, init: '', log: '', over: false, won: false, wonSeen: false, elapsed: 0, startedAt: 0, top: 0};
+  prev = null;
+  makeBoard();
+  for (let k = 0; k < 2; k++) { const [i, v] = randomSpawn(); B.spawn(i, v); G.init += code36(i) + (v === 4 ? '4' : '2'); }
+  G.vals = B.values(); G.top = B.max(); saveGame();
+}
+function resumeGame(s) {
+  if (!s || !s.vals || !SIZES.includes(s.n) || s.over) return false;
+  G = Object.assign({}, s, {startedAt: 0}); prev = null;
+  makeBoard(); B.setVals(G.vals);
+  return true;
+}
+function makeBoard() { $('#grid').innerHTML = ''; B = Board($('#grid'), G.n); }
+function saveGame() {
+  if (!G) return;
+  if (G.over) keep(saveKey(G.m, G.n), null);
+  else keep(saveKey(G.m, G.n), Object.assign({}, G, {elapsed: timeNow(), startedAt: 0}));
+}
+function updatePaused() {
+  if (!G || G.over) return;
+  const paused = (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show') || !!$('.winbox');
+  if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
+  else if (!paused && !G.startedAt && G.moves) G.startedAt = Date.now();
+}
+document.addEventListener('visibilitychange', updatePaused);
+
+/* ---------- the numbers above the board ---------- */
+function showScore(gained) {
+  $('#score').textContent = num(G.score);
+  $('#best').textContent = num(Math.max(G.score, bestOf(G.m, G.n)));
+  if (gained && !reduced()) { const p = document.createElement('span'); p.className = 'plus'; p.textContent = '+' + gained; $('#scoreChip').appendChild(p); setTimeout(() => p.remove(), 800); }
+}
+function showTime() {
+  const t = timeNow();
+  if (G.m === 'timed') {
+    const left = Math.max(0, TIMED_MS - t);
+    $('#time').textContent = fmt(left + 999); $('#timeChip').classList.toggle('low', left < 15000);
+    if (!left && !G.over) endGame('time');
+  } else $('#time').textContent = fmt(t);
+}
+setInterval(() => { if (G && !G.over && !$('#game').classList.contains('hidden')) showTime(); }, 250);
+function showUndo() {
+  const b = $('#undoBtn');
+  $('#tools').classList.toggle('hidden', !prefs.undo || (G && G.over));
+  b.innerHTML = ic('undo') + 'Undo' + (G && G.undos ? ` <small style="opacity:.6">${G.undos}</small>` : '');
+  b.disabled = !prev;
+}
+
+/* ---------- making a move ---------- */
+function go(d) {
+  if (!G || G.over || $('.winbox')) return;
+  const before = {vals: B.values(), score: G.score, moves: G.moves, log: G.log, top: G.top};
+  const r = B.move(d);
+  if (!r.moved) { Sound.bump(); return; }
+  if (!G.startedAt) G.startedAt = Date.now();
+  G.score += r.gained; G.moves++;
+  const sp = randomSpawn();
+  if (sp) { B.spawn(sp[0], sp[1]); G.log += d + code36(sp[0]) + (sp[1] === 4 ? '4' : '2'); }
+  G.vals = B.values(); G.top = Math.max(G.top, B.max());
+  prev = before;
+  if (r.merges.length) { Sound.merge(Math.max(...r.merges)); vibrate(r.merges.some(v => v >= 128) ? 18 : 8); } else Sound.slide();
+  showScore(r.gained); showUndo();
+  if (!G.won && G.top >= GOAL[G.n]) { G.won = true; saveGame(); setTimeout(showWin, 250); return; }
+  if (!B.canMove()) { saveGame(); setTimeout(() => endGame('over'), 350); return; }
+  saveGame();
+}
+function undo() {
+  if (!prev || !G || G.over || !prefs.undo) return;
+  Object.assign(G, prev); G.undos++; prev = null;
+  B.setVals(G.vals, true); Sound.undo();
+  showScore(0); showUndo(); saveGame();
+}
+$('#undoBtn').onclick = undo;
+// a gold veil when you reach the goal: keep going, or start again
+function showWin() {
+  const w = document.createElement('div'); w.className = 'winbox';
+  w.innerHTML = `<h2>${num(GOAL[G.n])}!</h2><div class="row2"><button class="sec" id="winNew">New game</button><button class="primary" id="winKeep">Keep going</button></div>`;
+  $('#grid').appendChild(w); updatePaused(); Sound.win(); vibrate([20, 60, 20]);
+  $('#winKeep').onclick = () => { w.remove(); updatePaused(); };
+  $('#winNew').onclick = () => { w.remove(); endGame('quit', true); };
+}
+
+/* ---------- controls: swipe, arrow keys or WASD ---------- */
+(() => {
+  const area = $('#bwrap');
+  let s = null;
+  area.addEventListener('pointerdown', e => { if (e.target.closest('.winbox')) return; s = {x: e.clientX, y: e.clientY, id: e.pointerId, done: false}; });
+  area.addEventListener('pointermove', e => {
+    if (!s || s.done || e.pointerId !== s.id) return;
+    const dx = e.clientX - s.x, dy = e.clientY - s.y, dist = Math.max(Math.abs(dx), Math.abs(dy));
+    if (dist < 26) return;
+    s.done = true; go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U'));
+  });
+  const end = () => { s = null; };
+  area.addEventListener('pointerup', end); area.addEventListener('pointercancel', end);
+  area.addEventListener('touchmove', e => e.preventDefault(), {passive: false});   // the page mustn't scroll while you swipe
+})();
+const KEY = {ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D', A: 'L', D: 'R', W: 'U', S: 'D'};
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || $('#game').classList.contains('hidden') || document.querySelector('.panel.show') || (RZ && RZ.menuOpen)) return;
+  if (KEY[e.key]) { e.preventDefault(); go(KEY[e.key]); }
+  else if ((e.key === 'z' || e.key === 'u' || e.key === 'Backspace') && prefs.undo) { e.preventDefault(); undo(); }
+});
+
+/* ---------- toasts ---------- */
+let toastT = 0;
+function toast(text, ms = 1600) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
+
+/* ---------- the end of a game ---------- */
+function record() {
+  const all = allStats(), key = G.m + ':' + G.n, st = all[key] = Object.assign({played: 0, best: 0, top: 0, wins: 0, tiles: {}}, all[key]);
+  const wasBest = st.best;
+  st.played++; st.best = Math.max(st.best, G.score); st.top = Math.max(st.top, G.top);
+  if (G.won) st.wins++;
+  st.tiles[G.top] = (st.tiles[G.top] || 0) + 1;
+  keep(STATS_KEY, all);
+  const h = history();
+  h.unshift({m: G.m, n: G.n, score: G.score, top: G.top, moves: G.moves, ms: G.elapsed, u: G.undos, won: G.won ? 1 : 0, why: G.why, t: Date.now(), rp: {i: G.init, l: G.log}});
+  h.forEach((x, k) => { if (k >= 40) delete x.rp; });           // timelapses are kept for the latest 40 games
+  keep(HIST_KEY, h.slice(0, 300));
+  return {isBest: G.score > wasBest && G.score > 0, st};
+}
+function endGame(why, fresh) {
+  if (!G || G.over) return;
+  G.elapsed = timeNow(); G.startedAt = 0; G.over = true; G.why = why;
+  const res = G.moves ? record() : {isBest: false};
+  saveGame();
+  if (fresh) { newGame(G.m, G.n); showGame(); return; }
+  why === 'over' || why === 'time' ? Sound.over() : 0;
+  showResult(res);
+}
+function showResult({isBest}) {
+  const R = $('#result');
+  const title = G.why === 'time' ? "Time's up!" : G.why === 'quit' ? 'Game ended' : G.won ? 'What a game!' : 'No more moves';
+  const chips = [isBest ? `<span class="new">${ic('trophy')}New best!</span>` : '', `<span>${ic('moves')}${num(G.moves)} move${G.moves === 1 ? '' : 's'}</span>`,
+    G.m === 'classic' && G.elapsed ? `<span>${ic('clock')}${fmt(G.elapsed)}</span>` : '', G.undos ? `<span>${ic('undo')}${G.undos}</span>` : ''].filter(Boolean);
+  R.className = 'result';
+  R.innerHTML = `<div class="top"><span class="ri ${tileClass(G.top)}" style="font-size:${G.top < 1000 ? 1.15 : .9}rem">${G.top}</span>
+    <div><h2>${title}</h2><div style="font-weight:900;font-size:1.05rem">${num(G.score)} points</div><div class="chips">${chips.join('')}</div></div></div>
+    <div class="row2"><button class="sec" id="rpBtn">${ic('play')}Replay</button><button class="primary" id="againBtn">${ic('again')}Play again</button></div>`;
+  $('#tools').classList.add('hidden'); R.classList.remove('hidden');
+  $('#againBtn').onclick = () => { newGame(G.m, G.n); showGame(); };
+  $('#rpBtn').onclick = () => { const h = history()[0]; if (h) RP.open(h); };
+  layoutGame();
+}
+
+/* ---------- moving between screens ---------- */
+function layoutGame() { if (G && B && !$('#game').classList.contains('hidden')) fitBoard(B, $('#bwrap')); }
+addEventListener('resize', () => { layoutGame(); scrollToMode(modeIdx, true); });
+function showGame() {
+  $('#home').classList.add('hidden'); $('#game').classList.remove('hidden');
+  $('#gMode').textContent = MODES[G.m].name; $('#gSub').textContent = sizeName(G.n);
+  $('#timeLbl').textContent = G.m === 'timed' ? 'Left' : 'Time';
+  $('#result').classList.add('hidden');
+  layoutGame(); showScore(0); showTime(); showUndo(); updatePaused(); saveGame();
+}
+function showHome() {
+  clearTimeout(toastT); $('#toast').classList.remove('show');
+  $('.winbox') && $('.winbox').remove();
+  $('#game').classList.add('hidden'); $('#home').classList.remove('hidden');
+  updatePaused(); saveGame(); renderModes(); renderPlay(); renderHistBadge();
+}
+$('#homeBtn').onclick = showHome;
+// a new game: tap twice if you're partway through, so a slip doesn't lose your board
+$('#newBtn').onclick = () => {
+  if (G && !G.over && G.moves) {
+    if (Date.now() - newArmed > 2500) { newArmed = Date.now(); toast('Tap again to start a new game'); return; }
+    newArmed = 0; endGame('quit', true); return;
+  }
+  newGame(G.m, G.n); showGame();
+};
+
+/* ======================================================================
+   HOME
+   ====================================================================== */
+$('#ttitle').innerHTML = [['2', 2], ['0', 16], ['4', 128], ['8', 2048]].map(([ch, v], k) => `<span class="${tileClass(v)}" style="--k:${k}" aria-hidden="true">${ch}</span>`).join('');
+const TC = {2: ['var(--t2)', 'var(--tsmall)'], 4: ['var(--t4)', 'var(--tsmall)'], 8: ['#8fb8ff', '#fff'], 16: ['#5b8def', '#fff'], 32: ['#4361d8', '#fff'], 64: ['#7a4fd6', '#fff'], 128: ['#c04fc4', '#fff'], 256: ['#ec4f8a', '#fff'], 512: ['#ff6b5a', '#fff'], 1024: ['#ff9a3d', '#fff'], 2048: ['#f5c518', '#fff']};
+function boardArt(vals, badge) {
+  let s = `<rect width="120" height="120" rx="12" fill="var(--board)"/>`;
+  vals.forEach((v, k) => { const x = 6 + (k % 4) * 28, y = 6 + Math.floor(k / 4) * 28;
+    s += `<rect x="${x}" y="${y}" width="24" height="24" rx="4" fill="${v ? TC[v][0] : 'var(--cell)'}"/>`;
+    if (v) s += `<text x="${x + 12}" y="${y + 13}" fill="${TC[v][1]}" style="font:900 ${v < 100 ? 12 : v < 1000 ? 10 : 8}px Nunito,system-ui,sans-serif;text-anchor:middle;dominant-baseline:central">${v}</text>`; });
+  if (badge) s += `<g transform="translate(88 88)"><circle r="22" fill="var(--accent)" stroke="var(--board)" stroke-width="3"/><g transform="translate(-14.4 -15.6) scale(1.2)" fill="none" stroke="var(--onaccent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS.timer}</g></g>`;
+  return `<svg class="mart" viewBox="0 0 120 120" aria-hidden="true">${s}</svg>`;
+}
+const ART = {classic: () => boardArt([2, 0, 0, 4, 0, 8, 16, 0, 4, 32, 64, 2, 128, 256, 512, 2048]), timed: () => boardArt([0, 2, 4, 0, 8, 0, 2, 16, 32, 4, 0, 0, 2, 128, 0, 0], true)};
+const SUB = {classic: n => bestOf('classic', n) ? `Best ${num(bestOf('classic', n))}` : `Reach the ${num(GOAL[n])} tile`, timed: n => bestOf('timed', n) ? `Best ${num(bestOf('timed', n))}` : '3 minutes, top score'};
+let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
+function renderModes() {
+  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${MODES[id].name}">
+    ${ART[id]()}<h2>${MODES[id].name}</h2><p>${SUB[id](prefs.size)}</p></button>`).join('');
+  $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
+  $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
+  $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
+  requestAnimationFrame(() => scrollToMode(modeIdx, true));
+}
+function scrollToMode(k, instant) {
+  const m = $('#modes'), card = m.children[k]; if (!card || $('#home').classList.contains('hidden')) return;
+  m.scrollTo({left: card.offsetLeft - (m.clientWidth - card.clientWidth) / 2, behavior: instant || reduced() ? 'auto' : 'smooth'});
+}
+function setMode(k) {
+  if (k === modeIdx && $('#modes').children[k].classList.contains('active')) return;
+  modeIdx = k;
+  [...$('#modes').children].forEach((c, j) => c.classList.toggle('active', j === k));
+  [...$('#modeDots').children].forEach((c, j) => c.classList.toggle('on', j === k));
+  $('#modePrev').disabled = k === 0; $('#modeNext').disabled = k === MODE_IDS.length - 1;
+  prefs.mode = MODE_IDS[k]; savePrefs(); renderPlay();
+}
+(() => {   // swiping and dragging the mode cards
+  const m = $('#modes');
+  let t = 0;
+  m.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const mid = m.scrollLeft + m.clientWidth / 2;
+      let best = 0, bd = 1e9;
+      [...m.children].forEach((c, k) => { const d = Math.abs(c.offsetLeft + c.clientWidth / 2 - mid); if (d < bd) { bd = d; best = k; } });
+      setMode(best);
+    }, 60);
+  });
+  let drag = null;
+  m.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = {x: e.clientX, s: m.scrollLeft, moved: false}; });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 5) { drag.moved = true; m.classList.add('dragging'); }
+    if (drag.moved) m.scrollLeft = drag.s - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!drag) return;
+    const moved = drag.moved; drag = null; m.classList.remove('dragging');
+    if (moved) { m._noClick = true; setTimeout(() => m._noClick = false, 50); requestAnimationFrame(() => m.dispatchEvent(new Event('scroll'))); }
+  });
+  m.addEventListener('click', e => {
+    if (m._noClick) return;
+    const c = e.target.closest('.mode'); if (!c) return;
+    const k = +c.dataset.k;
+    if (k !== modeIdx) { scrollToMode(k); setMode(k); } else play();
+  });
+  $('#modePrev').onclick = () => { if (modeIdx > 0) { scrollToMode(modeIdx - 1); setMode(modeIdx - 1); } };
+  $('#modeNext').onclick = () => { if (modeIdx < MODE_IDS.length - 1) { scrollToMode(modeIdx + 1); setMode(modeIdx + 1); } };
+})();
+function renderSizes() {
+  $('#sizeSeg').innerHTML = SIZES.map(n => `<button role="radio" aria-checked="${n === prefs.size}" class="${n === prefs.size ? 'on' : ''}" data-n="${n}">
+    <span class="gd" style="grid-template-columns:repeat(${n},1fr)">${'<i></i>'.repeat(n * n)}</span>${sizeName(n)}</button>`).join('');
+}
+$('#sizeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.size = +b.dataset.n; savePrefs(); renderSizes(); renderModes(); renderPlay(); });
+function renderPlay() {
+  const m = MODE_IDS[modeIdx], n = prefs.size, s = load(saveKey(m, n), null), live = s && !s.over && s.moves > 0;
+  $('#playBtn').innerHTML = live ? `<span>Continue</span><small>${num(s.score)} points${m === 'timed' ? ` · ${fmt(TIMED_MS - s.elapsed + 999)} left` : ''}</small>` : `<span>Play</span><small>${sizeName(n)}</small>`;
+  $('#newBtnHome').classList.toggle('hidden', !live);
+}
+function play(fresh) {
+  const m = MODE_IDS[modeIdx], n = prefs.size, s = !fresh && load(saveKey(m, n), null);
+  if (!(s && resumeGame(s))) newGame(m, n);
+  showGame();
+}
+$('#playBtn').onclick = () => play(false);
+$('#newBtnHome').innerHTML = ic('refresh');
+$('#newBtnHome').onclick = () => {
+  const m = MODE_IDS[modeIdx], n = prefs.size, s = load(saveKey(m, n), null);
+  if (s && s.moves && resumeGame(s)) { G.elapsed = s.elapsed; endGame('quit', true); return; }
+  play(true);
+};
+
+/* ======================================================================
+   PANELS
+   ====================================================================== */
+function openPanel(id) {
+  $('#' + id).classList.add('show'); updatePaused();
+  setTimeout(() => { const b = $('#' + id + ' [data-close]'); if (b) b.focus({preventScroll: true}); }, 50);
+}
+function closePanel(p) {
+  p = p || [...document.querySelectorAll('.panel.show')].pop(); if (!p) return;
+  p.classList.remove('show');
+  if (p.id === 'howPanel') How.stop();
+  if (p.id === 'rpPanel') RP.stop();
+  updatePaused();
+}
+document.querySelectorAll('.panel [data-close]').forEach(b => b.onclick = () => closePanel(b.closest('.panel')));
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.panel.show')) { e.stopImmediatePropagation(); closePanel(); } }, true);
+document.querySelectorAll('.panel').forEach(p => {   // pull a panel down by its top to close it
+  let y0 = null;
+  p.addEventListener('pointerdown', e => { if (p.scrollTop <= 0 && e.target.closest('.grab, .phead h1')) { y0 = e.clientY; p.style.transition = 'none'; } });
+  addEventListener('pointermove', e => { if (y0 != null) p.style.transform = `translateY(${Math.max(0, e.clientY - y0)}px)`; });
+  addEventListener('pointerup', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; y0 = null; p.style.transition = ''; p.style.transform = '';
+    if (dy > 90) closePanel(p);
+  });
+});
+
+/* ---------- Settings ---------- */
+let resetArmed = false;
+function renderSettings() {
+  document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = !!prefs[el.dataset.p]);
+  $('#sBuzzRow').closest('.sgroup').previousElementSibling.classList.toggle('hidden', !navigator.vibrate);
+  $('#sBuzzRow').closest('.sgroup').classList.toggle('hidden', !navigator.vibrate);
+  $('#sResetNote').textContent = ''; resetArmed = false; $('#sReset').textContent = 'Reset stats & best scores';
+}
+document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () => {
+  prefs[el.dataset.p] = el.checked; savePrefs(); CTRL.buzz = prefs.buzz;
+  if (G) showUndo();
+});
+$('#sMenu').onclick = () => RZ && RZ.openMenu();
+$('#sReset').onclick = () => {
+  if (!resetArmed) { resetArmed = true; $('#sReset').textContent = 'Tap again to reset'; $('#sResetNote').textContent = 'Your history stays.'; return; }
+  keep(STATS_KEY, null); renderPlay(); renderModes(); renderSettings(); $('#sResetNote').textContent = 'Stats reset.';
+  if (G) showScore(0);
+};
+const openSettings = () => { renderSettings(); openPanel('setPanel'); };
+$('#setBtnHome').onclick = openSettings; $('#setBtnGame').onclick = openSettings;
+
+/* ---------- Stats ---------- */
+let sfMode = prefs.mode, sfSize = prefs.size;
+function renderStats() {
+  $('#sfMode').innerHTML = MODE_IDS.map(id => `<button class="${sfMode === id ? 'on' : ''}" data-m="${id}">${ic(MODES[id].icon)}${MODES[id].name}</button>`).join('');
+  $('#sfSize').innerHTML = SIZES.map(n => `<button class="${sfSize === n ? 'on' : ''}" data-n="${n}">${sizeName(n)}</button>`).join('');
+  const st = allStats()[sfMode + ':' + sfSize] || {played: 0, best: 0, top: 0, wins: 0, tiles: {}};
+  $('#ssum').innerHTML = [[st.played, 'Played'], [num(st.best), 'Best score'], [st.top || '–', 'Best tile'], [st.wins, `Reached ${GOAL[sfSize]}`]]
+    .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+  const tiles = Object.keys(st.tiles || {}).map(Number).sort((a, b) => b - a), top = Math.max(1, ...tiles.map(t => st.tiles[t]));
+  $('#sdist').innerHTML = `<h3>Biggest tile each game</h3>` + (tiles.length ? tiles.map(t =>
+    `<div class="dbar"><span class="${tileClass(t)}">${t}</span><i style="width:${Math.max(7, st.tiles[t] / top * 100)}%">${st.tiles[t]}</i></div>`).join('')
+    : `<p class="snote" style="margin:4px 0">Finish a game to see it here.</p>`);
+}
+$('#sfMode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { sfMode = b.dataset.m; renderStats(); } });
+$('#sfSize').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { sfSize = +b.dataset.n; renderStats(); } });
+$('#statsBtn').onclick = () => { sfMode = MODE_IDS[modeIdx]; sfSize = prefs.size; renderStats(); openPanel('statsPanel'); };
+
+/* ---------- History ---------- */
+let histFilter = 'all';
+function renderHistBadge() {
+  const n = history().filter(h => h.t > (prefs.histSeen || 0)).length;
+  $('#histBadge').textContent = n > 99 ? '99+' : n;
+  $('#histBadge').classList.toggle('hidden', !n);
+}
+function renderHistory() {
+  $('#hfilt').innerHTML = [['all', 'all', 'All'], ...MODE_IDS.map(id => [id, MODES[id].icon, MODES[id].name])]
+    .map(([id, icon, label]) => `<button class="${histFilter === id ? 'on' : ''}" data-f="${id}">${ic(icon)}${label}</button>`).join('');
+  const all = history(), list = all.filter(h => histFilter === 'all' || h.m === histFilter);
+  const day = t => { const d = new Date(t), now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+    const same = (a, b) => a.toDateString() === b.toDateString();
+    return same(d, now) ? d.toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'}) : same(d, y) ? 'Yesterday' : d.toLocaleDateString(undefined, {day: 'numeric', month: 'short'}); };
+  $('#hlist').innerHTML = list.length ? list.slice(0, 200).map(h => `<div class="hrow" data-t="${h.t}" ${h.rp ? 'role="button" tabindex="0" aria-label="Watch timelapse"' : ''}>
+      <span class="ht ${tileClass(h.top)}" style="font-size:${h.top < 1000 ? .9 : .7}rem">${h.top}</span>
+      <span class="hm"><b>${num(h.score)} points</b><small>${MODES[h.m].name} · ${sizeName(h.n)} · ${day(h.t)}</small></span>
+      <span class="hv">${h.won ? ic('trophy') : ''}${h.rp ? `<i class="hplay">${ic('play')}</i>` : ''}</span></div>`).join('')
+    : `<p class="hempty">${ic('history')}No games yet</p>`;
+  $('#histClear').classList.toggle('hidden', !all.length);
+  $('#histClear').textContent = 'Clear history';
+}
+$('#hfilt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { histFilter = b.dataset.f; renderHistory(); } });
+$('#hlist').addEventListener('click', e => { const r = e.target.closest('.hrow'); if (r) { const h = history().find(x => x.t === +r.dataset.t); if (h && h.rp) RP.open(h); } });
+$('#hlist').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.hrow')) { e.preventDefault(); e.target.click(); } });
+$('#histClear').onclick = () => {
+  const b = $('#histClear');
+  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to clear'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Clear history'; }, 3000); return; }
+  delete b.dataset.sure; keep(HIST_KEY, []); renderHistory(); renderHistBadge();
+};
+$('#historyBtn').onclick = () => { prefs.histSeen = Date.now(); savePrefs(); renderHistBadge(); renderHistory(); openPanel('histPanel'); };
+
+/* ---------- Timelapse: the whole game replayed quickly, move by move ---------- */
+const RP = (() => {
+  let h = null, b = null, timer = 0, k = 0, steps = [], playing = false, speed = 1, step = 100, score = 0;
+  const grid = $('#rpGrid');
+  function reset() {
+    grid.innerHTML = ''; b = Board(grid, h.n); fitBoard(b, $('#rpWrap'), 440);
+    const init = h.rp.i; for (let j = 0; j < init.length; j += 2) b.spawn(parseInt(init[j], 36), +init[j + 1]);
+    steps = []; for (let j = 0; j < h.rp.l.length; j += 3) steps.push(h.rp.l.slice(j, j + 3));
+    k = 0; score = 0; show();
+    step = Math.max(28, Math.min(170, 9000 / Math.max(1, steps.length)));   // a whole game takes about 9 seconds
+    grid.style.setProperty('--mv', Math.round(Math.min(110, step * .8)) + 'ms');
+  }
+  function show() { $('#rpScore').textContent = num(score); $('#rpMoves').textContent = `${k}/${steps.length}`; $('#rpMax').textContent = b ? b.max() : 0; }
+  function next() {
+    if (k >= steps.length) { playing = false; setBtn(); return; }
+    const s = steps[k++], r = b.move(s[0]);
+    score += r.gained; b.spawn(parseInt(s[1], 36), +s[2]);
+    if (r.merges.length && speed === 1 && step > 60) Sound.merge(Math.max(...r.merges));
+    show(); timer = setTimeout(next, step / speed);
+  }
+  const setBtn = () => { $('#rpPlay').innerHTML = ic(playing ? 'pause' : 'play'); $('#rpPlay').setAttribute('aria-label', playing ? 'Pause' : 'Play'); };
+  function run(restart) { clearTimeout(timer); if (restart || k >= steps.length) reset(); playing = true; setBtn(); timer = setTimeout(next, 400); }
+  function open(entry) {
+    h = entry;
+    $('#rpTitle').textContent = `${MODES[h.m].name} · ${sizeName(h.n)}`;
+    $('#rpSub').textContent = `${num(h.score)} points, biggest tile ${h.top}`;
+    openPanel('rpPanel');
+    requestAnimationFrame(() => requestAnimationFrame(() => run(true)));
+  }
+  $('#rpPlay').onclick = () => { if (playing) { clearTimeout(timer); playing = false; setBtn(); } else run(false); };
+  $('#rpAgain').innerHTML = ic('again');
+  $('#rpAgain').onclick = () => run(true);
+  $('#rpSpeed').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; $('#rpSpeed').textContent = speed + '×'; };
+  addEventListener('resize', () => { if (b && $('#rpPanel').classList.contains('show')) fitBoard(b, $('#rpWrap'), 440); });
+  return {open, stop() { clearTimeout(timer); playing = false; }};
+})();
+
+/* ---------- How to play ---------- */
+const How = (() => {
+  let step = 0, timers = [], demo = null;
+  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+  function mini(stage, vals, moves) {
+    stage.innerHTML = `<div class="grid" id="howGrid"></div><div class="arrows" id="howArrows"></div>`;
+    demo = Board($('#howGrid'), 4); demo.layout(Math.min(220, stage.clientWidth - 40)); demo.setVals(vals);
+    let t = 600;
+    moves.forEach(([d, sp]) => {
+      at(t, () => { $('#howArrows').innerHTML = `<span>${ic({L: 'left', R: 'right', U: 'up', D: 'down'}[d])}</span>`; const r = demo.move(d); if (r.merges.length) Sound.merge(Math.max(...r.merges)); else Sound.slide(); if (sp) demo.spawn(sp[0], sp[1]); });
+      t += 1100;
+    });
+    at(t + 600, () => mini(stage, vals, moves));   // and again
+  }
+  const STEPS = [
+    {title: 'Swipe to slide', cap: '<span>Swipe in any direction (or use the arrow keys) and <b>every tile slides</b> as far as it can. A new tile appears after each move.</span>',
+      run: s => mini(s, [0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0], [['L', [15, 2]], ['D', [3, 2]], ['R', [0, 4]]])},
+    {title: 'Join matching numbers', cap: '<span>When two tiles with the <b>same number</b> touch, they join into one: 2 + 2 makes 4, 4 + 4 makes 8. Each join adds to your score.</span>',
+      run: s => mini(s, [2, 0, 2, 0, 0, 4, 0, 4, 0, 0, 0, 0, 8, 0, 0, 8], [['L', [15, 2]], ['L', [7, 2]]])},
+    {title: 'Reach 2048', cap: () => `<span>Keep joining to build bigger tiles. Reach <b>2048</b> on a 4 × 4 board to win, then keep going if you like. The game ends when the board is full and nothing can join.</span>`,
+      run: s => { s.innerHTML = `<div class="chain">${[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048].map((v, k) => `<i class="${tileClass(v)}" style="animation:tin .4s ${k * 90}ms var(--ease) both">${v}</i>`).join('')}</div>`; }},
+    {title: 'Modes and sizes', cap: '<span><b>Timed</b> gives you 3 minutes to score as much as you can. Bigger boards are easier to keep going, so they aim for a bigger tile. Made a slip? <b>Undo</b> takes back one move.</span>',
+      run: s => { s.innerHTML = `<div class="howkeys"><span>${ic('grid')}Classic: as long as you like</span><span>${ic('timer')}Timed: 3 minutes</span><span>${ic('grid')}3 × 3 up to 6 × 6</span><span>${ic('undo')}Undo one move</span></div>`; }},
+  ];
+  function go(k) {
+    clear(); step = Math.max(0, Math.min(STEPS.length - 1, k));
+    const S = STEPS[step];
+    $('#howTitle').innerHTML = `<span class="hn">${step + 1}</span>${S.title}`;
+    $('#howCap').innerHTML = typeof S.cap === 'function' ? S.cap() : S.cap;
+    $('#howCount').textContent = `${step + 1}/${STEPS.length}`;
+    $('#howDots').innerHTML = STEPS.map((_, j) => `<i class="${j === step ? 'on' : ''}"></i>`).join('');
+    $('#howPrev').style.visibility = step ? 'visible' : 'hidden';
+    $('#howNext').textContent = step === STEPS.length - 1 ? 'Play' : 'Next';
+    S.run($('#howStage'));
+  }
+  $('#howPrev').onclick = () => go(step - 1);
+  $('#howNext').onclick = () => { if (step === STEPS.length - 1) { closePanel($('#howPanel')); if (!$('#home').classList.contains('hidden')) play(false); } else go(step + 1); };
+  return {open() { openPanel('howPanel'); requestAnimationFrame(() => go(0)); }, stop: clear};
+})();
+$('#howBtn').onclick = () => How.open();
+
+/* ---------- start ---------- */
+fillIcons();
+renderModes(); renderSizes(); renderPlay(); renderHistBadge();
+if (!load('2048-seen-how', 0)) { keep('2048-seen-how', 1); setTimeout(() => How.open(), 700); }
+
+/* ---------- Rizzo Games hooks (menu, updates) ---------- */
+window.RizzoHooks = {
+  onMenuOpen: () => updatePaused(),
+  onMenuClose: () => updatePaused(),
+  previewSound: () => Sound.merge(16),
+  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over ? [G.m, G.n] : null}; },
+  afterReload(info) { const g = info && info.inGame, s = g && load(saveKey(g[0], g[1]), null); if (s && resumeGame(s)) showGame(); },
+};
+</script>
+</body>
+</html>
