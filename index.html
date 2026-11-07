@@ -89,6 +89,23 @@ header{text-align:center;margin:18px 0 26px}
 .logowrap{position:relative;display:inline-block;padding:4px 30px 10px}
 .tag{margin:14px 0 0;color:var(--muted);font-weight:700;font-size:.98rem}
 
+/* ---------- categories ---------- */
+.cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 16px;padding:2px 16px 4px;-webkit-overflow-scrolling:touch}
+.cats::-webkit-scrollbar{display:none}
+@media (min-width:600px){.cats{justify-content:center;flex-wrap:wrap}}
+.cat{flex:none;display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
+  font:inherit;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:var(--shadow);-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,transform .15s}
+.cat svg{width:17px;height:17px;flex:none}
+.cat small{font-size:.75rem;font-weight:800;color:var(--muted);background:var(--soft);border-radius:99px;padding:1px 7px}
+.cat[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.cat[aria-pressed=true] small{background:rgba(255,255,255,.22);color:#fff}
+.cat:active{transform:scale(.94)}
+.cat:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sec+.sec{margin-top:24px}
+.sech{display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:.82rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.sech svg{width:17px;height:17px}
+.sech.favh svg{color:#e0a800}
+
 /* ---------- game cards ---------- */
 .games{display:grid;grid-template-columns:1fr;gap:14px;list-style:none;margin:0;padding:0}
 @media (min-width:600px){.games{grid-template-columns:1fr 1fr}}
@@ -175,7 +192,8 @@ html.rz-vt .game,html.rz-vt .soon{animation:none}
     </div>
     <p class="tag">Pick a game to play</p>
   </header>
-  <ul class="games" id="games"></ul>
+  <nav class="cats" id="cats" aria-label="Categories"></nav>
+  <div id="games"></div>
 </div>
 
 <script>
@@ -197,6 +215,7 @@ const GAMES = [
     blurb: 'The classic number puzzle! Killer and Paper modes, helpful hints and themes to unlock.',
     colors: ['#3b6fe0', '#7ea6ff'],
     art: 'sudoku',
+    cat: 'puzzle',
     // A little line under the description, read from the game's own saved data
     stat() {
       let recs = {};
@@ -212,6 +231,7 @@ const GAMES = [
     blurb: 'A racing quiz! Answer fast to stay fuelled, then unlock new cars and planes.',
     colors: ['#7c3aed', '#f472b6'],
     art: 'equus',
+    cat: 'quiz',
     stat() {
       let g = null;
       try { g = JSON.parse(localStorage.getItem('mr_garage')); } catch {}
@@ -226,6 +246,7 @@ const GAMES = [
     blurb: 'Classic Minesweeper! Hexagon boards, Time Attack and themes to unlock.',
     colors: ['#16a34a', '#86efac'],
     art: 'mines',
+    cat: 'puzzle',
     stat() {
       let recs = {}, old = {};
       try { recs = JSON.parse(localStorage.getItem('minesweeper-records-v2')) || {}; } catch {}
@@ -242,6 +263,7 @@ const GAMES = [
     blurb: 'Guess the hidden word! A new Daily word every day, Unlimited play and 4 to 7 letters.',
     colors: ['#3b3f47', '#8b9099'],
     art: 'words',
+    cat: 'word',
     stat() {
       let st = {};
       try { st = JSON.parse(localStorage.getItem('rizzle-stats-v1')) || {}; } catch {}
@@ -315,18 +337,24 @@ const loadFavs = () => { try { const f = JSON.parse(localStorage.getItem(FAV_KEY
 const infoIc = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 10.8v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.5" fill="currentColor"/></svg>`;
 const star = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>`;
 
-function render(still) {
-  // Favourites first, then the most recently played
-  const favs = loadFavs(), isFav = id => favs.includes(id);
-  const list = GAMES.map((g, k) => ({...g, k})).sort((a, b) =>
-    (isFav(b.id) - isFav(a.id)) || lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
-  const el = document.getElementById('games');
-  el.classList.toggle('nofx', !!still);           // re-sorting after a tap shouldn't replay the slide-in
-  el.innerHTML = list.map((g, n) => {
-    let stat = '';
-    try { stat = g.stat ? g.stat() : ''; } catch {}
-    const f = isFav(g.id);
-    return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]};view-transition-name:rz-card-${g.id}" aria-label="Play ${esc(g.name)}">
+// Categories: each game has one; the chips at the top show them all, or just one
+const CATS = [
+  {id: 'puzzle', name: 'Puzzles', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg>'},
+  {id: 'word', name: 'Words', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18L7.5 6 12 18M4.6 14h5.8"/><path d="M15 10.5c.8-.7 1.7-1 2.8-1 1.9 0 3.2 1.1 3.2 3V18m0-4.2c-.9-.5-1.9-.8-3-.8-1.9 0-3.3.9-3.3 2.6 0 1.5 1.1 2.4 2.7 2.4 1.5 0 2.7-.7 3.6-2"/></svg>'},
+  {id: 'quiz', name: 'Quiz', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/></svg>'},
+  {id: 'arcade', name: 'Arcade', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r="1" fill="currentColor"/><circle cx="18" cy="13.5" r="1" fill="currentColor"/></svg>'},
+  {id: 'cards', name: 'Cards', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3.5" width="12" height="17" rx="2.5"/><path d="M4.5 6.5v11.5a2.5 2.5 0 0 0 2 2.4"/></svg>'},
+];
+const CAT_KEY = 'hub-cat';
+const allIc = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
+const starIc = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>';
+let cat = (() => { try { return localStorage.getItem(CAT_KEY) || 'all'; } catch { return 'all'; } })();
+
+function card(g, n, isFav) {
+  let stat = '';
+  try { stat = g.stat ? g.stat() : ''; } catch {}
+  const f = isFav(g.id);
+  return `<li><a class="game" href="${esc(g.file)}" style="animation-delay:${n * 60}ms;--c:${g.colors[0]};view-transition-name:rz-card-${g.id}" aria-label="Play ${esc(g.name)}">
       <div class="art" style="background:linear-gradient(135deg,${g.colors[0]},${g.colors[1]})">${ART[g.art] || ''}</div>
       <div class="body">
         <div class="txt"><h2>${esc(g.name)}</h2><span class="stat">${esc(stat)}</span></div>
@@ -335,8 +363,36 @@ function render(still) {
       <button class="info" data-id="${esc(g.id)}" aria-expanded="false" aria-label="About ${esc(g.name)}">${infoIc}</button>
       <div class="desc" role="note"><p>${esc(g.blurb)}</p></div>
       <button class="fav" data-id="${esc(g.id)}" aria-pressed="${f}" aria-label="${f ? 'Remove ' + esc(g.name) + ' from favourites' : 'Add ' + esc(g.name) + ' to favourites'}" style="view-transition-name:rz-fav-${g.id}">${star}</button></li>`;
-  }).join('') + `<li class="soon" style="animation-delay:${list.length * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>`;
 }
+function render(still) {
+  const favs = loadFavs(), isFav = id => favs.includes(id);
+  // the chips: All, then each category that has games in it
+  const used = CATS.filter(c => GAMES.some(g => g.cat === c.id));
+  if (cat !== 'all' && !used.some(c => c.id === cat)) cat = 'all';
+  document.getElementById('cats').innerHTML = [{id: 'all', name: 'All', icon: allIc}, ...used].map(c =>
+    `<button class="cat" data-cat="${c.id}" aria-pressed="${cat === c.id}">${c.icon}${c.name}${c.id === 'all' ? '' : `<small>${GAMES.filter(g => g.cat === c.id).length}</small>`}</button>`).join('');
+  // most recently played first, favourites before the rest
+  const order = list => list.map(g => ({...g, k: GAMES.indexOf(g)})).sort((a, b) => (isFav(b.id) - isFav(a.id)) || lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
+  const sections = [];
+  if (cat === 'all') {
+    const fav = order(GAMES.filter(g => isFav(g.id)));
+    if (fav.length) sections.push({head: `<h3 class="sech favh">${starIc}Favourites</h3>`, games: fav});
+    used.forEach(c => { const gs = order(GAMES.filter(g => g.cat === c.id && !isFav(g.id))); if (gs.length) sections.push({head: `<h3 class="sech">${c.icon}${c.name}</h3>`, games: gs}); });
+  } else sections.push({head: '', games: order(GAMES.filter(g => g.cat === cat))});
+  const el = document.getElementById('games');
+  el.classList.toggle('nofx', !!still);           // re-sorting after a tap shouldn't replay the slide-in
+  let n = 0;
+  el.innerHTML = sections.map((s, k) => `<section class="sec">${s.head}<ul class="games">${s.games.map(g => card(g, n++, isFav)).join('')}${
+    k === sections.length - 1 && cat === 'all' ? `<li class="soon" style="animation-delay:${n * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>` : ''}</ul></section>`).join('');
+}
+document.getElementById('cats').addEventListener('click', e => {
+  const b = e.target.closest('.cat'); if (!b || b.dataset.cat === cat) return;
+  cat = b.dataset.cat;
+  try { localStorage.setItem(CAT_KEY, cat); } catch {}
+  const redo = () => render(true);
+  if (document.startViewTransition && !document.documentElement.classList.contains('rz-reduce-motion')) document.startViewTransition(redo);
+  else redo();
+});
 const closeDesc = except => document.querySelectorAll('.games>li.open').forEach(li => { if (li !== except) { li.classList.remove('open'); li.querySelector('.info').setAttribute('aria-expanded', 'false'); } });
 document.getElementById('games').addEventListener('click', e => {
   const inf = e.target.closest('.info');
