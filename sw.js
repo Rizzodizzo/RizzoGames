@@ -10,7 +10,7 @@
 const SCOPE = self.registration.scope;
 const CACHE = 'rizzo-games:' + SCOPE;
 const OLD_CACHES = ['sudoku-app:' + SCOPE];           // left behind by the old Sudoku-only worker
-const SHELL = ['index.html', 'manifest.webmanifest', 'games.js', 'themes.js', 'icon-192.png', 'icon-180.png', 'icon-512.png'];
+const SHELL = ['index.html', 'manifest.webmanifest', 'games.js', 'themes.js', 'cards.js', 'icon-192.png', 'icon-180.png', 'icon-512.png'];
 // pages that have a newer version waiting, but no open window has been told yet
 const pending = new Set();
 

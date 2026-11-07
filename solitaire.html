@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solitaire</title>
+<meta name="theme-color" content="#f6f3f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141012" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="solitaire" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<script src="cards.js"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Solitaire">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   COLOURS: light or dark, following the device. The table is green felt,
+   the card backs are red, and the cards themselves are classic red and black.
+   ====================================================================== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);
+  --bg:#f6f3f0;--panel:#ffffff;--ink:#2a1f1f;--muted:#7d6f6f;--line:#e8dfdc;--soft:#f1e9e6;
+  --accent:#c0392b;--hi:#e0533f;--edge:#8e2219;--onaccent:#ffffff;--shade:rgba(60,20,15,.10);--boom:#d6453d;--ok:#3fa36b;
+  --felt:#2f7d50;--felt2:#256943;--slot:rgba(255,255,255,.22);--face:#ffffff;--red:#d0312d;--black:#1f2328;--back:#c0392b;--back2:#a52e22;
+  --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;
+  --bg:#141012;--panel:#1f191b;--ink:#f4ecea;--muted:#b0a1a0;--line:#33292b;--soft:#2a2224;
+  --accent:#ff6b5a;--hi:#ff8a7a;--edge:#a3352a;--onaccent:#1a0d0b;--shade:rgba(0,0,0,.45);--boom:#ef5a52;--ok:#3f9358;
+  --felt:#1c4a31;--felt2:#163d28;--slot:rgba(255,255,255,.14);--face:#f2eee8;--red:#c8302b;--black:#1f2328;--back:#b0342a;--back2:#8f2a22}}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.app{max-width:1100px;margin:0 auto;height:100%}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade)}
+.iconbtn:active{transform:scale(.94)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade)}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+/* ================= HOME ================= */
+.home{max-width:480px;margin:0 auto;height:100%;min-height:560px;display:flex;flex-direction:column;padding-top:54px}
+.homeset{position:fixed;z-index:2;top:calc(env(safe-area-inset-top,0px) + 16px);right:16px}
+/* mode cards you swipe between */
+.modes{position:relative;flex:1 1 0;min-height:150px;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px 22% 12px;margin:0 -16px;
+  scrollbar-width:none;overscroll-behavior-x:contain;align-items:stretch}
+.modes::-webkit-scrollbar{display:none}
+@media (hover:hover) and (pointer:fine){.modes{cursor:grab}.modes.dragging{cursor:grabbing;scroll-snap-type:none}}
+.mode{container-type:size;flex:0 0 100%;scroll-snap-align:center;max-height:330px;align-self:center;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);
+  background:var(--panel);border-radius:26px;box-shadow:0 6px 20px var(--shade);transition:transform .3s var(--ease),opacity .3s;position:relative}
+.mode.active{outline:2.5px solid var(--accent);outline-offset:-2.5px}
+.mode:not(.active){transform:scale(.84);opacity:.45}
+.mode h2{margin:0;font-size:clamp(1.15rem,3vh,1.55rem);font-weight:900}
+.mode p{margin:-4px 12px 0;color:var(--muted);font-weight:800;font-size:.85rem;text-align:center}
+.mart{width:min(clamp(100px,min(46vw,24vh),200px),calc(100cqh - 120px));height:auto;flex:none;min-width:56px}
+.modenav{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 0}
+.modearrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted)}
+.modearrow.l svg{transform:scaleX(-1)}
+.modearrow:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .25s var(--ease),background .25s}
+.dots i.on{width:22px;background:var(--accent)}
+/* board size */
+.seg{flex:none;display:flex;gap:3px;padding:4px;margin-top:clamp(10px,2.2vh,20px);background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade)}
+.seg button{flex:1;min-width:0;padding:8px 0 7px;border-radius:10px;color:var(--muted);font-weight:800;font-size:.86rem;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background .2s,color .2s}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+.seg .gd{display:grid;gap:1.5px;width:18px;height:18px}.seg .gd i{border-radius:1.5px;background:currentColor;opacity:.8}
+.playrow{flex:none;margin-top:clamp(10px,1.8vh,16px);display:flex;gap:10px}
+.play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
+.play small{font-size:.75rem;font-weight:700;opacity:.88}
+.newg{flex:none;width:58px;border-radius:16px;background:var(--panel);color:var(--accent);display:grid;place-items:center;box-shadow:0 2px 8px var(--shade)}
+.tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:clamp(14px,2.4vh,22px)}   /* room below Play's shadow */
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
+.tile .tic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);transition:transform .2s;position:relative}
+@media (hover:hover){.tile:hover .tic{transform:translateY(-2px)}}
+.badge{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--accent);color:var(--onaccent);font-size:.68rem;font-weight:900;display:grid;place-items:center}
+
+
+
+
+/* the title: a fan of four aces */
+.stitle{flex:none;display:flex;justify-content:center;margin:clamp(4px,2vh,22px) 0 clamp(8px,2vh,22px);height:clamp(84px,13vh,120px)}
+.stitle{--cw:clamp(52px,9vh,70px);--ch:calc(var(--cw) * 1.4);--cr:8px}
+.stitle .cd{position:relative;flex:none;margin:0 -10px;animation:fanin .6s var(--ease) both;animation-delay:calc(var(--k) * 90ms);transform-origin:50% 120%;rotate:calc((var(--k) - 1.5) * 9deg);translate:0 calc(var(--y) * 1px)}
+@keyframes fanin{from{rotate:0deg;opacity:0;translate:0 20px}}
+.stitle-name{flex:none;text-align:center;margin:-4px 0 clamp(6px,1.6vh,16px);font-size:clamp(1.5rem,6vw,2rem);font-weight:900;letter-spacing:.02em}
+
+/* ================= GAME ================= */
+.game{height:100%;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto}
+.ghead{flex:none;width:100%;max-width:640px;display:flex;align-items:center;gap:10px;padding:0 0 0 52px;min-height:44px}   /* R + back on the left, new + settings on the right */
+.gtitle{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.gtitle b{font-size:1.12rem;font-weight:900;white-space:nowrap}
+.gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
+.stats{flex:none;display:flex;gap:8px;margin-top:10px;justify-content:center}
+.chip{min-width:74px;padding:5px 12px 6px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;align-items:center}
+.chip span{font-size:.66rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chip b{font-size:1.1rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15}
+/* the table */
+.twrap{flex:1 1 0;min-height:0;width:100%;max-width:820px;margin-top:10px;position:relative}
+.table{position:absolute;inset:0;border-radius:18px;background:radial-gradient(120% 90% at 50% 0%,var(--felt),var(--felt2));box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 6px 20px var(--shade);
+  overflow:hidden;isolation:isolate;touch-action:none;user-select:none;-webkit-user-select:none}
+.slot{position:absolute;left:0;top:0;width:var(--cw);height:var(--ch);border-radius:var(--cr);border:2px dashed var(--slot);display:grid;place-items:center;color:var(--slot);font-size:calc(var(--cw) * .5);font-weight:900}
+.slot.stock{border-style:solid;cursor:pointer}
+.slot svg.ic{width:45%;height:45%}
+/* a card: the face, or the back when it's face down */
+/* a card: the faces and backs are drawn by cards.js (shared by every card game); here it's placed on the table */
+.cd{position:absolute;left:0;top:0;width:var(--cw);height:var(--ch);border-radius:var(--cr);cursor:default}
+.cd.down{box-shadow:inset 0 0 0 calc(var(--cw) * .05) var(--face),0 1px 2px rgba(0,0,0,.28)}
+.table .cd{translate:var(--at);transition:translate .2s var(--ease)}
+.table .cd.drag{transition:none;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.table .cd.lift{box-shadow:0 0 0 3px #ffd23f,0 6px 16px rgba(0,0,0,.3)}
+.cd.hint,.slot.hint{animation:hint 1.4s ease-in-out}
+@keyframes hint{20%,60%{box-shadow:0 0 0 4px #ffd23f,0 6px 16px rgba(0,0,0,.3)}40%,80%{box-shadow:0 0 0 2px #ffd23f}}
+.cd.nope{animation:nope .3s}
+@keyframes nope{25%{rotate:-5deg}75%{rotate:5deg}}
+.table.quick .cd{transition-duration:var(--mv,.12s)}
+/* when you win, the foundations jump in a wave */
+.cd.cheer{animation:cheer .5s var(--ease) both;animation-delay:var(--dl)}
+@keyframes cheer{40%{translate:var(--at2)}}
+.tools{flex:none;display:flex;justify-content:center;gap:10px;margin:10px 0}
+.tbtn{height:44px;padding:0 16px;border-radius:999px;background:var(--panel);display:flex;align-items:center;gap:7px;font-weight:900;box-shadow:0 2px 8px var(--shade)}
+.tbtn:disabled{opacity:.4}
+.tbtn.go{background:var(--accent);color:var(--onaccent)}
+.tbtn small{opacity:.6}
+/* toasts */
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);z-index:9;transform:translate(-50%,-10px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);
+  font-weight:900;padding:10px 16px;border-radius:12px;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* result card */
+.result{flex:none;width:100%;max-width:520px;margin:10px 0 6px;background:var(--panel);border-radius:20px;padding:14px;box-shadow:0 4px 16px var(--shade);animation:rise .35s var(--ease) both;display:flex;flex-direction:column;gap:12px}
+.result .top{display:flex;align-items:center;gap:12px}
+.result .ri{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0;color:#fff;background:var(--ok)}
+.result.lose .ri{background:var(--muted)}
+.result .ri svg.ic{width:28px;height:28px}
+.result h2{margin:0;font-size:1.3rem;font-weight:900}
+.result .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.result .chips span{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:.82rem;background:var(--soft);padding:4px 10px;border-radius:99px}
+.result .chips svg.ic{width:15px;height:15px}
+.result .chips .new{background:#ffd23f;color:#3a2c00}
+.result .row2{display:flex;gap:10px}
+.result .row2 button{flex:1;white-space:nowrap;padding:13px 8px;border-radius:14px;font-weight:900;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:6px}
+.result .row2 .sec{background:var(--soft)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+/* How to play: little cards on a bit of felt */
+.felt{background:radial-gradient(120% 90% at 50% 0%,var(--felt),var(--felt2));border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:10px;min-height:170px;--cw:58px;--ch:81px;--cr:7px;position:relative}
+.felt .cd{position:relative}
+.felt .col{position:relative;width:58px;height:150px}
+.felt .col .cd{position:absolute}
+#rpWrap{position:relative;width:100%}
+.howdemo{position:relative;width:250px;height:200px;border-radius:16px;background:radial-gradient(120% 90% at 50% 0%,var(--felt),var(--felt2));--cw:52px;--ch:73px;--cr:7px;overflow:hidden}
+.howdemo .cd{translate:var(--at);transition:translate .45s var(--ease)}
+.howdemo .slot{translate:var(--at)}
+.howdemo .tapdot{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(255,255,255,.55);translate:var(--at);opacity:0;pointer-events:none;z-index:99}
+.howdemo .tapdot.on{animation:tap .5s}
+@keyframes tap{0%{opacity:0;scale:1.5}40%{opacity:1;scale:1}100%{opacity:0;scale:.8}}
+.srow small{color:var(--muted);font-weight:700;font-size:.78rem}
+/* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
+.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
+  transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
+.panel.show{transform:none;visibility:visible;transition:transform .38s var(--ease),visibility 0s}
+.panelin{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phead h1{flex:1;margin:0;text-align:center;font-size:1.3rem;font-weight:900}
+.phead .sp{width:42px;text-align:right;color:var(--muted);font-weight:800;font-size:.85rem}
+/* how to play */
+.how h2{margin:0 0 12px;font-size:1.25rem;font-weight:900;display:flex;align-items:center;gap:10px}
+.how h2 .hn{width:30px;height:30px;border-radius:10px;background:var(--accent);color:var(--onaccent);display:grid;place-items:center;font-size:.95rem}
+.stage{background:var(--panel);border-radius:20px;padding:18px 12px;box-shadow:0 2px 10px var(--shade);min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;--ts:46px;--g:5px}
+.cap{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--panel);border-radius:14px;padding:12px 14px;font-weight:800;box-shadow:0 2px 8px var(--shade);min-height:56px;border-left:4px solid var(--accent);line-height:1.4}
+.cap .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.hownav{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
+.hownav button{min-width:96px;padding:12px 16px;border-radius:14px;font-weight:900}
+.hownav .sec{background:var(--soft)}
+.howkeys{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.howkeys span{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:99px;padding:7px 12px;font-weight:900;font-size:.88rem}
+.howkeys svg.ic{width:17px;height:17px;color:var(--accent)}
+/* filters shared by Stats and History */
+.hfilt{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade);margin-bottom:10px}
+.hfilt button{flex:1;padding:9px 0;border-radius:10px;font-weight:800;font-size:.85rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.hfilt button.on{background:var(--accent);color:var(--onaccent)}
+.hfilt svg.ic{width:17px;height:17px}
+.hsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 14px}
+.hsum div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.hsum b{display:block;font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums}
+.hsum span{display:block;color:var(--muted);font-weight:800;font-size:.72rem;margin-top:2px}
+/* stats: how many guesses each win took */
+.dist{background:var(--panel);border-radius:16px;padding:12px 14px;box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;gap:6px}
+.dist h3{margin:0 0 4px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:14px;text-align:center;color:var(--muted)}
+.dbar i{display:flex;justify-content:flex-end;align-items:center;min-width:26px;height:24px;padding:0 8px;border-radius:6px;background:var(--no);color:#fff;font-style:normal;font-size:.85rem;transition:width .5s var(--ease)}
+.snote{margin:10px 4px 0;text-align:center;font-weight:800;font-size:.82rem;color:var(--muted);min-height:1em}
+/* history */
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:14px;padding:10px 12px;box-shadow:0 2px 8px var(--shade);cursor:pointer}
+.hrow .hm{flex:1;min-width:0}
+.hrow .hm b{display:block;font-weight:900}
+.hrow .hm small{color:var(--muted);font-weight:700;font-size:.8rem}
+.hrow .hv{font-weight:900;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.hrow .hv svg.ic{width:16px;height:16px;color:#c88a00}
+.hrow .hv .lose{color:var(--boom)}
+.hplay{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);font-style:normal}
+.hrow .hv .hplay svg.ic{width:14px;height:14px;color:var(--onaccent)}
+.hempty{text-align:center;color:var(--muted);font-weight:800;padding:30px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hempty svg.ic{width:40px;height:40px;opacity:.6}
+.danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
+/* timelapse */
+#rpPanel .panelin{display:flex;flex-direction:column;min-height:100%}
+.rpsub{margin:-8px 0 10px;text-align:center;color:var(--muted);font-weight:800;font-size:.85rem}
+.rpwrap{flex:1 1 0;min-height:240px;display:flex;align-items:center;justify-content:center}
+.rpctl{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 10px}
+.rpctl .rpplay{width:52px;height:52px;padding:0;border-radius:50%;display:grid;place-items:center}
+.rpctl .rpbtn{height:44px;min-width:52px;padding:0 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:900;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.rpstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rpstats div{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.rpstats span{display:block;font-size:.72rem;font-weight:800;color:var(--muted)}
+.rpstats b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+/* settings */
+.sgh{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sgh:first-of-type{margin-top:4px}
+.sgroup{background:var(--panel);border-radius:16px;box-shadow:0 2px 8px var(--shade);overflow:hidden}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);cursor:pointer}
+.srow:last-child{border-bottom:0}
+.srow .sl{display:flex;flex-direction:column;min-width:0;gap:2px}
+.srow b{font-weight:800}
+.srow small{font-size:.78rem;font-weight:700;color:var(--muted)}
+.srow .sr{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.srow .sr svg.ic{width:18px;height:18px}
+.switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+
+
+
+.dbar i{background:var(--accent);color:var(--onaccent)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:46px;flex:none;height:24px;border-radius:6px;display:grid;place-items:center;font-size:.78rem}
+
+
+.hrow .ht{width:34px;height:46px;border-radius:7px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.85rem;background:var(--felt);color:#fff}
+.hrow .ht.won{background:var(--accent);color:var(--onaccent)}
+/* small phones: a little less room around the table */
+@media (max-width:420px){
+  .twrap{margin-left:-8px;margin-right:-8px;width:calc(100% + 16px)}
+  .table{border-radius:14px}
+  .chip{min-width:66px;padding:4px 10px 5px}
+}
+@media (max-height:700px) and (orientation:portrait){
+  .stitle{height:64px;--cw:42px;margin:0 0 6px}
+  .stitle-name{font-size:1.35rem;margin-bottom:0}
+  .home{padding-top:46px}
+  .tools{margin:8px 0 4px}
+  .tbtn{height:40px}
+}
+
+/* ================= SIDEWAYS PHONES: controls on the left, the table on the right ================= */
+@media (orientation:landscape) and (max-height:520px){
+  body{padding:calc(env(safe-area-inset-top,0px) + 12px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) calc(env(safe-area-inset-left,0px) + 16px);overflow:hidden}
+  .home{max-width:860px;min-height:0;padding:0 56px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto minmax(0,1fr);column-gap:clamp(16px,4vw,40px);align-items:center}
+  .stitle{grid-column:2;grid-row:1;margin:0;height:clamp(60px,20vh,84px);--cw:clamp(40px,13vh,58px)}
+  .stitle-name{grid-column:2;grid-row:2;margin:4px 0 0;font-size:1.4rem}
+  .home>.hl{display:flex;flex-direction:column;grid-column:1;grid-row:1/4;height:100%;min-height:0}
+  .modes{min-height:0;padding:18px 20% 6px}
+  .mode{max-height:none;gap:6px;border-radius:20px}
+  .mart{width:min(clamp(90px,32vh,150px),calc(100cqh - 100px))}
+  .mode h2{font-size:clamp(1rem,4.5vh,1.3rem)}
+  .modenav{margin:0}
+  .modearrow{width:30px;height:30px}
+  .home>.hr{display:flex;flex-direction:column;grid-column:2;grid-row:3;justify-content:center;min-height:0}
+  .playrow{margin-top:6px}
+  .play{padding:11px}
+  .tiles{margin-top:12px;gap:8px}
+  .tile{flex-direction:row;justify-content:center;padding:8px 6px;gap:6px;font-size:.8rem}
+  .tile .tic{width:34px;height:34px;border-radius:10px}
+  .tile .tic svg.ic{width:18px;height:18px}
+  .game{max-width:none;display:grid;grid-template-columns:minmax(250px,268px) minmax(0,1fr);grid-template-rows:auto auto 1fr auto;column-gap:14px;align-items:start}
+  .ghead{grid-column:1;grid-row:1;max-width:none;padding:0 0 0 52px;gap:6px}
+  .gtitle b{font-size:1rem}
+  .result .row2{gap:6px}
+  .stats{grid-column:1;grid-row:2;margin-top:10px;gap:6px}
+  .chip{min-width:0;flex:1;padding:4px 6px 5px}
+  .twrap{grid-column:2;grid-row:1/5;height:100%;margin:0;max-width:none}
+  .tools{grid-column:1;grid-row:3;align-self:end;flex-wrap:wrap;margin:8px 0 0}
+  .tools .tbtn{flex:1;justify-content:center;padding:0 10px;height:40px}
+  .result{grid-column:1;grid-row:3/5;align-self:center;margin:0;padding:12px;gap:10px}
+  .result .row2 button{padding:10px 6px;font-size:.92rem}
+  .result .ri{width:42px;height:42px;border-radius:13px}
+  .result h2{font-size:1.1rem}
+}
+
+/* Reduce motion follows the switch in the Settings menu */
+html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *::after{animation:none!important;transition:none!important}
+.hl,.hr{display:contents}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= HOME ================= -->
+  <section class="home" id="home">
+    <button class="iconbtn homeset" id="setBtnHome" aria-label="Settings" data-ic="settings"></button>
+    <div class="stitle" id="stitle" role="img" aria-label="Solitaire"></div>
+    <div class="stitle-name">Solitaire</div>
+    <div class="hl">
+      <div class="modes" id="modes" aria-label="Mode"></div>
+      <div class="modenav">
+        <button class="modearrow l" id="modePrev" aria-label="Previous mode"></button>
+        <div class="dots" id="modeDots"></div>
+        <button class="modearrow" id="modeNext" aria-label="Next mode"></button>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="playrow">
+        <button class="primary play" id="playBtn"></button>
+        <button class="newg hidden" id="newBtnHome" aria-label="New game"></button>
+      </div>
+      <div class="tiles">
+        <button class="tile" id="howBtn"><span class="tic" data-ic="help"></span>How to play</button>
+        <button class="tile" id="statsBtn"><span class="tic" data-ic="chart"></span>Stats</button>
+        <button class="tile" id="historyBtn"><span class="tic" data-ic="history"><b class="badge hidden" id="histBadge"></b></span>History</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="game hidden" id="game">
+    <div class="ghead">
+      <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
+      <div class="gtitle"><b id="gMode">Draw 1</b><small id="gSub">Klondike</small></div>
+      <button class="iconbtn" id="newBtn" aria-label="New game" data-ic="refresh"></button>
+      <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
+    </div>
+    <div class="stats">
+      <div class="chip"><span>Score</span><b id="score">0</b></div>
+      <div class="chip"><span>Moves</span><b id="moves">0</b></div>
+      <div class="chip"><span>Time</span><b id="time">0:00</b></div>
+    </div>
+    <div class="twrap" id="twrap"><div class="table" id="table" aria-label="Card table: tap a card to move it, or drag it"></div></div>
+    <div class="tools" id="tools">
+      <button class="tbtn" id="undoBtn" aria-label="Undo the last move"></button>
+      <button class="tbtn" id="hintBtn" aria-label="Show a move"></button>
+      <button class="tbtn go hidden" id="finishBtn" aria-label="Finish the game"></button>
+    </div>
+    <div class="result hidden" id="result"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ================= PANELS ================= -->
+<div class="panel" id="setPanel" role="dialog" aria-label="Settings"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Settings</h1><span class="sp"></span></div>
+  <h3 class="sgh">Every game</h3>
+  <div class="sgroup">
+    <button class="srow" id="sMenu"><span class="sl"><b>Sound, motion &amp; updates</b></span><span class="sr"><span data-ic="chevron"></span></span></button>
+  </div>
+  <h3 class="sgh">Game</h3>
+  <div class="sgroup">
+    <label class="srow"><span class="sl"><b>Undo button</b></span><input type="checkbox" class="switch" data-p="undo"></label>
+    <label class="srow"><span class="sl"><b>Hint button</b></span><input type="checkbox" class="switch" data-p="hint"></label>
+    <label class="srow"><span class="sl"><b>Auto-finish</b><small>Sends the cards home once they're all face up</small></span><input type="checkbox" class="switch" data-p="auto"></label>
+  </div>
+  <h3 class="sgh">Controls</h3>
+  <div class="sgroup">
+    <label class="srow"><span class="sl"><b>Left-handed</b><small>Stock and foundations swap sides</small></span><input type="checkbox" class="switch" data-p="lefty"></label>
+    <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
+  </div>
+  <h3 class="sgh">Data</h3>
+  <button class="danger" id="sReset">Reset stats</button>
+  <p class="snote" id="sResetNote"></p>
+</div></div>
+
+<div class="panel" id="howPanel" role="dialog" aria-label="How to play"><div class="panelin how">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp" id="howCount"></span></div>
+  <h2 id="howTitle"></h2>
+  <div class="stage" id="howStage"></div>
+  <div class="cap" id="howCap"></div>
+  <div class="hownav"><button class="sec" id="howPrev">Back</button><div class="dots" id="howDots"></div><button class="primary" id="howNext">Next</button></div>
+</div></div>
+
+<div class="panel" id="statsPanel" role="dialog" aria-label="Stats"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Stats</h1><span class="sp"></span></div>
+  <div class="hfilt" id="sfMode"></div>
+  <div class="hsum" id="ssum"></div>
+  <div class="hsum" id="ssum2"></div>
+  <div class="dist" id="sdist"></div>
+</div></div>
+
+<div class="panel" id="histPanel" role="dialog" aria-label="History"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>History</h1><span class="sp"></span></div>
+  <div class="hfilt" id="hfilt"></div>
+  <div class="hlist" id="hlist"></div>
+  <button class="danger hidden" id="histClear">Clear history</button>
+</div></div>
+
+<div class="panel" id="rpPanel" role="dialog" aria-label="Timelapse"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Back"></button><h1 id="rpTitle">Timelapse</h1><span class="sp"></span></div>
+  <p class="rpsub" id="rpSub"></p>
+  <div class="rpwrap" id="rpWrap"><div class="table" id="rpTable" aria-label="Timelapse table"></div></div>
+  <div class="rpctl"><button class="rpbtn" id="rpAgain" aria-label="Watch again"></button><button class="primary rpplay" id="rpPlay" aria-label="Play"></button><button class="rpbtn" id="rpSpeed" aria-label="Speed">1×</button></div>
+  <div class="rpstats"><div><span>Moves</span><b id="rpMoves">0</b></div><div><span>Cards home</span><b id="rpHome">0</b></div><div><span>Score</span><b id="rpScore">0</b></div></div>
+</div></div>
+
+<script>
+/* ======================================================================
+   Solitaire (Klondike) for Rizzo Games.
+   Modes: Draw 1 and Draw 3. Tap a card to send it where it fits, or drag it.
+   Undo, hints, auto-finish, stats, history with timelapses, How to play.
+
+   How it's built:
+     Cards      what a card is (suit, rank, colour) and how it's drawn
+     Rules      the deal, what can go where, making a move, hints
+     Table      draws a game on the felt (also used by the timelapse)
+     Game       the game you're playing: moves, score, the clock, winning, saving
+     Home       the menu: title, mode cards, Play
+     Panels     How to play, Stats, History, Timelapse, Settings
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const RZ = window.RizzoGames || null;
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+const fmt = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = Math.floor(t - m * 60); return m + ':' + String(s).padStart(2, '0'); };
+const num = n => (n || 0).toLocaleString();
+const CTRL = {buzz: true};
+const vibrate = ms => { if (CTRL.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+
+/* ---------- icons ---------- */
+const ICONS = {
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  settings: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.5v.6"/><path d="M12 17.2v.1"/>',
+  chart: '<path d="M5 20V11M12 20V5M19 20v-6"/><path d="M3 20.5h18"/>',
+  history: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V9H8"/><path d="M12 7.5V12l3 2"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7 10M17 6h2.5v1A3 3 0 0 1 17 10M12 13v4M8.5 20.5h7l-.8-3.5H9.3z"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="3"/>',
+  again: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/>',
+  clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',
+  moves: '<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+  all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  bulb: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>',
+  flag: '<path d="M5.5 21V4"/><path d="M5.5 4.5h12l-2.5 4 2.5 4h-12"/>',
+  one: '<rect x="6.5" y="3.5" width="11" height="17" rx="2.5"/>',
+  three: '<rect x="10" y="3.5" width="10.5" height="15" rx="2.2"/><path d="M7 6.5v11.3a2.2 2.2 0 0 0 2.2 2.2h6.3"/><path d="M4 9.5v10.3A2.2 2.2 0 0 0 6.2 22h5.3"/>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
+  home: '<path d="M12 19V7M7 12l5-5 5 5"/><path d="M5 21h14"/>',
+  fire: '<path d="M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.3 2.3-5.4 3.6-7.7.5 1.7 1.3 2.8 2.4 3.4-.2-2.8 1-5.6 3.3-7.5.3 3.2 1.9 5.1 3.3 7.1 1 1.4 1.4 2.9 1.4 4.7 0 3.6-2.6 6.2-6.5 6.2z"/>',
+};
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
+
+/* ---------- sound effects (follow the shared Rizzo volume) ---------- */
+const Sound = (() => {
+  let ctx = null;
+  const vol = () => RZ ? RZ.level('sfx') : 0.6;
+  const ac = () => { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+  function tone(freq, dur, type = 'sine', gain = .2, delay = 0, slide = 0) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac(), t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain * v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+    } catch {}
+  }
+  return {
+    place() { tone(240, .06, 'triangle', .12, 0, .7); },
+    flip() { tone(1200, .025, 'square', .025); tone(700, .04, 'triangle', .05, .02); },
+    draw() { tone(520, .05, 'triangle', .07, 0, 1.5); },
+    home(r) { tone(520 + r * 30, .09, 'triangle', .12); tone(780 + r * 45, .08, 'sine', .06, .03); },
+    shuffle() { for (let k = 0; k < 5; k++) tone(900 - k * 90, .03, 'square', .025, k * .035); },
+    bump() { tone(140, .06, 'square', .04); },
+    undo() { tone(500, .07, 'triangle', .1, 0, .6); },
+    win() { [523, 659, 784, 1047, 1319].forEach((f, k) => tone(f, .2, 'triangle', .16, k * .09)); },
+  };
+})();
+
+/* ======================================================================
+   CARDS: 0–51. Suit = id ÷ 13 (♠ ♥ ♣ ♦), rank = id % 13 + 1 (Ace … King).
+   ====================================================================== */
+const {suit, rank, red, RANKS} = RZC;   // the cards themselves (and their King, Queen and Jack art) live in cards.js
+const cardName = RZC.name;
+function cardEl(id, down) { const el = RZC.el(id, down); el.classList.add('cd'); return el; }
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';   // a deck saved as 52 letters
+
+/* ======================================================================
+   RULES. Piles are named by one letter: s stock, w waste, A–D foundations,
+   0–6 the seven columns. A move is "from, to, how many" (e.g. "3A1"),
+   or d (draw from the stock) or r (turn the waste back over).
+   ====================================================================== */
+const COLS = [...'0123456'], FOUNDS = [...'ABCD'];
+const isF = p => p >= 'A' && p <= 'D', isT = p => p >= '0' && p <= '6';
+const last = p => p[p.length - 1];
+function pile(S, p) { return p === 's' ? S.stock : p === 'w' ? S.waste : isF(p) ? S.f[p.charCodeAt(0) - 65] : S.t[+p]; }
+function shuffled() { const d = [...Array(52).keys()]; for (let i = 51; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; } return d; }
+function deal(deck) {
+  const S = {stock: [], waste: [], f: [[], [], [], []], t: [[], [], [], [], [], [], []], up: Array(52).fill(0)};
+  let k = 0;
+  for (let r = 0; r < 7; r++) for (let c = r; c < 7; c++) S.t[c].push(deck[k++]);
+  S.t.forEach(col => S.up[last(col)] = 1);
+  S.stock = deck.slice(k).reverse();
+  return S;
+}
+const clone = S => ({stock: S.stock.slice(), waste: S.waste.slice(), f: S.f.map(p => p.slice()), t: S.t.map(p => p.slice()), up: S.up.slice()});
+const homeCount = S => S.f.reduce((n, p) => n + p.length, 0);
+function where(S, id) {
+  for (const p of ['s', 'w', ...FOUNDS, ...COLS]) { const k = pile(S, p).indexOf(id); if (k >= 0) return {p, k}; }
+  return null;
+}
+// can this card (with anything sitting on it) go onto that pile?
+function fits(S, id, to) {
+  const t = last(pile(S, to));
+  if (isF(to)) return t === undefined ? rank(id) === 1 : suit(t) === suit(id) && rank(id) === rank(t) + 1;
+  if (isT(to)) return t === undefined ? rank(id) === 13 : !!S.up[t] && red(t) !== red(id) && rank(t) === rank(id) + 1;
+  return false;
+}
+function legal(S, from, to, n) {
+  if (from === to || to === 's' || to === 'w') return false;
+  const src = pile(S, from); if (n < 1 || n > src.length) return false;
+  const id = src[src.length - n];
+  if (!S.up[id] || ((from === 'w' || isF(from) || isF(to)) && n !== 1)) return false;
+  return fits(S, id, to);
+}
+function foundFor(S, id) {   // the foundation this card can go on (its own suit first, else an empty one for an Ace)
+  for (const f of FOUNDS) if (pile(S, f).length && fits(S, id, f)) return f;
+  if (rank(id) === 1) for (const f of FOUNDS) if (!pile(S, f).length) return f;
+  return null;
+}
+// make a move; returns the points, the cards that moved and any card it turned over
+function apply(S, a, draw) {
+  if (a === 'd') { const ids = []; for (let i = 0, n = Math.min(draw, S.stock.length); i < n; i++) { const c = S.stock.pop(); S.up[c] = 1; S.waste.push(c); ids.push(c); } return {pts: 0, ids, kind: 'draw', flipped: -1}; }
+  if (a === 'r') { const ids = S.waste.slice(); S.stock = S.waste.reverse(); S.waste = []; S.stock.forEach(c => S.up[c] = 0); return {pts: draw === 1 ? -100 : -20, ids, kind: 'recycle', flipped: -1}; }
+  const from = a[0], to = a[1], n = parseInt(a[2], 36), src = pile(S, from), dst = pile(S, to);
+  const ids = src.splice(src.length - n, n); dst.push(...ids);
+  let pts = 0, flipped = -1;
+  if (isF(to)) pts += 10;
+  if (from === 'w' && isT(to)) pts += 5;
+  if (isF(from) && isT(to)) pts -= 15;
+  if (isT(from) && src.length && !S.up[last(src)]) { flipped = last(src); S.up[flipped] = 1; pts += 5; }
+  return {pts, ids, kind: isF(to) ? 'home' : 'move', flipped};
+}
+const won = S => S.f.every(p => p.length === 13);
+const canAuto = S => !S.stock.length && !S.waste.length && S.t.every(col => col.every(c => S.up[c])) && !won(S);
+// the best place to send a tapped card: home first, then a column (nearest to the right)
+function bestTarget(S, from, n) {
+  const src = pile(S, from), id = src[src.length - n];
+  if (n === 1 && !isF(from)) { const f = foundFor(S, id); if (f) return f; }
+  const start = isT(from) ? +from + 1 : 0, order = COLS.slice(start).concat(COLS.slice(0, start));
+  for (const to of order) if (pile(S, to).length && legal(S, from, to, n)) return to;
+  const pointless = isT(from) && src.length === n;   // a King that's already at the top of its column
+  if (!pointless) for (const to of order) if (!pile(S, to).length && legal(S, from, to, n)) return to;
+  return null;
+}
+// a useful move to suggest; boardOnly leaves out "draw from the stock"
+function findHint(S, boardOnly) {
+  for (const p of ['w', ...COLS]) { const src = pile(S, p); if (src.length && S.up[last(src)]) { const f = foundFor(S, last(src)); if (f) return {from: p, to: f, n: 1}; } }
+  for (const p of COLS) {   // a run that uncovers a face-down card
+    const src = pile(S, p), k = src.findIndex(c => S.up[c]);
+    if (k <= 0) continue;
+    for (const to of COLS) if (legal(S, p, to, src.length - k)) return {from: p, to, n: src.length - k};
+  }
+  if (S.waste.length) for (const to of COLS) if (legal(S, 'w', to, 1)) return {from: 'w', to, n: 1};
+  for (const p of COLS) {   // move part of a run so the card underneath can go home
+    const src = pile(S, p);
+    for (let k = 1; k < src.length; k++) {
+      if (!S.up[src[k - 1]] || !S.up[src[k]] || !foundFor(S, src[k - 1])) continue;
+      for (const to of COLS) if (legal(S, p, to, src.length - k)) return {from: p, to, n: src.length - k};
+    }
+  }
+  // empty a column when there's a King waiting for one
+  const kingWaiting = S.t.some(col => col.some((c, k) => k > 0 && S.up[c] && rank(c) === 13)) || S.stock.concat(S.waste).some(c => rank(c) === 13);
+  if (kingWaiting && !S.t.some(col => !col.length)) for (const p of COLS) {
+    const src = pile(S, p);
+    if (src.length && S.up[src[0]] && rank(src[0]) !== 13) for (const to of COLS) if (legal(S, p, to, src.length)) return {from: p, to, n: src.length};
+  }
+  if (boardOnly) return null;
+  if (S.stock.length || S.waste.length) return {draw: true};
+  return null;
+}
+function stuck(S) {
+  if (findHint(S, true)) return false;
+  return !S.stock.concat(S.waste).some(id => foundFor(S, id) || COLS.some(to => fits(S, id, to)));
+}
+function parseLog(l) { const out = []; for (let i = 0; i < l.length;) { if (l[i] === 'd' || l[i] === 'r') out.push(l[i++]); else { out.push(l.slice(i, i + 3)); i += 3; } } return out; }
+
+/* ======================================================================
+   TABLE: lays the cards out on the felt. Used by the game and the timelapse.
+   Tall screens: stock, waste and foundations in a row above the columns.
+   Wide, short screens: stock on one side, foundations stacked on the other.
+   ====================================================================== */
+function Table(el, opts) {
+  const cards = [], slots = {};
+  let S = null, geo = null, zt = 0;
+  el.innerHTML = '';
+  for (const p of ['s', 'w', ...FOUNDS, ...COLS]) {
+    const d = document.createElement('div'); d.className = 'slot' + (p === 's' ? ' stock' : ''); d.dataset.p = p;
+    if (isF(p)) d.textContent = 'A';
+    if (p === 'w') d.style.borderColor = 'transparent';
+    el.appendChild(d); slots[p] = d;
+  }
+  for (let id = 0; id < 52; id++) { const c = cardEl(id, true); el.appendChild(c); cards[id] = c; }
+  function measure() {
+    const W = el.clientWidth, H = el.clientHeight, lefty = opts.lefty();
+    if (!W || !H) return false;
+    // tall: 7 across with the top row above; wide: 9 across with foundations stacked down one side
+    const gT = Math.max(4, Math.min(12, W * .012)), cwT = Math.min((W - 8 * gT) / 7, (H - 4.8 * gT) / 6.8, 112);   // room for a column of about ten cards
+    const gW = Math.max(4, Math.min(10, H * .022)), cwW = Math.min((W - 10 * gW) / 9, (H - 5 * gW) / 5.6, (H - 2 * gW) / 5.4, 112);
+    const wide = cwW > cwT * 1.06, pos = {};
+    let cw, g;
+    if (!wide) {
+      g = gT; cw = cwT;
+      const x0 = (W - (7 * cw + 6 * g)) / 2, col = i => x0 + i * (cw + g);
+      const order = lefty ? {A: 0, B: 1, C: 2, D: 3, w: 5, s: 6} : {s: 0, w: 1, A: 3, B: 4, C: 5, D: 6};
+      for (const p in order) pos[p] = [col(order[p]), g];
+      COLS.forEach((p, i) => pos[p] = [col(i), g + cw * 1.4 + g * 1.8]);
+    } else {
+      g = gW; cw = cwW;
+      const x0 = (W - (9 * cw + 8 * g)) / 2, col = i => x0 + i * (cw + g), ch = cw * 1.4;
+      const sideS = lefty ? 8 : 0, sideF = lefty ? 0 : 8;
+      pos.s = [col(sideS), g]; pos.w = [col(sideS), g + ch + g];
+      FOUNDS.forEach((p, i) => pos[p] = [col(sideF), g + i * (ch + g)]);
+      COLS.forEach((p, i) => pos[p] = [col(i + 1), g]);
+    }
+    geo = {wide, cw, ch: cw * 1.4, g, pos, H, fanX: lefty ? -1 : 1};
+    el.style.setProperty('--cw', cw + 'px'); el.style.setProperty('--ch', cw * 1.4 + 'px'); el.style.setProperty('--cr', Math.max(4, cw * .09) + 'px');
+    for (const p in slots) { const [x, y] = pos[p]; slots[p].style.translate = `${x}px ${y}px`; }
+    return true;
+  }
+  // where every card goes: positions and stacking order
+  function layout(S) {
+    const P = [], Z = [], {cw, ch, g, pos, H} = geo;
+    S.stock.forEach((id, i) => { P[id] = [pos.s[0], pos.s[1]]; Z[id] = 1 + i; });
+    const fan = opts.draw() === 3 ? Math.min(3, S.waste.length) : 1;
+    S.waste.forEach((id, i) => {
+      const k = Math.max(0, i - (S.waste.length - fan));   // the top few spread out
+      P[id] = geo.wide ? [pos.w[0], pos.w[1] + k * ch * .2] : [pos.w[0] + k * cw * .3 * geo.fanX, pos.w[1]];
+      Z[id] = 40 + i;
+    });
+    FOUNDS.forEach(p => pile(S, p).forEach((id, i) => { P[id] = pos[p]; Z[id] = 100 + i; }));
+    COLS.forEach(p => {
+      const col = S.t[+p], [x, y0] = pos[p];
+      // squeeze long columns: face-down cards first, then face-up ones (but keep their corners readable)
+      let dd = ch * .13, du = ch * .32;
+      const room = H - g - ch - y0, nd = col.slice(0, -1).filter(c => !S.up[c]).length, nu = Math.max(0, col.length - 1 - nd);
+      if (nd * dd + nu * du > room) {
+        if (nd) dd = Math.max(ch * .05, (room - nu * du) / nd);
+        if (nu && nd * dd + nu * du > room) du = Math.max(cw * .42, (room - nd * dd) / nu);
+        const need = nd * dd + nu * du;
+        if (need > room) { const f = Math.max(.2, room / need); dd *= f; du *= f; }
+      }
+      let y = y0;
+      col.forEach((c, k) => { P[c] = [x, y]; Z[c] = 200 + k; y += S.up[c] ? du : dd; });
+    });
+    return {P, Z};
+  }
+  function render(state, moved = [], dealIt) {
+    S = state;
+    if (!geo && !measure()) return;
+    const {P, Z} = layout(S);
+    clearTimeout(zt);
+    for (let id = 0; id < 52; id++) {
+      const c = cards[id];
+      c.classList.toggle('down', !S.up[id]); c.classList.toggle('up', !!S.up[id]);
+      c.classList.remove('drag');
+      c.style.transitionDelay = '';
+      c.style.setProperty('--at', `${P[id][0]}px ${P[id][1]}px`);
+      c.style.zIndex = Z[id];
+      c.setAttribute('aria-label', S.up[id] ? cardName(id) : 'Face-down card');
+    }
+    moved.forEach((id, k) => cards[id].style.zIndex = 600 + k);   // moving cards pass over the others
+    if (moved.length) zt = setTimeout(() => moved.forEach(id => cards[id].style.zIndex = Z[id]), 260);
+    slots.s.innerHTML = !S.stock.length && S.waste.length ? ic('again') : '';
+    if (dealIt && !reduced()) {   // the deal: everything starts on the stock, then flies out
+      const order = [];
+      for (let r = 0; r < 7; r++) for (let c = r; c < 7; c++) order.push(S.t[c][r]);
+      order.forEach(id => { cards[id].style.transition = 'none'; cards[id].style.setProperty('--at', `${geo.pos.s[0]}px ${geo.pos.s[1]}px`); });
+      void el.offsetWidth;
+      order.forEach((id, k) => { const c = cards[id]; c.style.transition = ''; c.style.transitionDelay = k * 22 + 'ms'; c.style.setProperty('--at', `${P[id][0]}px ${P[id][1]}px`); });
+    }
+  }
+  function relayout() { geo = null; if (S && measure()) render(S); }
+  new ResizeObserver(() => relayout()).observe(el);
+  // where a pile accepts a dropped card, in table coordinates
+  function dropRect(p) {
+    const [x, y] = geo.pos[p], col = pile(S, p);
+    if (isT(p) && col.length) { const lc = cards[last(col)].style.getPropertyValue("--at").split(" ").map(parseFloat); return [x, y, geo.cw, lc[1] - y + geo.ch]; }
+    return [x, y, geo.cw, geo.ch];
+  }
+  function cardXY(id) { return cards[id].style.getPropertyValue('--at').split(' ').map(parseFloat); }
+  return {el, render, relayout, cards, slots, dropRect, cardXY, geo: () => geo};
+}
+
+/* ---------- saved data ---------- */
+const PREF_KEY = 'solitaire-prefs', STATS_KEY = 'solitaire-stats-v1', HIST_KEY = 'solitaire-history-v1';
+const saveKey = m => `solitaire-save-v1-${m}`;
+const prefs = Object.assign({mode: 'd1', histSeen: 0, undo: true, hint: true, auto: true, lefty: false, buzz: true}, load(PREF_KEY, {}));
+const savePrefs = () => keep(PREF_KEY, prefs);
+const allStats = () => load(STATS_KEY, {});
+const hist = () => load(HIST_KEY, []);
+const MODES = {d1: {name: 'Draw 1', draw: 1, icon: 'one'}, d3: {name: 'Draw 3', draw: 3, icon: 'three'}};
+const MODE_IDS = Object.keys(MODES);
+if (!MODES[prefs.mode]) prefs.mode = 'd1';
+const statOf = m => Object.assign({played: 0, wins: 0, streak: 0, bestStreak: 0, bestTime: 0, fewest: 0, bestScore: 0, home: {}}, allStats()[m]);
+CTRL.buzz = prefs.buzz;
+
+/* ======================================================================
+   GAME
+   ====================================================================== */
+let G = null, undoStack = [], busy = false, newArmed = 0, stuckShown = false;
+const T = Table($('#table'), {draw: () => G ? G.draw : 1, lefty: () => prefs.lefty});
+const timeNow = () => G ? G.elapsed + (G.startedAt ? Date.now() - G.startedAt : 0) : 0;
+function newGame(m) {
+  const deck = shuffled();
+  G = {m, draw: MODES[m].draw, deck: deck.map(i => ALPHA[i]).join(''), S: deal(deck), score: 0, moves: 0, undos: 0, log: '', elapsed: 0, startedAt: 0, over: false, won: false};
+  undoStack = []; stuckShown = false; busy = false;
+  saveGame(); G.fresh = true;
+}
+function resumeGame(s) {
+  if (!s || !s.S || !MODES[s.m] || s.over) return false;
+  G = Object.assign({}, s, {startedAt: 0}); undoStack = []; stuckShown = false; busy = false;
+  return true;
+}
+function saveGame() {
+  if (!G) return;
+  if (G.over) keep(saveKey(G.m), null);
+  else keep(saveKey(G.m), Object.assign({}, G, {elapsed: timeNow(), startedAt: 0, fresh: undefined}));
+}
+function updatePaused() {
+  if (!G || G.over) return;
+  const paused = (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show');
+  if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
+  else if (!paused && !G.startedAt && G.moves) G.startedAt = Date.now();
+}
+document.addEventListener('visibilitychange', updatePaused);
+
+/* ---------- the numbers and buttons ---------- */
+function showNums() { $('#score').textContent = num(G.score); $('#moves').textContent = num(G.moves); }
+function showTime() { $('#time').textContent = fmt(timeNow()); }
+setInterval(() => { if (G && !G.over && !$('#game').classList.contains('hidden')) showTime(); }, 250);
+function showTools() {
+  const over = !G || G.over;
+  $('#tools').classList.toggle('hidden', over);
+  $('#undoBtn').classList.toggle('hidden', !prefs.undo);
+  $('#undoBtn').innerHTML = ic('undo') + 'Undo' + (G && G.undos ? ` <small>${G.undos}</small>` : '');
+  $('#undoBtn').disabled = !undoStack.length || busy;
+  $('#hintBtn').classList.toggle('hidden', !prefs.hint);
+  $('#hintBtn').innerHTML = ic('bulb') + 'Hint';
+  $('#hintBtn').disabled = busy;
+  $('#finishBtn').innerHTML = ic('flag') + 'Finish';
+  $('#finishBtn').classList.toggle('hidden', over || busy || prefs.auto || !canAuto(G.S));
+}
+
+/* ---------- making a move ---------- */
+function perform(a, quiet) {
+  undoStack.push({S: clone(G.S), score: G.score, moves: G.moves, log: G.log});
+  if (undoStack.length > 400) undoStack.shift();
+  const r = apply(G.S, a, G.draw);
+  G.score = Math.max(0, G.score + r.pts); G.moves++; G.log += a;
+  if (!G.startedAt) G.startedAt = Date.now();
+  T.render(G.S, r.ids);
+  if (r.kind === 'home') { Sound.home(rank(r.ids[0])); vibrate(8); }
+  else if (r.kind === 'draw') Sound.draw();
+  else if (r.kind === 'recycle') Sound.shuffle();
+  else Sound.place();
+  if (r.flipped >= 0) setTimeout(Sound.flip, 90);
+  showNums();
+  if (!quiet) afterMove();
+  return r;
+}
+function afterMove() {
+  saveGame(); showTools();
+  if (won(G.S)) { win(); return; }
+  if (canAuto(G.S)) { if (prefs.auto) autoFinish(); return; }
+  if (stuck(G.S)) { if (!stuckShown) { stuckShown = true; toast('No moves left. Undo, or start a new game.', 3200); } }
+  else stuckShown = false;
+}
+function tapStock() {
+  if (!G || G.over || busy) return;
+  if (G.S.stock.length) perform('d');
+  else if (G.S.waste.length) perform('r');
+  else Sound.bump();
+}
+function tryMove(from, to, n) {
+  if (!legal(G.S, from, to, n)) return false;
+  perform(from + to + n.toString(36));
+  return true;
+}
+function nope(ids) {
+  Sound.bump(); vibrate(12);
+  ids.forEach(id => { const c = T.cards[id]; c.classList.remove('nope'); void c.offsetWidth; c.classList.add('nope'); });
+}
+function undo() {
+  if (!G || G.over || busy || !undoStack.length || !prefs.undo) return;
+  const u = undoStack.pop();
+  const moved = [];
+  G.S.up.forEach((v, id) => { if (!moved.includes(id) && where(G.S, id).p !== where(u.S, id).p) moved.push(id); });
+  G.S = u.S; G.score = u.score; G.moves = u.moves; G.log = u.log; G.undos++; stuckShown = false;
+  T.render(G.S, moved); Sound.undo();
+  showNums(); showTools(); saveGame();
+}
+$('#undoBtn').onclick = undo;
+function hint() {
+  if (!G || G.over || busy) return;
+  const h = stuck(G.S) ? null : findHint(G.S);
+  const flash = el => { el.classList.remove('hint'); void el.offsetWidth; el.classList.add('hint'); };
+  if (!h) { toast('No moves left. Undo, or start a new game.', 2600); Sound.bump(); return; }
+  if (h.draw) { flash(G.S.stock.length ? T.cards[last(G.S.stock)] : T.slots.s); toast(G.S.stock.length ? 'Turn over the stock' : 'Turn the stock back over'); return; }
+  const src = pile(G.S, h.from);
+  src.slice(src.length - h.n).forEach(id => flash(T.cards[id]));
+  const dst = pile(G.S, h.to);
+  setTimeout(() => flash(dst.length ? T.cards[last(dst)] : T.slots[h.to]), 250);
+}
+$('#hintBtn').onclick = hint;
+// once every card is face up: send them all home, lowest first
+function autoFinish() {
+  if (busy || !G || G.over) return;
+  busy = true; showTools();
+  const step = () => {
+    if (!G || G.over) { busy = false; return; }
+    if (won(G.S)) { busy = false; win(); return; }
+    let best = null;
+    for (const p of ['w', ...COLS]) { const src = pile(G.S, p); if (!src.length) continue; const f = foundFor(G.S, last(src)); if (f && (!best || rank(last(src)) < best.r)) best = {p, f, r: rank(last(src))}; }
+    if (!best) { busy = false; showTools(); return; }
+    perform(best.p + best.f + '1', true); saveGame();
+    setTimeout(step, reduced() ? 0 : 95);
+  };
+  setTimeout(step, 250);
+}
+$('#finishBtn').onclick = () => autoFinish();
+
+/* ---------- tapping and dragging cards ---------- */
+(() => {
+  const tb = $('#table');
+  let d = null;
+  tb.addEventListener('pointerdown', e => {
+    if (!G || G.over || busy || d) return;
+    const c = e.target.closest('.cd'), slot = e.target.closest('.slot');
+    if ((c && G.S.stock.includes(+c.dataset.id)) || (slot && slot.dataset.p === 's')) { e.preventDefault(); tapStock(); return; }
+    if (!c) return;
+    const id = +c.dataset.id, w = where(G.S, id);
+    if (!G.S.up[id] || !w) return;
+    const src = pile(G.S, w.p);
+    if ((w.p === 'w' || isF(w.p)) && w.k !== src.length - 1) return;
+    const ids = src.slice(w.k);
+    d = {p: w.p, n: ids.length, ids, x: e.clientX, y: e.clientY, pid: e.pointerId, moved: false, at: ids.map(i => T.cardXY(i))};
+    try { tb.setPointerCapture(e.pointerId); } catch {}
+  });
+  tb.addEventListener('pointermove', e => {
+    if (!d || e.pointerId !== d.pid) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (!d.moved) {
+      if (Math.hypot(dx, dy) < 7) return;
+      d.moved = true;
+      d.ids.forEach((id, k) => { const c = T.cards[id]; c.classList.add('drag'); c.style.zIndex = 800 + k; });
+    }
+    d.ids.forEach((id, k) => T.cards[id].style.setProperty('--at', `${d.at[k][0] + dx}px ${d.at[k][1] + dy}px`));
+  });
+  function end(e, cancel) {
+    if (!d || (e && e.pointerId !== d.pid)) return;
+    const s = d; d = null;
+    if (!s.moved) { if (cancel) return;   // a tap: send it to the best place
+      const to = bestTarget(G.S, s.p, s.n);
+      if (to) tryMove(s.p, to, s.n); else nope(s.ids);
+      return;
+    }
+    // a drag: drop it on the pile it overlaps most
+    const [x, y] = T.cardXY(s.ids[0]), {cw, ch} = T.geo();
+    let best = null, bestA = 0;
+    if (!cancel) for (const p of [...FOUNDS, ...COLS]) {
+      if (p === s.p || !legal(G.S, s.p, p, s.n)) continue;
+      const [rx, ry, rw, rh] = T.dropRect(p);
+      const a = Math.max(0, Math.min(x + cw, rx + rw) - Math.max(x, rx)) * Math.max(0, Math.min(y + ch, ry + rh) - Math.max(y, ry));
+      if (a > bestA) { bestA = a; best = p; }
+    }
+    if (best) tryMove(s.p, best, s.n);
+    else { T.render(G.S, s.ids); if (!cancel) Sound.bump(); }
+  }
+  tb.addEventListener('pointerup', e => end(e, false));
+  tb.addEventListener('pointercancel', e => end(e, true));
+  tb.addEventListener('touchmove', e => e.preventDefault(), {passive: false});   // the page mustn't scroll while you drag
+})();
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || $('#game').classList.contains('hidden') || document.querySelector('.panel.show') || (RZ && RZ.menuOpen)) return;
+  if (e.key === 'z' || e.key === 'u' || e.key === 'Backspace') { e.preventDefault(); undo(); }
+  else if (e.key === 'h') { e.preventDefault(); if (prefs.hint) hint(); }
+  else if (e.key === ' ' || e.key === 'd') { e.preventDefault(); tapStock(); }
+});
+
+/* ---------- toasts ---------- */
+let toastT = 0;
+function toast(text, ms = 1600) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
+
+/* ---------- the end of a game ---------- */
+function record() {
+  const all = allStats(), st = all[G.m] = statOf(G.m), home = homeCount(G.S);
+  const prevBest = st.bestTime;
+  st.played++;
+  if (G.won) {
+    st.wins++; st.streak++; st.bestStreak = Math.max(st.bestStreak, st.streak);
+    st.bestTime = st.bestTime ? Math.min(st.bestTime, G.elapsed) : G.elapsed;
+    st.fewest = st.fewest ? Math.min(st.fewest, G.moves) : G.moves;
+    st.bestScore = Math.max(st.bestScore, G.score);
+  } else st.streak = 0;
+  st.home[home] = (st.home[home] || 0) + 1;
+  keep(STATS_KEY, all);
+  const h = hist();
+  h.unshift({m: G.m, won: G.won ? 1 : 0, home, score: G.score, moves: G.moves, ms: G.elapsed, u: G.undos, why: G.why, t: Date.now(), rp: {d: G.deck, l: G.log}});
+  h.forEach((x, k) => { if (k >= 40) delete x.rp; });           // timelapses are kept for the latest 40 games
+  keep(HIST_KEY, h.slice(0, 300));
+  return {bestTime: G.won && (!prevBest || G.elapsed < prevBest), st};
+}
+function endGame(why, fresh) {
+  if (!G || G.over) return;
+  G.elapsed = timeNow(); G.startedAt = 0; G.over = true; G.why = why; G.won = why === 'won';
+  const res = G.moves ? record() : {bestTime: false};
+  saveGame(); showTools();
+  if (fresh) { newGame(G.m); showGame(); return; }
+  return res;
+}
+function win() {
+  const res = endGame('won');
+  Sound.win(); vibrate([20, 60, 20]);
+  // the foundations jump in a wave
+  if (!reduced()) G.S.f.forEach((p, i) => p.forEach((id, k) => {
+    const c = T.cards[id], [x, y] = T.cardXY(id);
+    c.style.setProperty('--at2', `${x}px ${y - T.geo().ch * .35}px`); c.style.setProperty('--dl', (k * 4 + i) * 22 + 'ms');
+    c.classList.remove('cheer'); void c.offsetWidth; c.classList.add('cheer');
+    setTimeout(() => c.classList.remove('cheer'), 1900);
+  }));
+  setTimeout(() => showResult(res), reduced() ? 0 : 900);
+}
+function showResult(res) {
+  const R = $('#result'), st = res.st || statOf(G.m);
+  const chips = [res.bestTime ? `<span class="new">${ic('trophy')}Best time!</span>` : '', `<span>${ic('clock')}${fmt(G.elapsed)}</span>`,
+    `<span>${ic('moves')}${num(G.moves)} moves</span>`, G.undos ? `<span>${ic('undo')}${G.undos}</span>` : '', st.streak > 1 ? `<span>${ic('fire')}${st.streak} in a row</span>` : ''].filter(Boolean);
+  R.className = 'result';
+  R.innerHTML = `<div class="top"><span class="ri">${ic('trophy')}</span>
+    <div><h2>You won!</h2><div style="font-weight:900;font-size:1.05rem">${num(G.score)} points</div><div class="chips">${chips.join('')}</div></div></div>
+    <div class="row2"><button class="sec" id="rpBtn">${ic('play')}Replay</button><button class="primary" id="againBtn">${ic('again')}Play again</button></div>`;
+  R.classList.remove('hidden');
+  $('#againBtn').onclick = () => { newGame(G.m); showGame(); };
+  $('#rpBtn').onclick = () => { const h = hist()[0]; if (h) RP.open(h); };
+}
+
+/* ---------- moving between screens ---------- */
+function showGame() {
+  $('#home').classList.add('hidden'); $('#game').classList.remove('hidden');
+  $('#gMode').textContent = MODES[G.m].name;
+  $('#result').classList.add('hidden');
+  const fresh = G.fresh; G.fresh = false;
+  T.relayout(); T.render(G.S, [], fresh);
+  showNums(); showTime(); showTools(); updatePaused(); saveGame();
+  if (canAuto(G.S) && prefs.auto) autoFinish();
+}
+function showHome() {
+  clearTimeout(toastT); $('#toast').classList.remove('show');
+  $('#game').classList.add('hidden'); $('#home').classList.remove('hidden');
+  updatePaused(); saveGame(); renderModes(); renderPlay(); renderHistBadge();
+}
+$('#homeBtn').onclick = showHome;
+// a new game: tap twice if you're partway through, so a slip doesn't lose your game
+$('#newBtn').onclick = () => {
+  if (busy) return;
+  if (G && !G.over && G.moves) {
+    if (Date.now() - newArmed > 2500) { newArmed = Date.now(); toast('Tap again to start a new game'); return; }
+    newArmed = 0; endGame('quit', true); return;
+  }
+  newGame(G.m); showGame();
+};
+
+/* ======================================================================
+   HOME
+   ====================================================================== */
+$('#stitle').innerHTML = '';
+[0, 13, 26, 39].forEach((id, k) => { const c = cardEl(id); c.style.setProperty('--k', k); c.style.setProperty('--y', k === 0 || k === 3 ? 8 : 0); c.setAttribute('aria-hidden', 'true'); $('#stitle').appendChild(c); });
+// little card drawings for the mode cards
+function svgCard(x, y, id, down, w = 30) {
+  const h = w * 1.4, r = w * .1;
+  if (down) return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="var(--back)" stroke="var(--face)" stroke-width="2.4"/><rect x="${x + 5}" y="${y + 5}" width="${w - 10}" height="${h - 10}" rx="${r / 2}" fill="none" stroke="var(--back2)" stroke-width="2"/>`;
+  const col = red(id) ? 'var(--red)' : 'var(--black)';
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="var(--face)" stroke="rgba(0,0,0,.15)"/>
+    <text x="${x + 3.5}" y="${y + 11.5}" fill="${col}" style="font:900 11px Nunito,system-ui,sans-serif">${RANKS[rank(id)]}</text>
+    <use href="#rzs${suit(id)}" x="${x + w / 2 - 8}" y="${y + h / 2 - 4}" width="16" height="16" style="color:${col}"/>`;
+}
+function modeArt(m) {
+  let s = `<rect width="120" height="120" rx="16" fill="var(--felt)"/>`;
+  if (m === 'd1') s += svgCard(12, 12, 0, true) + svgCard(48, 12, 13);
+  else s += svgCard(12, 12, 0, true) + svgCard(46, 12, 30) + svgCard(58, 12, 44) + svgCard(70, 12, 6);
+  s += svgCard(12, 62, 0, true) + svgCard(12, 72, 37) + svgCard(48, 62, 23) + svgCard(48, 74, 9) + svgCard(84, 62, 38);
+  return `<svg class="mart" viewBox="0 0 120 120" aria-hidden="true">${s}</svg>`;
+}
+const SUB = {d1: 'Turn one card at a time', d3: 'Three at a time: harder'};
+const subFor = m => { const st = statOf(m); return st.wins ? `${num(st.wins)} win${st.wins > 1 ? 's' : ''} · best ${fmt(st.bestTime)}` : SUB[m]; };
+let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
+function renderModes() {
+  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${MODES[id].name}">
+    ${modeArt(id)}<h2>${MODES[id].name}</h2><p>${subFor(id)}</p></button>`).join('');
+  $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
+  $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
+  $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
+  requestAnimationFrame(() => scrollToMode(modeIdx, true));
+}
+function scrollToMode(k, instant) {
+  const m = $('#modes'), card = m.children[k]; if (!card || $('#home').classList.contains('hidden')) return;
+  m.scrollTo({left: card.offsetLeft - (m.clientWidth - card.clientWidth) / 2, behavior: instant || reduced() ? 'auto' : 'smooth'});
+}
+addEventListener('resize', () => scrollToMode(modeIdx, true));
+function setMode(k) {
+  if (k === modeIdx && $('#modes').children[k].classList.contains('active')) return;
+  modeIdx = k;
+  [...$('#modes').children].forEach((c, j) => c.classList.toggle('active', j === k));
+  [...$('#modeDots').children].forEach((c, j) => c.classList.toggle('on', j === k));
+  $('#modePrev').disabled = k === 0; $('#modeNext').disabled = k === MODE_IDS.length - 1;
+  prefs.mode = MODE_IDS[k]; savePrefs(); renderPlay();
+}
+(() => {   // swiping and dragging the mode cards
+  const m = $('#modes');
+  let t = 0;
+  m.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const mid = m.scrollLeft + m.clientWidth / 2;
+      let best = 0, bd = 1e9;
+      [...m.children].forEach((c, k) => { const d = Math.abs(c.offsetLeft + c.clientWidth / 2 - mid); if (d < bd) { bd = d; best = k; } });
+      setMode(best);
+    }, 60);
+  });
+  let drag = null;
+  m.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = {x: e.clientX, s: m.scrollLeft, moved: false}; });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 5) { drag.moved = true; m.classList.add('dragging'); }
+    if (drag.moved) m.scrollLeft = drag.s - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!drag) return;
+    const moved = drag.moved; drag = null; m.classList.remove('dragging');
+    if (moved) { m._noClick = true; setTimeout(() => m._noClick = false, 50); requestAnimationFrame(() => m.dispatchEvent(new Event('scroll'))); }
+  });
+  m.addEventListener('click', e => {
+    if (m._noClick) return;
+    const c = e.target.closest('.mode'); if (!c) return;
+    const k = +c.dataset.k;
+    if (k !== modeIdx) { scrollToMode(k); setMode(k); } else play();
+  });
+  $('#modePrev').onclick = () => { if (modeIdx > 0) { scrollToMode(modeIdx - 1); setMode(modeIdx - 1); } };
+  $('#modeNext').onclick = () => { if (modeIdx < MODE_IDS.length - 1) { scrollToMode(modeIdx + 1); setMode(modeIdx + 1); } };
+})();
+function renderPlay() {
+  const m = MODE_IDS[modeIdx], s = load(saveKey(m), null), live = s && !s.over && s.moves > 0;
+  $('#playBtn').innerHTML = live ? `<span>Continue</span><small>${homeCount(s.S)} of 52 home · ${fmt(s.elapsed)}</small>` : `<span>Play</span><small>${MODES[m].name}</small>`;
+  $('#newBtnHome').classList.toggle('hidden', !live);
+}
+function play(fresh) {
+  const m = MODE_IDS[modeIdx], s = !fresh && load(saveKey(m), null);
+  if (!(s && resumeGame(s))) newGame(m);
+  showGame();
+}
+$('#playBtn').onclick = () => play(false);
+$('#newBtnHome').innerHTML = ic('refresh');
+$('#newBtnHome').onclick = () => {
+  const m = MODE_IDS[modeIdx], s = load(saveKey(m), null);
+  if (s && s.moves && resumeGame(s)) { G.elapsed = s.elapsed; endGame('quit', true); return; }
+  play(true);
+};
+
+/* ======================================================================
+   PANELS
+   ====================================================================== */
+function openPanel(id) {
+  $('#' + id).classList.add('show'); updatePaused();
+  setTimeout(() => { const b = $('#' + id + ' [data-close]'); if (b) b.focus({preventScroll: true}); }, 50);
+}
+function closePanel(p) {
+  p = p || [...document.querySelectorAll('.panel.show')].pop(); if (!p) return;
+  p.classList.remove('show');
+  if (p.id === 'howPanel') How.stop();
+  if (p.id === 'rpPanel') RP.stop();
+  updatePaused();
+}
+document.querySelectorAll('.panel [data-close]').forEach(b => b.onclick = () => closePanel(b.closest('.panel')));
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.panel.show')) { e.stopImmediatePropagation(); closePanel(); } }, true);
+document.querySelectorAll('.panel').forEach(p => {   // pull a panel down by its top to close it
+  let y0 = null;
+  p.addEventListener('pointerdown', e => { if (p.scrollTop <= 0 && e.target.closest('.grab, .phead h1')) { y0 = e.clientY; p.style.transition = 'none'; } });
+  addEventListener('pointermove', e => { if (y0 != null) p.style.transform = `translateY(${Math.max(0, e.clientY - y0)}px)`; });
+  addEventListener('pointerup', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; y0 = null; p.style.transition = ''; p.style.transform = '';
+    if (dy > 90) closePanel(p);
+  });
+});
+
+/* ---------- Settings ---------- */
+let resetArmed = false;
+function renderSettings() {
+  document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = !!prefs[el.dataset.p]);
+  $('#sBuzzRow').classList.toggle('hidden', !navigator.vibrate);
+  $('#sResetNote').textContent = ''; resetArmed = false; $('#sReset').textContent = 'Reset stats';
+}
+document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () => {
+  prefs[el.dataset.p] = el.checked; savePrefs(); CTRL.buzz = prefs.buzz;
+  if (el.dataset.p === 'lefty') T.relayout();
+  if (G) { showTools(); if (el.dataset.p === 'auto' && prefs.auto && !G.over && canAuto(G.S) && !$('#game').classList.contains('hidden')) autoFinish(); }
+});
+$('#sMenu').onclick = () => RZ && RZ.openMenu();
+$('#sReset').onclick = () => {
+  if (!resetArmed) { resetArmed = true; $('#sReset').textContent = 'Tap again to reset'; $('#sResetNote').textContent = 'Your history stays.'; return; }
+  keep(STATS_KEY, null); renderPlay(); renderModes(); renderSettings(); $('#sResetNote').textContent = 'Stats reset.';
+};
+const openSettings = () => { renderSettings(); openPanel('setPanel'); };
+$('#setBtnHome').onclick = openSettings; $('#setBtnGame').onclick = openSettings;
+
+/* ---------- Stats ---------- */
+let sfMode = prefs.mode;
+const BUCKETS = [[52, 52, 'All 52'], [39, 51, '39–51'], [26, 38, '26–38'], [13, 25, '13–25'], [0, 12, '0–12']];
+function renderStats() {
+  $('#sfMode').innerHTML = MODE_IDS.map(id => `<button class="${sfMode === id ? 'on' : ''}" data-m="${id}">${ic(MODES[id].icon)}${MODES[id].name}</button>`).join('');
+  const st = statOf(sfMode);
+  $('#ssum').innerHTML = [[st.played, 'Played'], [st.wins, 'Won'], [st.played ? Math.round(st.wins / st.played * 100) + '%' : '–', 'Win rate'], [st.streak, 'Streak']]
+    .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#ssum2').innerHTML = [[st.bestTime ? fmt(st.bestTime) : '–', 'Best time'], [st.fewest || '–', 'Fewest moves'], [st.bestScore ? num(st.bestScore) : '–', 'Best score'], [st.bestStreak, 'Best streak']]
+    .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+  const counts = BUCKETS.map(([lo, hi]) => Object.keys(st.home).filter(k => +k >= lo && +k <= hi).reduce((n, k) => n + st.home[k], 0)), most = Math.max(1, ...counts);
+  $('#sdist').innerHTML = `<h3>Cards home each game</h3>` + (st.played ? BUCKETS.map(([, , label], k) =>
+    `<div class="dbar"><span>${label}</span><i style="width:${Math.max(7, counts[k] / most * 100)}%">${counts[k]}</i></div>`).join('')
+    : `<p class="snote" style="margin:4px 0">Finish a game to see it here.</p>`);
+}
+$('#sfMode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { sfMode = b.dataset.m; renderStats(); } });
+$('#statsBtn').onclick = () => { sfMode = MODE_IDS[modeIdx]; renderStats(); openPanel('statsPanel'); };
+
+/* ---------- History ---------- */
+let histFilter = 'all';
+function renderHistBadge() {
+  const n = hist().filter(h => h.t > (prefs.histSeen || 0)).length;
+  $('#histBadge').textContent = n > 99 ? '99+' : n;
+  $('#histBadge').classList.toggle('hidden', !n);
+}
+function renderHistory() {
+  $('#hfilt').innerHTML = [['all', 'all', 'All'], ...MODE_IDS.map(id => [id, MODES[id].icon, MODES[id].name])]
+    .map(([id, icon, label]) => `<button class="${histFilter === id ? 'on' : ''}" data-f="${id}">${ic(icon)}${label}</button>`).join('');
+  const all = hist(), list = all.filter(h => histFilter === 'all' || h.m === histFilter);
+  const day = t => { const d = new Date(t), now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+    const same = (a, b) => a.toDateString() === b.toDateString();
+    return same(d, now) ? d.toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'}) : same(d, y) ? 'Yesterday' : d.toLocaleDateString(undefined, {day: 'numeric', month: 'short'}); };
+  $('#hlist').innerHTML = list.length ? list.slice(0, 200).map(h => `<div class="hrow" data-t="${h.t}" ${h.rp ? 'role="button" tabindex="0" aria-label="Watch timelapse"' : ''}>
+      <span class="ht${h.won ? ' won' : ''}">${h.home}</span>
+      <span class="hm"><b>${h.won ? `Won in ${fmt(h.ms)}` : `${h.home} card${h.home === 1 ? '' : 's'} home`}</b><small>${MODES[h.m].name} · ${num(h.moves)} moves · ${day(h.t)}</small></span>
+      <span class="hv">${h.won ? ic('trophy') : ''}${h.rp ? `<i class="hplay">${ic('play')}</i>` : ''}</span></div>`).join('')
+    : `<p class="hempty">${ic('history')}No games yet</p>`;
+  $('#histClear').classList.toggle('hidden', !all.length);
+  $('#histClear').textContent = 'Clear history';
+}
+$('#hfilt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { histFilter = b.dataset.f; renderHistory(); } });
+$('#hlist').addEventListener('click', e => { const r = e.target.closest('.hrow'); if (r) { const h = hist().find(x => x.t === +r.dataset.t); if (h && h.rp) RP.open(h); } });
+$('#hlist').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.hrow')) { e.preventDefault(); e.target.click(); } });
+$('#histClear').onclick = () => {
+  const b = $('#histClear');
+  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to clear'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Clear history'; }, 3000); return; }
+  delete b.dataset.sure; keep(HIST_KEY, []); renderHistory(); renderHistBadge();
+};
+$('#historyBtn').onclick = () => { prefs.histSeen = Date.now(); savePrefs(); renderHistBadge(); renderHistory(); openPanel('histPanel'); };
+
+/* ---------- Timelapse: the whole game replayed quickly, move by move ---------- */
+const RP = (() => {
+  let h = null, S = null, timer = 0, k = 0, steps = [], playing = false, speed = 1, step = 100, score = 0, draw = 1;
+  const tb = $('#rpTable'), table = Table(tb, {draw: () => draw, lefty: () => prefs.lefty});
+  function reset() {
+    draw = MODES[h.m].draw;
+    S = deal([...h.rp.d].map(ch => ALPHA.indexOf(ch)));
+    steps = parseLog(h.rp.l);
+    k = 0; score = 0;
+    step = Math.max(45, Math.min(380, 11000 / Math.max(1, steps.length)));   // a whole game takes about 11 seconds
+    tb.classList.add('quick'); tb.style.setProperty('--mv', Math.round(Math.min(200, step * .85)) + 'ms');
+    table.relayout(); table.render(S); show();
+  }
+  function show() { $('#rpScore').textContent = num(score); $('#rpMoves').textContent = `${k}/${steps.length}`; $('#rpHome').textContent = S ? homeCount(S) : 0; }
+  function next() {
+    if (k >= steps.length) { playing = false; setBtn(); if (h.won) Sound.win(); return; }
+    const r = apply(S, steps[k++], draw);
+    score = Math.max(0, score + r.pts);
+    table.render(S, r.ids);
+    if (speed === 1 && step > 90) r.kind === 'home' ? Sound.home(rank(r.ids[0])) : r.kind === 'draw' ? Sound.draw() : Sound.place();
+    show(); timer = setTimeout(next, step / speed);
+  }
+  const setBtn = () => { $('#rpPlay').innerHTML = ic(playing ? 'pause' : 'play'); $('#rpPlay').setAttribute('aria-label', playing ? 'Pause' : 'Play'); };
+  function run(restart) { clearTimeout(timer); if (restart || k >= steps.length) reset(); playing = true; setBtn(); timer = setTimeout(next, 500); }
+  function open(entry) {
+    h = entry;
+    $('#rpTitle').textContent = MODES[h.m].name;
+    $('#rpSub').textContent = h.won ? `Won in ${fmt(h.ms)}, ${num(h.moves)} moves` : `${h.home} cards home, ${num(h.moves)} moves`;
+    openPanel('rpPanel');
+    requestAnimationFrame(() => requestAnimationFrame(() => run(true)));
+  }
+  $('#rpPlay').onclick = () => { if (playing) { clearTimeout(timer); playing = false; setBtn(); } else run(false); };
+  $('#rpAgain').innerHTML = ic('again');
+  $('#rpAgain').onclick = () => run(true);
+  $('#rpSpeed').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; $('#rpSpeed').textContent = speed + '×'; };
+  return {open, stop() { clearTimeout(timer); playing = false; }};
+})();
+
+/* ---------- How to play: little animated tables ---------- */
+const How = (() => {
+  let step = 0, timers = [];
+  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+  function demo(stage) {
+    stage.innerHTML = '<div class="howdemo"></div>';
+    const box = stage.firstChild, dot = document.createElement('div');
+    dot.className = 'tapdot'; box.appendChild(dot);
+    let z = 1;
+    return {
+      card(id, x, y, down) { const c = cardEl(id, down); c.style.setProperty('--at', `${x}px ${y}px`); c.style.zIndex = z++; box.appendChild(c); return c; },
+      slot(x, y, text) { const s = document.createElement('div'); s.className = 'slot'; s.textContent = text || ''; s.style.setProperty('--at', `${x}px ${y}px`); box.appendChild(s); return s; },
+      move(c, x, y) { c.style.zIndex = z++; c.style.setProperty('--at', `${x}px ${y}px`); },
+      tap(x, y) { dot.style.setProperty('--at', `${x}px ${y}px`); dot.classList.remove('on'); void dot.offsetWidth; dot.classList.add('on'); },
+    };
+  }
+  const W = 52, H = 73;
+  const STEPS = [
+    {title: 'Build down the columns', cap: '<span>Stack cards <b>down by one</b>, switching between <b>red and black</b>, like a red 8 on a black 9. Tap a card to move it, or drag it. Uncovered cards turn over.</span>',
+      run(s) {
+        const d = demo(s);
+        d.card(1, 30, 14, true); d.card(8, 30, 34);
+        d.card(2, 99, 14, true); const king = d.card(51, 99, 14, true); const eight = d.card(20, 99, 34);
+        const seven = d.card(32, 168, 14);
+        at(700, () => { d.tap(99 + W / 2, 34 + H / 2); Sound.place(); d.move(eight, 30, 56); });
+        at(1100, () => { king.classList.remove('down'); Sound.flip(); });
+        at(2000, () => { d.tap(168 + W / 2, 14 + H / 2); Sound.place(); d.move(seven, 30, 78); });
+        at(3800, () => this.run(s));
+      }},
+    {title: 'Send cards home', cap: '<span>Each suit builds up on a <b>foundation</b> from <b>Ace to King</b>. Tap a card and it goes home by itself when it can. Get <b>all 52</b> home to win.</span>',
+      run(s) {
+        const d = demo(s);
+        [12, 72, 132, 192].forEach(x => d.slot(x, 12, 'A'));
+        const a = d.card(13, 12, 112), two = d.card(14, 99, 112), three = d.card(15, 186, 112);
+        at(700, () => { d.tap(12 + W / 2, 112 + H / 2); Sound.home(1); d.move(a, 12, 12); });
+        at(1600, () => { d.tap(99 + W / 2, 112 + H / 2); Sound.home(2); d.move(two, 12, 12); });
+        at(2500, () => { d.tap(186 + W / 2, 112 + H / 2); Sound.home(3); d.move(three, 12, 12); });
+        at(4200, () => this.run(s));
+      }},
+    {title: 'Turn over the stock', cap: () => `<span>Stuck? Tap the <b>stock</b> to turn cards over: one at a time in <b>Draw 1</b>, three in <b>Draw 3</b>. When it runs out, tap it again to go back through.</span>`,
+      run(s) {
+        const d = demo(s);
+        d.slot(20, 10);
+        const cs = [44, 5, 30].map(id => d.card(id, 20, 10, true));
+        d.card(3, 20, 92, true); d.card(18, 20, 100);   // a column with a 6 of hearts, waiting for a black 5
+        at(700, () => { d.tap(20 + W / 2, 10 + H / 2); Sound.draw(); const c = cs.pop(); c.classList.remove('down'); d.move(c, 90, 10); });   // 5 of clubs
+        at(1700, () => { d.tap(90 + W / 2, 10 + H / 2); Sound.place(); d.move(s.querySelector('.cd[data-id="30"]'), 20, 120); });
+        at(2700, () => { d.tap(20 + W / 2, 10 + H / 2); Sound.draw(); const c = cs.pop(); c.classList.remove('down'); d.move(c, 90, 10); });
+        at(4400, () => this.run(s));
+      }},
+    {title: 'Good to know', cap: '<span>Only a <b>King</b> (and anything on it) can fill an empty column. <b>Undo</b> takes back moves, <b>Hint</b> points one out, and once every card is face up the rest go home by themselves.</span>',
+      run(s) { s.innerHTML = `<div class="howkeys"><span>${ic('one')}Draw 1: easier</span><span>${ic('three')}Draw 3: harder</span><span>${ic('undo')}Undo any move</span><span>${ic('bulb')}Hint</span><span>${ic('flag')}Auto-finish</span></div>`; }},
+  ];
+  function go(k) {
+    clear(); step = Math.max(0, Math.min(STEPS.length - 1, k));
+    const S = STEPS[step];
+    $('#howTitle').innerHTML = `<span class="hn">${step + 1}</span>${S.title}`;
+    $('#howCap').innerHTML = typeof S.cap === 'function' ? S.cap() : S.cap;
+    $('#howCount').textContent = `${step + 1}/${STEPS.length}`;
+    $('#howDots').innerHTML = STEPS.map((_, j) => `<i class="${j === step ? 'on' : ''}"></i>`).join('');
+    $('#howPrev').style.visibility = step ? 'visible' : 'hidden';
+    $('#howNext').textContent = step === STEPS.length - 1 ? 'Play' : 'Next';
+    S.run($('#howStage'));
+  }
+  $('#howPrev').onclick = () => go(step - 1);
+  $('#howNext').onclick = () => { if (step === STEPS.length - 1) { closePanel($('#howPanel')); if (!$('#home').classList.contains('hidden')) play(false); } else go(step + 1); };
+  return {open() { openPanel('howPanel'); requestAnimationFrame(() => go(0)); }, stop: clear};
+})();
+$('#howBtn').onclick = () => How.open();
+
+/* ---------- start ---------- */
+fillIcons();
+renderModes(); renderPlay(); renderHistBadge();
+if (!load('solitaire-seen-how', 0)) { keep('solitaire-seen-how', 1); setTimeout(() => How.open(), 700); }
+
+/* ---------- Rizzo Games hooks (menu, updates) ---------- */
+window.RizzoHooks = {
+  onMenuOpen: () => updatePaused(),
+  onMenuClose: () => updatePaused(),
+  previewSound: () => Sound.home(5),
+  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over ? G.m : null}; },
+  afterReload(info) { const m = info && info.inGame, s = m && load(saveKey(m), null); if (s && resumeGame(s)) showGame(); },
+};
+</script>
+</body>
+</html>
