@@ -717,7 +717,7 @@ const prefs = Object.assign({mode: 'd3', histSeen: 0, undo: true, hint: true, au
 const savePrefs = () => keep(PREF_KEY, prefs);
 const allStats = () => load(STATS_KEY, {});
 const hist = () => load(HIST_KEY, []);
-const MODES = {d1: {name: 'Draw 1', draw: 1, icon: 'one'}, d3: {name: 'Draw 3', draw: 3, icon: 'three'}};
+const MODES = {d3: {name: 'Draw 3', draw: 3, icon: 'three'}, d1: {name: 'Draw 1', draw: 1, icon: 'one'}};   // Draw 3 comes first
 const MODE_IDS = Object.keys(MODES);
 if (!MODES[prefs.mode]) prefs.mode = 'd3';
 if (!prefs.d3) { prefs.mode = 'd3'; prefs.d3 = 1; keep(PREF_KEY, prefs); }   // Draw 3 became the default (once, for anyone who'd already played)
