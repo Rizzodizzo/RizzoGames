@@ -498,14 +498,9 @@ document.getElementById('games').addEventListener('click', e => {
 document.addEventListener('click', e => { if (!e.target.closest('.info, .desc')) closeDesc(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDesc(); });
 render();
-// Changing the box size in the Settings menu: the cards glide to their new size
-window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
-  hubSize() {
-    const redo = () => render(true);
-    if (document.startViewTransition && !document.documentElement.classList.contains('rz-reduce-motion')) document.startViewTransition(redo);
-    else redo();
-  },
-});
+// Changing the box size in the Settings menu: redraw straight away, behind the menu
+// (no gliding here: that animation would be drawn on top of the menu)
+window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {hubSize: () => render(true)});
 // Coming back from a game (or the app waking up) refreshes the stats and the order
 addEventListener('pageshow', () => render());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(true); });
