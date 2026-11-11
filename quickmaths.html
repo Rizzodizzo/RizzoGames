@@ -139,8 +139,9 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .ans.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--panel));color:var(--ok)}
 .ans.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel));color:var(--bad);animation:shake .35s}
 @keyframes shake{20%{translate:-7px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:3px 0}}
-.fix{height:1.4em;font-weight:900;font-size:1.05rem;color:var(--muted)}
+.fix{height:1.4em;font-weight:900;font-size:1.05rem;color:var(--bad);display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
 .fix b{color:var(--ok)}
+.fix svg.ic{width:18px;height:18px}
 /* the number pad */
 .pad{flex:none;width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vh,10px);padding-bottom:4px}
 .pad.hidden{display:none}
@@ -189,6 +190,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .qnext b{font-size:1.35rem}
 .qnext .op{color:var(--opc);margin:0 .14em}
 .qcard.hidden~.qnext{display:none}
+.qcard.flashbad{animation:flashbad .45s ease-out}
+@keyframes flashbad{0%{box-shadow:0 0 0 4px var(--bad),0 4px 18px var(--shade);translate:-6px 0}25%{translate:5px 0}50%{translate:-3px 0}100%{box-shadow:0 0 0 0 transparent,0 4px 18px var(--shade);translate:0 0}}
 /* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
 .panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
   transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
@@ -405,7 +408,6 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
   </div>
   <h3 class="sgh">Game</h3>
   <div class="sgroup">
-    <label class="srow"><span class="sl"><b>Next when right</b><small>Moves on as soon as your answer is right</small></span><input type="checkbox" class="switch" data-p="auto"></label>
     <label class="srow"><span class="sl"><b>Show the timer</b></span><input type="checkbox" class="switch" data-p="timer"></label>
   </div>
   <h3 class="sgh">Controls</h3>
@@ -527,7 +529,7 @@ const Sound = (() => {
 /* ---------- saved data ---------- */
 const PREF_KEY = 'quickmaths-prefs', STATS_KEY = 'quickmaths-stats-v1', HIST_KEY = 'quickmaths-history-v1';
 const saveKey = k => `quickmaths-save-v1-${k}`;
-const prefs = Object.assign({mode: 'add', neg: 'pos', auto: true, timer: true, pad: true, buzz: true, histSeen: 0}, load(PREF_KEY, {}));
+const prefs = Object.assign({mode: 'add', neg: 'pos', timer: true, pad: true, buzz: true, histSeen: 0}, load(PREF_KEY, {}));
 const savePrefs = () => keep(PREF_KEY, prefs);
 const allStats = () => load(STATS_KEY, {});
 const hist = () => load(HIST_KEY, []);
@@ -630,27 +632,18 @@ function press(k) {
   else if (k === 'neg') { if (G.neg !== 'neg') return; typed = typed.startsWith('-') ? typed.slice(1) : '-' + typed; }
   else { if (typed.replace('-', '').length >= 4) return; typed = (typed === '0' ? '' : typed === '-0' ? '-' : typed) + k; }
   showTyped(); Sound.key();
-  if (prefs.auto && /\d/.test(typed) && +typed === cur().x && !(typed === '-0')) submit();
 }
 function submit() {
   if (!/\d/.test(typed)) { $('#ans').classList.remove('bad'); void $('#ans').offsetWidth; $('#ans').classList.add('bad'); setTimeout(() => $('#ans').classList.remove('bad'), 400); return; }
   const q = cur(), ok = +typed === q.x;
   q.g = +typed; q.ms = Math.max(1, Math.round(timeNow() - G.qT0)); q.ok = ok ? 1 : 0;
-  if (ok) {   // right: straight on to the next question, with a quick green flash
-    G.right++; G.run = (G.run || 0) + 1;
-    Sound.right(G.run); vibrate(6);
-    const c = $('#qcard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
-    next(); return;
-  }
-  lock = true; updatePaused();
-  {
-    G.run = 0;
-    $('#ans').classList.add('bad'); $('#fix').innerHTML = `It's <b>${showN(q.x)}</b>`; Sound.wrong(); vibrate([30, 40, 30]);
-  }
-  $('#right').textContent = G.right;
-  $('#bar').style.width = (G.i + 1) / N_Q * 100 + '%';
-  saveGame();
-  setTimeout(next, 1200);
+  // right or wrong, it's straight on to the next question: no second goes
+  const c = $('#qcard'); c.classList.remove('flash', 'flashbad'); void c.offsetWidth; c.classList.add(ok ? 'flash' : 'flashbad');
+  if (ok) { G.right++; G.run = (G.run || 0) + 1; Sound.right(G.run); vibrate(6); }
+  else { G.run = 0; Sound.wrong(); vibrate([30, 40, 30]); }
+  next();
+  // a wrong one shows its answer under the new question until you answer that
+  if (!ok && !G.over) $('#fix').innerHTML = `${ic('cross')}${exprText(q)} = <b>${showN(q.x)}</b>`;
 }
 function next() {
   if (!G || G.over) return;
@@ -973,7 +966,7 @@ const How = (() => {
         keys.innerHTML = presses.map(p => `<i>${p}</i>`).join(''); });
       t += 700;
       presses.forEach((p, k) => {
-        at(t, () => { keys.children[k].classList.add('down'); if (p !== '✓') out.textContent = (p === '±' ? '−' : '') + out.textContent + (p === '±' ? '' : p); Sound.key(); });
+        at(t, () => { keys.children[k].classList.add('down'); if (p !== '⏎') out.textContent = (p === '±' ? '−' : '') + out.textContent + (p === '±' ? '' : p); Sound.key(); });
         at(t + 160, () => keys.children[k] && keys.children[k].classList.remove('down'));
         t += 520;
       });
@@ -984,12 +977,12 @@ const How = (() => {
   }
   const op = o => `<span class="op" style="--opc:var(--${o})">${OPS[o].sym}</span>`;
   const STEPS = [
-    {title: 'Answer as fast as you can', cap: '<span>Type the answer on the number pad, or a keyboard. When it\'s right, the next question pops up straight away.</span>',
-      run: s => demo(s, [[`7${op('add')}5`, ['1', '2'], true], [`6${op('mul')}8`, ['4', '8'], true]])},
-    {title: '25 questions a round', cap: '<span>Pick <b>Add</b>, <b>Subtract</b>, <b>Multiply</b>, <b>Divide</b> or a <b>Mix</b>. Get one wrong and you\'ll see the right answer, then it moves on. Afterwards, check every answer and your slowest ones.</span>',
+    {title: 'Answer as fast as you can', cap: '<span>Type the answer and press <b>Enter</b>. Right or wrong, the next question comes straight away, so there\'s no going back. Watch the <b>Next</b> box to get ahead.</span>',
+      run: s => demo(s, [[`7${op('add')}5`, ['1', '2', '⏎'], true], [`6${op('mul')}8`, ['4', '8', '⏎'], true]])},
+    {title: '25 questions a round', cap: '<span>Pick <b>Add</b>, <b>Subtract</b>, <b>Multiply</b>, <b>Divide</b> or a <b>Mix</b>. Get one wrong and you\'ll see the right answer under the next question. Afterwards, check every answer and your slowest ones.</span>',
       run: s => { s.innerHTML = `<div class="qsyms"><i class="o-add">+</i><i class="o-sub">−</i><i class="o-mul">×</i><i class="o-div">÷</i></div><div class="howkeys" style="margin-top:16px"><span>${ic('clock')}Timed</span><span>${ic('check')}Score out of 25</span><span>${ic('list')}See your answers</span></div>`; }},
     {title: 'Negative numbers', cap: '<span>Choose <b>Negatives</b> for sums like −6 × 3. Tap <b>±</b> (or the minus key) to make your answer negative.</span>',
-      run: s => demo(s, [[`−6${op('mul')}3`, ['±', '1', '8'], true], [`4${op('sub')}(−2)`, ['6'], true]])},
+      run: s => demo(s, [[`−6${op('mul')}3`, ['±', '1', '8', '⏎'], true], [`4${op('sub')}(−2)`, ['6', '⏎'], true]])},
   ];
   function go(k) {
     clear(); step = Math.max(0, Math.min(STEPS.length - 1, k));
