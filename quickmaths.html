@@ -126,31 +126,35 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .bar{flex:none;width:100%;max-width:520px;height:8px;border-radius:99px;background:var(--soft);margin-top:12px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--accent);transition:width .25s var(--ease)}
 /* the question */
-.qwrap{flex:1 1 0;min-height:0;width:100%;max-width:520px;display:flex;flex-direction:column;justify-content:center;padding:14px 0}
-.qcard{background:var(--panel);border-radius:24px;box-shadow:0 4px 18px var(--shade);padding:clamp(18px,4vh,34px) 16px;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,18px);position:relative}
-.q{font-size:clamp(2.4rem,11vw,3.6rem);font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
+.qwrap{flex:1 1 0;min-height:0;width:100%;max-width:520px;display:flex;flex-direction:column;justify-content:safe center;padding:clamp(6px,1.6vh,14px) 0;container-type:size}
+.qcard{background:var(--panel);border-radius:24px;box-shadow:0 4px 18px var(--shade);padding:clamp(8px,5cqh,34px) 16px;display:flex;flex-direction:column;align-items:center;gap:clamp(4px,2.6cqh,18px);position:relative;flex:none}
+.q{font-size:clamp(1.5rem,min(11vw,19cqh),3.6rem);font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
 .q .op{color:var(--opc,var(--accent));margin:0 .12em}
 .q.in{animation:qin .14s var(--ease)}
 @keyframes qin{from{opacity:.2;translate:0 6px}}
-.ans{min-width:min(220px,70%);height:clamp(58px,9vh,74px);border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:clamp(2rem,9vw,2.9rem);font-weight:900;
+.ans{min-width:min(220px,70%);height:clamp(36px,17cqh,74px);border-radius:clamp(10px,3cqh,16px);background:var(--soft);display:grid;place-items:center;font-size:clamp(1.3rem,min(9vw,12.5cqh),2.9rem);font-weight:900;
   font-variant-numeric:tabular-nums;border:3px solid transparent;transition:border-color .15s,background .15s}
 .ans span:empty::after{content:"";display:inline-block;width:3px;height:.9em;border-radius:2px;background:var(--muted);vertical-align:-.1em;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 .ans.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--panel));color:var(--ok)}
 .ans.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel));color:var(--bad);animation:shake .35s}
 @keyframes shake{20%{translate:-7px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:3px 0}}
-.fix{height:1.4em;font-weight:900;font-size:1.05rem;color:var(--bad);display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.fix{height:1.35em;font-weight:900;font-size:clamp(.78rem,4.6cqh,1.05rem);color:var(--bad);display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
 .fix b{color:var(--ok)}
 .fix svg.ic{width:18px;height:18px}
 /* the number pad */
-.pad{flex:none;width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vh,10px);padding-bottom:4px}
+.pad{flex:none;width:100%;max-width:420px;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(6px,1.1vh,10px);padding-bottom:4px}
 .pad.hidden{display:none}
-.key{height:clamp(48px,7.4vh,64px);border-radius:16px;background:var(--panel);box-shadow:0 3px 0 var(--line),0 4px 10px var(--shade);font-size:clamp(1.4rem,5.5vw,1.8rem);font-weight:900;
+.key{height:clamp(44px,7.2vh,62px);border-radius:16px;background:var(--panel);box-shadow:0 3px 0 var(--line),0 4px 10px var(--shade);font-size:clamp(1.4rem,5.5vw,1.8rem);font-weight:900;
   display:grid;place-items:center;touch-action:manipulation;transition:transform .06s,background .1s}
 .key:active,.key.down{transform:translateY(2px);box-shadow:0 1px 0 var(--line),0 2px 6px var(--shade);background:var(--soft)}
 .key svg.ic{width:28px;height:28px}
-.key.ghost{visibility:hidden}
-.key.enter{grid-column:1/-1;background:var(--accent);color:var(--onaccent);box-shadow:0 3px 0 var(--edge),0 4px 10px var(--shade);font-size:1.15rem;gap:8px;display:flex;align-items:center;justify-content:center}
+.key.k-0{grid-column:1/span 3}
+.key.k-back{grid-column:4;grid-row:1}
+.key.k-neg{grid-column:4;grid-row:2}
+.pad.pos .key.k-neg{display:none}
+.pad.pos .key.k-back{grid-row:1/span 2;height:auto}
+.key.enter{grid-column:4;grid-row:3/span 2;height:auto;background:var(--accent);color:var(--onaccent);box-shadow:0 3px 0 var(--edge),0 4px 10px var(--shade);font-size:1rem;gap:2px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .key.enter:active,.key.enter.down{background:var(--hi)}
 /* the result */
 .result .score{font-size:2.2rem;font-weight:900;line-height:1}
@@ -184,10 +188,10 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .qcard.flash{animation:flash .35s ease-out}
 @keyframes flash{0%{box-shadow:0 0 0 4px var(--ok),0 4px 18px var(--shade)}100%{box-shadow:0 0 0 0 transparent,0 4px 18px var(--shade)}}
 /* the next question, peeking out underneath */
-.qnext{align-self:center;margin-top:10px;padding:8px 18px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);display:flex;align-items:center;gap:10px;opacity:.75;
+.qnext{align-self:center;flex:none;margin-top:clamp(4px,2.4cqh,10px);padding:clamp(2px,1.3cqh,8px) 16px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);display:flex;align-items:center;gap:10px;opacity:.75;
   font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
 .qnext span{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.qnext b{font-size:1.35rem}
+.qnext b{font-size:clamp(1rem,6.5cqh,1.35rem)}
 .qnext .op{color:var(--opc);margin:0 .14em}
 .qcard.hidden~.qnext{display:none}
 .qcard.flashbad{animation:flashbad .45s ease-out}
@@ -197,6 +201,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .mode .pb{position:absolute;top:-14px;left:50%;translate:-50% 0;z-index:2;display:flex;align-items:center;gap:5px;padding:5px 13px 5px 9px;border-radius:99px;background:#ffd23f;color:#3a2c00;
   font-weight:900;font-size:1rem;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:0 0 0 3px var(--bg),0 4px 12px rgba(120,80,0,.25)}
 .mode .pb svg.ic{width:18px;height:18px}
+.mode .pb.score{background:var(--panel);color:var(--ink);box-shadow:0 0 0 3px var(--bg),0 3px 10px var(--shade),inset 0 0 0 1.5px var(--line)}
+.mode .pb.score svg.ic{color:#e0a800}
 /* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
 .panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
   transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
@@ -289,8 +295,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .qtitle{margin:2px 0 4px;gap:5px}
   .qsyms i{width:38px;border-radius:11px;font-size:1.5rem}
   .qtitle b{font-size:1.45rem}
-  .qwrap{padding:10px 0}
-  .key{height:46px}
 }
 
 /* ================= SIDEWAYS PHONES: the question on the left, the number pad on the right ================= */
@@ -321,15 +325,9 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .stats{grid-column:1;grid-row:2;margin-top:8px}
   .chip{padding:3px 10px 4px}
   .bar{grid-column:1;grid-row:3;max-width:none;margin-top:8px}
-  .qwrap{grid-column:1;grid-row:4;height:100%;max-width:none;padding:10px 0 4px}
-  .qcard{padding:12px 14px;gap:8px}
-  .q{font-size:clamp(1.9rem,11vh,2.8rem)}
-  .ans{height:clamp(44px,13vh,58px);font-size:clamp(1.6rem,9vh,2.2rem)}
-  .fix{height:1.2em;font-size:.95rem}
-  .qnext{margin-top:6px;padding:4px 14px}
-  .qnext b{font-size:1.1rem}
+  .qwrap{grid-column:1;grid-row:4;height:100%;max-width:none;padding:8px 0 2px}
   .pad{grid-column:2;grid-row:1/5;align-self:center;max-width:none;gap:7px}
-  .key{height:clamp(40px,13vh,54px);border-radius:13px}
+  .key{height:clamp(40px,16vh,60px);border-radius:13px}
   .result{padding:12px;gap:10px}
   .result .ri{width:42px;height:42px;border-radius:13px}
   .result h2{font-size:1.1rem}
@@ -659,11 +657,13 @@ function next() {
 }
 
 /* ---------- the number pad, and a keyboard ---------- */
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'neg', '0', 'back', 'enter'];
+// a calculator-style pad: four rows, with Delete, ± and a tall Enter down the right
+const KEYS = ['1', '2', '3', 'back', '4', '5', '6', 'neg', '7', '8', '9', 'enter', '0'];
 function renderPad() {
-  $('#pad').innerHTML = KEYS.map(k => `<button class="key${k === 'enter' ? ' enter' : ''}${k === 'neg' && (!G || G.neg !== 'neg') ? ' ghost' : ''}" data-k="${k}" aria-label="${k === 'neg' ? 'Make negative' : k === 'back' ? 'Delete' : k === 'enter' ? 'Enter' : k}">${
+  $('#pad').innerHTML = KEYS.map(k => `<button class="key k-${k}${k === 'enter' ? ' enter' : ''}" data-k="${k}" aria-label="${k === 'neg' ? 'Make negative' : k === 'back' ? 'Delete' : k === 'enter' ? 'Enter' : k}">${
     k === 'back' ? ic('del') : k === 'enter' ? ic('enter') + 'Enter' : k === 'neg' ? '±' : k}</button>`).join('');
   $('#pad').classList.toggle('hidden', !prefs.pad);
+  $('#pad').classList.toggle('pos', !G || G.neg !== 'neg');   // no ± without negatives: Delete takes its place
 }
 $('#pad').addEventListener('pointerdown', e => {
   const b = e.target.closest('.key'); if (!b) return;
@@ -760,9 +760,15 @@ function modeArt(id) {
 }
 let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
 function renderModes() {
-  // a gold badge on top of the box once you've got all 25 right: your fastest time (with the numbers picked below)
-  const pb = id => { const t = statOf(keyOf(id, prefs.neg)).bestTime; return t ? `<span class="pb" title="Your best time with all 25 right">${ic('trophy')}${fmtPB(t)}</span>` : ''; };
-  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${OPS[id].name}${statOf(keyOf(id, prefs.neg)).bestTime ? ', best time ' + fmtPB(statOf(keyOf(id, prefs.neg)).bestTime) : ''}">${pb(id)}${modeArt(id)}<h2>${OPS[id].name}</h2></button>`).join('');
+  // a badge on top of each box: your best score, then (once you've got all 25 right) your fastest time, in gold
+  const pb = id => {
+    const st = statOf(keyOf(id, prefs.neg));
+    if (st.bestTime) return {html: `<span class="pb" title="Your best time with all 25 right">${ic('trophy')}${fmtPB(st.bestTime)}</span>`, say: `best time ${fmtPB(st.bestTime)}`};
+    if (st.played) return {html: `<span class="pb score" title="Your best score">${ic('star')}${st.bestScore}/${N_Q}</span>`, say: `best score ${st.bestScore} of ${N_Q}`};
+    return {html: '', say: ''};
+  };
+  $('#modes').innerHTML = MODE_IDS.map((id, k) => { const b = pb(id);
+    return `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${OPS[id].name}${b.say ? ', ' + b.say : ''}">${b.html}${modeArt(id)}<h2>${OPS[id].name}</h2></button>`; }).join('');
   $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
   $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
   $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
