@@ -335,6 +335,20 @@ const GAMES = [
       const rows = Object.values(st), perfect = rows.reduce((n, r) => n + ((r && r.perfect) || 0), 0), best = Math.max(0, ...rows.map(r => (r && r.bestScore) || 0));
       return perfect ? `🏆 ${perfect.toLocaleString()} perfect` : best ? `⭐ Best ${best}/25` : 'No rounds yet';
     },
+  },  {
+    id: 'blockdefence',
+    name: 'Block Defence',
+    file: 'blockdefence.html',
+    blurb: 'Build toy-block towers to protect your Core! Every game has a new random track, with bosses every 10 waves. Played sideways.',
+    colors: ['#4f5bd5', '#38bdf8'],
+    art: 'defence',
+    cat: 'arcade',
+    stat() {
+      let st = {};
+      try { st = JSON.parse(localStorage.getItem('blockdefence-stats-v1')) || {}; } catch {}
+      const rows = Object.values(st), wins = rows.reduce((n, r) => n + ((r && r.wins) || 0), 0), best = Math.max(0, ...rows.map(r => (r && r.best) || 0));
+      return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : best ? `⭐ Best ${best} waves` : 'No games yet';
+    },
   },
 ];
 
@@ -401,6 +415,16 @@ const ART = {
       <rect x="13" y="50" width="33" height="33" rx="8" fill="#ea7a0c"/><text x="29.5" y="75.5">×</text>
       <rect x="50" y="50" width="33" height="33" rx="8" fill="#9333ea"/><text x="66.5" y="75.5">÷</text></g>
     <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#0b5f57" stroke-width="4"/></svg>`,
+  // a little board in a box: a track, two towers and the Core
+  defence: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="#dde4ec"/>
+    <path d="M6 30 H34 V66 H62 V44 H74" fill="none" stroke="#7b889c" stroke-width="15" stroke-linejoin="round"/>
+    <path d="M6 30 H34 V66 H62 V44 H74" fill="none" stroke="#9eabbd" stroke-width="11" stroke-linejoin="round"/>
+    <rect x="66" y="31" width="20" height="22" rx="6" fill="#363fa3"/><rect x="66" y="31" width="20" height="18" rx="6" fill="#4f5bd5"/><path d="M76 33.5l4.5 6-4.5 6-4.5-6z" fill="#4ade80"/>
+    <rect x="13" y="44" width="16" height="16" rx="4.5" fill="#1d4ed8"/><rect x="13" y="44" width="16" height="13" rx="4.5" fill="#3b82f6"/><rect x="21" y="48" width="10" height="3.6" rx="1.8" fill="#1e3a8a" transform="rotate(-35 21 50)"/><circle cx="21" cy="50" r="4.2" fill="#93c5fd"/>
+    <rect x="42" y="38" width="16" height="16" rx="4.5" fill="#c2410c"/><rect x="42" y="38" width="16" height="13" rx="4.5" fill="#f97316"/><circle cx="50" cy="44" r="4.6" fill="#fdba74"/><circle cx="50" cy="44" r="2.3" fill="#1f2937"/>
+    <circle cx="20" cy="30" r="4.5" fill="#e11d48"/><circle cx="48" cy="66" r="4.5" fill="#e11d48"/>
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#363fa3" stroke-width="4"/></svg>`,
   // a 2048 board in a box: four tiles growing up to the gold 2048
   twenty48: `<svg viewBox="0 0 96 96" aria-hidden="true">
     <rect x="6" y="6" width="84" height="84" rx="14" fill="#c9d3e3"/>
