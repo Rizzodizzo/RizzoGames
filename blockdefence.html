@@ -130,9 +130,11 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 @keyframes hurt{20%{translate:-4px 0;background:var(--bad);color:#fff}50%{translate:4px 0}80%{translate:-2px 0}}
 .pill.short{animation:hurt .45s}
 .ctrl .speed{font-size:1rem}
-/* the wave banner drops in from the top */
-.banner{position:absolute;left:50%;top:0;z-index:4;translate:-50% -120%;pointer-events:none;background:var(--block);border-radius:18px;padding:10px 22px 12px;text-align:center;
-  box-shadow:0 5px 0 var(--blockEdge),0 10px 24px var(--shade);min-width:170px}
+/* messages on the board: one stack at the top middle, under the buttons, so they never overlap */
+.notes{position:absolute;left:50%;top:58px;translate:-50% 0;z-index:4;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 24px)}
+.note{animation:noteIn 2.3s var(--ease) both;text-align:center;max-width:100%}
+@keyframes noteIn{0%{opacity:0;translate:0 -36px;scale:.92}9%{opacity:1;translate:0 5px;scale:1}14%{translate:0 0}86%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -14px}}
+.note.banner{order:0;background:var(--block);border-radius:18px;padding:10px 22px 12px;min-width:170px;box-shadow:0 5px 0 var(--blockEdge),0 10px 24px var(--shade)}
 .banner b{display:block;font-size:1.5rem;font-weight:900;line-height:1.1}
 .banner small{display:flex;gap:6px;justify-content:center;margin-top:5px;font-weight:800;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
 .banner small i{font-style:normal;background:var(--soft);border-radius:8px;padding:2px 7px}
@@ -140,8 +142,12 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .banner.boss small{color:#ffe4e6}.banner.boss small i{background:rgba(255,255,255,.18)}
 .banner.good{background:var(--ok);color:#fff;box-shadow:0 5px 0 #15803d,0 10px 24px var(--shade)}
 .banner.good small{color:#dcfce7}.banner.good small i{background:rgba(255,255,255,.18)}
-.banner.show{animation:bannerIn 2.3s var(--ease) both}
-@keyframes bannerIn{0%{translate:-50% -120%}14%{translate:-50% 64px}20%{translate:-50% 54px}80%{translate:-50% 54px}100%{translate:-50% -120%}}
+.note.ach{order:1;display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;border-radius:14px;background:#ffd23f;color:#3a2c00;box-shadow:0 4px 0 #c99a00,0 8px 18px rgba(0,0,0,.2);text-align:left}
+.note.ach .ai{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.55)}
+.note.ach .ai svg.ic{width:19px;height:19px}
+.note.ach small{display:block;font-size:.6rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;opacity:.75}
+.note.ach b{font-weight:900;font-size:.92rem}
+.note.tip{order:2;background:var(--ink);color:var(--bg);font-weight:900;font-size:.88rem;padding:8px 14px;border-radius:12px;box-shadow:0 6px 16px var(--shade)}
 /* paused, and the end of a game */
 .pausecover,.over{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:rgba(15,20,30,.35)}
 .pausecover.hidden,.over.hidden{display:none}
@@ -219,7 +225,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 
 /* placing a tower: the buttons fade away so every square can be reached */
 .hud,.hudr,.ctrl{transition:opacity .2s}
-.field.placing .hud,.field.placing .hudr,.field.placing .ctrl,.field.placing .banner{opacity:0}
+.field.placing .hud,.field.placing .hudr,.field.placing .ctrl{opacity:0}
+.field.placing .note.banner,.field.placing .note.ach{filter:opacity(.3)}   /* faded so you can see the squares under them; tips stay clear */
 .field.placing .hud>*,.field.placing .hudr>*,.field.placing .ctrl>*{pointer-events:none}
 .placehint{position:absolute;left:50%;bottom:10px;translate:-50% 0;z-index:4;pointer-events:none;background:var(--ink);color:var(--bg);font-weight:800;font-size:.82rem;padding:7px 14px;border-radius:12px;opacity:0;white-space:nowrap;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis}
 .placehint.show{animation:hint 2.6s ease both}
@@ -397,10 +404,8 @@ body:not(.playing) #rotHome{display:none}
   .bbtn{height:38px;min-width:38px;border-radius:12px;font-size:.92rem}
   .bbtn.sq{width:38px}
   .bbtn svg.ic{width:19px;height:19px}
+  .notes{top:50px;gap:6px}.note.banner{padding:7px 16px 9px}.banner b{font-size:1.2rem}
   .hud,.hudr{top:7px;gap:6px}.hud,.ctrl{left:7px}.hudr{right:7px}.ctrl{bottom:7px}
-  .banner{padding:7px 16px 9px}.banner b{font-size:1.2rem}
-  .banner.show{animation-name:bannerInS}
-  @keyframes bannerInS{0%{translate:-50% -120%}14%{translate:-50% 54px}20%{translate:-50% 46px}80%{translate:-50% 46px}100%{translate:-50% -120%}}
 }
 
 /* Reduce motion follows the switch in the Settings menu */
@@ -504,6 +509,80 @@ kbd{font:inherit;font-weight:900;font-size:.78rem;min-width:24px;padding:2px 7px
 .keys span{margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #sThis:not(.hidden) + .sgh,#sKeys .sgh{margin-top:18px}
 
+/* the end of a game: the board's buttons step aside for the results card, which has its own */
+.field.ended .hud,.field.ended .hudr,.field.ended .ctrl,.field.ended .notes{opacity:0;pointer-events:none}
+.field.ended .hud>*,.field.ended .hudr>*,.field.ended .ctrl>*{pointer-events:none}
+.ocard{max-width:min(460px,calc(100% - 24px));max-height:calc(100% - 20px);overflow:auto;padding:16px 18px;gap:10px}
+.ocard .row{flex-wrap:nowrap}
+.ocard .row .bbtn{height:42px;padding:0 13px;font-size:.92rem;white-space:nowrap}
+.ocard .row .bbtn.sq{padding:0;width:42px}
+.ocard .chips.got span{background:#ffd23f;color:#3a2c00}
+@media (max-height:430px){.ocard .oi{width:44px;height:44px;border-radius:14px}.ocard .oi svg.ic{width:24px;height:24px}.ocard h2{font-size:1.2rem}}
+/* confirm states on the difficulty cards and History */
+.mtough.warn{color:var(--bad);opacity:1}
+.hmore .bbtn.go.sure{background:var(--bad);color:#fff;box-shadow:0 4px 0 #9f1239;white-space:normal;line-height:1.15;height:auto;min-height:44px;padding:6px 14px}
+.ocard .chips span{padding:4px 9px;font-size:.8rem}
+/* outside a game, achievements drop in at the top middle (only the title is there, never a button) */
+.achpop{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 8px);translate:-50% -150%}
+@keyframes achIn{0%{translate:-50% -150%;opacity:0}12%{translate:-50% 6px;opacity:1}18%,85%{translate:-50% 0;opacity:1}100%{translate:-50% -150%;opacity:0}}
+
+/* the wave button while a wave is on: solid (never see-through over the board) */
+#waveBtn:disabled{opacity:1;background:var(--block);color:var(--muted);box-shadow:0 4px 0 var(--blockEdge),0 6px 14px var(--shade);animation:none}
+
+/* ================= THE END: first the word, then the results ================= */
+.over.word{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,3vh,18px);cursor:pointer;animation:scrim .5s ease both}
+.over.word.win{background:radial-gradient(ellipse at center,rgba(15,20,30,.15),rgba(15,20,30,.55))}
+.over.word.lose{background:radial-gradient(ellipse at center,rgba(60,0,15,.3),rgba(30,0,8,.7))}
+@keyframes scrim{from{opacity:0}}
+.eword{display:flex;gap:clamp(3px,.8vw,8px);align-items:flex-end}
+.eword span{--w:clamp(30px,min(7.2vw,15vh),72px);width:var(--w);height:calc(var(--w) * 1.08);display:grid;place-items:center;border-radius:calc(var(--w) * .2);font-weight:900;font-size:calc(var(--w) * .66);line-height:1;
+  animation:ldrop .6s var(--pop) both;animation-delay:calc(var(--i) * 75ms)}
+.eword .gap{width:calc(clamp(30px,min(7.2vw,15vh),72px) * .35)}
+.win .eword span{background:#ffd23f;color:#5a3d00;box-shadow:0 calc(var(--w) * .09) 0 #c99a00,0 12px 26px rgba(0,0,0,.3),inset 0 3px 0 rgba(255,255,255,.5)}
+.lose .eword span{background:#e11d48;color:#fff;box-shadow:0 calc(var(--w) * .09) 0 #9f1239,0 12px 26px rgba(0,0,0,.35),inset 0 3px 0 rgba(255,255,255,.25);
+  animation:ldrop .6s var(--pop) both,lslump .5s ease-in both;animation-delay:calc(var(--i) * 75ms),calc(1s + var(--i) * 40ms)}
+.lose .eword span:nth-child(2n){--r:-7deg;--y:6px}.lose .eword span:nth-child(2n+1){--r:5deg;--y:3px}.lose .eword span:nth-child(3n){--r:-3deg;--y:10px}
+@keyframes ldrop{0%{opacity:0;translate:0 -70vh;rotate:-8deg}100%{opacity:1;translate:0 0;rotate:0deg}}
+@keyframes lslump{to{rotate:var(--r);translate:0 var(--y)}}
+.win .eword span{animation:ldrop .6s var(--pop) both,lhop .5s ease-in-out both;animation-delay:calc(var(--i) * 75ms),calc(1.1s + var(--i) * 70ms)}
+@keyframes lhop{50%{translate:0 -14px}}
+.esub{margin:0;color:#fff;font-weight:900;font-size:clamp(.95rem,4vh,1.2rem);text-shadow:0 2px 8px rgba(0,0,0,.5);animation:subin .4s ease both .8s}
+@keyframes subin{from{opacity:0;translate:0 8px}}
+/* the results card */
+.over.res{background:rgba(15,20,30,.45);animation:scrim .3s ease both}
+.ecard{background:var(--panel);border-radius:22px;padding:clamp(12px,3.4vh,18px) 18px;box-shadow:0 6px 0 var(--blockEdge),0 16px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:clamp(8px,2.6vh,14px);
+  width:min(480px,calc(100% - 24px));max-height:calc(100% - 16px);overflow:auto;animation:popin .35s var(--pop)}
+.ehead{display:flex;align-items:center;gap:12px}
+.ehead .oi{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;color:#fff;background:var(--ok);box-shadow:0 4px 0 #15803d}
+.lose .ehead .oi{background:var(--bad);box-shadow:0 4px 0 #9f1239}
+.ehead .oi svg.ic{width:26px;height:26px}
+.ehead h2{margin:0;font-size:clamp(1.2rem,5.4vh,1.5rem);font-weight:900;line-height:1.1}
+.ehead small{display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:800;font-size:.85rem}
+.ehead small b{display:inline-flex;align-items:center;gap:3px;background:#ffd23f;color:#3a2c00;padding:1px 8px 1px 5px;border-radius:99px;font-size:.78rem}
+.ehead small b svg.ic{width:13px;height:13px;fill:currentColor}
+.etiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.etiles div{background:var(--soft);border-radius:12px;padding:clamp(5px,1.6vh,9px) 4px;text-align:center}
+.etiles b{display:block;font-size:clamp(1.05rem,4.6vh,1.35rem);font-weight:900;font-variant-numeric:tabular-nums}
+.etiles span{display:block;font-size:.7rem;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eachs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.eachs span{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:#ffd23f;color:#3a2c00;font-weight:900;font-size:.8rem;box-shadow:0 2px 0 #c99a00}
+.eachs svg.ic{width:15px;height:15px}
+.ebtns{display:flex;gap:8px}
+.ebtns .bbtn{height:clamp(40px,12vh,48px);padding:0 14px;font-size:.95rem;white-space:nowrap}
+.ebtns .bbtn.go{flex:1}
+.ebtns svg.ic{width:19px;height:19px}
+/* looking at your board after a win */
+.viewbar{position:absolute;left:50%;bottom:10px;translate:-50% 0;z-index:7;display:flex;align-items:center;gap:12px;padding:6px 6px 6px 16px;border-radius:18px;background:var(--block);
+  box-shadow:0 5px 0 var(--blockEdge),0 10px 24px var(--shade);font-weight:900;white-space:nowrap;animation:subin .3s ease both}
+.viewbar span{color:var(--muted);font-size:.9rem}
+.viewbar .bbtn{height:40px}
+.etiles b small{font-size:.6em;color:var(--muted);margin-left:1px}
+/* achievements earned: in the header, top right */
+.ehead .eachs{margin-left:auto;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;min-width:0}
+.ehead .eachs span{font-size:.74rem;padding:3px 9px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ehead .eachs .more{background:var(--soft);color:var(--muted);box-shadow:none}
+.ehead>span:nth-child(2){min-width:0}
+
 </style>
 </head>
 <body>
@@ -552,10 +631,11 @@ kbd{font:inherit;font-weight:900;font-size:.78rem;min-width:24px;padding:2px 7px
         <button class="bbtn sq speed" id="speedBtn" aria-label="Game speed">1×</button>
         <button class="bbtn auto" id="autoBtn" role="switch" aria-checked="false" aria-label="Start waves by themselves"><span>Auto</span><i class="sw"></i></button>
       </div>
-      <div class="banner" id="banner" aria-live="polite"></div>
+      <div class="notes" id="notes" aria-live="polite"></div>
       <div class="placehint" id="placeHint" aria-live="polite"></div>
       <div class="pausecover hidden" id="pauseCover"><div class="pcard"><b>Paused</b><button class="bbtn go" id="resumeBtn">Resume</button></div></div>
-      <div class="over hidden" id="over"></div>
+      <div class="over hidden" id="over" aria-live="polite"></div>
+      <div class="viewbar hidden" id="viewBar"><span>Your winning board</span><button class="bbtn go" id="viewBack">Back to results</button></div>
     </div>
     <aside class="shop" id="shop" aria-label="Towers"></aside>
   </section>
@@ -781,12 +861,14 @@ const hist = () => load(HIST_KEY, []);
 const COLS = 16, ROWS = 9;
 // the difficulties: how long and twisty the track is, how tough the enemies are
 const MODES = {
-  easy: {name: 'Easy', lives: 25, hp: .8, cash: 230, waves: 30, run: [2, 2], dv: [3, 7], min: 38},
+  easy: {name: 'Easy', lives: 25, hp: .8, cash: 230, pay: 1.35, waves: 30, run: [2, 2], dv: [3, 7], min: 38},
   normal: {name: 'Normal', lives: 20, hp: 1, cash: 200, waves: 30, run: [2, 3], dv: [2, 6], min: 30},
   hard: {name: 'Hard', lives: 15, hp: 1.3, cash: 180, waves: 30, run: [3, 4], dv: [2, 4], min: 22},
   endless: {name: 'Endless', lives: 20, hp: 1, cash: 200, waves: Infinity, run: [2, 3], dv: [2, 6], min: 30},
 };
 const MODE_IDS = Object.keys(MODES);
+// money: what each enemy is worth (times this), and the bonus for clearing wave n (base + n × step)
+const ECON = {kill: .55, waveBase: 10, waveStep: 1.5};   // kept lean: every wave should feel like a squeeze, not just the Bosses
 if (!MODES[prefs.mode]) prefs.mode = 'normal';
 // the towers: each stat has one value per level (1, 2, 3); range is in squares.
 // The third level also unlocks the tower's perk (its special trick).
@@ -815,7 +897,7 @@ const TRAITS = {
   shield: {name: 'Shielded', hp: 1, speed: 1, size: 1, coin: 1.5},
   split: {name: 'Splitter', hp: 1, speed: 1, size: 1, coin: 1.2},
   mend: {name: 'Mender', hp: 1.3, speed: .9, size: 1.05, coin: 2},
-  boss: {name: 'Boss', hp: 30, speed: .52, size: 1.9, coin: 20, lives: 8},
+  boss: {name: 'Boss', hp: 18, speed: .52, size: 1.9, coin: 20, lives: 5},
 };
 
 /* ---------- a random track ----------
@@ -841,6 +923,9 @@ function makeTrack(seed, m) {
     while (col < endCol) { col++; cells.push([col, row]); }
     if (cells.length < st.min || (m === 'hard' && cells.length > 30)) continue;
     if (row < 2 || row > ROWS - 3) continue;   // keep the Core away from the top and bottom edges, clear of the buttons
+    // keep the whole track out of the top row and the bottom two (the buttons sit over those corners),
+    // and the gate a little lower still, so you can see every enemy from the moment it comes out
+    if (cells[0][1] < 2 || cells.some(([, r]) => r < 1 || r > ROWS - 3)) continue;
     return {seed: s, cells, endRow: row, coreY: row + .5};   // the Core sits centred on the end of the track
   }
   return makeTrack(seed + 1, m);
@@ -898,12 +983,6 @@ function makeWave(n) {
   return out;
 }
 const baseHp = (n, m) => 8 * Math.pow(1.135, n - 1) * (1 + n * .03) * MODES[m].hp;
-// what a wave holds, for the banner
-function waveSummary(list) {
-  const c = {};
-  list.forEach(e => { const nm = e.tr.includes('boss') ? 'Boss' : (e.tr.filter(t => t !== 'boss').map(t => TRAITS[t].name).join(' ') + ' ' + KINDS[e.k].name + 's').trim(); c[nm] = (c[nm] || 0) + 1; });
-  return Object.entries(c).map(([k, v]) => k === 'Boss' ? (v > 1 ? `${v} Bosses` : 'Boss') : `${v} ${v === 1 ? k.replace(/s$/, '') : k}`);
-}
 
 /* ======================================================================
    DRAWING: everything is seen from above. Height is faked with a darker
@@ -1067,34 +1146,94 @@ const DRAW = {
       g.fillStyle = 'rgba(147,197,253,.16)'; circ(g, e.x, e.y, s * .52); g.fill(); }
   },
   // the Core: a big two-by-two block with a floating crystal; its ring shows the lives left
+  /* the Core: a big block with a floating crystal. It breaks up as lives are lost: cracks spread and start
+     to glow, corners get knocked off, rubble piles up around it, the crystal chips, flickers and smokes.
+     With no lives left it lies in pieces. k = lives left (0 to 1). */
   core(g, x, y, s, t, k, hurt, cracks) {
-    const w = s * 1.8, lift = s * .26, c = '#4f5bd5';
-    block(g, x - w / 2, y - w / 2, w, w, dark() ? '#5b66d8' : c, s * .3, lift);
+    const w = s * 1.8, lift = s * .26, c = '#4f5bd5', top = dark() ? '#5b66d8' : c, dmg = 1 - Math.max(0, Math.min(1, k));
+    const H = i => { const v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };   // fixed "random" numbers
+    // rubble around the base
+    for (let i = 0, n = Math.round(dmg * 12); i < n; i++) {
+      const a = H(i) * Math.PI * 2, d = w * (.5 + H(i + 20) * .28), z = s * (.07 + H(i + 40) * .11);
+      g.fillStyle = SHADOW; rr(g, x + Math.cos(a) * d - z / 2 + z * .2, y + Math.sin(a) * d * .75 - z / 2 + lift * .4 + z * .2, z, z * .8, z * .25); g.fill();
+      g.fillStyle = H(i + 60) > .45 ? shade(c, -.25 + H(i + 80) * .3) : '#64748b'; rr(g, x + Math.cos(a) * d - z / 2, y + Math.sin(a) * d * .75 - z / 2 + lift * .4, z, z * .8, z * .25); g.fill();
+    }
+    if (k <= 0) {   // in pieces: four chunks pushed apart, crystal shards on the ground, smoke
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, y + lift * .3, w * .5, w * .38, 0, 0, Math.PI * 2); g.fill();
+      [[-1, -1, -.18], [1, -1, .12], [-1, 1, .1], [1, 1, -.2]].forEach(([sx, sy, rot], i) => {
+        const q = w * .46; g.save(); g.translate(x + sx * w * .3, y + sy * w * .28); g.rotate(rot);
+        block(g, -q / 2, -q / 2, q, q * .92, shade(top, -.25), s * .12, lift * .7); g.restore(); });
+      for (let i = 0; i < 6; i++) { const a = H(i + 100) * Math.PI * 2, d = s * (.15 + H(i + 120) * .5), z = s * (.1 + H(i + 140) * .08);
+        g.fillStyle = shade('#4ade80', -.35 + H(i + 160) * .3); g.beginPath(); g.moveTo(x + Math.cos(a) * d, y + Math.sin(a) * d - z); g.lineTo(x + Math.cos(a) * d + z * .6, y + Math.sin(a) * d + z * .4); g.lineTo(x + Math.cos(a) * d - z * .6, y + Math.sin(a) * d + z * .3); g.fill(); }
+      for (let i = 0; i < 4; i++) { const p = (t * .35 + i / 4) % 1; g.globalAlpha = (1 - p) * .35; g.fillStyle = '#94a3b8'; circ(g, x + Math.sin(i * 2 + t) * s * .2, y - p * s * 1.6, s * (.15 + p * .35)); g.fill(); }
+      g.globalAlpha = 1; return;
+    }
+    // the block, with corners knocked off as it gets hurt (the polygon has jagged notches)
+    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]], order = [2, 0, 3, 1], cuts = [0, 0, 0, 0];
+    order.forEach((ci, n) => { if (dmg > .25 + n * .17) cuts[ci] = .2 + H(ci + 7) * .12; });
+    const breaks = [];   // the jagged edges, drawn bright like fresh breaks
+    const shape = (x0, y0, ww, hh, keep) => {
+      g.beginPath();
+      corners.forEach(([sx, sy], ci) => {
+        const cx = sx < 0 ? x0 : x0 + ww, cy = sy < 0 ? y0 : y0 + hh, prev = corners[(ci + 3) % 4], next = corners[(ci + 1) % 4];
+        const up = [(prev[0] - sx) / 2, (prev[1] - sy) / 2], un = [(next[0] - sx) / 2, (next[1] - sy) / 2];
+        if (cuts[ci]) {
+          const cut = cuts[ci] * ww, A = [cx + up[0] * cut, cy + up[1] * cut], B = [cx + un[0] * cut, cy + un[1] * cut], pts = [A];
+          for (let j = 1; j < 5; j++) { const f = j / 5, o = (j % 2 ? .2 : -.04) + (H(ci * 9 + j) - .5) * .12; pts.push([A[0] + (B[0] - A[0]) * f + (up[0] + un[0]) * cut * o, A[1] + (B[1] - A[1]) * f + (up[1] + un[1]) * cut * o]); }
+          pts.push(B); pts.forEach(([px, py], j) => ci === 0 && j === 0 ? g.moveTo(px, py) : g.lineTo(px, py));
+          if (keep) breaks.push(pts);
+        } else {
+          const r = s * .2, A = [cx + up[0] * r, cy + up[1] * r], B = [cx + un[0] * r, cy + un[1] * r];
+          ci === 0 ? g.moveTo(...A) : g.lineTo(...A); g.quadraticCurveTo(cx, cy, ...B);
+        }
+      });
+      g.closePath();
+    };
+    const x0 = x - w / 2, y0 = y - w / 2;
+    g.lineJoin = 'round';
+    g.fillStyle = SHADOW; shape(x0 + lift * .5, y0 + lift * .9, w, w); g.fill();
+    g.fillStyle = shade(top, -.5); shape(x0, y0, w, w); g.fill();
+    g.fillStyle = top; shape(x0, y0, w, w - lift, true); g.fill();
+    g.strokeStyle = shade(top, .5); g.lineWidth = s * .035; breaks.forEach(pts => { g.beginPath(); pts.forEach(([px, py], j) => j ? g.lineTo(px, py) : g.moveTo(px, py)); g.stroke(); });
     g.fillStyle = shade(c, -.35); rr(g, x - w * .36, y - w * .36 - lift * .4, w * .72, w * .72, s * .22); g.fill();
     g.fillStyle = shade(c, -.15); rr(g, x - w * .36, y - w * .36 - lift * .4, w * .72, w * .66, s * .22); g.fill();
+    // cracks: more of them as lives go, and past half they glow red from inside
+    const nCr = Math.round(dmg * 1.4 * cracks.length);
+    const crack = (p, i) => { const sc = i < cracks.length ? 1 : 1.35; g.beginPath(); g.moveTo(x + p[0] * w * sc, y + p[1] * w * sc); for (let j = 2; j < p.length; j += 2) g.lineTo(x + p[j] * w * sc, y + p[j + 1] * w * sc); g.stroke(); };
+    const list = [...cracks, ...cracks.map(p => p.map(v => -v))].slice(0, nCr);
+    g.save(); shape(x0, y0, w, w - lift); g.clip();   // cracks stay on the block
+    g.lineCap = 'round'; g.strokeStyle = 'rgba(15,23,42,.6)'; g.lineWidth = s * (.03 + dmg * .03); list.forEach(crack);
+    if (dmg > .5) { g.strokeStyle = `rgba(251,68,105,${(dmg - .5) * 1.6 * (.75 + .25 * Math.sin(t * 5))})`; g.lineWidth = s * .018; list.forEach(crack); }
+    g.restore();
     const cy = y - lift * .45, R = s * .58;
     // the lives ring
     g.lineCap = 'round'; g.lineWidth = s * .09;
     g.strokeStyle = 'rgba(0,0,0,.25)'; circ(g, x, cy, R); g.stroke();
     const col = k > .5 ? '#4ade80' : k > .25 ? '#facc15' : '#fb4469';
     g.strokeStyle = col; g.beginPath(); g.arc(x, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, k)); g.stroke();
-    // the crystal, floating and turning
-    const bob = Math.sin(t * 2) * s * .05, cr = s * .36;
+    // the crystal: it wobbles, shrinks, loses facets and flickers as the Core breaks
+    const shake = dmg > .6 ? Math.sin(t * 31) * s * .025 * (dmg - .6) * 2.5 : 0;
+    const bob = Math.sin(t * 2) * s * .05 * (1 - dmg * .6), cr = s * .36 * (1 - dmg * .22), ccx = x + shake, ccy = cy - s * .12 + bob;
+    const flick = dmg > .7 ? (Math.sin(t * 23) * Math.sin(t * 7.3) > .55 ? .45 : 1) : 1;
     g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(x + s * .08, cy + s * .2, cr * .8, cr * .35, 0, 0, Math.PI * 2); g.fill();
     const gc = hurt > 0 ? '#fb4469' : col;
-    g.globalAlpha = .3 + .15 * Math.sin(t * 3); g.fillStyle = gc; circ(g, x, cy - s * .12 + bob, cr * 1.35); g.fill(); g.globalAlpha = 1;
-    const spin = t * .8;
+    g.globalAlpha = (.3 + .15 * Math.sin(t * 3)) * flick; g.fillStyle = gc; circ(g, ccx, ccy, cr * 1.35); g.fill(); g.globalAlpha = flick;
+    const spin = t * .8 * (1 - dmg * .5), lost = dmg > .45 ? (dmg > .75 ? 2 : 1) : 0;
     for (let i = 0; i < 4; i++) {
       const a1 = spin + i * Math.PI / 2, lit = Math.cos(a1 + Math.PI / 4 + 2.3);
-      g.beginPath(); g.moveTo(x, cy - s * .12 + bob - cr * 1.25); g.lineTo(x + Math.cos(a1) * cr * .8, cy - s * .12 + bob + Math.sin(a1) * cr * .3); g.lineTo(x + Math.cos(a1 + Math.PI / 2) * cr * .8, cy - s * .12 + bob + Math.sin(a1 + Math.PI / 2) * cr * .3); g.closePath();
+      g.beginPath(); g.moveTo(ccx, ccy - cr * 1.25); g.lineTo(ccx + Math.cos(a1) * cr * .8, ccy + Math.sin(a1) * cr * .3); g.lineTo(ccx + Math.cos(a1 + Math.PI / 2) * cr * .8, ccy + Math.sin(a1 + Math.PI / 2) * cr * .3); g.closePath();
       g.fillStyle = shade(gc, lit * .4); g.fill();
-      g.beginPath(); g.moveTo(x, cy - s * .12 + bob + cr * .75); g.lineTo(x + Math.cos(a1) * cr * .8, cy - s * .12 + bob + Math.sin(a1) * cr * .3); g.lineTo(x + Math.cos(a1 + Math.PI / 2) * cr * .8, cy - s * .12 + bob + Math.sin(a1 + Math.PI / 2) * cr * .3); g.closePath();
+      if (i < lost) continue;   // a chipped-off bottom facet
+      g.beginPath(); g.moveTo(ccx, ccy + cr * .75); g.lineTo(ccx + Math.cos(a1) * cr * .8, ccy + Math.sin(a1) * cr * .3); g.lineTo(ccx + Math.cos(a1 + Math.PI / 2) * cr * .8, ccy + Math.sin(a1 + Math.PI / 2) * cr * .3); g.closePath();
       g.fillStyle = shade(gc, lit * .4 - .3); g.fill();
     }
-    // cracks as lives run out
-    g.strokeStyle = 'rgba(15,23,42,.55)'; g.lineWidth = s * .035; g.lineCap = 'round';
-    cracks.slice(0, Math.round((1 - k) * cracks.length)).forEach(p => { g.beginPath(); g.moveTo(x + p[0] * w, y + p[1] * w); for (let i = 2; i < p.length; i += 2) g.lineTo(x + p[i] * w, y + p[i + 1] * w); g.stroke(); });
-    if (hurt > 0) { g.globalAlpha = hurt * .55; g.fillStyle = '#fb4469'; rr(g, x - w / 2, y - w / 2, w, w - lift, s * .3); g.fill(); g.globalAlpha = 1; }
+    if (dmg > .35) { g.strokeStyle = 'rgba(15,23,42,.65)'; g.lineWidth = s * .025; g.beginPath(); g.moveTo(ccx - cr * .1, ccy - cr * 1.05); g.lineTo(ccx + cr * .15, ccy - cr * .4); g.lineTo(ccx - cr * .2, ccy + cr * .1); if (dmg > .65) g.lineTo(ccx + cr * .1, ccy + cr * .55); g.stroke(); }
+    g.globalAlpha = 1;
+    // sparks off the crystal, then smoke, near the end
+    if (dmg > .5) for (let i = 0; i < 3; i++) { const p = (t * 1.3 + i / 3) % 1, a = i * 2.1 + Math.floor(t * 1.3 + i / 3) * 1.7; g.globalAlpha = 1 - p; g.fillStyle = '#fde047'; circ(g, ccx + Math.cos(a) * cr * (.6 + p * 1.4), ccy + Math.sin(a) * cr * (.4 + p) - p * s * .2, s * .035); g.fill(); }
+    if (dmg > .7) for (let i = 0; i < 3; i++) { const p = (t * .4 + i / 3) % 1; g.globalAlpha = (1 - p) * .3; g.fillStyle = '#64748b'; circ(g, x + (H(i + 200) - .5) * w * .6 + Math.sin(t + i) * s * .1, y - w * .2 - p * s * 1.4, s * (.12 + p * .3)); g.fill(); }
+    g.globalAlpha = 1;
+    if (hurt > 0) { g.globalAlpha = hurt * .55; g.fillStyle = '#fb4469'; shape(x0, y0, w, w - lift); g.fill(); g.globalAlpha = 1; }
   },
   // where enemies come from: a dark gate on the left edge
   gate(g, x, y, s, t) {
@@ -1175,7 +1314,8 @@ function setup() {
   const R = rng(G.seed ^ 0x5bd1e995);   // cracks in the Core, revealed as lives are lost
   G.cracks = Array.from({length: 7}, () => { const p = [(R() - .5) * .7, (R() - .5) * .7]; for (let i = 0; i < 3; i++) p.push(p[p.length - 2] + (R() - .5) * .35, p[p.length - 1] + (R() - .5) * .35); return p; });
   FX = {parts: [], floats: [], rings: [], tracers: [], shells: [], missiles: []};
-  pick = null; drag = null; $('#field').classList.remove('placing'); sel = null; shake = 0; coreHurt = 0; autoT = 0;
+  pick = null; drag = null; $('#field').classList.remove('placing', 'ended'); $('#notes').innerHTML = ''; clearTimeout(endT);
+  $('#over').className = 'over hidden'; $('#viewBar').classList.add('hidden'); sel = null; shake = 0; coreHurt = 0; autoT = 0;
   G.towers.forEach(t => t.id = t.id || uid++);
 }
 function saveGame() {
@@ -1222,13 +1362,21 @@ function showWaveBtn() {
   else if (G.state === 'wave') { const left = G.enemies.length + G.queue.length; if (left === lastLeft) return; lastLeft = left; b.innerHTML = `${ic('skull')}${left} left`; b.disabled = true; b.classList.remove('ready'); }
   else { b.innerHTML = ic('flag'); b.disabled = true; b.classList.remove('ready'); }
 }
+/* ---------- messages on the board ----------
+   Wave banners, achievements and short tips all go in one stack at the top middle of the board,
+   under the buttons. They stack instead of overlapping, and each one drops in then fades away. */
+function note(kind, html, ms) {
+  const box = $('#notes');
+  box.querySelectorAll('.' + kind.split(' ')[0]).forEach(x => x.remove());   // one of each kind at a time
+  const n = document.createElement('div'); n.className = 'note ' + kind; n.innerHTML = html;
+  n.style.animationDuration = ms + 'ms';
+  box.appendChild(n);
+  setTimeout(() => n.remove(), ms);
+  return n;
+}
+const bannerUp = () => !!$('#notes .banner');
 function banner(title, chips, cls) {
-  const b = $('#banner');
-  b.className = 'banner' + (cls ? ' ' + cls : '');
-  b.innerHTML = `<b>${title}</b>${chips && chips.length ? `<small>${chips.map(c => `<i>${c}</i>`).join('')}</small>` : ''}`;
-  void b.offsetWidth;
-  if (reduced()) { b.style.translate = '-50% 54px'; clearTimeout(b._t); b._t = setTimeout(() => b.style.translate = '', 1800); }
-  else b.classList.add('show');
+  note('banner' + (cls ? ' ' + cls : ''), `<b>${title}</b>${chips && chips.length ? `<small>${chips.map(c => `<i>${c}</i>`).join('')}</small>` : ''}`, 2300);
 }
 
 /* ---------- the shop on the right ---------- */
@@ -1257,6 +1405,7 @@ function renderShop() {
 function setPick(k) {
   pick = k;
   $('#field').classList.toggle('placing', !!pick);
+  if (!pick) $('#placeHint').classList.remove('show');   // the hint goes with the placing view, so it never sits on the buttons
   if (pick) { const h = $('#placeHint'); h.innerHTML = `Tap a square to build a ${TOWERS[pick].name} · tap it again on the right to stop`; h.classList.remove('show'); void h.offsetWidth; h.classList.add('show'); }
   updateShop();
 }
@@ -1369,18 +1518,18 @@ function startWave() {
   G.snap = snapshot();
   G.waveN = G.wave + 1; G.queue = makeWave(G.waveN); G.spawnT = .6; G.state = 'wave'; autoT = 0; G.allFast = speed === 3;
   const boss = G.queue.some(q => q.tr.includes('boss'));
-  banner(boss ? `Boss wave ${G.waveN}` : `Wave ${G.waveN}`, waveSummary(G.queue), boss ? 'boss' : '');
+  banner(boss ? `Boss wave ${G.waveN}` : `Wave ${G.waveN}`, null, boss ? 'boss' : '');   // what's coming is for you to find out
   boss ? Sound.boss() : Sound.wave();
   showHud(); saveGame();
 }
 $('#waveBtn').onclick = startWave;
 function spawn(q, at) {
   const K = KINDS[q.k], n = G.waveN;
-  let hp = baseHp(n, G.m) * K.hp, sp = K.speed * (1 + Math.min(.3, n * .01)), size = K.size, lives = K.lives, coin = K.coin * (1 + n * .02);
+  let hp = baseHp(n, G.m) * K.hp, sp = K.speed * (1 + Math.min(.3, n * .01)), size = K.size, lives = K.lives, coin = K.coin * (1 + n * .02) * ECON.kill * (MODES[G.m].pay || 1);
   q.tr.forEach(t => { const R = TRAITS[t]; hp *= R.hp; sp *= R.speed; size *= R.size; coin *= R.coin; lives += R.lives || 0; });
   let c = K.c;
   if (q.tr.includes('small')) c = shade(c, .3); if (q.tr.includes('heavy')) c = shade(c, -.28); if (q.tr.includes('boss')) c = '#7f1d1d'; if (q.tr.includes('mend')) c = '#0f766e';
-  const e = {id: uid++, k: q.k, tr: q.tr, hp, max: hp, shield: 0, shieldMax: 0, speed: sp, size, lives, coin: Math.round(coin), c, ground: K.ground,
+  const e = {id: uid++, k: q.k, tr: q.tr, hp, max: hp, shield: 0, shieldMax: 0, speed: sp, size, lives, coin: Math.max(1, Math.round(coin)), c, ground: K.ground,
     d: at ? at.d : 0, f: at ? at.f : 0, x: -1, y: G.track.cells[0][1] + .5, a: 0, spin: 0, slowUntil: 0, slow: 0, frozenUntil: 0, flash: 0, dmgAcc: 0, dmgT: -1};
   if (q.tr.includes('shield')) e.shield = e.shieldMax = hp * .8;
   move(e, 0);
@@ -1448,7 +1597,7 @@ function reachCore(e) {
   if (G.lives <= 0) gameOver(false);
 }
 function waveDone() {
-  const n = G.waveN, reward = 20 + n * 3;
+  const n = G.waveN, reward = Math.round((ECON.waveBase + n * ECON.waveStep) * (MODES[G.m].pay || 1));
   G.wave = n; G.coins += reward; G.state = 'build'; G.snap = null;
   achGet('wave1');
   if (G.allFast) achGet('fast');
@@ -1628,7 +1777,9 @@ function render(rt) {
       g.fillStyle = e.hp / e.max > .5 ? '#4ade80' : e.hp / e.max > .25 ? '#facc15' : '#fb4469'; rr(g, px - w / 2, yy, w * Math.max(0, e.hp / e.max), h, h / 2); g.fill();
     }
   };
-  ground.sort((a, b) => a.y - b.y).forEach(drawE);
+  // enemies only show once they're out: walkers from the front of the gate, flyers once they're over the board
+  const within = (x0, f) => { g.save(); g.beginPath(); g.rect(x0 * s, -s * 2, (COLS + 2) * s, (ROWS + 4) * s); g.clip(); f(); g.restore(); };
+  within(.62, () => ground.sort((a, b) => a.y - b.y).forEach(drawE));
   DRAW.gate(g, ...P(.2, G.track.cells[0][1] + .5), s, rt);
   // the towers (they drop in when built)
   [...G.towers].sort((a, b) => a.r - b.r).forEach(t => {
@@ -1657,7 +1808,7 @@ function render(rt) {
   });
   FX.missiles.forEach(m => { g.save(); g.translate(m.x * s, m.y * s); g.rotate(m.a);
     if (m.pierce > 1 || m.done.length) { g.fillStyle = 'rgba(192,132,252,.35)'; g.beginPath(); g.ellipse(0, 0, s * .26, s * .12, 0, 0, Math.PI * 2); g.fill(); } g.fillStyle = '#f8fafc'; rr(g, -s * .15, -s * .05, s * .3, s * .1, s * .05); g.fill(); g.fillStyle = '#a855f7'; g.beginPath(); g.moveTo(s * .2, 0); g.lineTo(s * .1, -s * .06); g.lineTo(s * .1, s * .06); g.fill(); g.fillStyle = '#fb923c'; circ(g, -s * .17, 0, s * .045); g.fill(); g.restore(); });
-  air.sort((a, b) => a.y - b.y).forEach(drawE);
+  within(0, () => air.sort((a, b) => a.y - b.y).forEach(drawE));
   FX.tracers.forEach(r => { g.globalAlpha = r.life / r.max; g.strokeStyle = '#fde68a'; g.lineWidth = s * .05; g.lineCap = 'round'; g.beginPath(); g.moveTo(r.x1 * s, r.y1 * s); g.lineTo(r.x2 * s, r.y2 * s); g.stroke(); });
   g.globalAlpha = 1;
   FX.rings.forEach(r => { const k = 1 - r.life / r.max; g.globalAlpha = 1 - k; g.strokeStyle = r.color; g.lineWidth = r.w * s * (1 - k * .6); circ(g, r.x * s, r.y * s, (r.r0 + (r.r1 - r.r0) * (1 - (1 - k) * (1 - k))) * s); g.stroke(); });
@@ -1686,6 +1837,8 @@ function frame(now) {
   requestAnimationFrame(frame);
   const real = Math.min(.05, (now - lastNow) / 1000 || 0); lastNow = now;
   if (!G || !live()) return;
+  if (G.over && !document.hidden) { fxUpdate(real); shake = Math.max(0, shake - real * 2.5); coreHurt = Math.max(0, coreHurt - real * 2.2);
+    if (G.won && $('#over').classList.contains('word') && Math.random() < .5) part(Math.random() * COLS, -.3, ['#facc15', '#4ade80', '#60a5fa', '#f472b6'][Math.random() * 4 | 0], 1.5, 2.2, -2); }
   if (!held() && !G.over) {
     G.elapsed += real * 1000;
     let dt = real * speed;
@@ -1696,31 +1849,57 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-/* ---------- the end ---------- */
+/* ---------- the end ----------
+   First the word: VICTORY (or DEFEAT / GAME OVER) drops in, one block letter at a time, over the board.
+   Then the results card. Lost: Try again or Home. Won: Play again, Home, or look at your board. */
+let endT = 0;
 function gameOver(won) {
   if (G.over) return;
-  G.over = true; G.state = 'over'; G.won = won;
-  const reached = won ? G.wave : G.waveN;
+  G.over = true; G.state = 'over'; G.won = won; G.endAch = [];
+  setPick(null); sel = null; renderShop();
   const res = record({m: G.m, w: G.wave, won, kills: G.kills, ms: G.elapsed, seed: G.seed, lives: Math.max(0, G.lives), built: G.built, tw: towerMix()});
   keep(saveKey(G.m), null);
   if (won) { if (['easy', 'normal', 'hard'].includes(G.m)) achGet(G.m); if (G.lives >= G.maxLives) achGet('flawless'); }
   achSave();
   showHud();
-  won ? Sound.win() : Sound.lose(); vibrate(won ? [20, 60, 20, 60, 40] : [80, 60, 120]);
-  if (won) for (let i = 0; i < 40; i++) part(COLS - 1, G.track.coreY, ['#facc15', '#4ade80', '#60a5fa', '#f472b6'][i % 4], 5, 1.2, 4);
-  setTimeout(() => {
-    const o = $('#over');
-    const chips = [res.best ? `<span class="new">${ic('trophy')}Best yet!</span>` : '', `<span>${ic('flag')}${won ? `All ${G.wave} waves` : `Wave ${reached}`}</span>`,
-      `<span>${ic('skull')}${num(G.kills)} destroyed</span>`, `<span>${ic('clock')}${fmt(G.elapsed)}</span>`].filter(Boolean);
-    o.innerHTML = `<div class="ocard${won ? '' : ' lost'}"><span class="oi">${ic(won ? 'trophy' : 'heart')}</span>
-      <h2>${won ? 'You defended the Core!' : 'The Core fell'}</h2><div class="chips">${chips.join('')}</div>
-      <div class="row"><button class="bbtn" id="oHome">${ic('back')}Menu</button><button class="bbtn" id="oSame">${ic('map')}Same track</button><button class="bbtn go" id="oNew">${ic('again')}New track</button></div></div>`;
-    o.classList.remove('hidden');
-    $('#oSame').onclick = () => { const sd = G.seed; o.classList.add('hidden'); newGame(G.m, sd); showGame(true); };
-    $('#oNew').onclick = () => { o.classList.add('hidden'); newGame(G.m); showGame(true); };
-    $('#oHome').onclick = () => { o.classList.add('hidden'); showHome(); };
-  }, won ? 1200 : 900);
+  const cx = COLS - 1, cy = G.track.coreY;
+  if (won) { Sound.win(); vibrate([20, 60, 20, 60, 40]); for (let i = 0; i < 50; i++) part(cx, cy, ['#facc15', '#4ade80', '#60a5fa', '#f472b6'][i % 4], 5, 1.4, 4); }
+  else {   // the Core blows apart
+    Sound.boom(); Sound.lose(); vibrate([80, 60, 120]); shake = 1.6; coreHurt = 1;
+    ring(cx, cy, .2, 3, '#fb4469', .7, .2); ring(cx, cy, .1, 1.8, '#ffffff', .4, .12);
+    for (let i = 0; i < 46; i++) part(cx, cy, ['#4ade80', '#4f5bd5', '#363fa3', '#64748b', '#fb4469'][i % 5], 6, 1.1, 2);
+  }
+  const word = won ? 'VICTORY' : isFinite(MODES[G.m].waves) ? 'DEFEAT' : 'GAME OVER';
+  const sub = won ? `All ${G.wave} waves cleared on ${MODES[G.m].name}` : isFinite(MODES[G.m].waves) ? `The Core fell on wave ${G.waveN}` : `You reached wave ${G.waveN} in Endless`;
+  const o = $('#over');
+  clearTimeout(endT);
+  endT = setTimeout(() => {
+    o.className = 'over word ' + (won ? 'win' : 'lose');
+    o.innerHTML = `<div class="eword" role="heading" aria-level="2" aria-label="${word}">${[...word].map((ch, i) => ch === ' ' ? '<i class="gap"></i>' : `<span style="--i:${i}">${ch}</span>`).join('')}</div><p class="esub">${sub}</p>`;
+    $('#field').classList.add('ended');
+    o.onclick = () => showResults(won, res);   // tap to skip ahead
+    endT = setTimeout(() => showResults(won, res), reduced() ? 1600 : 2600);
+  }, won ? 700 : 900);
 }
+function showResults(won, res) {
+  clearTimeout(endT);
+  const o = $('#over'); o.onclick = null;
+  const endless = !isFinite(MODES[G.m].waves);
+  const tiles = [[endless ? `${G.wave}` : `${G.wave}<small>/${MODES[G.m].waves}</small>`, 'Waves cleared'],
+    [num(G.kills), 'Destroyed'], [fmt(G.elapsed), 'Time'], won ? [Math.max(0, G.lives), 'Lives left'] : [G.built, 'Towers built']];
+  // achievements sit in the header, to the right of the title (two at most, then "+1 more")
+  const ea = G.endAch || [], got = ea.slice(0, 2).map(a => `<span>${ic('medal')}${a.name}</span>`).join('') + (ea.length > 2 ? `<span class="more">+${ea.length - 2} more</span>` : '');
+  o.className = 'over res ' + (won ? 'win' : 'lose');
+  o.innerHTML = `<div class="ecard">
+    <div class="ehead"><span class="oi">${ic(won ? 'trophy' : endless ? 'flag' : 'heart')}</span><span><h2>${won ? 'Victory!' : endless ? 'Game over' : 'Defeat'}</h2><small>${MODES[G.m].name}${res.best ? ` · <b>${ic('star')}Best yet!</b>` : ''}</small></span>${got ? `<div class="eachs" aria-label="Achievements earned">${got}</div>` : ''}</div>
+    <div class="etiles">${tiles.map(([b, l]) => `<div><b>${b}</b><span>${l}</span></div>`).join('')}</div>
+    <div class="ebtns"><button class="bbtn" id="oHome">${ic('back')}Home</button>${won ? `<button class="bbtn" id="oView">${ic('map')}View board</button>` : ''}<button class="bbtn go" id="oAgain">${ic('again')}${won ? 'Play again' : 'Try again'}</button></div></div>`;
+  $('#oAgain').onclick = () => { const sd = G.seed; o.className = 'over hidden'; newGame(G.m, sd); showGame(true); };
+  $('#oHome').onclick = () => { o.className = 'over hidden'; showHome(); };
+  if (won) $('#oView').onclick = () => { o.classList.add('hidden'); $('#viewBar').classList.remove('hidden'); };
+  setTimeout(() => $('#oAgain') && $('#oAgain').focus({preventScroll: true}), 50);
+}
+$('#viewBack').onclick = () => { $('#viewBar').classList.add('hidden'); $('#over').classList.remove('hidden'); };
 
 /* ---------- controls ---------- */
 const SPEEDS = [1, 2, 3];
@@ -1731,7 +1910,7 @@ function setAuto(on) {
   if (G && G.state === 'build' && !G.over) { autoT = on && G.wave > 0 ? AUTO_WAIT : 0; showWaveBtn(); }
 }
 function showAuto() { const b = $('#autoBtn'); b.classList.toggle('on', !!prefs.auto); b.setAttribute('aria-checked', prefs.auto ? 'true' : 'false'); }
-$('#autoBtn').onclick = () => { setAuto(!prefs.auto); Sound.tap(); toast(prefs.auto ? 'Auto on: waves start by themselves' : 'Auto off', 1200); };
+$('#autoBtn').onclick = () => { setAuto(!prefs.auto); Sound.tap(); };
 const setPaused = p => { paused = p; $('#pauseCover').classList.toggle('hidden', !p); };
 $('#pauseBtn').onclick = () => setPaused(!paused);
 $('#resumeBtn').onclick = () => setPaused(false);
@@ -1750,7 +1929,10 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G) 
 
 /* ---------- toasts ---------- */
 let toastT = 0;
-function toast(text, ms = 1600) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
+function toast(text, ms = 1600) {
+  if (live()) { note('tip', text, ms + 300); return; }   // in a game: in the stack on the board
+  const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
+}
 
 /* ---------- moving between screens ---------- */
 function showGame(fresh) {
@@ -1812,7 +1994,7 @@ function modeArt(m) {
   if (m === 'endless') o += `<path d="M58 45c0-8 12-8 22 0s22 8 22 0-12-8-22 0-22 8-22 0" fill="none" stroke="#4f5bd5" stroke-width="5" stroke-linecap="round" opacity=".85"/>`;
   return `<svg class="mart" viewBox="0 0 160 90" aria-hidden="true">${o}</svg>`;
 }
-const TOUGH = {easy: 'Weaker enemies', normal: 'Regular enemies', hard: 'Tough enemies, short track', endless: 'Enemies keep getting tougher'};
+const TOUGH = {easy: 'Weaker enemies, more coins', normal: 'Regular enemies', hard: 'Tough enemies, short track', endless: 'Enemies keep getting tougher'};
 function renderModes() {
   $('#mcards').innerHTML = MODE_IDS.map((id, k) => {
     const M = MODES[id], st = statOf(id), sv = savedOf(id);
@@ -1839,7 +2021,10 @@ $('#mcards').addEventListener('click', e => {
   const card = e.target.closest('.mcard'); if (!card) return;
   const m = card.dataset.m, b = e.target.closest('[data-act]');
   if (b && b.dataset.act === 'new') {
-    if (!b.dataset.sure) { b.dataset.sure = 1; b.classList.add('sure'); toast('Tap again to start a new game', 1800); setTimeout(() => { delete b.dataset.sure; b.classList.remove('sure'); }, 2500); return; }
+    if (!b.dataset.sure) {   // second tap to confirm; the card says so itself (no pop-up over the cards)
+      const t = card.querySelector('.mtough'), was = t.textContent;
+      b.dataset.sure = 1; b.classList.add('sure'); t.textContent = 'Tap again to start over'; t.classList.add('warn');
+      setTimeout(() => { delete b.dataset.sure; b.classList.remove('sure'); t.textContent = was; t.classList.remove('warn'); }, 2500); return; }
     const s = savedOf(m);
     if (s && s.wave > 0) record({m, w: s.wave, won: false, kills: s.kills, ms: s.elapsed || 0, seed: s.seed, lives: s.lives, built: s.built, tw: ORDER.map(k => s.towers.filter(t => t.k === k).map(t => t.lv + 1).join(''))});   // a game you leave counts as finished
     keep(saveKey(m), null); startMode(m, true); return;
@@ -1870,22 +2055,30 @@ const achSave = () => { if (achDirty) { keep(ACH_KEY, ACHS); achDirty = false; }
 function achGet(id) {
   if (ACHS.got[id]) return;
   ACHS.got[id] = Date.now(); achDirty = true; achSave();
+  renderAchBadge();
   const a = ACH.find(x => x.id === id); if (a) achPop(a);
 }
 function achAdd(n, k) {
   ACHS[n] = (ACHS[n] || 0) + k; achDirty = true;
   ACH.forEach(a => { if (a.n === n && ACHS[n] >= a.goal) achGet(a.id); });
 }
-// a little card slides up from the bottom when you earn one (they queue up if several come at once)
+// earning one: in a game it joins the stack on the board (after any wave banner, and not while paused);
+// at the end of a game it goes in the results card; elsewhere a card drops in at the top
 const popQ = []; let popping = false;
-function achPop(a) { popQ.push(a); if (!popping) nextPop(); }
+function achPop(a) {
+  if (G && G.over && live()) { (G.endAch = G.endAch || []).push(a); return; }
+  popQ.push(a); if (!popping) nextPop();
+}
 function nextPop() {
-  const a = popQ.shift(), el = $('#achPop'); if (!a) { popping = false; return; }
+  if (!popQ.length) { popping = false; return; }
   popping = true;
-  el.innerHTML = `<span class="ai">${ic(a.ic)}</span><span><small>Achievement</small><b>${a.name}</b></span>`;
-  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  if (live() && (bannerUp() || held())) { setTimeout(nextPop, 300); return; }
+  const a = popQ.shift(), html = `<span class="ai">${ic(a.ic)}</span><span><small>Achievement</small><b>${a.name}</b></span>`;
   Sound.upgrade();
-  setTimeout(nextPop, reduced() ? 2200 : 2900);
+  if (live()) { note('ach', html, 2600); setTimeout(nextPop, 2700); return; }
+  const el = $('#achPop'); el.innerHTML = html;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  setTimeout(nextPop, 2900);
 }
 function renderAchBadge() { $('#achN').textContent = `${Object.keys(ACHS.got).filter(id => ACH.some(a => a.id === id)).length}/${ACH.length}`; }
 function renderAch() {
@@ -2033,7 +2226,11 @@ $('#hlist').addEventListener('click', e => {
   const h = hist().find(x => x.t === +r.dataset.t); if (!h) return;
   if (e.target.closest('[data-act="replay"]')) {
     if (!MODES[h.m]) return;
-    if (savedOf(h.m)) { toast(`You have a ${MODES[h.m].name} game going: finish or restart it first`, 2400); return; }
+    const sv = savedOf(h.m), btn = e.target.closest('[data-act="replay"]');
+    if (sv && !btn.dataset.sure) {   // you have a game going on that difficulty: the button asks first
+      btn.dataset.sure = 1; btn.classList.add('sure'); btn.innerHTML = `${ic('again')}End your ${MODES[h.m].name} game (wave ${sv.wave + 1}) and play?`;
+      setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.classList.remove('sure'); btn.innerHTML = `${ic('map')}Play this track on ${MODES[h.m].name}`; } }, 3500); return; }
+    if (sv) { if (sv.wave > 0) record({m: h.m, w: sv.wave, won: false, kills: sv.kills, ms: sv.elapsed || 0, seed: sv.seed, lives: sv.lives, built: sv.built, tw: ORDER.map(k => sv.towers.filter(t => t.k === k).map(t => t.lv + 1).join(''))}); keep(saveKey(h.m), null); }
     closePanel($('#histPanel')); modeIdx = MODE_IDS.indexOf(h.m); prefs.mode = h.m; savePrefs();
     newGame(h.m, h.seed); showGame(true); return;
   }
