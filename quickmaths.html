@@ -130,8 +130,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .qcard{background:var(--panel);border-radius:24px;box-shadow:0 4px 18px var(--shade);padding:clamp(18px,4vh,34px) 16px;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,18px);position:relative}
 .q{font-size:clamp(2.4rem,11vw,3.6rem);font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
 .q .op{color:var(--opc,var(--accent));margin:0 .12em}
-.q.in{animation:qin .25s var(--ease)}
-@keyframes qin{from{opacity:0;translate:0 10px}}
+.q.in{animation:qin .14s var(--ease)}
+@keyframes qin{from{opacity:.2;translate:0 6px}}
 .ans{min-width:min(220px,70%);height:clamp(58px,9vh,74px);border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:clamp(2rem,9vw,2.9rem);font-weight:900;
   font-variant-numeric:tabular-nums;border:3px solid transparent;transition:border-color .15s,background .15s}
 .ans span:empty::after{content:"";display:inline-block;width:3px;height:.9em;border-radius:2px;background:var(--muted);vertical-align:-.1em;animation:blink 1s steps(1) infinite}
@@ -180,6 +180,15 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 #ssum2{grid-template-columns:repeat(2,1fr)}
 #revSum{grid-template-columns:repeat(3,1fr)}
 #sfOp button,#hfilt button{font-size:1.15rem}
+.qcard.flash{animation:flash .35s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--ok),0 4px 18px var(--shade)}100%{box-shadow:0 0 0 0 transparent,0 4px 18px var(--shade)}}
+/* the next question, peeking out underneath */
+.qnext{align-self:center;margin-top:10px;padding:8px 18px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);display:flex;align-items:center;gap:10px;opacity:.75;
+  font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qnext span{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.qnext b{font-size:1.35rem}
+.qnext .op{color:var(--opc);margin:0 .14em}
+.qcard.hidden~.qnext{display:none}
 /* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
 .panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
   transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
@@ -309,6 +318,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .q{font-size:clamp(1.9rem,11vh,2.8rem)}
   .ans{height:clamp(44px,13vh,58px);font-size:clamp(1.6rem,9vh,2.2rem)}
   .fix{height:1.2em;font-size:.95rem}
+  .qnext{margin-top:6px;padding:4px 14px}
+  .qnext b{font-size:1.1rem}
   .pad{grid-column:2;grid-row:1/5;align-self:center;max-width:none;gap:7px}
   .key{height:clamp(40px,13vh,54px);border-radius:13px}
   .result{padding:12px;gap:10px}
@@ -375,6 +386,7 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
         <div class="ans" id="ans"><span id="typed"></span></div>
         <div class="fix" id="fix"></div>
       </div>
+      <div class="qnext" id="qnext" aria-label="Next question"></div>
       <div class="result hidden" id="result"></div>
     </div>
     <div class="pad" id="pad" aria-label="Number pad"></div>
@@ -604,6 +616,8 @@ function showQ() {
   $('#q').classList.remove('in'); void $('#q').offsetWidth; $('#q').classList.add('in');
   $('#ans').className = 'ans'; $('#fix').innerHTML = '';
   typed = ''; showTyped();
+  const n = G.qs[G.i + 1];   // a peek at the next one, so you can get ready
+  $('#qnext').innerHTML = n ? `<span>Next</span><b>${exprHTML(n)}</b>` : `<span>Last one!</span>`;
   $('#qnum').textContent = `${G.i + 1}/${N_Q}`;
   $('#right').textContent = G.right;
   $('#bar').style.width = G.i / N_Q * 100 + '%';
@@ -622,18 +636,21 @@ function submit() {
   if (!/\d/.test(typed)) { $('#ans').classList.remove('bad'); void $('#ans').offsetWidth; $('#ans').classList.add('bad'); setTimeout(() => $('#ans').classList.remove('bad'), 400); return; }
   const q = cur(), ok = +typed === q.x;
   q.g = +typed; q.ms = Math.max(1, Math.round(timeNow() - G.qT0)); q.ok = ok ? 1 : 0;
-  lock = true; updatePaused();
-  if (ok) {
+  if (ok) {   // right: straight on to the next question, with a quick green flash
     G.right++; G.run = (G.run || 0) + 1;
-    $('#ans').classList.add('good'); Sound.right(G.run); vibrate(6);
-  } else {
+    Sound.right(G.run); vibrate(6);
+    const c = $('#qcard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash');
+    next(); return;
+  }
+  lock = true; updatePaused();
+  {
     G.run = 0;
     $('#ans').classList.add('bad'); $('#fix').innerHTML = `It's <b>${showN(q.x)}</b>`; Sound.wrong(); vibrate([30, 40, 30]);
   }
   $('#right').textContent = G.right;
   $('#bar').style.width = (G.i + 1) / N_Q * 100 + '%';
   saveGame();
-  setTimeout(next, ok ? (reduced() ? 120 : 260) : 1200);
+  setTimeout(next, 1200);
 }
 function next() {
   if (!G || G.over) return;
