@@ -208,6 +208,14 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 #newBtn kbd{position:absolute;right:-5px;bottom:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:5px;background:var(--ink);color:var(--bg);font:900 10px/17px system-ui,sans-serif;text-align:center}
 .qcard.restart{animation:restart .3s var(--ease)}
 @keyframes restart{from{opacity:.3;scale:.97}}
+/* "Get ready": waiting for Enter */
+.qcard.ready{cursor:pointer}
+.qcard.ready .q{color:var(--accent);font-size:clamp(1.4rem,min(9vw,16cqh),3rem)}
+.ans.wait span{display:none}
+.ans.wait::after{content:attr(data-msg);font-size:clamp(.85rem,min(4.4vw,7cqh),1.15rem);color:var(--muted);font-weight:900}
+.pad.ready .key.enter{animation:readyp 1.4s ease-in-out infinite}
+@keyframes readyp{50%{box-shadow:0 3px 0 var(--edge),0 0 0 6px color-mix(in srgb,var(--accent) 30%,transparent)}}
+.qcard.ready~.qnext{opacity:.5}
 /* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
 .panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
   transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
@@ -595,12 +603,12 @@ let G = null, typed = '', lock = false;
 const timeNow = () => G ? G.elapsed + (G.startedAt ? Date.now() - G.startedAt : 0) : 0;
 const cur = () => G.qs[G.i];
 function newGame(op, neg) {
-  G = {op, neg, k: keyOf(op, neg), qs: makeRound(op, neg === 'neg'), i: 0, right: 0, elapsed: 0, startedAt: 0, qT0: 0, over: false};
+  G = {op, neg, k: keyOf(op, neg), qs: makeRound(op, neg === 'neg'), i: 0, right: 0, elapsed: 0, startedAt: 0, qT0: 0, over: false, go: false};
   typed = ''; lock = false; saveGame();
 }
 function resumeGame(s) {
   if (!s || !s.qs || s.over || !OPS[s.op]) return false;
-  G = Object.assign({}, s, {startedAt: 0}); typed = ''; lock = false;
+  G = Object.assign({}, s, {startedAt: 0, go: false}); typed = ''; lock = false;   // back to "Get ready" until you press Enter
   if (G.qs[G.i] && G.qs[G.i].ms) { G.i++; G.qT0 = G.elapsed; }   // it was left while an answer was showing
   if (G.i >= N_Q) { G.i = N_Q - 1; lock = true; }                 // ...the last one: showGame finishes it
   return true;
@@ -610,10 +618,10 @@ function saveGame() {
   if (G.over) keep(saveKey(G.k), null);
   else keep(saveKey(G.k), Object.assign({}, G, {elapsed: timeNow(), startedAt: 0}));
 }
-// the clock stops while a menu or panel is open, the app is hidden, or an answer is being shown
+// the clock waits for you to press Enter on "Get ready", and stops while a menu or panel is open or the app is hidden
 function updatePaused() {
   if (!G || G.over) return;
-  const paused = lock || (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show');
+  const paused = lock || !G.go || (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show');
   if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
   else if (!paused && !G.startedAt) G.startedAt = Date.now();
 }
@@ -622,6 +630,19 @@ setInterval(() => { if (G && !G.over && !$('#game').classList.contains('hidden')
 
 /* ---------- showing a question ---------- */
 function showQ() {
+  $('#qcard').classList.toggle('ready', !G.go);
+  $('#pad').classList.toggle('ready', !G.go);
+  $('#qnum').textContent = `${G.i + 1}/${N_Q}`;
+  $('#right').textContent = G.right;
+  $('#bar').style.width = G.i / N_Q * 100 + '%';
+  if (!G.go) {   // "Get ready": the question stays hidden (and the clock stopped) until you press Enter
+    $('#q').innerHTML = G.i ? `Question ${G.i + 1}` : 'Get ready';
+    $('#q').classList.remove('in');
+    $('#ans').className = 'ans wait'; $('#ans').dataset.msg = 'Press Enter to start'; $('#fix').innerHTML = '';
+    $('#qnext').innerHTML = `<span>${G.i ? 'Ready when you are' : `${N_Q} questions`}</span>`;
+    typed = ''; showTyped();
+    return;
+  }
   const q = cur();
   $('#q').innerHTML = exprHTML(q);
   $('#q').classList.remove('in'); void $('#q').offsetWidth; $('#q').classList.add('in');
@@ -633,9 +654,16 @@ function showQ() {
   $('#right').textContent = G.right;
   $('#bar').style.width = G.i / N_Q * 100 + '%';
 }
+function start() {
+  if (!G || G.go || G.over) return;
+  G.go = true; G.qT0 = timeNow();
+  showQ(); updatePaused(); saveGame(); Sound.right(0);
+}
+$('#qcard').addEventListener('click', () => { if (G && !G.go) start(); });   // tapping the card starts it too
 const showTyped = () => { $('#typed').textContent = typed.replace('-', '−'); };
 function press(k) {
   if (!G || G.over || lock || $('#game').classList.contains('hidden')) return;
+  if (!G.go) { if (k === 'enter') start(); return; }
   if (k === 'enter') { submit(); return; }
   if (k === 'back') typed = typed.slice(0, -1);
   else if (k === 'neg') { if (G.neg !== 'neg') return; typed = typed.startsWith('-') ? typed.slice(1) : '-' + typed; }
@@ -1003,7 +1031,7 @@ const How = (() => {
   }
   const op = o => `<span class="op" style="--opc:var(--${o})">${OPS[o].sym}</span>`;
   const STEPS = [
-    {title: 'Answer as fast as you can', cap: '<span>Type the answer and press <b>Enter</b>. Right or wrong, the next question comes straight away, so there\'s no going back. Watch the <b>Next</b> box to get ahead.</span>',
+    {title: 'Answer as fast as you can', cap: '<span>The clock starts when you press <b>Enter</b> on Get ready. Then type each answer and press <b>Enter</b>. Right or wrong, the next question comes straight away, so there\'s no going back. Watch the <b>Next</b> box to get ahead.</span>',
       run: s => demo(s, [[`7${op('add')}5`, ['1', '2', '⏎'], true], [`6${op('mul')}8`, ['4', '8', '⏎'], true]])},
     {title: '25 questions a round', cap: '<span>Pick <b>Add</b>, <b>Subtract</b>, <b>Multiply</b>, <b>Divide</b> or a <b>Mix</b>. Get one wrong and you\'ll see the right answer under the next question. Afterwards, check every answer and your slowest ones.</span>',
       run: s => { s.innerHTML = `<div class="qsyms"><i class="o-add">+</i><i class="o-sub">−</i><i class="o-mul">×</i><i class="o-div">÷</i></div><div class="howkeys" style="margin-top:16px"><span>${ic('clock')}Timed</span><span>${ic('check')}Score out of 25</span><span>${ic('list')}See your answers</span><span>${ic('refresh')}Restart: ↻ or R</span></div>`; }},
