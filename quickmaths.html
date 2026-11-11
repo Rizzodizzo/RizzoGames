@@ -203,6 +203,11 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .mode .pb svg.ic{width:18px;height:18px}
 .mode .pb.score{background:var(--panel);color:var(--ink);box-shadow:0 0 0 3px var(--bg),0 3px 10px var(--shade),inset 0 0 0 1.5px var(--line)}
 .mode .pb.score svg.ic{color:#e0a800}
+/* the restart button: shows its key (R) on computers */
+#newBtn{position:relative}
+#newBtn kbd{position:absolute;right:-5px;bottom:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:5px;background:var(--ink);color:var(--bg);font:900 10px/17px system-ui,sans-serif;text-align:center}
+.qcard.restart{animation:restart .3s var(--ease)}
+@keyframes restart{from{opacity:.3;scale:.97}}
 /* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
 .panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
   transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
@@ -377,7 +382,7 @@ html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *:
     <div class="ghead">
       <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
       <div class="gtitle"><b id="gMode">Add</b><small id="gSub">No negatives</small></div>
-      <button class="iconbtn" id="newBtn" aria-label="New round" data-ic="refresh"></button>
+      <button class="iconbtn" id="newBtn" aria-label="Restart" aria-keyshortcuts="R" data-ic="refresh"></button>
       <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
     </div>
     <div class="stats">
@@ -586,7 +591,7 @@ const exprText = q => `${showN(q.a)} ${OPS[q.o].sym} ${q.b < 0 ? `(${showN(q.b)}
 /* ======================================================================
    GAME
    ====================================================================== */
-let G = null, typed = '', lock = false, newArmed = 0;
+let G = null, typed = '', lock = false;
 const timeNow = () => G ? G.elapsed + (G.startedAt ? Date.now() - G.startedAt : 0) : 0;
 const cur = () => G.qs[G.i];
 function newGame(op, neg) {
@@ -739,14 +744,21 @@ function showHome() {
   updatePaused(); saveGame(); renderModes(); renderSeg(); renderPlay(); renderHistBadge();
 }
 $('#homeBtn').onclick = showHome;
-// a new round: tap twice if you're partway through
-$('#newBtn').onclick = () => {
-  if (G && !G.over && G.i > 0) {
-    if (Date.now() - newArmed > 2500) { newArmed = Date.now(); toast('Tap again to start a new round'); return; }
-    newArmed = 0;
-  }
+// quick restart: a fresh round of the same sums straight away (the ↻ button, or R on a keyboard)
+function restart() {
+  if (!G || $('#game').classList.contains('hidden')) return;
   newGame(G.op, G.neg); showGame();
-};
+  const c = $('#qcard'); c.classList.remove('restart'); void c.offsetWidth; c.classList.add('restart');
+  Sound.key();
+}
+$('#newBtn').onclick = restart;
+addEventListener('keydown', e => {
+  if ((e.key === 'r' || e.key === 'R') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !document.querySelector('.panel.show') && !(RZ && RZ.menuOpen)) {
+    e.preventDefault(); restart();
+  }
+});
+// on a computer, the ↻ button shows its key
+if (!(RZ && RZ.device && RZ.device.touch)) { $('#newBtn').insertAdjacentHTML('beforeend', '<kbd>R</kbd>'); $('#newBtn').title = 'Restart (R)'; }
 
 /* ======================================================================
    HOME
@@ -994,7 +1006,7 @@ const How = (() => {
     {title: 'Answer as fast as you can', cap: '<span>Type the answer and press <b>Enter</b>. Right or wrong, the next question comes straight away, so there\'s no going back. Watch the <b>Next</b> box to get ahead.</span>',
       run: s => demo(s, [[`7${op('add')}5`, ['1', '2', '⏎'], true], [`6${op('mul')}8`, ['4', '8', '⏎'], true]])},
     {title: '25 questions a round', cap: '<span>Pick <b>Add</b>, <b>Subtract</b>, <b>Multiply</b>, <b>Divide</b> or a <b>Mix</b>. Get one wrong and you\'ll see the right answer under the next question. Afterwards, check every answer and your slowest ones.</span>',
-      run: s => { s.innerHTML = `<div class="qsyms"><i class="o-add">+</i><i class="o-sub">−</i><i class="o-mul">×</i><i class="o-div">÷</i></div><div class="howkeys" style="margin-top:16px"><span>${ic('clock')}Timed</span><span>${ic('check')}Score out of 25</span><span>${ic('list')}See your answers</span></div>`; }},
+      run: s => { s.innerHTML = `<div class="qsyms"><i class="o-add">+</i><i class="o-sub">−</i><i class="o-mul">×</i><i class="o-div">÷</i></div><div class="howkeys" style="margin-top:16px"><span>${ic('clock')}Timed</span><span>${ic('check')}Score out of 25</span><span>${ic('list')}See your answers</span><span>${ic('refresh')}Restart: ↻ or R</span></div>`; }},
     {title: 'Negative numbers', cap: '<span>Choose <b>Negatives</b> for sums like −6 × 3. Tap <b>±</b> (or the minus key) to make your answer negative.</span>',
       run: s => demo(s, [[`−6${op('mul')}3`, ['±', '1', '8', '⏎'], true], [`4${op('sub')}(−2)`, ['6', '⏎'], true]])},
   ];
