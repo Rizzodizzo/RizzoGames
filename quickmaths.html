@@ -690,8 +690,8 @@ function next() {
 }
 
 /* ---------- the number pad, and a keyboard ---------- */
-// a calculator-style pad: four rows, with Delete, ± and a tall Enter down the right
-const KEYS = ['1', '2', '3', 'back', '4', '5', '6', 'neg', '7', '8', '9', 'enter', '0'];
+// a calculator-style pad: four rows (7 8 9 at the top, 1 2 3 at the bottom), with Delete, ± and a tall Enter down the right
+const KEYS = ['7', '8', '9', 'back', '4', '5', '6', 'neg', '1', '2', '3', 'enter', '0'];   // 7 8 9 on top, like a computer number pad
 function renderPad() {
   $('#pad').innerHTML = KEYS.map(k => `<button class="key k-${k}${k === 'enter' ? ' enter' : ''}" data-k="${k}" aria-label="${k === 'neg' ? 'Make negative' : k === 'back' ? 'Delete' : k === 'enter' ? 'Enter' : k}">${
     k === 'back' ? ic('del') : k === 'enter' ? ic('enter') + 'Enter' : k === 'neg' ? '±' : k}</button>`).join('');
