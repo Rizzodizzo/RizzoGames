@@ -192,6 +192,11 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .qcard.hidden~.qnext{display:none}
 .qcard.flashbad{animation:flashbad .45s ease-out}
 @keyframes flashbad{0%{box-shadow:0 0 0 4px var(--bad),0 4px 18px var(--shade);translate:-6px 0}25%{translate:5px 0}50%{translate:-3px 0}100%{box-shadow:0 0 0 0 transparent,0 4px 18px var(--shade);translate:0 0}}
+/* your best time, on a gold badge at the top of a mode box */
+.mode{position:relative}
+.mode .pb{position:absolute;top:-14px;left:50%;translate:-50% 0;z-index:2;display:flex;align-items:center;gap:5px;padding:5px 13px 5px 9px;border-radius:99px;background:#ffd23f;color:#3a2c00;
+  font-weight:900;font-size:1rem;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:0 0 0 3px var(--bg),0 4px 12px rgba(120,80,0,.25)}
+.mode .pb svg.ic{width:18px;height:18px}
 /* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
 .panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
   transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
@@ -473,6 +478,7 @@ const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); re
 const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
 const fmt = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = Math.floor(t - m * 60); return m + ':' + String(s).padStart(2, '0'); };
+const fmtPB = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60); return m + ':' + (t - m * 60).toFixed(1).padStart(4, '0'); };   // 0:42.3
 const secs = ms => (ms / 1000).toFixed(1) + 's';
 const num = n => (n || 0).toLocaleString();
 const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
@@ -754,7 +760,9 @@ function modeArt(id) {
 }
 let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
 function renderModes() {
-  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${OPS[id].name}">${modeArt(id)}<h2>${OPS[id].name}</h2></button>`).join('');
+  // a gold badge on top of the box once you've got all 25 right: your fastest time (with the numbers picked below)
+  const pb = id => { const t = statOf(keyOf(id, prefs.neg)).bestTime; return t ? `<span class="pb" title="Your best time with all 25 right">${ic('trophy')}${fmtPB(t)}</span>` : ''; };
+  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${OPS[id].name}${statOf(keyOf(id, prefs.neg)).bestTime ? ', best time ' + fmtPB(statOf(keyOf(id, prefs.neg)).bestTime) : ''}">${pb(id)}${modeArt(id)}<h2>${OPS[id].name}</h2></button>`).join('');
   $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
   $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
   $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
@@ -763,7 +771,7 @@ function renderModes() {
 function renderSeg() {
   $('#negSeg').innerHTML = Object.keys(NEGS).map(n => `<button role="radio" aria-checked="${n === prefs.neg}" class="${n === prefs.neg ? 'on' : ''}" data-n="${n}">${ic(n === 'neg' ? 'pm' : 'plus')}${NEGS[n]}</button>`).join('');
 }
-$('#negSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.neg = b.dataset.n; savePrefs(); renderSeg(); renderPlay(); });
+$('#negSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.neg = b.dataset.n; savePrefs(); renderSeg(); renderPlay(); renderModes(); });
 function scrollToMode(k, instant) {
   const m = $('#modes'), card = m.children[k]; if (!card || $('#home').classList.contains('hidden')) return;
   m.scrollTo({left: card.offsetLeft - (m.clientWidth - card.clientWidth) / 2, behavior: instant || reduced() ? 'auto' : 'smooth'});
