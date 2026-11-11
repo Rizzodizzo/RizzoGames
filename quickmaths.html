@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quick Maths</title>
+<meta name="theme-color" content="#f2f7f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1716" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="quickmaths" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quick Maths">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   COLOURS: light or dark, following the device. Teal for the game,
+   and each kind of sum has its own colour: + green, − blue, × orange, ÷ purple.
+   ====================================================================== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);
+  --bg:#f2f7f6;--panel:#ffffff;--ink:#15302c;--muted:#5f7773;--line:#dde9e6;--soft:#e7f1ef;
+  --accent:#0d9488;--hi:#14b8a6;--edge:#0b6e65;--onaccent:#ffffff;--shade:rgba(10,60,55,.10);--boom:#e5484d;--ok:#16a34a;--bad:#e5484d;
+  --add:#16a34a;--sub:#2563eb;--mul:#ea7a0c;--div:#9333ea;
+  --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;
+  --bg:#0e1716;--panel:#172423;--ink:#e8f5f3;--muted:#9bb5b0;--line:#25403c;--soft:#1f3330;
+  --accent:#2dd4bf;--hi:#5eead4;--edge:#0f766e;--onaccent:#062420;--shade:rgba(0,0,0,.45);--boom:#f2555a;--ok:#22c55e;--bad:#f2555a;
+  --add:#34c26a;--sub:#5b8cff;--mul:#f59e0b;--div:#b26bff}}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.app{max-width:1100px;margin:0 auto;height:100%}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade)}
+.iconbtn:active{transform:scale(.94)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade)}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+/* ================= HOME ================= */
+.home{max-width:480px;margin:0 auto;height:100%;min-height:560px;display:flex;flex-direction:column;padding-top:54px}
+.homeset{position:fixed;z-index:2;top:calc(env(safe-area-inset-top,0px) + 16px);right:16px}
+/* mode cards you swipe between */
+.modes{position:relative;flex:1 1 0;min-height:150px;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:20px 22% 12px;margin:0 -16px;
+  scrollbar-width:none;overscroll-behavior-x:contain;align-items:stretch}
+.modes::-webkit-scrollbar{display:none}
+@media (hover:hover) and (pointer:fine){.modes{cursor:grab}.modes.dragging{cursor:grabbing;scroll-snap-type:none}}
+.mode{container-type:size;flex:0 0 100%;scroll-snap-align:center;max-height:330px;align-self:center;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);
+  background:var(--panel);border-radius:26px;box-shadow:0 6px 20px var(--shade);transition:transform .3s var(--ease),opacity .3s;position:relative}
+.mode.active{outline:2.5px solid var(--accent);outline-offset:-2.5px}
+.mode:not(.active){transform:scale(.84);opacity:.45}
+.mode h2{margin:0;font-size:clamp(1.15rem,3vh,1.55rem);font-weight:900}
+.mode p{margin:-4px 12px 0;color:var(--muted);font-weight:800;font-size:.85rem;text-align:center}
+.mart{width:min(clamp(100px,min(46vw,24vh),200px),calc(100cqh - 120px));height:auto;flex:none;min-width:56px}
+.modenav{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 0}
+.modearrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted)}
+.modearrow.l svg{transform:scaleX(-1)}
+.modearrow:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .25s var(--ease),background .25s}
+.dots i.on{width:22px;background:var(--accent)}
+/* board size */
+.seg{flex:none;display:flex;gap:3px;padding:4px;margin-top:clamp(10px,2.2vh,20px);background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade)}
+.seg button{flex:1;min-width:0;padding:8px 0 7px;border-radius:10px;color:var(--muted);font-weight:800;font-size:.86rem;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background .2s,color .2s}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+.seg .gd{display:grid;gap:1.5px;width:18px;height:18px}.seg .gd i{border-radius:1.5px;background:currentColor;opacity:.8}
+.playrow{flex:none;margin-top:clamp(10px,1.8vh,16px);display:flex;gap:10px}
+.play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
+.play small{font-size:.75rem;font-weight:700;opacity:.88}
+.newg{flex:none;width:58px;border-radius:16px;background:var(--panel);color:var(--accent);display:grid;place-items:center;box-shadow:0 2px 8px var(--shade)}
+.tiles{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:clamp(14px,2.4vh,22px)}   /* room below Play's shadow */
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
+.tile .tic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);transition:transform .2s;position:relative}
+@media (hover:hover){.tile:hover .tic{transform:translateY(-2px)}}
+.badge{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--accent);color:var(--onaccent);font-size:.68rem;font-weight:900;display:grid;place-items:center}
+
+
+
+/* ================= GAME ================= */
+.game{height:100%;display:flex;flex-direction:column;align-items:center;max-width:1100px;margin:0 auto}
+.ghead{flex:none;width:100%;max-width:640px;display:flex;align-items:center;gap:10px;padding:0 0 0 52px;min-height:44px}   /* R + back on the left, new + settings on the right */
+.gtitle{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.gtitle b{font-size:1.12rem;font-weight:900;white-space:nowrap}
+.gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
+.stats{flex:none;display:flex;gap:8px;margin-top:10px;justify-content:center}
+.chip{min-width:74px;padding:5px 12px 6px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;align-items:center}
+.chip span{font-size:.66rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chip b{font-size:1.1rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.15}
+/* toasts */
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);z-index:9;transform:translate(-50%,-10px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);
+  font-weight:900;padding:10px 16px;border-radius:12px;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* result card */
+.result{flex:none;width:100%;max-width:520px;margin:0;background:var(--panel);border-radius:20px;padding:14px;box-shadow:0 4px 16px var(--shade);animation:rise .35s var(--ease) both;display:flex;flex-direction:column;gap:12px}
+.result .top{display:flex;align-items:center;gap:12px}
+.result .ri{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;flex-shrink:0;color:#fff;background:var(--ok)}
+.result.lose .ri{background:var(--muted)}
+.result .ri svg.ic{width:28px;height:28px}
+.result h2{margin:0;font-size:1.3rem;font-weight:900}
+.result .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.result .chips span{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:.82rem;background:var(--soft);padding:4px 10px;border-radius:99px}
+.result .chips svg.ic{width:15px;height:15px}
+.result .chips .new{background:#ffd23f;color:#3a2c00}
+.result .row2{display:flex;gap:10px}
+.result .row2 button{flex:1;white-space:nowrap;padding:13px 8px;border-radius:14px;font-weight:900;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:6px}
+.result .row2 .sec{background:var(--soft)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+
+/* the title: the four signs on tiles */
+.qtitle{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;margin:clamp(10px,3.4vh,34px) 0 clamp(6px,2vh,20px)}
+.qsyms{display:flex;gap:clamp(6px,1.8vw,10px)}
+.qsyms i{font-style:normal;width:clamp(42px,12vw,58px);aspect-ratio:1;border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:clamp(1.7rem,7vw,2.4rem);
+  line-height:1;box-shadow:0 4px 0 rgba(0,0,0,.18);animation:pop .5s var(--ease) both}
+.qsyms i:nth-child(2){animation-delay:.07s}.qsyms i:nth-child(3){animation-delay:.14s}.qsyms i:nth-child(4){animation-delay:.21s}
+@keyframes pop{from{scale:.4;opacity:0}}
+.qtitle b{font-size:clamp(1.6rem,7vw,2.2rem);font-weight:900;letter-spacing:.01em}
+.o-add{background:var(--add)}.o-sub{background:var(--sub)}.o-mul{background:var(--mul)}.o-div{background:var(--div)}
+/* the progress bar */
+.bar{flex:none;width:100%;max-width:520px;height:8px;border-radius:99px;background:var(--soft);margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--accent);transition:width .25s var(--ease)}
+/* the question */
+.qwrap{flex:1 1 0;min-height:0;width:100%;max-width:520px;display:flex;flex-direction:column;justify-content:center;padding:14px 0}
+.qcard{background:var(--panel);border-radius:24px;box-shadow:0 4px 18px var(--shade);padding:clamp(18px,4vh,34px) 16px;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,18px);position:relative}
+.q{font-size:clamp(2.4rem,11vw,3.6rem);font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
+.q .op{color:var(--opc,var(--accent));margin:0 .12em}
+.q.in{animation:qin .25s var(--ease)}
+@keyframes qin{from{opacity:0;translate:0 10px}}
+.ans{min-width:min(220px,70%);height:clamp(58px,9vh,74px);border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:clamp(2rem,9vw,2.9rem);font-weight:900;
+  font-variant-numeric:tabular-nums;border:3px solid transparent;transition:border-color .15s,background .15s}
+.ans span:empty::after{content:"";display:inline-block;width:3px;height:.9em;border-radius:2px;background:var(--muted);vertical-align:-.1em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ans.good{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--panel));color:var(--ok)}
+.ans.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--panel));color:var(--bad);animation:shake .35s}
+@keyframes shake{20%{translate:-7px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:3px 0}}
+.fix{height:1.4em;font-weight:900;font-size:1.05rem;color:var(--muted)}
+.fix b{color:var(--ok)}
+/* the number pad */
+.pad{flex:none;width:100%;max-width:420px;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.2vh,10px);padding-bottom:4px}
+.pad.hidden{display:none}
+.key{height:clamp(48px,7.4vh,64px);border-radius:16px;background:var(--panel);box-shadow:0 3px 0 var(--line),0 4px 10px var(--shade);font-size:clamp(1.4rem,5.5vw,1.8rem);font-weight:900;
+  display:grid;place-items:center;touch-action:manipulation;transition:transform .06s,background .1s}
+.key:active,.key.down{transform:translateY(2px);box-shadow:0 1px 0 var(--line),0 2px 6px var(--shade);background:var(--soft)}
+.key svg.ic{width:28px;height:28px}
+.key.ghost{visibility:hidden}
+.key.enter{grid-column:1/-1;background:var(--accent);color:var(--onaccent);box-shadow:0 3px 0 var(--edge),0 4px 10px var(--shade);font-size:1.15rem;gap:8px;display:flex;align-items:center;justify-content:center}
+.key.enter:active,.key.enter.down{background:var(--hi)}
+/* the result */
+.result .score{font-size:2.2rem;font-weight:900;line-height:1}
+.result .score small{font-size:1.1rem;color:var(--muted)}
+.result .ri.part{background:var(--accent)}
+/* reviewing a round: every question and your answer */
+.revlist{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.rv{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:14px;padding:9px 12px;box-shadow:0 1px 6px var(--shade)}
+.rv .n{width:24px;flex:none;color:var(--muted);font-weight:800;font-size:.8rem}
+.rv .e{flex:1;min-width:0;font-weight:900;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.rv .e s{color:var(--bad);text-decoration-thickness:2px;margin-right:6px}
+.rv .e .ok{color:var(--ok)}
+.rv .t{flex:none;color:var(--muted);font-weight:800;font-size:.82rem;font-variant-numeric:tabular-nums}
+.rv svg.ic{width:20px;height:20px;flex:none}
+.rv.right svg.ic{color:var(--ok)}.rv.wrong svg.ic{color:var(--bad)}
+.rv.slow .t{color:var(--mul)}
+/* history rows: the score on a tile */
+.hrow .ht{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.95rem;color:#fff;background:var(--accent)}
+.hrow .ht.perfect{background:var(--ok)}
+/* How to play: a small question card */
+.mini{background:var(--bg);border-radius:18px;padding:16px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:220px}
+.mini .q{font-size:2.2rem}
+.mini .ans{height:54px;min-width:150px;font-size:1.9rem;background:var(--soft)}
+.mini .ans span:empty::after{display:none}
+.minikeys{display:flex;gap:6px;margin-top:4px}
+.minikeys i{font-style:normal;width:40px;height:40px;border-radius:11px;background:var(--panel);box-shadow:0 2px 0 var(--line);display:grid;place-items:center;font-weight:900;font-size:1.1rem;transition:background .1s,transform .1s}
+.minikeys i.down{background:var(--accent);color:var(--onaccent);transform:translateY(2px)}
+#ssum2{grid-template-columns:repeat(2,1fr)}
+#revSum{grid-template-columns:repeat(3,1fr)}
+#sfOp button,#hfilt button{font-size:1.15rem}
+/* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
+.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
+  transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
+.panel.show{transform:none;visibility:visible;transition:transform .38s var(--ease),visibility 0s}
+.panelin{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phead h1{flex:1;margin:0;text-align:center;font-size:1.3rem;font-weight:900}
+.phead .sp{width:42px;text-align:right;color:var(--muted);font-weight:800;font-size:.85rem}
+/* how to play */
+.how h2{margin:0 0 12px;font-size:1.25rem;font-weight:900;display:flex;align-items:center;gap:10px}
+.how h2 .hn{width:30px;height:30px;border-radius:10px;background:var(--accent);color:var(--onaccent);display:grid;place-items:center;font-size:.95rem}
+.stage{background:var(--panel);border-radius:20px;padding:18px 12px;box-shadow:0 2px 10px var(--shade);min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;--ts:46px;--g:5px}
+.cap{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--panel);border-radius:14px;padding:12px 14px;font-weight:800;box-shadow:0 2px 8px var(--shade);min-height:56px;border-left:4px solid var(--accent);line-height:1.4}
+.cap .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.hownav{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
+.hownav button{min-width:96px;padding:12px 16px;border-radius:14px;font-weight:900}
+.hownav .sec{background:var(--soft)}
+.howkeys{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.howkeys span{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:99px;padding:7px 12px;font-weight:900;font-size:.88rem}
+.howkeys svg.ic{width:17px;height:17px;color:var(--accent)}
+/* filters shared by Stats and History */
+.hfilt{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade);margin-bottom:10px}
+.hfilt button{flex:1;padding:9px 0;border-radius:10px;font-weight:800;font-size:.85rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.hfilt button.on{background:var(--accent);color:var(--onaccent)}
+.hfilt svg.ic{width:17px;height:17px}
+.hsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 14px}
+.hsum div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.hsum b{display:block;font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums}
+.hsum span{display:block;color:var(--muted);font-weight:800;font-size:.72rem;margin-top:2px}
+/* stats: how many guesses each win took */
+.dist{background:var(--panel);border-radius:16px;padding:12px 14px;box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;gap:6px}
+.dist h3{margin:0 0 4px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:14px;text-align:center;color:var(--muted)}
+.dbar i{display:flex;justify-content:flex-end;align-items:center;min-width:26px;height:24px;padding:0 8px;border-radius:6px;background:var(--no);color:#fff;font-style:normal;font-size:.85rem;transition:width .5s var(--ease)}
+.snote{margin:10px 4px 0;text-align:center;font-weight:800;font-size:.82rem;color:var(--muted);min-height:1em}
+/* history */
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:14px;padding:10px 12px;box-shadow:0 2px 8px var(--shade);cursor:pointer}
+.hrow .hm{flex:1;min-width:0}
+.hrow .hm b{display:block;font-weight:900}
+.hrow .hm small{color:var(--muted);font-weight:700;font-size:.8rem}
+.hrow .hv{font-weight:900;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.hrow .hv svg.ic{width:16px;height:16px;color:#c88a00}
+.hrow .hv .lose{color:var(--boom)}
+.hplay{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);font-style:normal}
+.hrow .hv .hplay svg.ic{width:14px;height:14px;color:var(--onaccent)}
+.hempty{text-align:center;color:var(--muted);font-weight:800;padding:30px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hempty svg.ic{width:40px;height:40px;opacity:.6}
+.danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
+/* timelapse */
+#rpPanel .panelin{display:flex;flex-direction:column;min-height:100%}
+.rpsub{margin:-8px 0 10px;text-align:center;color:var(--muted);font-weight:800;font-size:.85rem}
+.rpwrap{flex:1 1 0;min-height:240px;display:flex;align-items:center;justify-content:center}
+.rpctl{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 10px}
+.rpctl .rpplay{width:52px;height:52px;padding:0;border-radius:50%;display:grid;place-items:center}
+.rpctl .rpbtn{height:44px;min-width:52px;padding:0 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:900;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.rpstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rpstats div{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.rpstats span{display:block;font-size:.72rem;font-weight:800;color:var(--muted)}
+.rpstats b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+/* settings */
+.sgh{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sgh:first-of-type{margin-top:4px}
+.sgroup{background:var(--panel);border-radius:16px;box-shadow:0 2px 8px var(--shade);overflow:hidden}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);cursor:pointer}
+.srow:last-child{border-bottom:0}
+.srow .sl{display:flex;flex-direction:column;min-width:0;gap:2px}
+.srow b{font-weight:800}
+.srow small{font-size:.78rem;font-weight:700;color:var(--muted)}
+.srow .sr{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.srow .sr svg.ic{width:18px;height:18px}
+.switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+
+
+
+.dbar i{background:var(--accent);color:var(--onaccent)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:46px;flex:none;height:24px;border-radius:6px;display:grid;place-items:center;font-size:.78rem}
+
+
+.hrow .ht{width:34px;height:46px;border-radius:7px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.85rem;background:var(--felt);color:#fff}
+.hrow .ht.won{background:var(--accent);color:var(--onaccent)}
+/* short phones: a little tighter */
+@media (max-height:700px) and (orientation:portrait){
+  .qtitle{margin:2px 0 4px;gap:5px}
+  .qsyms i{width:38px;border-radius:11px;font-size:1.5rem}
+  .qtitle b{font-size:1.45rem}
+  .qwrap{padding:10px 0}
+  .key{height:46px}
+}
+
+/* ================= SIDEWAYS PHONES: the question on the left, the number pad on the right ================= */
+@media (orientation:landscape) and (max-height:520px){
+  body{padding:calc(env(safe-area-inset-top,0px) + 12px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) calc(env(safe-area-inset-left,0px) + 16px);overflow:hidden}
+  .home{max-width:860px;min-height:0;padding:0 56px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr);column-gap:clamp(16px,4vw,40px);align-items:center}
+  .qtitle{grid-column:2;grid-row:1;margin:0 0 6px;gap:4px}
+  .qsyms i{width:clamp(30px,9vh,40px);border-radius:10px;font-size:1.4rem}
+  .qtitle b{font-size:1.3rem}
+  .home>.hl{display:flex;flex-direction:column;grid-column:1;grid-row:1/3;height:100%;min-height:0}
+  .modes{min-height:0;padding:18px 20% 6px}
+  .mode{max-height:none;gap:6px;border-radius:20px}
+  .mart{width:min(clamp(90px,32vh,150px),calc(100cqh - 100px))}
+  .mode h2{font-size:clamp(1rem,4.5vh,1.3rem)}
+  .modenav{margin:0}
+  .modearrow{width:30px;height:30px}
+  .home>.hr{display:flex;flex-direction:column;grid-column:2;grid-row:2;justify-content:center;min-height:0}
+  .seg{margin-top:0}
+  .seg button{padding:6px 0 5px}
+  .playrow{margin-top:8px}
+  .play{padding:11px}
+  .tiles{margin-top:10px;gap:8px}
+  .tile{flex-direction:row;justify-content:center;padding:8px 6px;gap:6px;font-size:.8rem}
+  .tile .tic{width:34px;height:34px;border-radius:10px}
+  .tile .tic svg.ic{width:18px;height:18px}
+  .game{max-width:900px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(250px,1fr);grid-template-rows:auto auto auto minmax(0,1fr);column-gap:22px;align-items:start}
+  .ghead{grid-column:1;grid-row:1;max-width:none;padding:0 0 0 52px}
+  .stats{grid-column:1;grid-row:2;margin-top:8px}
+  .chip{padding:3px 10px 4px}
+  .bar{grid-column:1;grid-row:3;max-width:none;margin-top:8px}
+  .qwrap{grid-column:1;grid-row:4;height:100%;max-width:none;padding:10px 0 4px}
+  .qcard{padding:12px 14px;gap:8px}
+  .q{font-size:clamp(1.9rem,11vh,2.8rem)}
+  .ans{height:clamp(44px,13vh,58px);font-size:clamp(1.6rem,9vh,2.2rem)}
+  .fix{height:1.2em;font-size:.95rem}
+  .pad{grid-column:2;grid-row:1/5;align-self:center;max-width:none;gap:7px}
+  .key{height:clamp(40px,13vh,54px);border-radius:13px}
+  .result{padding:12px;gap:10px}
+  .result .ri{width:42px;height:42px;border-radius:13px}
+  .result h2{font-size:1.1rem}
+  .result .score{font-size:1.7rem}
+}
+
+/* Reduce motion follows the switch in the Settings menu */
+html.rz-reduce-motion *,html.rz-reduce-motion *::before,html.rz-reduce-motion *::after{animation:none!important;transition:none!important}
+.hl,.hr{display:contents}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= HOME ================= -->
+  <section class="home" id="home">
+    <button class="iconbtn homeset" id="setBtnHome" aria-label="Settings" data-ic="settings"></button>
+    <div class="qtitle" role="img" aria-label="Quick Maths">
+      <div class="qsyms"><i class="o-add">+</i><i class="o-sub">−</i><i class="o-mul">×</i><i class="o-div">÷</i></div>
+      <b>Quick Maths</b>
+    </div>
+    <div class="hl">
+      <div class="modes" id="modes" aria-label="Kind of sums"></div>
+      <div class="modenav">
+        <button class="modearrow l" id="modePrev" aria-label="Previous"></button>
+        <div class="dots" id="modeDots"></div>
+        <button class="modearrow" id="modeNext" aria-label="Next"></button>
+      </div>
+    </div>
+    <div class="hr">
+      <div class="seg" id="negSeg" role="radiogroup" aria-label="Numbers"></div>
+      <div class="playrow">
+        <button class="primary play" id="playBtn"></button>
+        <button class="newg hidden" id="newBtnHome" aria-label="New round"></button>
+      </div>
+      <div class="tiles">
+        <button class="tile" id="howBtn"><span class="tic" data-ic="help"></span>How to play</button>
+        <button class="tile" id="statsBtn"><span class="tic" data-ic="chart"></span>Stats</button>
+        <button class="tile" id="historyBtn"><span class="tic" data-ic="history"><b class="badge hidden" id="histBadge"></b></span>History</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="game hidden" id="game">
+    <div class="ghead">
+      <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
+      <div class="gtitle"><b id="gMode">Add</b><small id="gSub">No negatives</small></div>
+      <button class="iconbtn" id="newBtn" aria-label="New round" data-ic="refresh"></button>
+      <button class="iconbtn" id="setBtnGame" aria-label="Settings" data-ic="settings"></button>
+    </div>
+    <div class="stats">
+      <div class="chip"><span>Question</span><b id="qnum">1/25</b></div>
+      <div class="chip" id="timeChip"><span>Time</span><b id="time">0:00</b></div>
+      <div class="chip"><span>Right</span><b id="right">0</b></div>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="qwrap" id="qwrap">
+      <div class="qcard" id="qcard" aria-live="polite">
+        <div class="q" id="q"></div>
+        <div class="ans" id="ans"><span id="typed"></span></div>
+        <div class="fix" id="fix"></div>
+      </div>
+      <div class="result hidden" id="result"></div>
+    </div>
+    <div class="pad" id="pad" aria-label="Number pad"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ================= PANELS ================= -->
+<div class="panel" id="setPanel" role="dialog" aria-label="Settings"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Settings</h1><span class="sp"></span></div>
+  <h3 class="sgh">Every game</h3>
+  <div class="sgroup">
+    <button class="srow" id="sMenu"><span class="sl"><b>Sound, motion &amp; updates</b></span><span class="sr"><span data-ic="chevron"></span></span></button>
+  </div>
+  <h3 class="sgh">Game</h3>
+  <div class="sgroup">
+    <label class="srow"><span class="sl"><b>Next when right</b><small>Moves on as soon as your answer is right</small></span><input type="checkbox" class="switch" data-p="auto"></label>
+    <label class="srow"><span class="sl"><b>Show the timer</b></span><input type="checkbox" class="switch" data-p="timer"></label>
+  </div>
+  <h3 class="sgh">Controls</h3>
+  <div class="sgroup">
+    <label class="srow"><span class="sl"><b>Number pad</b><small>Turn off to type on a keyboard</small></span><input type="checkbox" class="switch" data-p="pad"></label>
+    <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
+  </div>
+  <h3 class="sgh">Data</h3>
+  <button class="danger" id="sReset">Reset stats</button>
+  <p class="snote" id="sResetNote"></p>
+</div></div>
+
+<div class="panel" id="howPanel" role="dialog" aria-label="How to play"><div class="panelin how">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp" id="howCount"></span></div>
+  <h2 id="howTitle"></h2>
+  <div class="stage" id="howStage"></div>
+  <div class="cap" id="howCap"></div>
+  <div class="hownav"><button class="sec" id="howPrev">Back</button><div class="dots" id="howDots"></div><button class="primary" id="howNext">Next</button></div>
+</div></div>
+
+<div class="panel" id="statsPanel" role="dialog" aria-label="Stats"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Stats</h1><span class="sp"></span></div>
+  <div class="hfilt" id="sfOp"></div>
+  <div class="hfilt" id="sfNeg"></div>
+  <div class="hsum" id="ssum"></div>
+  <div class="hsum" id="ssum2"></div>
+  <div class="dist" id="sdist"></div>
+</div></div>
+
+<div class="panel" id="histPanel" role="dialog" aria-label="History"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>History</h1><span class="sp"></span></div>
+  <div class="hfilt" id="hfilt"></div>
+  <div class="hlist" id="hlist"></div>
+  <button class="danger hidden" id="histClear">Clear history</button>
+</div></div>
+
+<div class="panel" id="revPanel" role="dialog" aria-label="Your answers"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Back"></button><h1 id="revTitle">Your answers</h1><span class="sp"></span></div>
+  <div class="hsum" id="revSum"></div>
+  <div class="revlist" id="revList"></div>
+</div></div>
+
+<script>
+/* ======================================================================
+   Quick Maths for Rizzo Games.
+   Rounds of 25 quick questions: Add, Subtract, Multiply, Divide or a Mix,
+   with or without negative numbers. Type the answer on the number pad
+   (or a keyboard); the round is timed, and you can review every answer.
+
+   How it's built:
+     Questions  making a round of 25 different questions
+     Game       the round you're playing: answers, the clock, the end
+     Home       the menu: kinds of sums, numbers, Play
+     Panels     How to play, Stats, History, Your answers, Settings
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const RZ = window.RizzoGames || null;
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+const fmt = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = Math.floor(t - m * 60); return m + ':' + String(s).padStart(2, '0'); };
+const secs = ms => (ms / 1000).toFixed(1) + 's';
+const num = n => (n || 0).toLocaleString();
+const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+
+/* ---------- icons ---------- */
+const ICONS = {
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  settings: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.5v.6"/><path d="M12 17.2v.1"/>',
+  chart: '<path d="M5 20V11M12 20V5M19 20v-6"/><path d="M3 20.5h18"/>',
+  history: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V9H8"/><path d="M12 7.5V12l3 2"/>',
+  trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7 10M17 6h2.5v1A3 3 0 0 1 17 10M12 13v4M8.5 20.5h7l-.8-3.5H9.3z"/>',
+  again: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/>',
+  clock: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  cross: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.1M4.5 12h.1M4.5 18h.1" stroke-width="3"/>',
+  bolt: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
+  del: '<path d="M9 5h10a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 19H9l-6-7z"/><path d="M11.5 9.5l5 5M16.5 9.5l-5 5"/>',
+  enter: '<path d="M19 5v7a3 3 0 0 1-3 3H5"/><path d="M9 11l-4 4 4 4"/>',
+  all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  pm: '<path d="M12 4v10M7 9h10M7 19h10"/>',
+};
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
+
+/* ---------- sound effects (follow the shared Rizzo volume) ---------- */
+const Sound = (() => {
+  let ctx = null;
+  const vol = () => RZ ? RZ.level('sfx') : 0.6;
+  const ac = () => { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+  function tone(freq, dur, type = 'sine', gain = .2, delay = 0, slide = 0) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac(), t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain * v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+    } catch {}
+  }
+  return {
+    key() { tone(700, .03, 'triangle', .06); },
+    right(n) { const f = 520 * Math.pow(2, Math.min(n, 12) / 24); tone(f, .09, 'triangle', .13); tone(f * 1.5, .1, 'sine', .07, .05); },
+    wrong() { tone(200, .16, 'square', .05, 0, .7); },
+    done(perfect) { (perfect ? [523, 659, 784, 1047, 1319] : [523, 659, 784]).forEach((f, k) => tone(f, .2, 'triangle', .15, k * .09)); },
+  };
+})();
+
+/* ---------- saved data ---------- */
+const PREF_KEY = 'quickmaths-prefs', STATS_KEY = 'quickmaths-stats-v1', HIST_KEY = 'quickmaths-history-v1';
+const saveKey = k => `quickmaths-save-v1-${k}`;
+const prefs = Object.assign({mode: 'add', neg: 'pos', auto: true, timer: true, pad: true, buzz: true, histSeen: 0}, load(PREF_KEY, {}));
+const savePrefs = () => keep(PREF_KEY, prefs);
+const allStats = () => load(STATS_KEY, {});
+const hist = () => load(HIST_KEY, []);
+
+/* ======================================================================
+   QUESTIONS
+   ====================================================================== */
+const N_Q = 25;
+const OPS = {
+  add: {name: 'Add', sym: '+'}, sub: {name: 'Subtract', sym: '−'}, mul: {name: 'Multiply', sym: '×'}, div: {name: 'Divide', sym: '÷'},
+  mix: {name: 'Mix', sym: ''},
+};
+const MODE_IDS = Object.keys(OPS), FOUR = ['add', 'sub', 'mul', 'div'];
+const NEGS = {pos: 'No negatives', neg: 'Negatives'};
+if (!OPS[prefs.mode]) prefs.mode = 'add';
+if (!NEGS[prefs.neg]) prefs.neg = 'pos';
+const keyOf = (op, neg) => `${op}-${neg}`;
+const R = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+const sign = neg => neg && Math.random() < .5 ? -1 : 1;
+const small = () => { let n; do n = R(0, 12); while (n < 2 && Math.random() < .75); return n; };   // 0 and 1 only turn up now and then
+const nz = n => n || 0;   // no "−0"
+function makeQ(o, neg) {
+  for (let tries = 0; ; tries++) {
+    let a, b, x;
+    if (o === 'add') { a = neg ? R(-12, 12) : R(0, 12); b = neg ? R(-12, 12) : R(0, 12); x = a + b; }
+    else if (o === 'sub') { if (neg) { a = R(-12, 12); b = R(-12, 12); } else { b = R(0, 12); a = b + R(0, 12); } x = a - b; }
+    else if (o === 'mul') { a = nz(small() * sign(neg)); b = nz(small() * sign(neg)); x = nz(a * b); }
+    else { b = (Math.random() < .1 ? 1 : R(2, 12)) * sign(neg); x = nz(small() * sign(neg)); a = nz(b * x); }
+    // with negatives on, most questions should have one in them somewhere
+    if (neg && tries < 20 && a >= 0 && b >= 0 && x >= 0 && Math.random() < .85) continue;
+    return {o, a, b, x};
+  }
+}
+function makeRound(op, neg) {
+  const ops = op === 'mix' ? shuffle([].concat(...Array(7).fill(FOUR))).slice(0, N_Q) : Array(N_Q).fill(op);
+  const seen = new Set(), qs = [];
+  for (const o of ops) {
+    let q, t = 0;
+    do q = makeQ(o, neg); while (seen.has(`${q.o}${q.a},${q.b}`) && ++t < 60);
+    seen.add(`${q.o}${q.a},${q.b}`); qs.push(q);
+  }
+  return qs;
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const showN = n => n < 0 ? '−' + -n : String(n);
+// "7 + 5", "−6 × 3", "4 − (−2)": a negative second number goes in brackets
+const exprHTML = q => `${showN(q.a)}<span class="op" style="--opc:var(--${q.o})">${OPS[q.o].sym}</span>${q.b < 0 ? `(${showN(q.b)})` : q.b}`;
+const exprText = q => `${showN(q.a)} ${OPS[q.o].sym} ${q.b < 0 ? `(${showN(q.b)})` : q.b}`;
+
+/* ======================================================================
+   GAME
+   ====================================================================== */
+let G = null, typed = '', lock = false, newArmed = 0;
+const timeNow = () => G ? G.elapsed + (G.startedAt ? Date.now() - G.startedAt : 0) : 0;
+const cur = () => G.qs[G.i];
+function newGame(op, neg) {
+  G = {op, neg, k: keyOf(op, neg), qs: makeRound(op, neg === 'neg'), i: 0, right: 0, elapsed: 0, startedAt: 0, qT0: 0, over: false};
+  typed = ''; lock = false; saveGame();
+}
+function resumeGame(s) {
+  if (!s || !s.qs || s.over || !OPS[s.op]) return false;
+  G = Object.assign({}, s, {startedAt: 0}); typed = ''; lock = false;
+  if (G.qs[G.i] && G.qs[G.i].ms) { G.i++; G.qT0 = G.elapsed; }   // it was left while an answer was showing
+  if (G.i >= N_Q) { G.i = N_Q - 1; lock = true; }                 // ...the last one: showGame finishes it
+  return true;
+}
+function saveGame() {
+  if (!G) return;
+  if (G.over) keep(saveKey(G.k), null);
+  else keep(saveKey(G.k), Object.assign({}, G, {elapsed: timeNow(), startedAt: 0}));
+}
+// the clock stops while a menu or panel is open, the app is hidden, or an answer is being shown
+function updatePaused() {
+  if (!G || G.over) return;
+  const paused = lock || (RZ && RZ.menuOpen) || document.hidden || $('#game').classList.contains('hidden') || !!document.querySelector('.panel.show');
+  if (paused && G.startedAt) { G.elapsed += Date.now() - G.startedAt; G.startedAt = 0; saveGame(); }
+  else if (!paused && !G.startedAt) G.startedAt = Date.now();
+}
+document.addEventListener('visibilitychange', updatePaused);
+setInterval(() => { if (G && !G.over && !$('#game').classList.contains('hidden')) $('#time').textContent = fmt(timeNow()); }, 200);
+
+/* ---------- showing a question ---------- */
+function showQ() {
+  const q = cur();
+  $('#q').innerHTML = exprHTML(q);
+  $('#q').classList.remove('in'); void $('#q').offsetWidth; $('#q').classList.add('in');
+  $('#ans').className = 'ans'; $('#fix').innerHTML = '';
+  typed = ''; showTyped();
+  $('#qnum').textContent = `${G.i + 1}/${N_Q}`;
+  $('#right').textContent = G.right;
+  $('#bar').style.width = G.i / N_Q * 100 + '%';
+}
+const showTyped = () => { $('#typed').textContent = typed.replace('-', '−'); };
+function press(k) {
+  if (!G || G.over || lock || $('#game').classList.contains('hidden')) return;
+  if (k === 'enter') { submit(); return; }
+  if (k === 'back') typed = typed.slice(0, -1);
+  else if (k === 'neg') { if (G.neg !== 'neg') return; typed = typed.startsWith('-') ? typed.slice(1) : '-' + typed; }
+  else { if (typed.replace('-', '').length >= 4) return; typed = (typed === '0' ? '' : typed === '-0' ? '-' : typed) + k; }
+  showTyped(); Sound.key();
+  if (prefs.auto && /\d/.test(typed) && +typed === cur().x && !(typed === '-0')) submit();
+}
+function submit() {
+  if (!/\d/.test(typed)) { $('#ans').classList.remove('bad'); void $('#ans').offsetWidth; $('#ans').classList.add('bad'); setTimeout(() => $('#ans').classList.remove('bad'), 400); return; }
+  const q = cur(), ok = +typed === q.x;
+  q.g = +typed; q.ms = Math.max(1, Math.round(timeNow() - G.qT0)); q.ok = ok ? 1 : 0;
+  lock = true; updatePaused();
+  if (ok) {
+    G.right++; G.run = (G.run || 0) + 1;
+    $('#ans').classList.add('good'); Sound.right(G.run); vibrate(6);
+  } else {
+    G.run = 0;
+    $('#ans').classList.add('bad'); $('#fix').innerHTML = `It's <b>${showN(q.x)}</b>`; Sound.wrong(); vibrate([30, 40, 30]);
+  }
+  $('#right').textContent = G.right;
+  $('#bar').style.width = (G.i + 1) / N_Q * 100 + '%';
+  saveGame();
+  setTimeout(next, ok ? (reduced() ? 120 : 260) : 1200);
+}
+function next() {
+  if (!G || G.over) return;
+  lock = false; G.i++;
+  if (G.i >= N_Q) { finish(); return; }
+  G.qT0 = timeNow(); showQ(); updatePaused(); saveGame();
+}
+
+/* ---------- the number pad, and a keyboard ---------- */
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'neg', '0', 'back', 'enter'];
+function renderPad() {
+  $('#pad').innerHTML = KEYS.map(k => `<button class="key${k === 'enter' ? ' enter' : ''}${k === 'neg' && (!G || G.neg !== 'neg') ? ' ghost' : ''}" data-k="${k}" aria-label="${k === 'neg' ? 'Make negative' : k === 'back' ? 'Delete' : k === 'enter' ? 'Enter' : k}">${
+    k === 'back' ? ic('del') : k === 'enter' ? ic('enter') + 'Enter' : k === 'neg' ? '±' : k}</button>`).join('');
+  $('#pad').classList.toggle('hidden', !prefs.pad);
+}
+$('#pad').addEventListener('pointerdown', e => {
+  const b = e.target.closest('.key'); if (!b) return;
+  e.preventDefault(); press(b.dataset.k);
+  b.classList.add('down'); setTimeout(() => b.classList.remove('down'), 110);
+});
+$('#pad').addEventListener('click', e => { const b = e.target.closest('.key'); if (b && e.detail === 0) press(b.dataset.k); });   // keyboard users tabbing to the keys
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || $('#game').classList.contains('hidden') || document.querySelector('.panel.show') || (RZ && RZ.menuOpen)) return;
+  let k = null;
+  if (/^[0-9]$/.test(e.key)) k = e.key;
+  else if (e.key === '-' || e.key === '_' || e.key === 'Subtract') k = 'neg';
+  else if (e.key === 'Backspace' || e.key === 'Delete') k = 'back';
+  else if (e.key === 'Enter' || e.key === '=') k = 'enter';
+  if (!k) return;
+  e.preventDefault(); press(k);
+  const b = $(`#pad .key[data-k="${k}"]`); if (b) { b.classList.add('down'); setTimeout(() => b.classList.remove('down'), 110); }
+});
+
+/* ---------- toasts ---------- */
+let toastT = 0;
+function toast(text, ms = 1600) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
+
+/* ---------- the end of a round ---------- */
+const statOf = k => Object.assign({played: 0, right: 0, qs: 0, ms: 0, bestScore: 0, bestTime: 0, perfect: 0, dist: {}}, allStats()[k]);
+function finish() {
+  G.over = true; G.elapsed = G.qs.reduce((t, q) => t + (q.ms || 0), 0); G.startedAt = 0;   // the time spent answering
+  const all = allStats(), st = all[G.k] = statOf(G.k), perfect = G.right === N_Q;
+  const newScore = G.right > st.bestScore && st.played > 0, newTime = perfect && (!st.bestTime || G.elapsed < st.bestTime);
+  st.played++; st.right += G.right; st.qs += N_Q; st.ms += G.elapsed; st.bestScore = Math.max(st.bestScore, G.right);
+  if (perfect) { st.perfect++; st.bestTime = st.bestTime ? Math.min(st.bestTime, G.elapsed) : G.elapsed; }
+  st.dist[G.right] = (st.dist[G.right] || 0) + 1;
+  keep(STATS_KEY, all);
+  const h = hist();
+  h.unshift({k: G.k, s: G.right, ms: G.elapsed, t: Date.now(), q: G.qs.map(q => [q.o[0], q.a, q.b, q.g, q.ms])});
+  h.forEach((x, i) => { if (i >= 50) delete x.q; });   // every answer is kept for the latest 50 rounds
+  keep(HIST_KEY, h.slice(0, 300));
+  saveGame();
+  $('#bar').style.width = '100%';
+  Sound.done(perfect); if (perfect) vibrate([20, 60, 20]);
+  showResult({newScore, newTime, perfect, entry: h[0]});
+}
+function showResult(r) {
+  const R = $('#result');
+  $('#qcard').classList.add('hidden'); $('#pad').classList.add('hidden');
+  const head = r.perfect ? 'Perfect!' : G.right >= 20 ? 'Nice work!' : G.right >= 13 ? 'Good going!' : 'Keep practising!';
+  const chips = [r.newTime ? `<span class="new">${ic('trophy')}Best time!</span>` : '', r.newScore ? `<span class="new">${ic('star')}Best score!</span>` : '',
+    `<span>${ic('clock')}${fmt(G.elapsed)}</span>`, `<span>${ic('bolt')}${secs(G.elapsed / N_Q)} each</span>`].filter(Boolean);
+  R.className = 'result';
+  R.innerHTML = `<div class="top"><span class="ri${r.perfect ? '' : ' part'}">${ic(r.perfect ? 'trophy' : 'check')}</span>
+    <div><h2>${head}</h2><div class="score">${G.right}<small> / ${N_Q} right</small></div></div></div>
+    <div class="chips">${chips.join('')}</div>
+    <div class="row2"><button class="sec" id="revBtn">${ic('list')}Answers</button><button class="primary" id="againBtn">${ic('again')}Play again</button></div>`;
+  $('#againBtn').onclick = () => { newGame(G.op, G.neg); showGame(); };
+  $('#revBtn').onclick = () => Review.open(r.entry);
+}
+
+/* ---------- moving between screens ---------- */
+function showGame() {
+  $('#home').classList.add('hidden'); $('#game').classList.remove('hidden');
+  $('#gMode').textContent = OPS[G.op].name; $('#gSub').textContent = NEGS[G.neg];
+  $('#result').classList.add('hidden'); $('#qcard').classList.remove('hidden');
+  $('#timeChip').classList.toggle('hidden', !prefs.timer);
+  renderPad();
+  showQ(); updatePaused(); saveGame();
+  $('#time').textContent = fmt(timeNow());
+  if (lock) { G.i = N_Q; lock = false; finish(); }
+}
+function showHome() {
+  clearTimeout(toastT); $('#toast').classList.remove('show');
+  if (lock && G && !G.over) next();   // finish off an answer that was still showing
+  $('#game').classList.add('hidden'); $('#home').classList.remove('hidden');
+  updatePaused(); saveGame(); renderModes(); renderSeg(); renderPlay(); renderHistBadge();
+}
+$('#homeBtn').onclick = showHome;
+// a new round: tap twice if you're partway through
+$('#newBtn').onclick = () => {
+  if (G && !G.over && G.i > 0) {
+    if (Date.now() - newArmed > 2500) { newArmed = Date.now(); toast('Tap again to start a new round'); return; }
+    newArmed = 0;
+  }
+  newGame(G.op, G.neg); showGame();
+};
+
+/* ======================================================================
+   HOME
+   ====================================================================== */
+function modeArt(id) {
+  const tile = (x, y, s, o, fs) => `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="${s * .24}" fill="var(--${o})"/>
+    <text x="${x + s / 2}" y="${y + s / 2}" text-anchor="middle" dominant-baseline="central" fill="#fff" style="font:900 ${fs}px Nunito,system-ui,sans-serif">${OPS[o].sym}</text>`;
+  const s = id === 'mix' ? tile(4, 4, 54, 'add', 40) + tile(62, 4, 54, 'sub', 40) + tile(4, 62, 54, 'mul', 40) + tile(62, 62, 54, 'div', 40)
+    : `<rect x="4" y="10" width="112" height="112" rx="27" fill="rgba(0,0,0,.18)"/>` + tile(4, 4, 112, id, 84);
+  return `<svg class="mart" viewBox="0 0 120 124" aria-hidden="true">${s}</svg>`;
+}
+let modeIdx = Math.max(0, MODE_IDS.indexOf(prefs.mode));
+function renderModes() {
+  $('#modes').innerHTML = MODE_IDS.map((id, k) => `<button class="mode${k === modeIdx ? ' active' : ''}" data-k="${k}" aria-label="${OPS[id].name}">${modeArt(id)}<h2>${OPS[id].name}</h2></button>`).join('');
+  $('#modeDots').innerHTML = MODE_IDS.map((_, k) => `<i class="${k === modeIdx ? 'on' : ''}"></i>`).join('');
+  $('#modePrev').innerHTML = $('#modeNext').innerHTML = ic('chevron');
+  $('#modePrev').disabled = modeIdx === 0; $('#modeNext').disabled = modeIdx === MODE_IDS.length - 1;
+  requestAnimationFrame(() => scrollToMode(modeIdx, true));
+}
+function renderSeg() {
+  $('#negSeg').innerHTML = Object.keys(NEGS).map(n => `<button role="radio" aria-checked="${n === prefs.neg}" class="${n === prefs.neg ? 'on' : ''}" data-n="${n}">${ic(n === 'neg' ? 'pm' : 'plus')}${NEGS[n]}</button>`).join('');
+}
+$('#negSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.neg = b.dataset.n; savePrefs(); renderSeg(); renderPlay(); });
+function scrollToMode(k, instant) {
+  const m = $('#modes'), card = m.children[k]; if (!card || $('#home').classList.contains('hidden')) return;
+  m.scrollTo({left: card.offsetLeft - (m.clientWidth - card.clientWidth) / 2, behavior: instant || reduced() ? 'auto' : 'smooth'});
+}
+addEventListener('resize', () => scrollToMode(modeIdx, true));
+function setMode(k) {
+  if (k === modeIdx && $('#modes').children[k].classList.contains('active')) return;
+  modeIdx = k;
+  [...$('#modes').children].forEach((c, j) => c.classList.toggle('active', j === k));
+  [...$('#modeDots').children].forEach((c, j) => c.classList.toggle('on', j === k));
+  $('#modePrev').disabled = k === 0; $('#modeNext').disabled = k === MODE_IDS.length - 1;
+  prefs.mode = MODE_IDS[k]; savePrefs(); renderPlay();
+}
+(() => {   // swiping and dragging the mode cards
+  const m = $('#modes');
+  let t = 0;
+  m.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const mid = m.scrollLeft + m.clientWidth / 2;
+      let best = 0, bd = 1e9;
+      [...m.children].forEach((c, k) => { const d = Math.abs(c.offsetLeft + c.clientWidth / 2 - mid); if (d < bd) { bd = d; best = k; } });
+      setMode(best);
+    }, 60);
+  });
+  let drag = null;
+  m.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = {x: e.clientX, s: m.scrollLeft, moved: false}; });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 5) { drag.moved = true; m.classList.add('dragging'); }
+    if (drag.moved) m.scrollLeft = drag.s - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!drag) return;
+    const moved = drag.moved; drag = null; m.classList.remove('dragging');
+    if (moved) { m._noClick = true; setTimeout(() => m._noClick = false, 50); requestAnimationFrame(() => m.dispatchEvent(new Event('scroll'))); }
+  });
+  m.addEventListener('click', e => {
+    if (m._noClick) return;
+    const c = e.target.closest('.mode'); if (!c) return;
+    const k = +c.dataset.k;
+    if (k !== modeIdx) { scrollToMode(k); setMode(k); } else play();
+  });
+  $('#modePrev').onclick = () => { if (modeIdx > 0) { scrollToMode(modeIdx - 1); setMode(modeIdx - 1); } };
+  $('#modeNext').onclick = () => { if (modeIdx < MODE_IDS.length - 1) { scrollToMode(modeIdx + 1); setMode(modeIdx + 1); } };
+})();
+const liveSave = () => { const s = load(saveKey(keyOf(MODE_IDS[modeIdx], prefs.neg)), null); return s && !s.over && s.i > 0 ? s : null; };
+function renderPlay() {
+  const s = liveSave();
+  $('#playBtn').innerHTML = s ? `<span>Continue</span><small>Question ${s.i + 1} of ${N_Q} · ${s.right} right</small>` : `<span>Play</span><small>${N_Q} questions · ${NEGS[prefs.neg]}</small>`;
+  $('#newBtnHome').classList.toggle('hidden', !s);
+}
+function play(fresh) {
+  const op = MODE_IDS[modeIdx], s = !fresh && liveSave();
+  if (!(s && resumeGame(s))) newGame(op, prefs.neg);
+  showGame();
+}
+$('#playBtn').onclick = () => play(false);
+$('#newBtnHome').innerHTML = ic('refresh');
+$('#newBtnHome').onclick = () => play(true);
+
+/* ======================================================================
+   PANELS
+   ====================================================================== */
+function openPanel(id) {
+  $('#' + id).classList.add('show'); updatePaused();
+  setTimeout(() => { const b = $('#' + id + ' [data-close]'); if (b) b.focus({preventScroll: true}); }, 50);
+}
+function closePanel(p) {
+  p = p || [...document.querySelectorAll('.panel.show')].pop(); if (!p) return;
+  p.classList.remove('show');
+  if (p.id === 'howPanel') How.stop();
+  updatePaused();
+}
+document.querySelectorAll('.panel [data-close]').forEach(b => b.onclick = () => closePanel(b.closest('.panel')));
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.panel.show')) { e.stopImmediatePropagation(); closePanel(); } }, true);
+document.querySelectorAll('.panel').forEach(p => {   // pull a panel down by its top to close it
+  let y0 = null;
+  p.addEventListener('pointerdown', e => { if (p.scrollTop <= 0 && e.target.closest('.grab, .phead h1')) { y0 = e.clientY; p.style.transition = 'none'; } });
+  addEventListener('pointermove', e => { if (y0 != null) p.style.transform = `translateY(${Math.max(0, e.clientY - y0)}px)`; });
+  addEventListener('pointerup', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; y0 = null; p.style.transition = ''; p.style.transform = '';
+    if (dy > 90) closePanel(p);
+  });
+});
+
+/* ---------- Settings ---------- */
+let resetArmed = false;
+function renderSettings() {
+  document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = !!prefs[el.dataset.p]);
+  $('#sBuzzRow').classList.toggle('hidden', !navigator.vibrate);
+  $('#sResetNote').textContent = ''; resetArmed = false; $('#sReset').textContent = 'Reset stats';
+}
+document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () => {
+  prefs[el.dataset.p] = el.checked; savePrefs();
+  if (G && !$('#game').classList.contains('hidden')) {
+    $('#timeChip').classList.toggle('hidden', !prefs.timer);
+    if (!G.over) $('#pad').classList.toggle('hidden', !prefs.pad);
+  }
+});
+$('#sMenu').onclick = () => RZ && RZ.openMenu();
+$('#sReset').onclick = () => {
+  if (!resetArmed) { resetArmed = true; $('#sReset').textContent = 'Tap again to reset'; $('#sResetNote').textContent = 'Your history stays.'; return; }
+  keep(STATS_KEY, null); renderSettings(); $('#sResetNote').textContent = 'Stats reset.';
+};
+const openSettings = () => { renderSettings(); openPanel('setPanel'); };
+$('#setBtnHome').onclick = openSettings; $('#setBtnGame').onclick = openSettings;
+
+/* ---------- Stats ---------- */
+let sfOp = 'all', sfNeg = prefs.neg;
+const BUCKETS = [[25, 25, 'All 25'], [22, 24, '22–24'], [18, 21, '18–21'], [12, 17, '12–17'], [0, 11, '0–11']];
+function renderStats() {
+  $('#sfOp').innerHTML = [['all', 'All'], ...MODE_IDS.map(id => [id, OPS[id].sym || OPS[id].name])].map(([id, label]) =>
+    `<button class="${sfOp === id ? 'on' : ''}" data-o="${id}" aria-label="${id === 'all' ? 'All' : OPS[id].name}">${label}</button>`).join('');
+  $('#sfNeg').innerHTML = Object.keys(NEGS).map(n => `<button class="${sfNeg === n ? 'on' : ''}" data-n="${n}">${ic(n === 'neg' ? 'pm' : 'plus')}${NEGS[n]}</button>`).join('');
+  const keys = (sfOp === 'all' ? MODE_IDS : [sfOp]).map(o => keyOf(o, sfNeg));
+  const st = {played: 0, right: 0, qs: 0, ms: 0, bestScore: 0, bestTime: 0, perfect: 0, dist: {}};
+  keys.map(statOf).forEach(s => {
+    st.played += s.played; st.right += s.right; st.qs += s.qs; st.ms += s.ms; st.perfect += s.perfect;
+    st.bestScore = Math.max(st.bestScore, s.bestScore);
+    if (s.bestTime) st.bestTime = st.bestTime ? Math.min(st.bestTime, s.bestTime) : s.bestTime;
+    for (const k in s.dist) st.dist[k] = (st.dist[k] || 0) + s.dist[k];
+  });
+  $('#ssum').innerHTML = [[st.played, 'Rounds'], [st.qs ? Math.round(st.right / st.qs * 100) + '%' : '–', 'Right'], [st.qs ? secs(st.ms / st.qs) : '–', 'Per answer'], [st.perfect, 'Perfect']]
+    .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#ssum2').innerHTML = [[st.played ? `${st.bestScore}/${N_Q}` : '–', 'Best score'], [st.bestTime ? fmt(st.bestTime) : '–', 'Fastest 25/25']]
+    .map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+  const counts = BUCKETS.map(([lo, hi]) => Object.keys(st.dist).filter(k => +k >= lo && +k <= hi).reduce((n, k) => n + st.dist[k], 0)), most = Math.max(1, ...counts);
+  $('#sdist').innerHTML = `<h3>Score each round</h3>` + (st.played ? BUCKETS.map(([, , label], k) =>
+    `<div class="dbar"><span>${label}</span><i style="width:${Math.max(7, counts[k] / most * 100)}%">${counts[k]}</i></div>`).join('')
+    : `<p class="snote" style="margin:4px 0">Finish a round to see it here.</p>`);
+}
+$('#sfOp').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { sfOp = b.dataset.o; renderStats(); } });
+$('#sfNeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { sfNeg = b.dataset.n; renderStats(); } });
+$('#statsBtn').onclick = () => { sfOp = MODE_IDS[modeIdx]; sfNeg = prefs.neg; renderStats(); openPanel('statsPanel'); };
+
+/* ---------- History ---------- */
+let histFilter = 'all';
+const modeName = k => { const [o, n] = k.split('-'); return `${OPS[o] ? OPS[o].name : o} · ${NEGS[n] || ''}`; };
+function renderHistBadge() {
+  const n = hist().filter(h => h.t > (prefs.histSeen || 0)).length;
+  $('#histBadge').textContent = n > 99 ? '99+' : n;
+  $('#histBadge').classList.toggle('hidden', !n);
+}
+function renderHistory() {
+  $('#hfilt').innerHTML = [['all', 'All'], ...MODE_IDS.map(id => [id, OPS[id].sym || OPS[id].name])].map(([id, label]) => `<button class="${histFilter === id ? 'on' : ''}" data-f="${id}" aria-label="${id === 'all' ? 'All' : OPS[id].name}">${label}</button>`).join('');
+  const all = hist(), list = all.filter(h => histFilter === 'all' || h.k.startsWith(histFilter + '-'));
+  const day = t => { const d = new Date(t), now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+    const same = (a, b) => a.toDateString() === b.toDateString();
+    return same(d, now) ? d.toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'}) : same(d, y) ? 'Yesterday' : d.toLocaleDateString(undefined, {day: 'numeric', month: 'short'}); };
+  $('#hlist').innerHTML = list.length ? list.slice(0, 200).map(h => `<div class="hrow" data-t="${h.t}" ${h.q ? 'role="button" tabindex="0" aria-label="See the answers"' : ''}>
+      <span class="ht${h.s === N_Q ? ' perfect' : ''}">${h.s}</span>
+      <span class="hm"><b>${h.s}/${N_Q} in ${fmt(h.ms)}</b><small>${modeName(h.k)} · ${day(h.t)}</small></span>
+      <span class="hv">${h.s === N_Q ? ic('trophy') : ''}${h.q ? ic('chevron') : ''}</span></div>`).join('')
+    : `<p class="hempty">${ic('history')}No rounds yet</p>`;
+  $('#histClear').classList.toggle('hidden', !all.length);
+  $('#histClear').textContent = 'Clear history';
+}
+$('#hfilt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { histFilter = b.dataset.f; renderHistory(); } });
+$('#hlist').addEventListener('click', e => { const r = e.target.closest('.hrow'); if (r) { const h = hist().find(x => x.t === +r.dataset.t); if (h && h.q) Review.open(h); } });
+$('#hlist').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.hrow')) { e.preventDefault(); e.target.click(); } });
+$('#histClear').onclick = () => {
+  const b = $('#histClear');
+  if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Tap again to clear'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Clear history'; }, 3000); return; }
+  delete b.dataset.sure; keep(HIST_KEY, []); renderHistory(); renderHistBadge();
+};
+$('#historyBtn').onclick = () => { prefs.histSeen = Date.now(); savePrefs(); renderHistBadge(); renderHistory(); openPanel('histPanel'); };
+
+/* ---------- Your answers: every question in a round ---------- */
+const Review = {
+  open(h) {
+    const O = {a: 'add', s: 'sub', m: 'mul', d: 'div'};
+    const qs = h.q.map(([o, a, b, g, ms]) => { const q = {o: O[o], a, b, g, ms}; q.x = q.o === 'add' ? a + b : q.o === 'sub' ? a - b : q.o === 'mul' ? a * b : a / b; return q; });
+    const slow = qs.map(q => q.ms).sort((a, b) => b - a)[2];   // the three slowest get marked
+    $('#revTitle').textContent = modeName(h.k);
+    $('#revSum').innerHTML = [[`${h.s}/${N_Q}`, 'Right'], [fmt(h.ms), 'Time'], [secs(h.ms / N_Q), 'Per answer']].map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+    $('#revList').innerHTML = qs.map((q, i) => { const ok = q.g === q.x;
+      return `<div class="rv ${ok ? 'right' : 'wrong'}${q.ms >= slow ? ' slow' : ''}"><span class="n">${i + 1}</span>
+        <span class="e">${exprText(q)} = ${ok ? showN(q.x) : `<s>${showN(q.g)}</s><span class="ok">${showN(q.x)}</span>`}</span>
+        <span class="t">${secs(q.ms)}</span>${ic(ok ? 'check' : 'cross')}</div>`; }).join('');
+    openPanel('revPanel');
+    $('#revPanel').scrollTop = 0;
+  },
+};
+
+/* ---------- How to play: a little question being answered ---------- */
+const How = (() => {
+  let step = 0, timers = [];
+  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+  // shows a question and "presses" the keys one by one
+  function demo(stage, qs) {
+    stage.innerHTML = `<div class="mini"><div class="q"></div><div class="ans"><span></span></div><div class="minikeys"></div></div>`;
+    const q = stage.querySelector('.q'), ans = stage.querySelector('.ans'), out = ans.firstChild, keys = stage.querySelector('.minikeys');
+    let t = 300;
+    qs.forEach(([e, presses, good]) => {
+      at(t, () => { q.innerHTML = e; out.textContent = ''; ans.className = 'ans';
+        keys.innerHTML = presses.map(p => `<i>${p}</i>`).join(''); });
+      t += 700;
+      presses.forEach((p, k) => {
+        at(t, () => { keys.children[k].classList.add('down'); if (p !== '✓') out.textContent = (p === '±' ? '−' : '') + out.textContent + (p === '±' ? '' : p); Sound.key(); });
+        at(t + 160, () => keys.children[k] && keys.children[k].classList.remove('down'));
+        t += 520;
+      });
+      at(t, () => { ans.classList.add(good ? 'good' : 'bad'); good ? Sound.right(2) : Sound.wrong(); });
+      t += 1100;
+    });
+    at(t + 300, () => demo(stage, qs));
+  }
+  const op = o => `<span class="op" style="--opc:var(--${o})">${OPS[o].sym}</span>`;
+  const STEPS = [
+    {title: 'Answer as fast as you can', cap: '<span>Type the answer on the number pad, or a keyboard. When it\'s right, the next question pops up straight away.</span>',
+      run: s => demo(s, [[`7${op('add')}5`, ['1', '2'], true], [`6${op('mul')}8`, ['4', '8'], true]])},
+    {title: '25 questions a round', cap: '<span>Pick <b>Add</b>, <b>Subtract</b>, <b>Multiply</b>, <b>Divide</b> or a <b>Mix</b>. Get one wrong and you\'ll see the right answer, then it moves on. Afterwards, check every answer and your slowest ones.</span>',
+      run: s => { s.innerHTML = `<div class="qsyms"><i class="o-add">+</i><i class="o-sub">−</i><i class="o-mul">×</i><i class="o-div">÷</i></div><div class="howkeys" style="margin-top:16px"><span>${ic('clock')}Timed</span><span>${ic('check')}Score out of 25</span><span>${ic('list')}See your answers</span></div>`; }},
+    {title: 'Negative numbers', cap: '<span>Choose <b>Negatives</b> for sums like −6 × 3. Tap <b>±</b> (or the minus key) to make your answer negative.</span>',
+      run: s => demo(s, [[`−6${op('mul')}3`, ['±', '1', '8'], true], [`4${op('sub')}(−2)`, ['6'], true]])},
+  ];
+  function go(k) {
+    clear(); step = Math.max(0, Math.min(STEPS.length - 1, k));
+    const S = STEPS[step];
+    $('#howTitle').innerHTML = `<span class="hn">${step + 1}</span>${S.title}`;
+    $('#howCap').innerHTML = S.cap;
+    $('#howCount').textContent = `${step + 1}/${STEPS.length}`;
+    $('#howDots').innerHTML = STEPS.map((_, j) => `<i class="${j === step ? 'on' : ''}"></i>`).join('');
+    $('#howPrev').style.visibility = step ? 'visible' : 'hidden';
+    $('#howNext').textContent = step === STEPS.length - 1 ? 'Play' : 'Next';
+    S.run($('#howStage'));
+  }
+  $('#howPrev').onclick = () => go(step - 1);
+  $('#howNext').onclick = () => { if (step === STEPS.length - 1) { closePanel($('#howPanel')); if (!$('#home').classList.contains('hidden')) play(false); } else go(step + 1); };
+  return {open() { openPanel('howPanel'); requestAnimationFrame(() => go(0)); }, stop: clear};
+})();
+$('#howBtn').onclick = () => How.open();
+
+/* ---------- start ---------- */
+fillIcons();
+renderModes(); renderSeg(); renderPlay(); renderHistBadge();
+if (!load('quickmaths-seen-how', 0)) { keep('quickmaths-seen-how', 1); setTimeout(() => How.open(), 700); }
+
+/* ---------- Rizzo Games hooks (menu, updates) ---------- */
+window.RizzoHooks = {
+  onMenuOpen: () => updatePaused(),
+  onMenuClose: () => updatePaused(),
+  previewSound: () => Sound.right(4),
+  beforeReload() { saveGame(); return {inGame: !$('#game').classList.contains('hidden') && G && !G.over ? G.k : null}; },
+  afterReload(info) { const k = info && info.inGame, s = k && load(saveKey(k), null); if (s && resumeGame(s)) showGame(); },
+};
+</script>
+</body>
+</html>
