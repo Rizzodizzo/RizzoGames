@@ -682,6 +682,24 @@ kbd{font:inherit;font-weight:900;font-size:.78rem;min-width:24px;padding:2px 7px
 #field{left:auto;right:auto;bottom:auto;height:auto}
 #field::after{content:none}
 
+/* the picked tower's stats, in a bubble pointing at its shop button */
+.tipstats{position:fixed;z-index:8;translate:0 -50%;pointer-events:none;min-width:128px;padding:8px 11px 9px;border-radius:14px;background:var(--block);
+  box-shadow:0 4px 0 var(--blockEdge),0 10px 24px var(--shade);font-weight:800;font-size:.8rem;display:none}
+.tipstats.show{display:block;animation:tipin .22s var(--pop) both}
+@keyframes tipin{from{opacity:0;translate:10px -50%;scale:.9}}
+.tipstats::after{content:'';position:absolute;right:-7px;top:50%;width:14px;height:14px;background:var(--block);rotate:45deg;translate:0 -50%;border-radius:3px;box-shadow:3px -1px 0 0 var(--blockEdge)}
+.tipstats b{display:flex;align-items:center;gap:6px;font-weight:900;font-size:.92rem;margin-bottom:4px;position:relative;z-index:1}
+.tipstats b::before{content:'';width:10px;height:10px;border-radius:3px;background:var(--c)}
+.tipstats b small{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:800;display:flex;align-items:center;gap:3px}
+.tipstats b small::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.tipstats div{display:flex;justify-content:space-between;gap:12px;color:var(--muted);line-height:1.5;position:relative;z-index:1}
+.tipstats em{font-style:normal;color:var(--ink);font-weight:900}
+body:has(.panel.show) .tipstats,body:not(.playing) .tipstats{display:none}
+/* while placing, the hint sits bottom left (those buttons are hidden then), clear of the stats bubble on the right */
+.placehint{left:10px;translate:none;white-space:normal;max-width:min(330px,calc(100% - 200px));line-height:1.3}
+.placehint.show{animation-name:hintL}
+@keyframes hintL{0%{opacity:0;translate:0 8px}10%,80%{opacity:.92;translate:0 0}100%{opacity:0}}
+
 </style>
 </head>
 <body>
@@ -750,6 +768,7 @@ kbd{font:inherit;font-weight:900;font-size:.78rem;min-width:24px;padding:2px 7px
   <button class="bbtn" id="rotHome">Back to menu</button>
 </div>
 
+<div class="tipstats" id="tipStats" aria-live="polite"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="achpop" id="achPop" role="status" aria-live="polite"></div>
 
@@ -1171,7 +1190,7 @@ function makeWave(n) {
     if (n >= 15) opts.push(['roll', ['split'], 1.5], ['fly', ['split'], .8]);
     if (n >= 17) opts.push(['stomp', ['mend'], .9]);
     if (n >= 21) opts.push(['stomp', ['heavy'], 1.2], ['roll', ['heavy', 'shield'], 1]);
-    if (n >= 25) opts.push(['fly', ['shield'], 1], ['stomp', ['heavy', 'split'], .8]);
+    if (n >= 25) opts.push(['fly', ['heavy'], 1], ['stomp', ['heavy', 'split'], .8]);   // tougher flyers (never shielded: the Launcher is their answer)
     let tot = opts.reduce((s, o) => s + o[2], 0), r = Math.random() * tot, pick = opts[0];
     for (const o of opts) { r -= o[2]; if (r <= 0) { pick = o; break; } }
     const [k, tr] = pick, size = Math.min(left, 2 + Math.floor(Math.random() * 4));
@@ -2021,7 +2040,7 @@ function setup() {
   const R = rng(G.seed ^ 0x5bd1e995);   // cracks in the Core, revealed as lives are lost
   G.cracks = Array.from({length: 7}, () => { const p = [(R() - .5) * .7, (R() - .5) * .7]; for (let i = 0; i < 3; i++) p.push(p[p.length - 2] + (R() - .5) * .35, p[p.length - 1] + (R() - .5) * .35); return p; });
   FX = {parts: [], floats: [], rings: [], tracers: [], shells: [], missiles: []};
-  pick = null; drag = null; $('#field').classList.remove('placing', 'ended'); $('#notes').innerHTML = ''; clearTimeout(endT);
+  pick = null; drag = null; $('#tipStats').classList.remove('show'); $('#field').classList.remove('placing', 'ended'); $('#notes').innerHTML = ''; clearTimeout(endT);
   $('#over').className = 'over hidden'; $('#viewBar').classList.add('hidden'); sel = null; shake = 0; coreHurt = 0; autoT = 0;
   G.towers.forEach(t => t.id = t.id || uid++);
 }
@@ -2041,6 +2060,7 @@ function layout() {
   cv.width = Math.round(W * V.dpr); cv.height = Math.round(H * V.dpr);
   V.s = Math.floor(Math.min(W / COLS, H / ROWS)); V.ox = Math.round((W - COLS * V.s) / 2); V.oy = Math.round((H - ROWS * V.s) / 2);
   paintBoard();
+  if (pick) tipStats(pick);   // keep the stats bubble beside its button
 }
 function paintBoard() {   // the board and the scenery round it, painted once (again when the theme or size changes)
   if (!G || !V.W) return;
@@ -2112,8 +2132,8 @@ function setPick(k) {
   pick = k;
   $('#field').classList.toggle('placing', !!pick);
   if (!pick) $('#placeHint').classList.remove('show');   // the hint goes with the placing view, so it never sits on the buttons
-  if (pick) { const h = $('#placeHint'); h.innerHTML = `Tap a square to build a ${TOWERS[pick].name} · tap it again on the right to stop`; h.classList.remove('show'); void h.offsetWidth; h.classList.add('show'); }
-  updateShop();
+  if (pick) { const h = $('#placeHint'); h.innerHTML = `Tap a square to build a ${TOWERS[pick].name}. Tap it again on the right to stop.`; h.classList.remove('show'); void h.offsetWidth; h.classList.add('show'); }
+  updateShop(); tipStats(pick);
 }
 function updateShop() {
   if (sel) { const b = $('#shop [data-act="up"]'); if (b) b.classList.toggle('poor', G.coins < TOWERS[sel.k].up[sel.lv]); return; }
@@ -2162,6 +2182,21 @@ function endDrag(e, cancel) {
 }
 addEventListener('pointerup', e => endDrag(e));
 addEventListener('pointercancel', e => endDrag(e, true));
+
+/* a bubble beside the shop with the picked tower's starting stats (level 1) */
+function tipStats(k) {
+  const tip = $('#tipStats'), btn = k && $(`#shop .tbuy[data-k="${k}"]`);
+  if (!btn) { tip.classList.remove('show'); return; }
+  const d = TOWERS[k], pct = v => Math.round(v * 100) + '%';
+  const rows = k === 'booster' ? [['Damage', '+' + pct(d.bdmg[0])], ['Speed', '+' + pct(d.brate[0])], ['Reach', d.range[0]]]
+    : k === 'frost' ? [['Slows', pct(d.slow[0])], ['Pulses/s', d.rate[0]], ['Range', d.range[0]]]
+    : [['Damage', d.dmg[0]], ['Shots/s', d.rate[0]], ['Range', d.range[0]], ...(d.splash ? [['Blast', d.splash[0]]] : [])];
+  tip.innerHTML = `<b style="--c:${tcol(k)}">${d.name}<small>${d.cost}</small></b>${rows.map(([l, v]) => `<div><span>${l}</span><em>${v}</em></div>`).join('')}`;
+  const r = btn.getBoundingClientRect();
+  tip.style.right = (innerWidth - r.left + 12) + 'px';
+  tip.style.top = Math.max(60, Math.min(innerHeight - 60, r.top + r.height / 2)) + 'px';
+  tip.classList.remove('show'); void tip.offsetWidth; tip.classList.add('show');
+}
 
 /* ---------- building, upgrading, selling ---------- */
 const towerAt = (c, r) => G.towers.find(t => t.c === c && t.r === r);
@@ -2230,6 +2265,7 @@ function startWave() {
 }
 $('#waveBtn').onclick = startWave;
 function spawn(q, at) {
+  if (q.k === 'fly' && q.tr.includes('shield')) q = {...q, tr: q.tr.filter(t => t !== 'shield')};   // flyers are never shielded
   const K = KINDS[q.k], n = G.waveN;
   let hp = baseHp(n, G.m) * K.hp, sp = K.speed * (1 + Math.min(.3, n * .01)), size = K.size, lives = K.lives, coin = K.coin * (1 + n * .02) * ECON.kill * (MODES[G.m].pay || 1);
   q.tr.forEach(t => { const R = TRAITS[t]; hp *= R.hp; sp *= R.speed; size *= R.size; coin *= R.coin; lives += R.lives || 0; });
@@ -2666,7 +2702,7 @@ function showGame(fresh) {
 function showHome() {
   if (G) saveGame();
   clearTimeout(toastT); $('#toast').classList.remove('show');
-  $('#game').classList.add('hidden'); $('#modesel').classList.add('hidden'); $('#home').classList.remove('hidden'); document.body.classList.remove('playing');
+  $('#tipStats').classList.remove('show'); $('#game').classList.add('hidden'); $('#modesel').classList.add('hidden'); $('#home').classList.remove('hidden'); document.body.classList.remove('playing');
   renderHome();
 }
 function showModes() {
