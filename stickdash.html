@@ -213,7 +213,7 @@ body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .rphone{width:54px;height:92px;border:4px solid var(--ink);border-radius:14px;position:relative;margin-bottom:14px;animation:tilt 2.4s var(--ease) infinite}
 .rphone i{position:absolute;left:50%;bottom:6px;width:14px;height:4px;margin-left:-7px;border-radius:2px;background:var(--ink)}
 @keyframes tilt{0%,25%{transform:rotate(0)}55%,85%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
-@media (orientation:portrait){html.rz-touch body.playing .rotate{display:flex}}
+@media (orientation:portrait){html.rz-touch body.playing .rotate,html.rz-touch body.editing .rotate{display:flex}}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translate(-50%,20px);opacity:0;z-index:30;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:900;pointer-events:none;transition:opacity .25s,transform .25s var(--ease)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 /* ---------- panels ---------- */
@@ -227,10 +227,25 @@ kbd{font:inherit;font-weight:900;font-size:.8rem;min-width:28px;height:26px;padd
 html.rz-touch #sKeys{display:none}
 #howPanel .panelin{max-width:640px}
 .hows{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hows .howc:last-child:nth-child(odd){grid-column:1/-1}
 .howc{background:var(--panel);border-radius:18px;padding:8px 8px 12px;box-shadow:0 2px 10px var(--shade);display:flex;flex-direction:column;gap:5px}
 .howc canvas{width:100%;height:118px;border-radius:12px;background:var(--bg);display:block}
 .howc b{font-weight:900;padding:2px 4px 0}
 .howc span{font-size:.83rem;color:var(--muted);font-weight:700;padding:0 4px;line-height:1.35}
+/* segmented choices (settings, joystick editor) */
+.seg{display:flex;gap:3px;padding:3px;border-radius:12px;background:var(--soft);flex:none}
+.seg button{padding:7px 12px;border-radius:9px;font-weight:900;font-size:.85rem;color:var(--muted)}
+.seg button.on{background:var(--panel);color:var(--accent);box-shadow:0 1px 4px var(--shade)}
+/* moving the joystick */
+.padedit{position:fixed;inset:0;z-index:15;background:var(--bg);touch-action:none}
+#peCv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.pebar{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;border-radius:18px;background:var(--panel);box-shadow:0 4px 18px var(--shade);white-space:nowrap}
+.pet{display:flex;flex-direction:column;line-height:1.15}
+.pet b{font-weight:900}
+.pet span{font-size:.76rem;font-weight:800;color:var(--muted)}
+.pebtns{display:flex;gap:8px}
+.pebtns .bbtn{min-height:40px;padding:0 14px}
+@media (max-width:700px){.pet span{display:none}.pebar{gap:8px;padding:6px 8px 6px 12px}.seg button{padding:7px 9px}}
 /* ---------- sideways phones ---------- */
 @media (orientation:landscape) and (max-height:520px){
   body{padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(16px,env(safe-area-inset-left,0px))}
@@ -245,7 +260,8 @@ html.rz-touch #sKeys{display:none}
   .card h2{font-size:1.35rem}
   .dstats{margin-top:10px}
   .crow{margin-top:12px}
-  .hows{grid-template-columns:repeat(4,1fr)}
+  .hows{grid-template-columns:repeat(5,1fr)}
+  .hows .howc:last-child:nth-child(odd){grid-column:auto}
   #howPanel .panelin{max-width:900px}
   .howc canvas{height:96px}
 }
@@ -300,6 +316,14 @@ html.rz-touch #sKeys{display:none}
   <b>Turn your phone sideways</b>
   <span>Stick Dash plays in landscape</span>
 </div>
+<div class="padedit hidden" id="padEdit" role="dialog" aria-label="Move the joystick">
+  <canvas id="peCv"></canvas>
+  <div class="pebar">
+    <div class="pet"><b>Move the joystick</b><span>Drag it to where your thumb rests</span></div>
+    <div class="seg" id="peSize"><button data-v="S">Small</button><button data-v="M">Medium</button><button data-v="L">Large</button></div>
+    <div class="pebtns"><button class="bbtn" id="peReset">Reset</button><button class="bbtn go" id="peDone">Done</button></div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- ================= PANELS ================= -->
@@ -310,7 +334,8 @@ html.rz-touch #sKeys{display:none}
     <h3 class="sgh">Controls</h3>
     <div class="sgroup">
       <label class="srow"><span class="sl"><b>Joystick on the right</b><small>Then tap and swipe on the left</small></span><input type="checkbox" class="switch" data-p="swap"></label>
-      <label class="srow"><span class="sl"><b>Always show the joystick</b><small>Otherwise it appears where your thumb lands</small></span><input type="checkbox" class="switch" data-p="fixedStick"></label>
+      <div class="srow"><span class="sl"><b>Joystick</b><small id="sStickNote"></small></span><div class="seg" id="sStick"><button data-v="fixed">Fixed</button><button data-v="free">Free</button></div></div>
+      <button class="srow" id="sMove"><span class="sl"><b>Move the joystick</b><small>Put it where your thumb rests, and pick its size</small></span><span class="sr" data-ic="chevron"></span></button>
       <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
     </div>
   </div><div>
@@ -340,9 +365,10 @@ html.rz-touch #sKeys{display:none}
   <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp"></span></div>
   <div class="hows">
     <div class="howc"><canvas data-demo="run"></canvas><b>Run</b><span>Hold the joystick on the left side and push left or right.</span></div>
-    <div class="howc"><canvas data-demo="jump"></canvas><b>Jump</b><span>Tap the right side. Hold for a higher jump. Jump off walls too.</span></div>
+    <div class="howc"><canvas data-demo="jump"></canvas><b>Jump</b><span>Tap the right side. Hold for a higher jump. Touch a wall and you can jump off it too.</span></div>
     <div class="howc"><canvas data-demo="dash"></canvas><b>Dash</b><span>Swipe the right side: you dash that way, in any of 8 directions.</span></div>
-    <div class="howc"><canvas data-demo="touch"></canvas><b>Get it back</b><span>One dash at a time. Touch the ground, a wall, a gold orb or a spring to get it back.</span></div>
+    <div class="howc"><canvas data-demo="dashjump"></canvas><b>Dash jump</b><span>Jump while you&rsquo;re dashing along the ground and you fly off at full speed.</span></div>
+    <div class="howc"><canvas data-demo="touch"></canvas><b>Get it back</b><span>One dash at a time. Land on the ground, or grab a gold orb or a spring, to get it back. Walls give you a jump, not a dash.</span></div>
   </div>
 </div></div>
 <script>
@@ -428,19 +454,49 @@ const LEVELS = [
   ]
  },
  {
+  "name": "Dash jump",
+  "map": [
+   "..........#############################.................................",
+   "..........#############################.................................",
+   "..........#############################.................................",
+   "..........#############################.................................",
+   "..........#############################.................................",
+   "..........#############################.................................",
+   "..........#############################.................................",
+   "..................................................*.....................",
+   "........................................................................",
+   "...P...........................c..................................G.....",
+   "#################x.......x###################x........x#################",
+   "#################x.......x###################x........x#################",
+   "#################x.......x###################x........x#################"
+  ],
+  "hints": [
+   [
+    5,
+    5,
+    "Dash, then jump while you dash"
+   ],
+   [
+    34,
+    8,
+    "You keep all your speed"
+   ]
+  ]
+ },
+ {
   "name": "Walls",
   "map": [
    "............................................................",
    "..............##....................................*.......",
    "..............##............................................",
+   "..............##...###############..........................",
+   "..............##...###############..........................",
    "..............##...###############......................G...",
    "..............##...###############........##################",
    "..............##...###############........##################",
    "..............##...###############........##################",
    "..............##...###############........##################",
    "..............##...###############........##################",
-   "..............##...##################.....##################",
-   "..............##...##################.....##################",
    "...................##################.....##################",
    "...P...............##################.....##################",
    "############################################################",
@@ -450,13 +506,13 @@ const LEVELS = [
   "hints": [
    [
     6,
-    9,
+    8,
     "Jump into a wall, then jump again"
    ],
    [
-    36,
-    6,
-    "Touching a wall gives your dash back"
+    38,
+    4,
+    "Walls give you a jump, not a dash"
    ]
   ]
  },
@@ -520,21 +576,21 @@ const LEVELS = [
  {
   "name": "All together",
   "map": [
-   "............................................................................##................................",
-   "........................##..................................................##................................",
-   "........................##........c..............................c..........##................................",
-   "........................##..#############....................##########.....##................................",
-   "........................##..#############....o...............##########.....##................................",
-   "........................##..#############....................##########.....##...............o................",
-   "........................##..#############........o...........##########.....##................................",
-   "........................##..#############..............b.....##########.....##................................",
-   "........................##..#############............##################.....##................................",
-   "............................#############............##################.....##............xxxxxx........G.....",
-   "................o...........#############............##################...............########################",
-   "............................#############............##################...............########################",
-   "...P........................#############............##################...............########################",
-   "###########...........###################............##################.......*.......########################",
-   "###########...........###################............##################...............########################",
+   "..............................................................................................................",
+   "........................##....................................................................................",
+   "........................##........c..............................c............................................",
+   "........................##..#############....................##########.......................................",
+   "........................##..#############....o...............##########.......................................",
+   "........................##..#############....................##########......................o................",
+   "........................##..#############........o...........##########.......................................",
+   "........................##..#############..............b.....##########.......................................",
+   "........................##..#############............##################.......................................",
+   "............................#############............##################......##...........xxxxxx........G.....",
+   "................o...........#############............##################......##.......########################",
+   "............................#############............##################......##.......########################",
+   "...P........................#############............##################...*..##.......########################",
+   "###########...........###################............##################......##.......########################",
+   "###########...........###################............##################......##.......########################",
    "###########...........###################xxxxxxxxxxxx##################xxxxxxxxxxxxxxx########################"
   ],
   "hints": []
@@ -548,7 +604,7 @@ const LEVELS = [
 
    How it's built:
      Setup      helpers, icons, sounds, saved settings and progress
-     Stick      the stick figure: poses for each move, blended smoothly, and a scarf
+     Stick      the stick figure: poses for each move, blended smoothly, and a ninja headband
      Levels     the level maps (one letter per square) and reading them
      Physics    running, jumping, wall jumps, dashing, what you touch
      Drawing    the level, the things in it, the stick figure, effects
@@ -635,86 +691,219 @@ const Sound = (() => {
 
 /* ---------- saved settings and progress ---------- */
 const PREF_KEY = 'stickdash-prefs', PROG_KEY = 'stickdash-progress-v1';
-const prefs = Object.assign({swap: false, fixedStick: false, buzz: true}, load(PREF_KEY, {}));
+// stick: 'fixed' (stays where you put it) or 'free' (appears under your thumb); stickPos: px in from the bottom corner
+const prefs = Object.assign({swap: false, stick: 'fixed', stickPos: null, stickSize: 'M', buzz: true}, load(PREF_KEY, {}));
+if ('fixedStick' in prefs) { delete prefs.fixedStick; }
 const savePrefs = () => keep(PREF_KEY, prefs);
 const prog = () => load(PROG_KEY, {});   // {levelId: {best (ms), star, deaths, done}}
-
 /* ======================================================================
    THE STICK FIGURE
-   A pose is a set of joint angles. Each move has its own pose (and running
-   is a cycle of poses); the figure always eases towards the pose it should be
-   in, so every change of move flows instead of snapping.
+   A pose is a set of joint angles. Each move has its own pose (running is a
+   cycle of poses worked out from one phase value); the figure always eases
+   towards the pose it should be in, so every change of move flows.
    Angles: limbs measure from straight down, positive = towards where it faces.
+   "plant" pulls the body down until the lower foot touches the ground, so the
+   hips bob naturally as the legs bend and the feet never float or sink.
+   Turning round eases through side-on (the figure is drawn squashed sideways
+   for a moment), like a body turning in 3D, instead of flipping in one frame.
    ====================================================================== */
-const BODY = {thigh: .3, shin: .3, torso: .4, neck: .05, head: .17, upper: .26, fore: .24, w: .09};
-const POSE_KEYS = ['lean', 'hip', 't0', 'k0', 't1', 'k1', 's0', 'e0', 's1', 'e1', 'rot', 'head'];
-function poseFor(st, t, ph, spd) {
-  const s = Math.sin(ph), c = Math.cos(ph);
-  switch (st) {
-    case 'run': {   // a running cycle: legs swing, the swinging-forward leg bends, arms pump opposite
-      const k = clamp(spd, .25, 1);
-      return {lean: .22 * k, hip: -.05 * Math.cos(2 * ph) * k + .03, t0: .72 * s * k, k0: .12 + 1.25 * Math.max(0, c) * k, t1: -.72 * s * k, k1: .12 + 1.25 * Math.max(0, -c) * k,
-        s0: -.8 * s * k, e0: 1.25, s1: .8 * s * k, e1: 1.25, rot: 0, head: .04 * k};
-    }
-    case 'up':   return {lean: .08, hip: 0, t0: 1.05, k0: 1.7, t1: -.15, k1: .45, s0: 2.5, e0: .35, s1: -.5, e1: .7, rot: 0, head: -.05};
-    case 'fall': return {lean: -.04, hip: 0, t0: .35, k0: .5, t1: -.25, k1: .35, s0: 2.1 + .15 * Math.sin(t * 14), e0: -.5, s1: 1.7 + .15 * Math.sin(t * 14 + 2), e1: -.4, rot: 0, head: .06};
-    case 'wall': return {lean: -.12, hip: .06, t0: .6, k0: 1.45, t1: 1.05, k1: 1.75, s0: 2.6, e0: .25, s1: .35, e1: .6, rot: 0, head: -.08};
-    case 'dash': return {lean: 0, hip: 0, t0: -.35, k0: .45, t1: -.7, k1: .9, s0: -1.25, e0: .2, s1: -1.5, e1: .3, rot: 0, head: 0};
-    case 'land': return {lean: .12, hip: .2, t0: .5, k0: 1.1, t1: -.25, k1: .9, s0: .5, e0: .8, s1: -.3, e1: .8, rot: 0, head: .02};
-    default:     return {lean: .03, hip: .012 * Math.sin(t * 2.2), t0: .1, k0: .1, t1: -.1, k1: .08, s0: .14 + .03 * Math.sin(t * 2.2), e0: .2, s1: -.12, e1: .22, rot: 0, head: .01 * Math.sin(t * 2.2)};
-  }
+const BODY = {thigh: .29, shin: .29, torso: .43, neck: .04, head: .19, upper: .26, fore: .25, w: .09};
+const POSE_KEYS = ['lean', 'hip', 't0', 'k0', 't1', 'k1', 's0', 'e0', 's1', 'e1', 'rot', 'head', 'plant', 'hx'];   // hx: hips shifted forward (+) or back (-)
+const smooth = x => x * x * (3 - 2 * x);
+function mixPose(a, b, w) { const o = {}; POSE_KEYS.forEach(k => o[k] = (a[k] || 0) + ((b[k] || 0) - (a[k] || 0)) * w); return o; }
+// one stride of a run, keyframed like a cartoon run cycle. u goes 0 → 1 per stride of one leg
+// (the other leg is half a stride behind). Each key: [u, thigh, knee].
+const RUN_LEG = [
+  [0,   1.0,  1.3],    // reaching out in front, about to land
+  [.22, .2,   1.05],   // under the body, knee bent, taking the weight
+  [.5,  -.75, .4],     // pushed out long behind
+  [.62, -.5,  1.6],    // heel flicks up behind
+  [.75, .35,  2.2],    // knee comes through, heel tucked up high
+  [.88, 1.2,  1.95],   // knee driven up high in front
+];
+// smooth looping curve through keyframes (Catmull-Rom)
+function keyLoop(K, u, idx) {
+  u = ((u % 1) + 1) % 1;
+  const n = K.length; let i = n - 1;
+  for (let j = 0; j < n; j++) if (K[j][0] <= u) i = j;
+  const a = K[(i - 1 + n) % n][idx], b = K[i][idx], c = K[(i + 1) % n][idx], d = K[(i + 2) % n][idx];
+  const u0 = K[i][0], u1 = i + 1 < n ? K[i + 1][0] : 1, t = (u - u0) / (u1 - u0);
+  return .5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (3 * b - a - 3 * c + d) * t * t * t);
 }
-function newFigure() { const f = {face: 1, ph: 0, scarf: [], after: [], land: 0}; const p = poseFor('idle', 0); POSE_KEYS.forEach(k => f[k] = p[k]); return f; }
+const HOLD = .68;   // how long the full stride is held (0 = even timing, under 1)
+function runPose(ph, sp) {
+  // time is bent so the cycle eases into each full stride (legs split wide) and hangs there,
+  // then whips through the middle: at the split it moves at a third of its average speed
+  const a = clamp(sp, .35, 1.1), u0 = ph / (Math.PI * 2), u = u0 - HOLD / (4 * Math.PI) * Math.sin(u0 * Math.PI * 4);
+  const leg = q => [lerp(.05, keyLoop(RUN_LEG, q, 1), a), lerp(.15, keyLoop(RUN_LEG, q, 2), a)];
+  const [t0, k0] = leg(u), [t1, k1] = leg(u + .5);
+  // arms swing wide against the legs: the back arm flung out behind, the front fist punching forward, elbows bent
+  const arm = q => { const c = Math.cos(q * Math.PI * 2); return [lerp(.05, -1.05 + 1.05 * c, a), lerp(.3, 1.5 + .2 * c, a)] };
+  const [s0, e0] = arm(u + .5), [s1, e1] = arm(u);
+  // a little flight between steps: the body lifts when the legs are split
+  const lift = .5 + .5 * Math.cos(u * Math.PI * 4);
+  return {lean: .1 + .4 * a, hip: -.07 * a * lift, t0, k0, t1, k1, s0, e0, s1, e1, rot: 0, head: -.28 * a, plant: 1};
+}
+const POSES = {
+  idle: t => {
+    const b = Math.sin(t * 2.1);   // breathing: chest rises, arms drift
+    return {lean: .04 + .03 * b, hip: 0, t0: .16, k0: .22, t1: -.16, k1: .14, s0: .14 + .07 * b, e0: .3, s1: -.14 + .05 * b, e1: .34, rot: 0, head: .04 * b, plant: 1};
+  },
+  // a sliding stop: lean back, front leg braced out straight, back knee bent low, arms up for balance
+  skid: t => ({lean: -.32 + .025 * Math.sin(t * 55), hip: 0, t0: .78, k0: .08, t1: -.05, k1: 1.45, s0: 1.15, e0: .5, s1: .55, e1: .9, rot: 0, head: .18, plant: 1}),
+  // just turned round: weight still back, starting to drive forward
+  turn: () => ({lean: .4, hip: 0, t0: .7, k0: 1.4, t1: -.5, k1: .35, s0: -1.0, e0: 1.3, s1: .9, e1: 1.3, rot: 0, head: -.15, plant: 1}),
+  // going up: front knee tucked high, back leg trailing, one arm reaching up
+  // going up: front knee driven up high, back leg pushed out straight, arms swept down and back
+  up: () => ({lean: .22, hip: 0, t0: 1.3, k0: 2.1, t1: -.5, k1: .12, s0: -.4, e0: .15, s1: -1.3, e1: .2, rot: 0, head: -.12, plant: 0}),
+  // the top of a jump: legs gathering, arms opening
+  // the top of a jump: leaning forward, arms trailing down, one leg hanging, the other trailing behind
+  apex: () => ({lean: .3, hip: 0, t0: .4, k0: .5, t1: -.6, k1: .3, s0: -.15, e0: .08, s1: -1.0, e1: .12, rot: 0, head: -.05, plant: 0}),
+  // coming down: legs reaching for the ground, arms out to the sides
+  // coming down: arms float up and out, front leg reaches for the ground
+  fall: t => ({lean: .02, hip: 0, t0: .8, k0: 1.0, t1: -.25, k1: .65, s0: 2.35 + .12 * Math.sin(t * 11), e0: -.3, s1: -2.15 + .12 * Math.sin(t * 11 + 2), e1: .35, rot: 0, head: .1, plant: 0}),
+  // a landing: knees soak it up, arms drop forward
+  // a landing: a deep squat, chest down, arms thrown forward
+  land: () => ({lean: .62, hip: 0, t0: .95, k0: 2.05, t1: -.2, k1: 1.75, s0: 1.0, e0: .8, s1: -.5, e1: 1.0, rot: 0, head: -.3, plant: 1}),
+  // clinging to a wall, back to it, looking out: hips against the wall, shoulders leaning away,
+  // the arm behind reaching up to grip the wall above the head, the other arm hanging loose;
+  // one leg straight down the wall, the other knee against it with the foot dangling out
+  wall: t => ({lean: .26 + .02 * Math.sin(t * 3), hip: 0, hx: -.16, t0: -.3, k0: -.85, t1: -.12, k1: .04,
+    s0: .18 + .04 * Math.sin(t * 3), e0: .12, s1: -2.5, e1: -.8, rot: 0, head: .22, plant: 0}),
+  // springing off a wall (the wall is behind): back leg driving straight off it, front knee coming up,
+  // chest forward, front arm reaching out, back arm flung behind
+  kick: () => ({lean: .48, hip: 0, hx: 0, t0: .55, k0: 1.0, t1: -.8, k1: .12, s0: 1.7, e0: .3, s1: -1.7, e1: .35, rot: 0, head: -.18, plant: 0}),
+  // a dash jump: flying fast, body upright and chin forward, arms and legs streaming out behind
+  fly: t => ({lean: .12, hip: 0, hx: 0, t0: -.3, k0: .55, t1: -.65, k1: .4, s0: -1.35 + .06 * Math.sin(t * 16), e0: .15, s1: -1.7 + .06 * Math.sin(t * 16 + 1), e1: .2, rot: 0, head: .2, plant: 0}),
+  // dashing: stretched out, arms swept back, legs trailing; the whole body tilts towards the dash
+  dash: () => ({lean: .05, hip: 0, t0: -.45, k0: .45, t1: -.8, k1: .85, s0: -1.3, e0: .15, s1: -1.55, e1: .25, rot: 0, head: .1, plant: 0}),
+};
+function newFigure() { const f = {face: 1, fs: 1, ph: 0, scarf: [], scarf2: [], land: 0, landMax: .1, skid: 0, kick: 0, turn: 0, sq: 1, sqv: 0}; Object.assign(f, POSES.idle(0)); return f; }
 // ease the figure towards a pose (rate: how snappy)
-function easePose(f, p, dt, rate) { const a = 1 - Math.exp(-rate * dt); POSE_KEYS.forEach(k => f[k] += (p[k] - f[k]) * a); }
+function easePose(f, p, dt, rate) { const a = 1 - Math.exp(-rate * dt); POSE_KEYS.forEach(k => f[k] = (f[k] || 0) + ((p[k] || 0) - (f[k] || 0)) * a); }
 // where every joint is, for a figure whose feet are at (x, y), in tile units
 function joints(f, x, y) {
-  const F = f.face, B = BODY, dir = a => [Math.sin(a) * F, Math.cos(a)];
-  const hip = [x, y - (B.thigh + B.shin) + f.hip];
+  const F = f.fs ?? f.face, B = BODY, dir = a => [Math.sin(a) * F, Math.cos(a)];
+  const reach = (th, kn) => B.thigh * Math.cos(th) + B.shin * Math.cos(th - kn);   // how far below the hip a foot is
+  const drop = (B.thigh + B.shin) - Math.max(reach(f.t0, f.k0), reach(f.t1, f.k1));
+  const hip = [x + (f.hx || 0) * F, y - (B.thigh + B.shin) + drop * clamp(f.plant, 0, 1) + f.hip];
   const leg = (th, kn) => { const d1 = dir(th), knee = [hip[0] + d1[0] * B.thigh, hip[1] + d1[1] * B.thigh], d2 = dir(th - kn); return [knee, [knee[0] + d2[0] * B.shin, knee[1] + d2[1] * B.shin]]; };
   const up = [Math.sin(f.lean) * F, -Math.cos(f.lean)];
   const neck = [hip[0] + up[0] * B.torso, hip[1] + up[1] * B.torso];
-  const sh = [hip[0] + up[0] * B.torso * .9, hip[1] + up[1] * B.torso * .9];
+  const sh = [hip[0] + up[0] * B.torso * .97, hip[1] + up[1] * B.torso * .97];
   const hd = [neck[0] + Math.sin(f.lean + f.head) * F * (B.neck + B.head), neck[1] - Math.cos(f.lean + f.head) * (B.neck + B.head)];
   const arm = (sa, el) => { const d1 = dir(sa + f.lean), elb = [sh[0] + d1[0] * B.upper, sh[1] + d1[1] * B.upper], d2 = dir(sa + f.lean + el); return [elb, [elb[0] + d2[0] * B.fore, elb[1] + d2[1] * B.fore]]; };
   return {hip, neck, sh, hd, l0: leg(f.t0, f.k0), l1: leg(f.t1, f.k1), a0: arm(f.s0, f.e0), a1: arm(f.s1, f.e1)};
 }
-// draw a figure (s = pixels per tile); the far arm and leg are softer, for a little depth
+// draw a figure (s = pixels per tile); the far arm and leg are softer, for a little depth.
+// Squash and stretch (f.sq) scales the body from the feet: taller and thinner leaving the ground,
+// short and wide on landing. The head stays round, only moves.
 function drawFigure(g, f, x, y, s, ink, opts = {}) {
-  const J = joints(f, x, y), P = p => [p[0] * s, p[1] * s];
+  const J = joints(f, x, y), sq = f.sq || 1, wx = 1 + (1 - sq) * .75;
+  const P = p => [(x + (p[0] - x) * wx) * s, (y + (p[1] - y) * sq) * s];
   g.save();
-  if (f.rot) { const cx = J.hip[0] * s, cy = (J.hip[1] - .1) * s; g.translate(cx, cy); g.rotate(f.rot); g.translate(-cx, -cy); }
+  if (f.rot) { const c = P([J.hip[0], J.hip[1] - .1]); g.translate(c[0], c[1]); g.rotate(f.rot); g.translate(-c[0], -c[1]); }
   g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = ink; g.fillStyle = ink;
-  const line = (pts, w, a) => { g.globalAlpha = (opts.alpha ?? 1) * a; g.lineWidth = w * s; g.beginPath(); pts.forEach((p, i) => { const q = P(p); i ? g.lineTo(...q) : g.moveTo(...q); }); g.stroke(); };
-  line([J.sh, ...J.a1], BODY.w * .9, .55);
-  line([J.hip, ...J.l1], BODY.w * .95, .55);
-  if (opts.scarf !== false && f.scarf.length > 1) drawScarf(g, f, s, opts.scarfCol || css('--accent'), opts.alpha ?? 1);
+  const A = opts.alpha ?? 1;
+  const line = (pts, w, a) => { g.globalAlpha = A * a; g.lineWidth = w * s; g.beginPath(); pts.forEach((p, i) => { const q = P(p); i ? g.lineTo(...q) : g.moveTo(...q); }); g.stroke(); };
+  line([J.sh, ...J.a1], BODY.w * .9, .5);
+  line([J.hip, ...J.l1], BODY.w * .95, .5);
+  if (opts.scarf !== false && f.scarf.length > 1) drawScarf(g, f, s, opts.scarfCol || css('--accent'), A, P);
   line([J.hip, J.neck], BODY.w * 1.05, 1);
   line([J.hip, ...J.l0], BODY.w, 1);
   line([J.sh, ...J.a0], BODY.w * .95, 1);
-  g.globalAlpha = opts.alpha ?? 1; g.beginPath(); g.arc(J.hd[0] * s, J.hd[1] * s, BODY.head * s, 0, Math.PI * 2); g.fill();
+  const h = P(J.hd); g.globalAlpha = A; g.beginPath(); g.arc(h[0], h[1], BODY.head * s, 0, Math.PI * 2); g.fill();
+  if (opts.scarf !== false) drawFace(g, f, h, BODY.head * s, opts.scarfCol || css('--accent'), A);
   g.restore();
   return J;
 }
-// the scarf: a short chain that trails behind the neck and flutters
-function stepScarf(f, J, dt, wind) {
-  const n = 7, seg = .085, sc = f.scarf;
-  if (sc.length !== n) { sc.length = 0; for (let i = 0; i < n; i++) f.scarf.push({x: J.neck[0] - i * seg * f.face, y: J.neck[1] + .03, px: J.neck[0] - i * seg * f.face, py: J.neck[1]}); }
-  const S = f.scarf; S[0].x = J.neck[0] - .02 * f.face; S[0].y = J.neck[1] + .04;
+// the face: a ninja headband round the forehead and one upright eye looking where it's going.
+// Both slide round the head as it turns (side-on, the eye is in the middle; turned away, it's hidden).
+function drawFace(g, f, h, r, col, A) {
+  const F = f.fs ?? f.face;
+  g.save(); g.translate(h[0], h[1]); g.rotate((f.lean + f.head) * Math.sign(F || 1) * .55);
+  g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.clip();
+  // the band, a little tilted, across the forehead
+  g.globalAlpha = A; g.fillStyle = col;
+  g.beginPath(); g.moveTo(-r * 1.1, -r * .62 + F * r * .08); g.lineTo(r * 1.1, -r * .62 - F * r * .08); g.lineTo(r * 1.1, -r * .2 - F * r * .08); g.lineTo(-r * 1.1, -r * .2 + F * r * .08); g.fill();
+  // the eye: an upright line towards the front of the face, blinking now and then
+  const t = performance.now() / 1000, blink = (t % 3.7) < .11 ? .15 : 1, ex = F * r * .5;
+  g.strokeStyle = css('--bg'); g.lineCap = 'round'; g.lineWidth = Math.max(1.3, r * .2);
+  g.globalAlpha = A * clamp(Math.abs(F) * 1.6, 0, 1);
+  const top = -r * .05, bot = r * .42, mid = (top + bot) / 2, hl = (bot - top) / 2 * blink;
+  g.beginPath(); g.moveTo(ex, mid - hl); g.lineTo(ex, mid + hl); g.stroke();
+  g.restore();
+}
+// the headband's two tails: short chains tied at the back of the head that stream out behind and flutter
+function stepTail(S, n, seg, ax, ay, F, dt, wind, k) {
+  if (S.length !== n) { S.length = 0; for (let i = 0; i < n; i++) S.push({x: ax - i * seg * F, y: ay + i * .02, px: ax - i * seg * F, py: ay + i * .02}); }
+  S[0].x = ax; S[0].y = ay;
+  if (!dt) return;
+  const now = performance.now();
   for (let i = 1; i < n; i++) {
     const p = S[i], vx = (p.x - p.px) * .86, vy = (p.y - p.py) * .86;
-    p.px = p.x; p.py = p.y; p.x += vx + (wind || 0) * dt * dt * 3; p.y += vy + 6 * dt * dt + Math.sin(performance.now() / 90 + i) * .0009;
+    p.px = p.x; p.py = p.y; p.x += vx + (wind || 0) * dt * dt * 3; p.y += vy + 5 * dt * dt + Math.sin(now / 85 + i * 1.3 + k) * .0011;
   }
-  for (let k = 0; k < 3; k++) for (let i = 1; i < n; i++) {
+  for (let r = 0; r < 3; r++) for (let i = 1; i < n; i++) {
     const a = S[i - 1], b = S[i], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, m = (d - seg) / d;
     b.x -= dx * m; b.y -= dy * m;
   }
 }
-function drawScarf(g, f, s, col, alpha) {
-  const S = f.scarf; g.globalAlpha = alpha; g.strokeStyle = col;
-  for (let i = 1; i < S.length; i++) { g.lineWidth = s * (.1 - i * .009); g.beginPath(); g.moveTo(S[i - 1].x * s, S[i - 1].y * s); g.lineTo(S[i].x * s, S[i].y * s); g.stroke(); }
-  g.fillStyle = col; g.beginPath(); g.arc(S[0].x * s, S[0].y * s, s * .06, 0, Math.PI * 2); g.fill();
+function stepScarf(f, J, dt, wind) {
+  const F = f.fs ?? f.face, r = BODY.head, sg = Math.sign(F || 1);
+  const ax = J.hd[0] - sg * r * .9, ay = J.hd[1] - r * .4;   // the knot, at the back of the head
+  if (!f.scarf2) f.scarf2 = [];
+  stepTail(f.scarf, 6, .075, ax, ay, sg, dt, wind, 0);
+  stepTail(f.scarf2, 5, .07, ax, ay + .02, sg, dt, wind * .8, 2);
+}
+function drawScarf(g, f, s, col, alpha, P = p => [p[0] * s, p[1] * s]) {
+  g.globalAlpha = alpha; g.strokeStyle = col; g.fillStyle = col; g.lineCap = 'round';
+  for (const T of [f.scarf2 || [], f.scarf]) {
+    const S = T.map(q => P([q.x, q.y]));
+    for (let i = 1; i < S.length; i++) { g.lineWidth = s * (.075 - i * .007); g.beginPath(); g.moveTo(...S[i - 1]); g.lineTo(...S[i]); g.stroke(); }
+  }
+  if (f.scarf.length) { const k = P([f.scarf[0].x, f.scarf[0].y]); g.beginPath(); g.arc(k[0], k[1], s * .05, 0, Math.PI * 2); g.fill(); }
   g.strokeStyle = css('--ink'); g.fillStyle = css('--ink');
+}
+// squash and stretch spring back to normal with a little wobble
+function stepSquash(f, dt) {
+  for (let i = 0, n = Math.ceil(dt / .008); i < n; i++) { const h = dt / n; f.sqv += (-320 * (f.sq - 1) - 19 * f.sqv) * h; f.sq += f.sqv * h; }
+}
+// what pose the figure should be in now, from what the body is doing.
+// m: {ground, vx, vy, dash: [dx, dy] or null, wall, skid, kick, land (0..1), run speed (0..1.15), t}
+function targetPose(f, m) {
+  if (m.dash) {
+    const p = POSES.dash(), [dx, dy] = m.dash;
+    // tilt towards the dash; a straight-down dash stays upright (a stomp), a straight-up one reaches up
+    p.rot = dy <= 0 ? .6 * Math.atan2(Math.abs(dx), -dy) * f.face : .94 * (1 - dy) * f.face * Math.abs(Math.sign(dx));
+    // dashing upwards the arms lead the way; sideways or down they sweep back
+    const upness = clamp(-dy * 1.3, 0, 1);
+    p.s0 = lerp(-1.3, 2.5, upness); p.s1 = lerp(-1.55, 2.2, upness); p.e0 = lerp(.15, .2, upness); p.e1 = lerp(.25, .35, upness);
+    if (dy < -.5 && !dx) { p.s0 = 2.9; p.s1 = 2.7; p.e0 = .1; p.e1 = .15; p.t0 = .1; p.t1 = -.15; p.k0 = .4; p.k1 = .3; }
+    if (dy > .5 && !dx) { p.t0 = .2; p.k0 = 1.1; p.t1 = -.1; p.k1 = .5; p.s0 = 2.6; p.s1 = 2.3; }
+    return p;
+  }
+  if (m.mom) {   // a dash jump: streaming behind; legs come forward to land as it falls
+    const p = mixPose(POSES.fly(m.t), POSES.fall(m.t), smooth(clamp((m.vy - 5) / 12, 0, .6)));
+    p.lean += clamp(-m.vy / 14, -.3, .3) * .3;
+    return p;
+  }
+  if (m.kick > 0) return POSES.kick();
+  if (m.wall) return POSES.wall(m.t);
+  if (!m.ground) {
+    // rising, the top, falling: blended by vertical speed so the jump arcs through them smoothly
+    const v = m.vy, up = POSES.up(), ap = POSES.apex(m.t), fa = POSES.fall(m.t);
+    const p = v < 0 ? mixPose(up, ap, smooth(clamp((v + 10) / 10, 0, 1))) : mixPose(ap, fa, smooth(clamp(v / 9, 0, 1)));
+    p.lean += clamp(m.vx * f.face / 7.5, -1, 1) * .12;
+    return p;
+  }
+  let p;
+  if (m.skid > 0) p = POSES.skid(m.t);
+  else if (m.run > .04) p = mixPose(POSES.idle(m.t), runPose(f.ph, Math.min(1.15, m.run)), smooth(clamp(m.run * 4, 0, 1)));
+  else p = POSES.idle(m.t);
+  if (m.turn > 0) p = mixPose(p, POSES.turn(), m.turn);
+  if (m.land > 0) p = mixPose(p, POSES.land(), smooth(m.land));
+  return p;
 }
 
 /* ======================================================================
@@ -739,8 +928,8 @@ function readLevel(i) {
   }
   // spikes point away from the block they sit on
   for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (L.g[r * w + c] === 3) {
-    const sol = (cc, rr) => rr >= h || (cc >= 0 && cc < w && rr >= 0 && L.g[rr * w + cc] === 1);   // below the level counts as solid
-    const dir = sol(c, r + 1) ? 'up' : sol(c, r - 1) ? 'down' : sol(c - 1, r) ? 'right' : sol(c + 1, r) ? 'left' : 'up';
+    const sol = (cc, rr) => cc >= 0 && cc < w && rr >= 0 && rr < h && L.g[rr * w + cc] === 1;
+    const dir = sol(c, r + 1) ? 'up' : sol(c - 1, r) ? 'right' : sol(c + 1, r) ? 'left' : sol(c, r - 1) ? 'down' : 'up';   // spikes on the bottom row point up
     L.spikes.push({c, r, dir});
   }
   return L;
@@ -752,28 +941,28 @@ function readLevel(i) {
    x at its middle, y at its feet.
    ====================================================================== */
 const PH = {
-  run: 7.5, accG: 75, accA: 50, fric: 70, grav: 55, maxFall: 17, apex: .55,
+  run: 7.5, accG: 75, accA: 50, fric: 40, turn: 60, grav: 55, maxFall: 17, apex: .55,
   jump: 16, cut: .45, coyote: .1, buffer: .13,
-  wallSlide: 4.2, wjX: 8.5, wjY: 15, wjLock: .13, wallReach: .32,
+  wallSlide: 4.2, wjX: 8.5, wjY: 15, wjLock: .13, wallReach: .32, wallCoyote: .12,
   dashV: 21, dashT: .155, dashKeep: .55, hitstop: .045,
-  pad: 24, W: .5, H: 1.3,
+  pad: 24, W: .5, H: 1.3, superY: 13.5, superKeep: .9, superGrace: .2,
 };
 let G = null;   // the level being played
 function startLevel(i) {
   const L = readLevel(i);
-  G = {L, t: 0, deaths: 0, star: false, done: false, spawn: {...L.start}, cam: {x: 0, y: 0, shake: 0}, parts: [], after: [], flash: 0, hit: 0, note: 0, paused: false};
+  G = {L, t: 0, deaths: 0, star: false, done: false, spawn: {...L.start}, cam: {x: 0, y: 0, fx: 0, fy: 0, look: 0, shake: 0}, parts: [], after: [], flash: 0, hit: 0, note: 0, paused: false};
   spawnPlayer();
-  G.cam.x = G.p.x; G.cam.y = G.p.y;
   paintLevel();
+  snapCam();
 }
 function spawnPlayer() {
   const s = G.spawn;
   G.p = {x: s.x, y: s.y, vx: 0, vy: 0, ground: true, wall: 0, coyote: 0, buf: 0, held: false, cut: true, dash: 1, dashT: 0, dx: 0, dy: 0,
-    lock: 0, dead: 0, fig: G.p ? G.p.fig : newFigure(), airT: 0, padT: 0, flash: 0, trail: 0};
-  G.p.fig.scarf = []; G.p.fig.after = [];
+    lock: 0, dead: 0, fig: G.p ? G.p.fig : newFigure(), airT: 0, padT: 0, flash: 0, trail: 0, wallT: 0, wallS: 0, kickT: 0, mom: false, superT: 0};
+  const f = G.p.fig; f.scarf = []; f.scarf2 = []; f.skid = f.turn = f.land = 0; f.sq = 1; f.sqv = 0; f.fs = f.face; Object.assign(f, POSES.idle(0));
   G.L.orbs.forEach(o => o.off = 0);
 }
-const tileAt = (c, r) => { const L = G.L; if (c < 0 || c >= L.w) return 1; if (r < 0 || r >= L.h) return 0; return L.g[r * L.w + c]; };
+const tileAt = (c, r) => { const L = G.L; if (c < 0 || c >= L.w || r < 0) return 1; if (r >= L.h) return 0; return L.g[r * L.w + c]; };   // the sides and the top of the world are solid
 const solid = (c, r) => tileAt(c, r) === 1;
 // is there a block right beside the player (within reach), and on which side?
 function wallSide(p, reach = .06) {
@@ -819,7 +1008,6 @@ function dash(dx, dy) {
   const n = Math.hypot(dx, dy); dx /= n; dy /= n;
   p.dash = 0; p.dashT = PH.dashT; p.dx = dx; p.dy = dy; p.vx = dx * PH.dashV; p.vy = dy * PH.dashV;
   p.buf = 0; p.cut = true; G.hit = PH.hitstop; G.cam.shake = Math.max(G.cam.shake, .12);
-  if (dx) p.fig.face = Math.sign(dx);
   burst(p.x, p.y - PH.H / 2, 10, css('--accent'), 5, .3);
   Sound.dash(); vibrate(12);
 }
@@ -850,6 +1038,13 @@ function burst(x, y, n, col, spd, life, up = 0) {
 function dust(x, y, n, dir = 0) { for (let i = 0; i < n; i++) G.parts.push({kind: 'dust', x: x + (Math.random() - .5) * .4, y: y - .05, vx: (Math.random() - .5) * 2 + dir * 1.5, vy: -Math.random() * 1.5, life: .35, max: .35, r: .07 + Math.random() * .06, g: 0}); }
 function note(text, ms = 1600) { const n = $('#note'); n.textContent = text; n.classList.remove('show'); void n.offsetWidth; n.classList.add('show'); clearTimeout(note.t); note.t = setTimeout(() => n.classList.remove('show'), ms); }
 
+// a dash jump: jump while dashing along the ground (or just after) and you fly off keeping the dash's
+// speed, in a long low arc, until you land (or touch a wall, or steer back the other way)
+function dashJump(p) {
+  p.dashT = 0; p.superT = 0; p.vy = -PH.superY; p.vx = p.dx * PH.dashV * PH.superKeep; p.mom = true; p.buf = 0; p.cut = !p.held; p.ground = false; p.coyote = 0;
+  p.fig.sq = 1.16; p.fig.sqv = 0; G.cam.shake = Math.max(G.cam.shake, .1);
+  Sound.jump(); Sound.dash(); dust(p.x, p.y, 10, -Math.sign(p.dx)); vibrate(10);
+}
 /* ---------- one step of the game (1/120 of a second) ---------- */
 function step(dt) {
   const p = G.p, L = G.L;
@@ -867,20 +1062,26 @@ function step(dt) {
   p.wall = wallSide(p);
   const near = p.wall || wallSide(p, PH.wallReach);   // a little leeway for wall jumps
   const ix = p.lock > 0 ? 0 : IN.x;
-  if (Math.abs(ix) > .1 && p.dashT <= 0 && !(p.lock > 0)) p.fig.face = Math.sign(ix);
+  p.kickT = Math.max(0, p.kickT - dt); p.superT = Math.max(0, p.superT - dt);
+  if (p.wall && !p.ground) { p.wallT = PH.wallCoyote; p.wallS = p.wall; } else p.wallT = Math.max(0, p.wallT - dt);   // a moment's grace to jump after leaving a wall
   // dashing: straight line, no gravity
+  if (p.mom && !p.ground) { p.trail -= dt; if (p.trail <= 0) { p.trail = .045; G.after.push({fig: {...p.fig, scarf: []}, x: p.x, y: p.y, life: .2}); } }
   if (p.dashT > 0) {
     p.dashT -= dt;
     p.trail -= dt; if (p.trail <= 0) { p.trail = .022; G.after.push({fig: {...p.fig, scarf: []}, x: p.x, y: p.y, life: .28}); }
-    if (p.buf > 0 && (p.ground || p.coyote > 0)) {   // jump out of a dash along the ground: keep the speed
-      p.dashT = 0; p.vy = -PH.jump; p.vx = clamp(p.vx, -13, 13); p.buf = 0; p.cut = false; p.ground = false; p.coyote = 0; Sound.jump(); dust(p.x, p.y, 6);
-    }
-    if (p.dashT <= 0 && p.vy !== -PH.jump) { p.vx *= PH.dashKeep; p.vy *= p.dy < 0 ? .45 : PH.dashKeep; if (Math.abs(p.vx) < PH.run * Math.abs(p.dx) * .9) p.vx = PH.run * p.dx * .9; }
+    let leapt = false;
+    if (p.buf > 0 && (p.ground || p.coyote > 0) && Math.abs(p.dx) > .3) { leapt = true; dashJump(p); }
+    if (p.dashT <= 0 && !leapt) {
+      if (Math.abs(p.dx) > .3 && p.dy >= 0) p.superT = PH.superGrace;   // a moment after a ground dash still counts
+      p.vx *= PH.dashKeep; p.vy *= p.dy < 0 ? .45 : PH.dashKeep; if (Math.abs(p.vx) < PH.run * Math.abs(p.dx) * .9) p.vx = PH.run * p.dx * .9; }
   } else {
     // running
-    const target = ix * PH.run, acc = p.ground ? (ix ? PH.accG : PH.fric) : PH.accA * (ix ? 1 : .35);
+    // on the ground, letting go slides to a stop and pushing the other way digs in harder
+    const target = ix * PH.run, rev = ix && p.vx && Math.sign(ix) !== Math.sign(p.vx);
+    const acc = p.ground ? (!ix ? PH.fric : rev ? PH.turn : PH.accG) : PH.accA * (ix ? 1 : .35);
     const over = Math.abs(p.vx) > PH.run && Math.sign(p.vx) === Math.sign(target || p.vx);
-    const a = over ? (p.ground ? PH.fric * .6 : 14) : acc;
+    if (p.mom && (p.ground || p.wall || Math.abs(p.vx) <= PH.run || (ix && Math.sign(ix) !== Math.sign(p.vx)))) p.mom = false;
+    const a = over ? (p.ground ? PH.fric * .6 : p.mom ? 1.5 : 14) : acc;   // a dash jump hardly slows down in the air
     p.vx += clamp(target - p.vx, -a * dt, a * dt);
     // gravity, a softer top to the jump while holding, and wall sliding
     let g = PH.grav; if (p.held && Math.abs(p.vy) < 2.4 && !p.cut) g *= PH.apex;
@@ -890,11 +1091,17 @@ function step(dt) {
     p.vy = Math.min(p.vy, maxF);
     // jumping: from the ground (or just after leaving it), or off a wall
     if (p.buf > 0) {
-      if (p.ground || p.coyote > 0) { p.vy = -PH.jump; p.buf = 0; p.coyote = 0; p.ground = false; p.cut = !p.held; if (!p.held) p.vy *= .7; Sound.jump(); dust(p.x, p.y, 5); vibrate(5); }
-      else if (near) { p.vx = -near * PH.wjX; p.vy = -PH.wjY; p.buf = 0; p.lock = PH.wjLock; p.cut = !p.held; p.fig.face = -near; Sound.wall(); dust(p.x + near * PH.W / 2, p.y - .6, 6, -near); vibrate(5); }
+      if ((p.ground || p.coyote > 0) && p.superT > 0) dashJump(p);
+      else if (p.ground || p.coyote > 0) { p.vy = -PH.jump; p.buf = 0; p.coyote = 0; p.ground = false; p.cut = !p.held; if (!p.held) p.vy *= .7; p.fig.sq = 1.2; p.fig.sqv = 0; Sound.jump(); dust(p.x, p.y, 5); vibrate(5); }
+      else if (near || p.wallT > 0) {   // touching a wall (or just left one) gives you a jump
+        const side = near || p.wallS;
+        p.vx = -side * PH.wjX; p.vy = -PH.wjY; p.buf = 0; p.lock = PH.wjLock; p.cut = !p.held; p.wallT = 0; p.kickT = .2; p.fig.face = -side; p.fig.sq = 1.14; p.fig.sqv = 0;
+        Sound.wall(); dust(p.x + side * PH.W / 2, p.y - .6, 6, -side); vibrate(5);
+      }
     }
   }
   // move, one axis at a time
+  const vyPrev = p.vy;
   const sub = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / .2));
   let landed = false;
   for (let i = 0; i < sub; i++) {
@@ -906,8 +1113,11 @@ function step(dt) {
   p.ground = p.vy >= 0 && onGround(p);
   if (p.ground) { p.coyote = PH.coyote; if (p.dashT <= 0) regain(p, 'quiet'); }
   else p.coyote -= dt;
-  if (p.wall && p.dashT <= 0 && !p.ground) regain(p);
-  if (p.ground && !wasGround) { const hard = p.airT > .35; p.fig.land = hard ? .16 : .08; if (hard) { dust(p.x, p.y, 8); Sound.land(); } }
+  if (p.ground && !wasGround) {   // landing: the harder you come down, the deeper the knees bend
+    const imp = clamp(vyPrev / PH.maxFall, 0, 1), f = p.fig;
+    if (imp > .12) { f.landMax = f.land = .1 + .18 * imp; f.landAmt = .35 + .65 * imp; f.sq = 1 - .3 * imp; f.sqv = 0; }
+    if (imp > .55) { dust(p.x, p.y, 8); Sound.land(); }
+  }
   p.airT = p.ground ? 0 : p.airT + dt;
   // what you touch
   const box = {l: p.x - PH.W / 2, r: p.x + PH.W / 2, t: p.y - PH.H, b: p.y};
@@ -925,7 +1135,7 @@ function step(dt) {
   for (const d of L.pads) {
     d.sq = Math.max(0, d.sq - dt * 4);
     if (p.vy >= 0 && p.padT <= 0 && over(d.c + .1, d.r + .5, d.c + .9, d.r + 1.02)) {
-      p.vy = -PH.pad; p.dashT = 0; p.cut = true; p.padT = .2; p.ground = false; p.y = Math.min(p.y, d.r + .5); regain(p, 'quiet'); d.sq = 1;
+      p.vy = -PH.pad; p.dashT = 0; p.fig.sq = 1.28; p.fig.sqv = 0; p.cut = true; p.padT = .2; p.ground = false; p.y = Math.min(p.y, d.r + .5); regain(p, 'quiet'); d.sq = 1;
       Sound.pad(); dust(p.x, p.y, 8); vibrate(10);
     }
   }
@@ -938,22 +1148,32 @@ function step(dt) {
 // the figure's pose follows what the player is doing
 function animate(dt, now) {
   const p = G.p, f = p.fig; if (p.dead) return;
+  const ix = p.lock > 0 ? 0 : IN.x, sl = Math.sign(ix), sv = Math.sign(p.vx), spd = Math.abs(p.vx);
+  const sliding = !!p.wall && !p.ground && p.vy > 0 && p.dashT <= 0;
+  // which way it faces: on the ground it only turns round once it has (nearly) stopped
+  if (p.dashT > 0) { if (p.dx) f.face = Math.sign(p.dx); }
+  else if (sliding) f.face = -p.wall;   // back to the wall, looking out
+  else if (p.kickT > 0) { if (sv) f.face = sv; }
+  else if (p.ground) { if (sl && sl !== f.face && (sl === sv || spd < 1.5)) { if (f.skid > 0 || spd > .5) f.turn = 1; f.face = sl; } }
+  else if (sl) f.face = sl;
+  // a sliding stop: letting go at speed, or pushing the other way
+  const braking = p.ground && p.dashT <= 0 && spd > 2.2 && sv === f.face && (sl ? sl !== sv : spd > 3.5);
+  if (braking) {
+    if (f.skid <= 0) dust(p.x + sv * .3, p.y, 4, sv);
+    f.skid = Math.max(f.skid, .12);
+    if (Math.random() < dt * 30) dust(p.x + sv * .35, p.y, 1, sv);
+  } else f.skid = p.ground ? Math.max(0, f.skid - dt) : 0;
+  f.turn = Math.max(0, f.turn - dt * 5);
+  f.fs += (f.face - f.fs) * (1 - Math.exp(-dt * 22));   // turning round eases through side-on
+  const run = p.ground && f.skid <= 0 ? Math.min(1.15, spd / PH.run) : 0;
+  if (run > .03) f.ph += dt * (5 + 8 * run);   // about two strides a second at full speed (time-based, so the frame rate doesn't matter)
   f.land = Math.max(0, f.land - dt);
-  let st, rate = 16;
-  if (p.dashT > 0) st = 'dash';
-  else if (p.wall && !p.ground && p.vy > 0) st = 'wall';
-  else if (!p.ground) st = p.vy < -1.5 ? 'up' : 'fall';
-  else if (f.land > 0) { st = 'land'; rate = 30; }
-  else if (Math.abs(p.vx) > .5) st = 'run';
-  else st = 'idle';
-  const spd = Math.min(1.3, Math.abs(p.vx) / PH.run);
-  if (st === 'run') f.ph += dt * (6 + 9 * spd);
-  const pose = poseFor(st, now, f.ph, spd);
-  // a dash tilts the body towards where it's going (a straight-down dash stays upright: a stomp)
-  if (st === 'dash') pose.rot = p.dy <= 0 ? .6 * Math.atan2(p.dx, -p.dy) : Math.sign(p.dx) * .94 * (1 - p.dy);
-  if (st === 'wall') f.face = p.wall;   // a hand on the wall it's sliding down
-  if (st === 'up' || st === 'fall') pose.lean += clamp(p.vx / PH.run, -1, 1) * f.face * .12;
-  easePose(f, pose, dt, st === 'run' ? 22 : rate);
+  const land = f.land > 0 ? smooth(f.land / f.landMax) * (f.landAmt || .5) : 0;
+  const pose = targetPose(f, {mom: p.mom && !p.ground, ground: p.ground, vx: p.vx, vy: p.vy, dash: p.dashT > 0 ? [p.dx, p.dy] : null, wall: sliding, kick: p.kickT, skid: f.skid, turn: f.turn, land, run, t: now});
+  // how quickly it moves into the pose: snappy for dashes and running (the run pose itself is already smooth), softer in the air
+  const rate = p.dashT > 0 ? 24 : p.kickT > 0 ? 24 : run > .03 && !land ? 30 : land ? 20 : f.skid > 0 ? 16 : p.ground ? 16 : sliding ? 16 : 13;
+  easePose(f, pose, dt, rate);
+  stepSquash(f, dt);
   const J = joints(f, p.x, p.y);
   stepScarf(f, J, dt, -p.vx * 2.5);
   G.after = G.after.filter(a => (a.life -= dt) > 0);
@@ -976,7 +1196,7 @@ function layout() {
   const r = cv.getBoundingClientRect(); V.dpr = Math.min(2.5, devicePixelRatio || 1);
   V.w = r.width; V.h = r.height; cv.width = Math.round(V.w * V.dpr); cv.height = Math.round(V.h * V.dpr);
   V.s = Math.max(20, Math.round(V.h / clamp(V.h / 36, 9.5, 12)));   // 9½ to 12 squares of height on screen
-  if (G) paintLevel();
+  if (G) { paintLevel(); snapCam(); }
 }
 // the level's blocks, ledges and spikes, painted once into their own canvas
 function paintLevel() {
@@ -1015,18 +1235,24 @@ function paintLevel() {
     g.restore();
   }
 }
-function render(now) {
+function render(now, dt = 1 / 60) {
   const g = cx, s = V.s, L = G.L, p = G.p, t = now;
   g.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
   // the sky: a soft gradient and slow, far-off blocks
   const grd = g.createLinearGradient(0, 0, 0, V.h); grd.addColorStop(0, css('--bg')); grd.addColorStop(1, css('--bg2'));
   g.fillStyle = grd; g.fillRect(0, 0, V.w, V.h);
-  // the camera follows, looking a little ahead
-  const vw = V.w / s, vh = V.h / s;
-  const tx = clamp(p.x + p.fig.face * 1.6 + p.vx * .12 - vw / 2, 0, Math.max(0, L.w - vw)), ty = clamp(p.y - .8 - vh * .55, -1, Math.max(-1, L.h - vh));
-  const k = 1 - Math.exp(-6 * (1 / 60));
-  G.cam.x += (tx - G.cam.x) * k * 1.4; G.cam.y += (ty - G.cam.y) * k;
-  if (L.w < vw) G.cam.x = (L.w - vw) / 2;
+  // the camera: steady. It only moves sideways once you leave a small window round the middle,
+  // looks ahead only after you've run one way for a moment, and follows heights you land on
+  const vw = V.w / s, vh = V.h / s, C = G.cam;
+  if (!p.dead) {
+    C.look += (clamp(p.vx / PH.run, -1, 1) * 2 - C.look) * (1 - Math.exp(-dt * 1.3));
+    const fx = p.x + C.look, dz = .9;
+    if (fx > C.fx + dz) C.fx = fx - dz; else if (fx < C.fx - dz) C.fx = fx + dz;
+    if (p.ground) C.fy = p.y;
+    else if (p.y < C.fy - 2.8) C.fy = p.y + 2.8; else if (p.y > C.fy + .4) C.fy = p.y - .4;
+  }
+  const tx = camX(C.fx, vw), ty = camY(C.fy, vh);
+  C.x += (tx - C.x) * (1 - Math.exp(-dt * 6)); C.y += (ty - C.y) * (1 - Math.exp(-dt * 4.5));
   const sh = G.cam.shake > 0 && !reduced() ? G.cam.shake * .25 : 0;
   const ox = -(G.cam.x + (Math.random() - .5) * sh) * s, oy = -(G.cam.y + (Math.random() - .5) * sh) * s;
   drawFar(g, G.cam.x, G.cam.y, s);
@@ -1055,6 +1281,9 @@ function render(now) {
   if (G.flash > 0) { g.fillStyle = `rgba(239,59,59,${G.flash * .6})`; g.fillRect(0, 0, V.w, V.h); }
   drawStick(g);
 }
+const camX = (fx, vw) => G.L.w < vw ? (G.L.w - vw) / 2 : clamp(fx - vw / 2, 0, G.L.w - vw);
+const camY = (fy, vh) => clamp(fy - vh * .58, -1, Math.max(-1, G.L.h - vh));
+function snapCam() { const C = G.cam, p = G.p; C.fx = p.x; C.fy = p.y; C.look = 0; C.x = camX(C.fx, V.w / V.s); C.y = camY(C.fy, V.h / V.s); }
 // far-off scenery: big soft blocks drifting slower than the level
 function drawFar(g, camX, camY, s) {
   const c1 = css('--bg2'), w = V.w;
@@ -1117,59 +1346,101 @@ function drawThings(g, s, t) {
 
 /* ======================================================================
    CONTROLS
-   One side of the screen is the joystick (it appears where your thumb lands);
-   the other side: tap to jump (hold for higher), swipe to dash.
+   One side of the screen is the joystick: fixed in the corner (you can move
+   it in Settings) or free (it appears where your thumb lands). The other side:
+   tap to jump (hold for higher), swipe to dash. A touch waits a moment
+   (about a 15th of a second) before jumping, so a swipe straight from the
+   ground is a clean dash rather than a jump and a dash.
    ====================================================================== */
-const STICK_R = 52;
+const STICK_SIZES = {S: 44, M: 54, L: 66};
+const stickR = () => STICK_SIZES[prefs.stickSize] || 54;
 const touch = {stick: null, act: null};   // the active pointers
-const stickSide = () => prefs.swap ? 'right' : 'left';
-function fixedStickAt() { return prefs.swap ? {x: V.w - 110, y: V.h - 100} : {x: 110, y: V.h - 100}; }
-function isStickSide(x) { return prefs.swap ? x > V.w / 2 : x < V.w / 2; }
-const snap8 = (dx, dy) => { const a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4); return [Math.round(Math.cos(a) * 100) / 100, Math.round(Math.sin(a) * 100) / 100]; };
-function setStick(dx, dy) {
-  const d = Math.hypot(dx, dy), m = Math.min(d, STICK_R), nx = d ? dx / d * m : 0, ny = d ? dy / d * m : 0;
-  touch.stick.kx = nx; touch.stick.ky = ny;
-  const v = nx / STICK_R, dz = .18;
-  IN.x = Math.abs(v) < dz ? 0 : Math.sign(v) * Math.min(1, (Math.abs(v) - dz) / (1 - dz) * 1.35);
-  IN.y = ny / STICK_R;
+const safe = (() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)'; document.body.appendChild(d);
+  return () => { const c = getComputedStyle(d); return {l: parseFloat(c.paddingLeft) || 0, r: parseFloat(c.paddingRight) || 0, b: parseFloat(c.paddingBottom) || 0}; }; })();
+const defaultStickPos = () => ({x: stickR() + 48, y: stickR() + 40});
+// where the fixed joystick sits on a screen w × h (its position is kept as a distance in from the bottom corner)
+function stickAt(w = V.w, h = V.h) {
+  const R = stickR(), sa = safe(), p = prefs.stickPos || defaultStickPos();
+  const side = prefs.swap ? sa.r : sa.l;
+  const x = clamp(p.x + side, R + 12 + side, w / 2 - R - 12), y = clamp(h - p.y - sa.b, R + 70, h - R - 10 - sa.b);
+  return {x: prefs.swap ? w - x : x, y};
 }
+const fixedStick = () => prefs.stick !== 'free';
+function isStickSide(x) { return prefs.swap ? x > V.w / 2 : x < V.w / 2; }
+// a swipe's direction, as one of 8. Straight up or down only within 18° of upright,
+// sideways within 22° of flat; everything in between is a diagonal (thumbs swipe more upright than they mean to)
+function dir8(dx, dy) {
+  const ang = Math.atan2(Math.abs(dy), Math.abs(dx)) * 180 / Math.PI;
+  if (ang < 22) return [Math.sign(dx), 0];
+  if (ang > 72) return [0, Math.sign(dy)];
+  return [Math.sign(dx), Math.sign(dy)];
+}
+function setStick(dx, dy) {
+  const R = stickR(), d = Math.hypot(dx, dy), m = Math.min(d, R), nx = d ? dx / d * m : 0, ny = d ? dy / d * m : 0;
+  touch.stick.kx = nx; touch.stick.ky = ny;
+  const v = nx / R, dz = .16;
+  IN.x = Math.abs(v) < dz ? 0 : Math.sign(v) * Math.min(1, (Math.abs(v) - dz) / (1 - dz) * 1.35);
+  IN.y = ny / R;
+}
+const JUMP_WAIT = 65, SWIPE = 30;
+// forget every finger (a new level, pausing, finishing): nothing stays held down
+function resetTouch() { touch.stick = touch.act = null; IN.x = 0; IN.y = 0; if (G && G.p) G.p.held = false; }
 cv.addEventListener('pointerdown', e => {
+  // the first finger down when none are touching: anything still remembered is stale (a lift the browser
+  // never reported, say while a menu covered the game), so start clean rather than stay jammed
+  if (e.isPrimary) resetTouch();
   if (!G || G.paused || G.done) return;
   e.preventDefault();
   const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
   if (isStickSide(x) && !touch.stick) {
-    const o = prefs.fixedStick ? fixedStickAt() : {x, y};
+    const o = fixedStick() ? stickAt() : {x, y};
     touch.stick = {id: e.pointerId, ox: o.x, oy: o.y, kx: 0, ky: 0};
     setStick(x - o.x, y - o.y);
   } else if (!touch.act) {
-    touch.act = {id: e.pointerId, x, y, t: performance.now(), swiped: false};
-    jumpPress();
+    touch.act = {id: e.pointerId, x0: x, y0: y, x, y, t0: performance.now(), t: performance.now(), jumped: false, swiped: false};
+    // mid-dash (or just after), or with the dash used up, a tap jumps straight away: no waiting for a swipe
+    if (G.p.dash < 1 || G.p.dashT > 0 || G.p.superT > 0) { touch.act.jumped = true; jumpPress(); }
   }
   try { cv.setPointerCapture(e.pointerId); } catch {}
 });
+// the waiting touch becomes a jump once it has been held a moment without sliding away
+function touchTick(now) {
+  const a = touch.act; if (!a || a.jumped || a.swiped) return;
+  const moved = Math.hypot(a.x - a.x0, a.y - a.y0), age = now - a.t0;
+  if ((age >= JUMP_WAIT && moved < 18) || age >= 2 * JUMP_WAIT) { a.jumped = true; jumpPress(); }
+}
 cv.addEventListener('pointermove', e => {
   const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, now = performance.now();
   if (touch.stick && e.pointerId === touch.stick.id) setStick(x - touch.stick.ox, y - touch.stick.oy);
   else if (touch.act && e.pointerId === touch.act.id) {
-    const a = touch.act;
-    if (now - a.t > 260) { a.x = x; a.y = y; a.t = now; a.swiped = false; return; }   // held a while: watch for a fresh flick from here
-    if (!a.swiped && Math.hypot(x - a.x, y - a.y) > 28) { a.swiped = true; dash(...snap8(x - a.x, y - a.y)); }
+    const a = touch.act; a.x = x; a.y = y;
+    if (a.swiped) return;
+    if (now - a.t > 260) { a.x0 = x; a.y0 = y; a.t = now; return; }   // held a while: watch for a fresh flick from here
+    if (Math.hypot(x - a.x0, y - a.y0) > SWIPE) { a.swiped = true; dash(...dir8(x - a.x0, y - a.y0)); }
   }
 });
 function endPointer(e) {
   if (touch.stick && e.pointerId === touch.stick.id) { touch.stick = null; IN.x = 0; IN.y = 0; }
-  if (touch.act && e.pointerId === touch.act.id) { touch.act = null; jumpRelease(); }
+  if (touch.act && e.pointerId === touch.act.id) {
+    const a = touch.act; touch.act = null;
+    if (!a.jumped && !a.swiped && G && !G.paused) jumpPress();   // a quick tap: a short hop
+    jumpRelease();
+  }
 }
-cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer); cv.addEventListener('lostpointercapture', endPointer);
+// a finger lifted over a button or a card that covered the game still counts
+addEventListener('pointerup', endPointer, true); addEventListener('pointercancel', endPointer, true);
 // the joystick, drawn over the game
-function drawStick(g) {
-  const st = touch.stick, show = st || prefs.fixedStick;
-  if (!show || !matchMedia('(pointer: coarse)').matches && !st) return;
-  const o = st ? {x: st.ox, y: st.oy} : fixedStickAt();
-  g.fillStyle = css('--ink'); g.globalAlpha = .08; g.beginPath(); g.arc(o.x, o.y, STICK_R + 10, 0, Math.PI * 2); g.fill();
-  g.globalAlpha = .18; g.lineWidth = 2; g.strokeStyle = css('--ink'); g.beginPath(); g.arc(o.x, o.y, STICK_R + 10, 0, Math.PI * 2); g.stroke();
-  g.globalAlpha = st ? .55 : .25; g.fillStyle = css('--ink'); g.beginPath(); g.arc(o.x + (st ? st.kx : 0), o.y + (st ? st.ky : 0), 24, 0, Math.PI * 2); g.fill();
+function drawStickAt(g, o, R, knob, live) {
+  g.fillStyle = css('--ink'); g.globalAlpha = live ? .1 : .06; g.beginPath(); g.arc(o.x, o.y, R + 10, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = live ? .22 : .14; g.lineWidth = 2; g.strokeStyle = css('--ink'); g.beginPath(); g.arc(o.x, o.y, R + 10, 0, Math.PI * 2); g.stroke();
+  g.globalAlpha = live ? .55 : .22; g.beginPath(); g.arc(o.x + knob[0], o.y + knob[1], R * .45, 0, Math.PI * 2); g.fill();
   g.globalAlpha = 1;
+}
+function drawStick(g) {
+  const st = touch.stick, touchUI = matchMedia('(pointer: coarse)').matches || document.documentElement.classList.contains('rz-touch');
+  if (st) drawStickAt(g, {x: st.ox, y: st.oy}, stickR(), [st.kx, st.ky], true);
+  else if (fixedStick() && touchUI) drawStickAt(g, stickAt(), stickR(), [0, 0], false);
 }
 // the keyboard: arrows or WASD to run and aim, Space / Z / C to jump, X / Shift / J to dash
 const KEYS = {};
@@ -1190,7 +1461,7 @@ addEventListener('keyup', e => {
   keysToX();
 });
 function keysToX() { if (touch.stick) return; IN.x = (KEYS.arrowright || KEYS.d ? 1 : 0) - (KEYS.arrowleft || KEYS.a ? 1 : 0); }
-addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; IN.x = 0; touch.stick = touch.act = null; });
+addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; resetTouch(); });
 
 /* ======================================================================
    SCREENS
@@ -1201,13 +1472,13 @@ const touchy = () => document.documentElement.classList.contains('rz-touch') || 
 function hintText(t) {
   if (!touchy()) {
     const K = {'Push the joystick to run': 'Arrow keys to run', 'Tap the right side to jump': 'Space to jump', 'Swipe the right side to dash': 'X to dash',
-      'Jump, then swipe across': 'Jump, then X', 'Jump, then swipe up': 'Jump, then hold ↑ and press X', 'Dash diagonally too': 'Hold two arrows to dash diagonally'};
+      'Jump, then swipe across': 'Jump, then X', 'Jump, then swipe up': 'Jump, then hold ↑ and press X', 'Dash diagonally too': 'Hold two arrows to dash diagonally', 'Dash, then jump while you dash': 'Press X, then Space while you dash'};
     return K[t] || t;
   }
   return prefs.swap ? t.replace('right side', 'left side') : t;
 }
 const levelId = i => LEVELS[i].name;
-const isOpen = i => unlockAll || i === 0 || !!(prog()[levelId(i - 1)] || {}).done;
+const isOpen = i => unlockAll || i === 0 || !!(prog()[levelId(i - 1)] || {}).done || !!(prog()[levelId(i)] || {}).done;
 const inGame = () => !$('#game').classList.contains('hidden');
 function show(id) {
   ['home', 'levels', 'game'].forEach(k => $('#' + k).classList.toggle('hidden', k !== id));
@@ -1265,7 +1536,7 @@ $('#lvBack').onclick = () => { Sound.tap(); show('home'); };
 function play(i) {
   if (!isOpen(i)) return;
   $('#pauseCover').classList.add('hidden'); $('#doneCover').classList.add('hidden');
-  show('game'); layout(); startLevel(i);
+  show('game'); layout(); resetTouch(); startLevel(i);
   $('#lvName').textContent = (i + 1) + ' · ' + LEVELS[i].name;
   $('#starPill').classList.toggle('hidden', !G.L.stars.length);
   showHud(); last = performance.now();
@@ -1280,7 +1551,7 @@ function showHud() {
 function setPause(on) {
   if (!G || G.done) return;
   G.paused = on; $('#pauseCover').classList.toggle('hidden', !on);
-  touch.stick = touch.act = null; IN.x = 0; if (G.p) G.p.held = false;
+  resetTouch();
   if (on) setTimeout(() => $('#pResume').focus({preventScroll: true}), 30);
 }
 const togglePause = () => G && setPause(!G.paused);
@@ -1297,7 +1568,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // reaching the flag
 function finish() {
   if (G.done) return;
-  G.done = true; G.p.buf = 0; IN.x = 0;
+  G.done = true; G.p.buf = 0; resetTouch();
   const L = G.L, id = levelId(L.i), P = prog(), r = P[id] || {}, ms = Math.round(G.t * 1000);
   const firstClear = !r.done, newBest = !r.best || ms < r.best, starNew = G.star && !r.star;
   r.done = true; if (newBest) r.best = ms; r.star = r.star || G.star; r.deaths = r.deaths == null ? G.deaths : Math.min(r.deaths, G.deaths);
@@ -1338,12 +1609,13 @@ function frame(now) {
   if (!G || !inGame()) return;
   const t = now / 1000;
   if (!G.paused) {
+    touchTick(now);
     if (G.done) IN.x = 0;
     if (G.hit > 0) G.hit -= dt;   // a tiny freeze when a dash starts, so it lands with a punch
     else { acc += dt; let n = 0; while (acc >= 1 / 120 && n++ < 8) { step(1 / 120); acc -= 1 / 120; if (!G) return; } }
     animate(dt, t); stepFx(dt);
   }
-  render(t);
+  render(t, dt);
   const tt = fmtT(G.t * 1000); if (tt !== hudT) { hudT = tt; $('#timer').textContent = tt; }
   showHud();
 }
@@ -1378,6 +1650,10 @@ document.querySelectorAll('.panel').forEach(p => {   // pull a panel down by its
 let resetArmed = false;
 function renderSettings() {
   document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = !!prefs[el.dataset.p]);
+  const fixed = prefs.stick !== 'free';
+  document.querySelectorAll('#sStick button').forEach(b => b.classList.toggle('on', b.dataset.v === prefs.stick));
+  $('#sStickNote').textContent = fixed ? 'Stays where you put it' : 'Appears where your thumb lands';
+  $('#sMove').classList.toggle('hidden', !fixed);
   $('#sBuzzRow').classList.toggle('hidden', !navigator.vibrate);
   resetArmed = false; $('#sReset').querySelector('b').textContent = 'Reset progress';
 }
@@ -1386,6 +1662,50 @@ document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () =
   if (G) G.L.hints = (LEVELS[G.L.i].hints || []).map(([c, r, t]) => [c, r, hintText(t)]);
 });
 $('#sMenu').onclick = () => RZ && RZ.openMenu();
+document.querySelectorAll('#sStick button').forEach(b => b.onclick = () => { prefs.stick = b.dataset.v; savePrefs(); Sound.tap(); renderSettings(); });
+
+/* ---------- moving the joystick ---------- */
+const PadEdit = (() => {
+  const box = $('#padEdit'), c = $('#peCv'); let drag = false, on = false;
+  function draw() {
+    if (!on) return; requestAnimationFrame(draw);
+    const r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    if (c.width !== Math.round(r.width * d) || c.height !== Math.round(r.height * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+    const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0);
+    g.fillStyle = css('--bg'); g.fillRect(0, 0, r.width, r.height);
+    // the two halves: the joystick's, and tap / swipe
+    const half = r.width / 2, left = !prefs.swap;
+    g.fillStyle = css('--ink'); g.globalAlpha = .035; g.fillRect(left ? 0 : half, 0, half, r.height); g.globalAlpha = 1;
+    g.strokeStyle = css('--line'); g.setLineDash([6, 6]); g.lineWidth = 2; g.beginPath(); g.moveTo(half, 90); g.lineTo(half, r.height - 20); g.stroke(); g.setLineDash([]);
+    g.fillStyle = css('--muted'); g.font = '800 15px Nunito, system-ui, sans-serif'; g.textAlign = 'center';
+    const ox = left ? half * 1.5 : half * .5;
+    g.fillText('Tap to jump', ox, r.height * .6 - 10); g.fillText('Swipe to dash', ox, r.height * .6 + 12);
+    // a strip of ground, so it looks like the game
+    g.fillStyle = css('--tile'); g.fillRect(0, r.height - 26, r.width, 26); g.fillStyle = css('--tileTop'); g.fillRect(0, r.height - 26, r.width, 6);
+    const o = stickAt(r.width, r.height), R = stickR();
+    drawStickAt(g, o, R, [0, 0], true);
+    g.globalAlpha = drag ? .9 : .5; g.strokeStyle = css('--accent'); g.lineWidth = 2.5; g.setLineDash([5, 5]); g.beginPath(); g.arc(o.x, o.y, R + 18, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+  }
+  function place(e) {
+    const r = c.getBoundingClientRect(), sa = safe(), x = e.clientX - r.left, y = e.clientY - r.top;
+    prefs.stickPos = {x: (prefs.swap ? r.width - x - sa.r : x - sa.l), y: r.height - y - sa.b};
+    const o = stickAt(r.width, r.height);   // keep what was stored inside the limits
+    prefs.stickPos = {x: (prefs.swap ? r.width - o.x - sa.r : o.x - sa.l), y: r.height - o.y - sa.b};
+  }
+  c.addEventListener('pointerdown', e => { e.preventDefault(); drag = true; place(e); try { c.setPointerCapture(e.pointerId); } catch {} });
+  c.addEventListener('pointermove', e => { if (drag) place(e); });
+  const end = () => { if (drag) { drag = false; savePrefs(); } };
+  c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+  const sizes = () => document.querySelectorAll('#peSize button').forEach(b => b.classList.toggle('on', b.dataset.v === prefs.stickSize));
+  document.querySelectorAll('#peSize button').forEach(b => b.onclick = () => { prefs.stickSize = b.dataset.v; savePrefs(); sizes(); Sound.tap(); });
+  $('#peReset').onclick = () => { prefs.stickPos = null; prefs.stickSize = 'M'; savePrefs(); sizes(); Sound.tap(); };
+  $('#peDone').onclick = () => close();
+  function open() { on = true; sizes(); box.classList.remove('hidden'); document.body.classList.add('editing'); requestAnimationFrame(draw); }
+  function close() { on = false; box.classList.add('hidden'); document.body.classList.remove('editing'); savePrefs(); }
+  addEventListener('keydown', e => { if (on && e.key === 'Escape') { e.stopImmediatePropagation(); close(); } }, true);
+  return {open, close, get on() { return on; }};
+})();
+$('#sMove').onclick = () => { Sound.tap(); PadEdit.open(); };
 $('#sReset').onclick = () => {
   if (!resetArmed) { resetArmed = true; $('#sReset').querySelector('b').textContent = 'Tap again to reset'; return; }
   keep(PROG_KEY, null); renderSettings(); renderHome(); toast('Progress reset');
@@ -1435,12 +1755,18 @@ function drawScene(S, now) {
   if (S.extra) S.extra(g, s, m, t, r, bx, by);
   // the figure
   if (m.face) f.face = m.face;
-  if (m.st === 'run') f.ph += dt * 14;
-  const pose = poseFor(m.st, t, f.ph, 1);
-  if (m.st === 'dash' && m.dash) { const [dx, dy] = m.dash, n = Math.hypot(dx, dy); pose.rot = dy / n <= 0 ? .6 * Math.atan2(dx / n, -dy / n) : Math.sign(dx) * .94 * (1 - dy / n); }
-  easePose(f, pose, dt, m.st === 'land' ? 30 : m.st === 'run' ? 22 : 16);
-  const J = joints(f, bx, by);
+  f.fs += (f.face - f.fs) * (1 - Math.exp(-dt * 22));
+  // the scene's own motion tells the figure how fast it's going up or down
+  const vy = S.py == null || !dt ? 0 : (by - S.py) / dt; S.py = by;
   const vx = S.px == null || !dt ? 0 : (bx - S.px) / dt; S.px = bx;
+  const ground = ['run', 'idle', 'land', 'skid'].includes(m.st) || (m.st === 'dash' && m.low), running = m.st === 'run';
+  if (running) f.ph += dt * 13;
+  const dn = m.dash ? Math.hypot(...m.dash) : 1;
+  const pose = targetPose(f, {mom: m.st === 'fly', ground, vx: vx + (S.o.scroll || 0) * f.face, vy: m.st === 'up' ? Math.min(vy, -4) : m.st === 'fall' ? Math.max(vy, 2) : vy,
+    dash: m.st === 'dash' ? [m.dash[0] / dn, m.dash[1] / dn] : null, wall: false, kick: 0, skid: m.st === 'skid' ? 1 : 0, turn: 0,
+    land: m.st === 'land' ? .8 : 0, run: running ? 1 : 0, t});
+  easePose(f, pose, dt, m.st === 'dash' ? 32 : m.st === 'land' ? 26 : running ? 30 : ground ? 16 : 13);
+  const J = joints(f, bx, by);
   stepScarf(f, J, dt, -(vx + (S.o.scroll || 0)) * 2.5);
   if (m.st === 'dash') { S.trail = (S.trail || 0) - dt; if (S.trail <= 0) { S.trail = .025; S.after.push({fig: {...f, scarf: []}, x: bx, y: by, life: .28}); } }
   S.after = S.after.filter(a => (a.life -= dt) > 0);
@@ -1499,6 +1825,13 @@ const How = (() => {
       {d: .16, st: 'dash', to: [.6, -2.1], dash: [1, -.6], used: true, face: 1, sw: 1}, {d: .45, st: 'fall', to: [1, 0], ease: 'in', used: true, face: 1},
       {d: .15, st: 'land', to: [1, 0], face: 1}, {d: .3, st: 'idle', to: [1, 0], face: 1},
     ]), {cx: .45, scale: r => r.height / 4.3, extra: (g, s, m, t, r) => { if (m.sw) swipe(g, r, m.k * .5, .86, -.5); }});
+    if (k === 'dashjump') return makeScene(c, scene([
+      {d: .45, st: 'idle', to: [-2.6, 0], face: 1},
+      {d: .1, st: 'dash', to: [-1.7, 0], dash: [1, 0], used: true, face: 1, low: true, tap: 1},
+      {d: .26, st: 'fly', to: [.4, -1.15], ease: 'out', used: true, face: 1},
+      {d: .26, st: 'fly', to: [2.4, 0], ease: 'in', used: true, face: 1},
+      {d: .14, st: 'land', to: [2.6, 0], face: 1}, {d: .45, st: 'idle', to: [2.6, 0], face: 1},
+    ]), {cx: .5, scale: r => r.height / 4.3, extra: (g, s, m, t, r) => { if (m.tap) tapAt(g, r, m.k * .6); }});
     // get it back: dash (scarf goes grey), grab an orb (red again), dash once more
     return makeScene(c, scene([
       {d: .45, st: 'idle', to: [-2, 0], face: 1}, {d: .26, st: 'up', to: [-1.9, -1], ease: 'out', face: 1},
