@@ -266,6 +266,11 @@ html.rz-touch #sKeys{display:none}
   .howc canvas{height:96px}
 }
 @media (max-width:420px){.side{width:84px}.bbtn.play{width:128px}}
+/* the game itself is always night in the city, so its buttons and covers are always dark */
+#game{color-scheme:dark;background:#0b0a1f;color:var(--ink);
+  --bg:#16181d;--bg2:#1e2128;--panel:#252932;--ink:#eef1f6;--muted:#9aa3b2;--line:#353a45;--soft:#2c313b;
+  --accent:#ff5a4f;--hi:#ff7a6b;--shade:rgba(0,0,0,.45);--ok:#22c55e;--bad:#ff5a5f;--gold:#facc15;
+  --rz-btn-bg:var(--panel);--rz-btn-border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -621,6 +626,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // colours from the CSS, remembered until the light/dark scheme changes
 const cssCache = {};
 const css = n => cssCache[n] ?? (cssCache[n] = getComputedStyle(document.documentElement).getPropertyValue(n).trim());
+let FIGC = null;   // colours for the figure while it's drawn in the night city (null: follow the device)
+const fc = n => (FIGC && FIGC[n]) || css(n);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { for (const k in cssCache) delete cssCache[k]; if (typeof G !== 'undefined' && G) paintLevel(); });
 const fmtT = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(1).padStart(4, '0'); };
 const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
@@ -828,7 +835,7 @@ function drawFace(g, f, h, r, col, A) {
   g.beginPath(); g.moveTo(-r * 1.1, -r * .62 + F * r * .08); g.lineTo(r * 1.1, -r * .62 - F * r * .08); g.lineTo(r * 1.1, -r * .2 - F * r * .08); g.lineTo(-r * 1.1, -r * .2 + F * r * .08); g.fill();
   // the eye: an upright line towards the front of the face, blinking now and then
   const t = performance.now() / 1000, blink = (t % 3.7) < .11 ? .15 : 1, ex = F * r * .5;
-  g.strokeStyle = css('--bg'); g.lineCap = 'round'; g.lineWidth = Math.max(1.3, r * .2);
+  g.strokeStyle = fc('--bg'); g.lineCap = 'round'; g.lineWidth = Math.max(1.3, r * .2);
   g.globalAlpha = A * clamp(Math.abs(F) * 1.6, 0, 1);
   const top = -r * .05, bot = r * .42, mid = (top + bot) / 2, hl = (bot - top) / 2 * blink;
   g.beginPath(); g.moveTo(ex, mid - hl); g.lineTo(ex, mid + hl); g.stroke();
@@ -863,7 +870,7 @@ function drawScarf(g, f, s, col, alpha, P = p => [p[0] * s, p[1] * s]) {
     for (let i = 1; i < S.length; i++) { g.lineWidth = s * (.075 - i * .007); g.beginPath(); g.moveTo(...S[i - 1]); g.lineTo(...S[i]); g.stroke(); }
   }
   if (f.scarf.length) { const k = P([f.scarf[0].x, f.scarf[0].y]); g.beginPath(); g.arc(k[0], k[1], s * .05, 0, Math.PI * 2); g.fill(); }
-  g.strokeStyle = css('--ink'); g.fillStyle = css('--ink');
+  g.strokeStyle = fc('--ink'); g.fillStyle = fc('--ink');
 }
 // squash and stretch spring back to normal with a little wobble
 function stepSquash(f, dt) {
@@ -1008,7 +1015,7 @@ function dash(dx, dy) {
   const n = Math.hypot(dx, dy); dx /= n; dy /= n;
   p.dash = 0; p.dashT = PH.dashT; p.dx = dx; p.dy = dy; p.vx = dx * PH.dashV; p.vy = dy * PH.dashV;
   p.buf = 0; p.cut = true; G.hit = PH.hitstop; G.cam.shake = Math.max(G.cam.shake, .12);
-  burst(p.x, p.y - PH.H / 2, 10, css('--accent'), 5, .3);
+  burst(p.x, p.y - PH.H / 2, 10, wc('--accent'), 5, .3);
   Sound.dash(); vibrate(12);
 }
 function regain(p, why) {   // the dash comes back
@@ -1020,14 +1027,14 @@ function die() {
   const p = G.p; if (p.dead) return;
   p.dead = .8; G.deaths++; G.flash = .25; G.cam.shake = .35;
   // the figure comes apart: each limb flies off on its own
-  const J = joints(p.fig, p.x, p.y), ink = css('--ink');
+  const J = joints(p.fig, p.x, p.y), ink = wc('--ink');
   [[J.hip, J.neck], [J.l0[0], J.l0[1]], [J.hip, J.l0[0]], [J.l1[0], J.l1[1]], [J.hip, J.l1[0]], [J.sh, J.a0[0]], [J.a0[0], J.a0[1]], [J.sh, J.a1[0]], [J.a1[0], J.a1[1]]].forEach(([a, b]) => {
     const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
     G.parts.push({kind: 'bone', x: mx, y: my, len: Math.hypot(b[0] - a[0], b[1] - a[1]), a: Math.atan2(b[1] - a[1], b[0] - a[0]), va: (Math.random() - .5) * 18,
       vx: (Math.random() - .5) * 9 - p.vx * .2, vy: -4 - Math.random() * 6, life: 1.1, max: 1.1, col: ink, g: 30});
   });
   G.parts.push({kind: 'head', x: J.hd[0], y: J.hd[1], vx: (Math.random() - .5) * 6, vy: -7, life: 1.1, max: 1.1, col: ink, g: 30});
-  burst(p.x, p.y - .6, 16, css('--accent'), 7, .5);
+  burst(p.x, p.y - .6, 16, wc('--accent'), 7, .5);
   Sound.die(); vibrate([30, 40, 60]);
 }
 // little effects
@@ -1130,7 +1137,7 @@ function step(dt) {
   if (p.y > L.h + 2) { die(); return; }
   for (const o of L.orbs) {
     if (o.off > 0) { o.off -= dt; continue; }
-    if (p.dash < 1 && Math.hypot(p.x - o.x, p.y - PH.H / 2 - o.y) < .7) { o.off = 2.5; regain(p, 'quiet'); Sound.orb(); burst(o.x, o.y, 14, css('--orb'), 5, .45); vibrate(8); }
+    if (p.dash < 1 && Math.hypot(p.x - o.x, p.y - PH.H / 2 - o.y) < .7) { o.off = 2.5; regain(p, 'quiet'); Sound.orb(); burst(o.x, o.y, 14, wc('--orb'), 5, .45); vibrate(8); }
   }
   for (const d of L.pads) {
     d.sq = Math.max(0, d.sq - dt * 4);
@@ -1142,7 +1149,7 @@ function step(dt) {
   for (const k of L.checks) if (!k.on && over(k.c, k.r - .5, k.c + 1, k.r + 1)) {
     L.checks.forEach(x => x.on = false); k.on = true; k.wave = 1; G.spawn = {x: k.c + .5, y: k.r + 1}; Sound.check(); note('Checkpoint');
   }
-  for (const s of L.stars) if (!G.star && Math.hypot(p.x - s.x, p.y - PH.H / 2 - s.y) < .75) { G.star = true; Sound.star(); burst(s.x, s.y, 22, css('--gold'), 6, .7); vibrate([10, 30, 10]); showHud(); }
+  for (const s of L.stars) if (!G.star && Math.hypot(p.x - s.x, p.y - PH.H / 2 - s.y) < .75) { G.star = true; Sound.star(); burst(s.x, s.y, 22, wc('--gold'), 6, .7); vibrate([10, 30, 10]); showHud(); }
   if (L.goal && over(L.goal.c, L.goal.r - 1, L.goal.c + 1, L.goal.r + 1)) finish();
 }
 // the figure's pose follows what the player is doing
@@ -1195,52 +1202,14 @@ const V = {w: 0, h: 0, dpr: 1, s: 32};
 function layout() {
   const r = cv.getBoundingClientRect(); V.dpr = Math.min(2.5, devicePixelRatio || 1);
   V.w = r.width; V.h = r.height; cv.width = Math.round(V.w * V.dpr); cv.height = Math.round(V.h * V.dpr);
-  V.s = Math.max(20, Math.round(V.h / clamp(V.h / 36, 9.5, 12)));   // 9½ to 12 squares of height on screen
+  const want = Math.max(20, V.h / clamp(V.h / 36, 9.5, 12));   // 9½ to 12 squares of height on screen
+  V.s = Math.max(1, Math.round(want * V.dpr / ART)) * ART / V.dpr;   // a whole number of screen pixels per art pixel, so the pixel art stays crisp
   if (G) { paintLevel(); snapCam(); }
-}
-// the level's blocks, ledges and spikes, painted once into their own canvas
-function paintLevel() {
-  const L = G.L, s = V.s, d = Math.min(2, V.dpr);
-  lvlC.width = Math.ceil(L.w * s * d); lvlC.height = Math.ceil(L.h * s * d);
-  const g = lvlC.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, L.w * s, L.h * s);
-  const T = css('--tile'), TT = css('--tileTop'), TE = css('--tileEdge'), SP = css('--spike');
-  const sol = (c, r) => c >= 0 && c < L.w && r >= 0 && r < L.h && L.g[r * L.w + c] === 1;
-  const rr = (x, y, w, h, rad) => { g.beginPath(); g.roundRect(x, y, w, h, rad); };
-  for (let r = 0; r < L.h; r++) for (let c = 0; c < L.w; c++) {
-    const k = L.g[r * L.w + c], x = c * s, y = r * s;
-    if (k === 1) {   // solid ground: smooth slabs, with a light top and a darker underside wherever they're open
-      const up = !sol(c, r - 1) && r > 0, dn = !sol(c, r + 1) && r < L.h - 1, lf = !sol(c - 1, r), rt = !sol(c + 1, r), R = s * .2;
-      g.save(); g.beginPath(); g.roundRect(x, y, s, s, [up && lf ? R : 0, up && rt ? R : 0, dn && rt ? R : 0, dn && lf ? R : 0]); g.clip();
-      g.fillStyle = T; g.fillRect(x, y, s, s);
-      g.fillStyle = TE;
-      if (dn) g.fillRect(x, y + s * .86, s, s * .14);
-      if (lf) g.fillRect(x, y, s * .07, s);
-      if (rt) g.fillRect(x + s * .93, y, s * .07, s);
-      if (up) { g.fillStyle = TT; g.fillRect(x, y, s, s * .24); g.fillStyle = TE; g.globalAlpha = .35; g.fillRect(x, y + s * .24, s, s * .05); g.globalAlpha = 1; }
-      // a faint stud in every block keeps the toy-block feel without the busy seams
-      g.fillStyle = TE; g.globalAlpha = .18; g.beginPath(); g.arc(x + s / 2, y + s * (up ? .6 : .5), s * .07, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
-      g.restore();
-    } else if (k === 2) {   // a ledge: a thin plank
-      g.fillStyle = TE; rr(x + s * .02, y + s * .02, s * .96, s * .3, s * .1); g.fill();
-      g.fillStyle = TT; rr(x + s * .02, y + s * .02, s * .96, s * .22, s * .1); g.fill();
-    }
-  }
-  for (const sp of L.spikes) {   // spikes: three teeth
-    g.save(); g.translate((sp.c + .5) * s, (sp.r + .5) * s); g.rotate({up: 0, right: Math.PI / 2, down: Math.PI, left: -Math.PI / 2}[sp.dir]);
-    for (let i = 0; i < 3; i++) {
-      const x0 = -s * .5 + i * s / 3;
-      g.fillStyle = SP; g.beginPath(); g.moveTo(x0 + s * .02, s * .5); g.lineTo(x0 + s / 6, s * .02); g.lineTo(x0 + s / 3 - s * .02, s * .5); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.moveTo(x0 + s / 6, s * .06); g.lineTo(x0 + s / 6 + s * .05, s * .45); g.lineTo(x0 + s / 6, s * .45); g.fill();
-    }
-    g.restore();
-  }
 }
 function render(now, dt = 1 / 60) {
   const g = cx, s = V.s, L = G.L, p = G.p, t = now;
   g.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
-  // the sky: a soft gradient and slow, far-off blocks
-  const grd = g.createLinearGradient(0, 0, 0, V.h); grd.addColorStop(0, css('--bg')); grd.addColorStop(1, css('--bg2'));
-  g.fillStyle = grd; g.fillRect(0, 0, V.w, V.h);
+  FIGC = NIGHT;
   // the camera: steady. It only moves sideways once you leave a small window round the middle,
   // looks ahead only after you've run one way for a moment, and follows heights you land on
   const vw = V.w / s, vh = V.h / s, C = G.cam;
@@ -1256,60 +1225,65 @@ function render(now, dt = 1 / 60) {
   const sh = G.cam.shake > 0 && !reduced() ? G.cam.shake * .25 : 0;
   const ox = -(G.cam.x + (Math.random() - .5) * sh) * s, oy = -(G.cam.y + (Math.random() - .5) * sh) * s;
   drawFar(g, G.cam.x, G.cam.y, s);
-  g.save(); g.translate(Math.round(ox), Math.round(oy));
-  g.drawImage(lvlC, 0, 0, L.w * s, L.h * s);
+  g.save(); g.translate(Math.round(ox * V.dpr) / V.dpr, Math.round(oy * V.dpr) / V.dpr);
+  g.imageSmoothingEnabled = false; g.drawImage(lvlC, 0, -LTOP * s, L.w * s, (L.h + LTOP) * s); g.imageSmoothingEnabled = true;
+  drawLevelGlow(g, s);
   // hints written in the world
-  g.fillStyle = css('--muted'); g.font = `800 ${Math.round(s * .42)}px Nunito, system-ui, sans-serif`; g.textAlign = 'center';
+  g.fillStyle = wc('--muted'); g.font = `800 ${Math.round(s * .42)}px Nunito, system-ui, sans-serif`; g.textAlign = 'center';
   L.hints.forEach(([c, r, txt]) => { g.globalAlpha = .75; g.fillText(txt, (c + .5) * s, (r + .5) * s); }); g.globalAlpha = 1;
   drawThings(g, s, t);
   // afterimages of a dash
-  G.after.forEach(a => drawFigure(g, a.fig, a.x, a.y, s, css('--accent'), {alpha: a.life / .28 * .4, scarf: false}));
+  G.after.forEach(a => drawFigure(g, a.fig, a.x, a.y, s, wc('--accent'), {alpha: a.life / .28 * .4, scarf: false}));
   if (!p.dead) {
-    const col = p.dash >= 1 ? css('--accent') : css('--muted');
-    drawFigure(g, p.fig, p.x, p.y, s, css('--ink'), {scarfCol: p.flash > 0 && (t * 20 | 0) % 2 ? '#ffffff' : col});
+    const col = p.dash >= 1 ? wc('--accent') : wc('--muted');
+    drawFigure(g, p.fig, p.x, p.y, s, wc('--ink'), {scarfCol: p.flash > 0 && (t * 20 | 0) % 2 ? '#ffffff' : col});
   }
   // bits and pieces
   for (const q of G.parts) {
     g.globalAlpha = Math.min(1, q.life / q.max * 1.5);
     if (q.kind === 'bone') { g.save(); g.translate(q.x * s, q.y * s); g.rotate(q.a); g.strokeStyle = q.col; g.lineWidth = BODY.w * s; g.lineCap = 'round'; g.beginPath(); g.moveTo(-q.len / 2 * s, 0); g.lineTo(q.len / 2 * s, 0); g.stroke(); g.restore(); }
     else if (q.kind === 'head') { g.fillStyle = q.col; g.beginPath(); g.arc(q.x * s, q.y * s, BODY.head * s, 0, Math.PI * 2); g.fill(); }
-    else if (q.kind === 'dust') { g.fillStyle = css('--tileEdge'); g.globalAlpha *= .6; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s * (1.5 - q.life / q.max), 0, Math.PI * 2); g.fill(); }
+    else if (q.kind === 'dust') { g.fillStyle = wc('--tileEdge'); g.globalAlpha *= .6; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s * (1.5 - q.life / q.max), 0, Math.PI * 2); g.fill(); }
     else { g.fillStyle = q.col; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s, 0, Math.PI * 2); g.fill(); }
   }
   g.globalAlpha = 1;
   g.restore();
   if (G.flash > 0) { g.fillStyle = `rgba(239,59,59,${G.flash * .6})`; g.fillRect(0, 0, V.w, V.h); }
   drawStick(g);
+  FIGC = null;
 }
 const camX = (fx, vw) => G.L.w < vw ? (G.L.w - vw) / 2 : clamp(fx - vw / 2, 0, G.L.w - vw);
 const camY = (fy, vh) => clamp(fy - vh * .58, -1, Math.max(-1, G.L.h - vh));
 function snapCam() { const C = G.cam, p = G.p; C.fx = p.x; C.fy = p.y; C.look = 0; C.x = camX(C.fx, V.w / V.s); C.y = camY(C.fy, V.h / V.s); }
-// far-off scenery: big soft blocks drifting slower than the level
-function drawFar(g, camX, camY, s) {
-  const c1 = css('--bg2'), w = V.w;
-  g.fillStyle = c1; g.globalAlpha = .9;
-  for (let i = -1; i < 9; i++) {
-    const base = i * 7.3, x = ((base - camX * .25) % 66 + 66) % 66 - 6, hgt = 3 + (i * 37 % 5);
-    g.beginPath(); g.roundRect(x * s * .9, V.h - (hgt + 1.5 - camY * .05) * s * .6, s * 4.2, (hgt + 4) * s, s * .6); g.fill();
-  }
-  g.globalAlpha = .35;
-  for (let i = 0; i < 14; i++) { const x = ((i * 113.7 - camX * .12 * s) % (w + 40) + w + 40) % (w + 40) - 20, y = (i * 47 % 60) / 100 * V.h * .6 + 20; g.beginPath(); g.arc(x, y, 2 + i % 3, 0, Math.PI * 2); g.fill(); }
-  g.globalAlpha = 1;
-}
 function drawThings(g, s, t) {
-  const L = G.L, ink = css('--ink');
-  // springs
+  const L = G.L, ink = wc('--ink');
+  // springs: a pixel-art coil on a steel base with a glowing green pad, and faint arrows rising above it
   for (const d of L.pads) {
-    const x = (d.c + .5) * s, y = (d.r + 1) * s, ext = (1 - d.sq) * .12 + d.sq * .5;
-    g.fillStyle = css('--tileEdge'); g.beginPath(); g.roundRect(x - s * .38, y - s * .18, s * .76, s * .18, s * .06); g.fill();
-    g.strokeStyle = ink; g.lineWidth = s * .05; g.beginPath(); for (let i = 0; i <= 4; i++) g.lineTo(x + (i % 2 ? s * .18 : -s * .18), y - s * .18 - i * s * (.08 + ext * .1)); g.stroke();
-    g.fillStyle = css('--pad'); g.beginPath(); g.roundRect(x - s * .42, y - s * (.5 + ext * .45), s * .84, s * .16, s * .08); g.fill();
+    const ps = s / ART, ox = d.c * s, oy = d.r * s, ext = (1 - d.sq) * .12 + d.sq * .5;
+    const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(ox + x * ps, oy + y * ps, w * ps, h * ps); };
+    const hc = Math.round(2 + ext * 7), padY = 8 - 2 - hc - 2, cx = ox + 4 * ps, cy = oy + (padY + 1) * ps;
+    const gl = g.createRadialGradient(cx, cy, 0, cx, cy, ps * (7 + d.sq * 5));
+    gl.addColorStop(0, `rgba(61,220,132,${.28 + d.sq * .3 + Math.sin(t * 3) * .05})`); gl.addColorStop(1, 'rgba(61,220,132,0)');
+    g.fillStyle = gl; g.fillRect(cx - ps * 12, cy - ps * 12, ps * 24, ps * 24);
+    P(0, 7, 8, 1, '#1b1d42'); P(1, 6, 6, 1, '#4b4f8a'); P(1, 6, 6, .5, '#7a80c0');   // the base
+    for (let i = 0; i < hc; i++) {   // the coil
+      const y = 5 - i;
+      if (i % 2) P(2, y, 4, 1, '#3a3d74');
+      else { P(1, y, 6, 1, '#a3a8e6'); P(1, y, 1, 1, '#7a80c0'); P(6, y, 1, 1, '#d6d9ff'); }
+    }
+    P(0, padY, 8, 2, '#3ddc84'); P(0, padY, 8, .5, '#b6ffd6'); P(0, padY + 1.5, 8, .5, '#1f8a52');   // the pad
+    for (let k = 0; k < 2; k++) {   // arrows drifting up
+      const ph = (t * .9 + k * .5) % 1, ay = padY - 2 - Math.floor(ph * 6) - 1;
+      g.globalAlpha = Math.sin(ph * Math.PI) * .45;
+      for (const [x, y] of [[2, 2], [3, 1], [4, 0], [5, 1], [6, 2]]) P(x - .5, ay + y - 2, 1, 1, '#6dffad');
+    }
+    g.globalAlpha = 1;
   }
   // gold orbs: give the dash back (dim while they recharge)
   for (const o of L.orbs) {
     const x = o.x * s, y = (o.y + Math.sin(t * 2.5 + o.x) * .08) * s, r = s * .26;
-    if (o.off > 0) { g.strokeStyle = css('--orb'); g.globalAlpha = .4; g.lineWidth = s * .04; g.setLineDash([s * .07, s * .07]); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; continue; }
-    g.fillStyle = css('--orb'); g.globalAlpha = .25 + .1 * Math.sin(t * 4); g.beginPath(); g.arc(x, y, r * 1.8, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    if (o.off > 0) { g.strokeStyle = wc('--orb'); g.globalAlpha = .4; g.lineWidth = s * .04; g.setLineDash([s * .07, s * .07]); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; continue; }
+    g.fillStyle = wc('--orb'); g.globalAlpha = .25 + .1 * Math.sin(t * 4); g.beginPath(); g.arc(x, y, r * 1.8, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
     g.save(); g.translate(x, y); g.rotate(Math.sin(t * 1.5 + o.x) * .3);
     g.beginPath(); g.moveTo(0, -r * 1.2); g.lineTo(r * .9, 0); g.lineTo(0, r * 1.2); g.lineTo(-r * .9, 0); g.closePath(); g.fill();
     g.fillStyle = 'rgba(255,255,255,.65)'; g.beginPath(); g.moveTo(0, -r * 1.1); g.lineTo(r * .35, -r * .1); g.lineTo(0, -r * .1); g.fill();
@@ -1319,15 +1293,15 @@ function drawThings(g, s, t) {
   for (const k of L.checks) {
     const x = (k.c + .5) * s, y = (k.r + 1) * s, up = k.on ? 1 : 0;
     k.wave = Math.max(0, k.wave - 1 / 60);
-    g.strokeStyle = css('--tileEdge'); g.lineWidth = s * .07; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - s * .2, y); g.lineTo(x - s * .2, y - s * 1.1); g.stroke();
+    g.strokeStyle = wc('--tileEdge'); g.lineWidth = s * .07; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - s * .2, y); g.lineTo(x - s * .2, y - s * 1.1); g.stroke();
     const fy = y - s * (.45 + .55 * up), wv = Math.sin(t * 6) * s * .05;
-    g.fillStyle = k.on ? css('--accent') : css('--muted'); g.beginPath(); g.moveTo(x - s * .2, fy - s * .1); g.lineTo(x + s * .35, fy + wv); g.lineTo(x - s * .2, fy + s * .25); g.fill();
+    g.fillStyle = k.on ? wc('--accent') : wc('--muted'); g.beginPath(); g.moveTo(x - s * .2, fy - s * .1); g.lineTo(x + s * .35, fy + wv); g.lineTo(x - s * .2, fy + s * .25); g.fill();
   }
   // the star
   for (const st of L.stars) {
     if (G.star) continue;
     const x = st.x * s, y = (st.y + Math.sin(t * 2) * .1) * s, r = s * .34;
-    g.fillStyle = css('--gold'); g.globalAlpha = .22; g.beginPath(); g.arc(x, y, r * 1.6, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    g.fillStyle = wc('--gold'); g.globalAlpha = .22; g.beginPath(); g.arc(x, y, r * 1.6, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
     g.save(); g.translate(x, y); g.rotate(Math.sin(t * 1.2) * .25); g.beginPath();
     for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? r * .45 : r; g.lineTo(Math.cos(a) * q, Math.sin(a) * q); } g.closePath(); g.fill();
     g.restore();
@@ -1337,7 +1311,7 @@ function drawThings(g, s, t) {
     const x = (L.goal.c + .5) * s, y = (L.goal.r + 1) * s;
     g.strokeStyle = ink; g.lineWidth = s * .08; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - s * 2.3); g.stroke();
     g.fillStyle = ink; g.beginPath(); g.arc(x, y - s * 2.35, s * .1, 0, Math.PI * 2); g.fill();
-    g.fillStyle = css('--accent'); g.beginPath(); g.moveTo(x, y - s * 2.2);
+    g.fillStyle = wc('--accent'); g.beginPath(); g.moveTo(x, y - s * 2.2);
     for (let i = 0; i <= 8; i++) g.lineTo(x + i * s * .12, y - s * 2.2 + Math.sin(t * 6 - i * .7) * s * .07 + i * s * .01);
     for (let i = 8; i >= 0; i--) g.lineTo(x + i * s * .12, y - s * 1.55 + Math.sin(t * 6 - i * .7) * s * .07 - i * s * .01);
     g.fill();
@@ -1353,7 +1327,8 @@ function drawThings(g, s, t) {
    ground is a clean dash rather than a jump and a dash.
    ====================================================================== */
 const STICK_SIZES = {S: 44, M: 54, L: 66};
-const stickR = () => STICK_SIZES[prefs.stickSize] || 54;
+// bigger on bigger screens (a tablet gets up to two-thirds bigger again)
+const stickR = () => Math.round((STICK_SIZES[prefs.stickSize] || 54) * clamp(Math.min(innerWidth, innerHeight) / 390, 1, 1.65));
 const touch = {stick: null, act: null};   // the active pointers
 const safe = (() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)'; document.body.appendChild(d);
   return () => { const c = getComputedStyle(d); return {l: parseFloat(c.paddingLeft) || 0, r: parseFloat(c.paddingRight) || 0, b: parseFloat(c.paddingBottom) || 0}; }; })();
@@ -1432,8 +1407,8 @@ cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel
 addEventListener('pointerup', endPointer, true); addEventListener('pointercancel', endPointer, true);
 // the joystick, drawn over the game
 function drawStickAt(g, o, R, knob, live) {
-  g.fillStyle = css('--ink'); g.globalAlpha = live ? .1 : .06; g.beginPath(); g.arc(o.x, o.y, R + 10, 0, Math.PI * 2); g.fill();
-  g.globalAlpha = live ? .22 : .14; g.lineWidth = 2; g.strokeStyle = css('--ink'); g.beginPath(); g.arc(o.x, o.y, R + 10, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = wc('--ink'); g.globalAlpha = live ? .1 : .06; g.beginPath(); g.arc(o.x, o.y, R + 10, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = live ? .22 : .14; g.lineWidth = 2; g.strokeStyle = wc('--ink'); g.beginPath(); g.arc(o.x, o.y, R + 10, 0, Math.PI * 2); g.stroke();
   g.globalAlpha = live ? .55 : .22; g.beginPath(); g.arc(o.x + knob[0], o.y + knob[1], R * .45, 0, Math.PI * 2); g.fill();
   g.globalAlpha = 1;
 }
@@ -1462,6 +1437,314 @@ addEventListener('keyup', e => {
 });
 function keysToX() { if (touch.stick) return; IN.x = (KEYS.arrowright || KEYS.d ? 1 : 0) - (KEYS.arrowleft || KEYS.a ? 1 : 0); }
 addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; resetTouch(); });
+
+/* ======================================================================
+   THE CITY AT NIGHT
+   The world is always a pixel-art city at night, whatever the device's
+   light or dark setting. Everything is drawn on a grid of 8 × 8 art pixels
+   per square and scaled up without smoothing, so the pixels stay crisp;
+   on top of that, lit windows, neon and the moon get a soft glow (a tiny
+   picture of just the lights, stretched up smoothly so it blurs).
+   Behind the level: a dark sky with a few twinkling stars, a shooting star
+   now and then, a small moon tucked in the corner, a purple haze over the
+   city, and three rows of skyline that slide past slower the further away
+   they are. The level itself is dark rooftops with a few lit windows.
+   ====================================================================== */
+const ART = 8, GLOW = 4;   // art pixels per square; art pixels per pixel of the glow pictures
+const NIGHT = {'--ink': '#eef0ff', '--bg': '#0b0a1f', '--muted': '#6d68a3', '--accent': '#ff4a5a', '--tileEdge': '#3d3870',
+  '--spike': '#ff3b5c', '--orb': '#ffd23f', '--gold': '#ffd23f', '--pad': '#3ddc84'};
+const wc = n => NIGHT[n] ?? css(n);
+const CITY = {
+  sky: ['#020109', '#03020d', '#050412', '#070518', '#0a071e', '#0e0925', '#130b2d', '#1a0e36'],
+  wall: '#1a1738', wallDk: '#141130', line: '#07061a', rim: '#28235a', cap: '#3d3880', capHi: '#7c76c8',
+  winOff: '#100e28', sill: '#2c2860', glint: '#262350', back: '#110f29', post: '#23224a', postHi: '#34336a', backEdge: '#1a1738', backWin: '#0c0a20', winOn: ['#d9a24e', '#d9a24e', '#c98b3c', '#5f9fbd'], winHi: '#f0cf8e',
+  girder: '#363a6e', girderHi: '#7a80c0', girderDk: '#1b1d42',
+  spike: '#ff3b5c', spikeHi: '#ff9aaa', spikeDk: '#9a1b38', spikeBase: '#2f2b58',
+};
+function rng(seed) { return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash2 = (a, b) => { let h = Math.imul(a + 7, 374761393) + Math.imul(b + 3, 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+const hexRGB = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const canvasOf = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+
+// ---- the skyline: three repeating strips, far to near --------------------------------
+// further strips are lighter (haze) and dimmer; nearer ones are darker with brighter windows
+const SKYLINE = [
+  {seed: 11, w: 384, h: 62, para: .08, lift: .04, col: '#110d2a', top: '#18133a', win: [2, 2], gap: [2, 3], lit: .05, lights: ['#8a6a4a', '#5a5488'], minW: 12, maxW: 26, minH: 22, maxH: 58, antenna: .15, glow: .35},
+  {seed: 23, w: 416, h: 48, para: .2, lift: .08, col: '#0f0c28', top: '#18143a', win: [3, 3], gap: [2, 3], lit: .06, lights: ['#a8814a', '#a8814a', '#4f7f9c', '#8a7aa8'], minW: 14, maxW: 30, minH: 16, maxH: 44, antenna: .2, glow: .6},
+  {seed: 37, w: 448, h: 34, para: .38, lift: .13, col: '#0c0a24', top: '#1c1844', win: [4, 5], gap: [2, 3], lit: .06, lights: ['#c99a4e', '#c99a4e', '#b07f3a', '#5a93ad'], minW: 16, maxW: 34, minH: 10, maxH: 30, antenna: .12, neon: .22, glow: .7},
+].map(makeStrip);
+function makeStrip(o) {
+  const cv = canvasOf(o.w, o.h), gw = canvasOf(Math.ceil(o.w / GLOW), Math.ceil(o.h / GLOW));
+  const g = cv.getContext('2d'), gg = gw.getContext('2d'), R = rng(o.seed), lights = [];
+  const px = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  const glow = (x, y, c, a) => { gg.globalAlpha = a; gg.fillStyle = c; gg.fillRect(x / GLOW | 0, y / GLOW | 0, 1, 1); };
+  gg.globalCompositeOperation = 'lighter';
+  let x = 0;
+  while (x < o.w) {
+    let bw = Math.min(o.w - x, Math.round(o.minW + R() * (o.maxW - o.minW)));
+    if (o.w - x - bw < o.minW) bw = o.w - x;
+    const bh = Math.round(o.minH + R() * (o.maxH - o.minH)), y0 = o.h - bh;
+    px(x, y0, bw, bh, o.col); px(x, y0, bw, 1, o.top);
+    if (R() < .3 && bw > 13) {   // a smaller block on the roof
+      const iw = Math.max(4, Math.round(bw * (.25 + R() * .3))), ih = 2 + (R() * 4 | 0), ix = x + 1 + ((bw - iw - 2) * R() | 0);
+      px(ix, y0 - ih, iw, ih, o.col); px(ix, y0 - ih, iw, 1, o.top);
+    }
+    if (R() < o.antenna && bw > 6) { const ax = x + 2 + (R() * (bw - 4) | 0), ah = 4 + (R() * 9 | 0); px(ax, y0 - ah, 1, ah, o.top); lights.push({x: ax, y: y0 - ah - 1, ph: R() * 6.28}); }
+    // windows: most buildings have only a few lit, and a few have a lit floor or two
+    const [ww, wh] = o.win, [gx, gy] = o.gap, dens = o.lit * (.2 + R() * 1.6);
+    for (let wy = y0 + 3; wy + wh <= o.h - 1; wy += wh + gy) {
+      const floor = R() < .08 ? 4 : 1;
+      for (let wx = x + 2; wx + ww <= x + bw - 2; wx += ww + gx) if (R() < dens * floor) {
+        const c = o.lights[R() * o.lights.length | 0];
+        px(wx, wy, ww, wh, c); for (let gy2 = 0; gy2 < wh; gy2 += GLOW) for (let gx2 = 0; gx2 < ww; gx2 += GLOW) glow(wx + gx2, wy + gy2, c, .5);
+      } else if (ww > 2) px(wx, wy, ww, wh, 'rgba(0,0,0,.18)');
+    }
+    if (o.neon && R() < o.neon && bw > 16 && bh > 20) {   // a vertical neon sign
+      const nc = ['#ff4fa3', '#4ff0ff', '#b56bff'][R() * 3 | 0], sx = x + (R() < .5 ? 2 : bw - 7), sy = y0 + 3, sh = 9 + (R() * 5 | 0);
+      px(sx, sy, 5, sh, nc); px(sx + 1, sy + 1, 3, sh - 2, '#12081c');
+      for (let k = sy + 2; k < sy + sh - 2; k += 2) if (R() < .6) px(sx + 2, k, 1, 1, nc);
+      for (let k = sy; k < sy + sh; k += GLOW) glow(sx + 2, k, nc, .9);
+    }
+    x += bw;
+  }
+  return {cv, gw, lights, o};
+}
+
+// ---- the sky: dark bands blended with an ordered dither; stars and moon are drawn live ----
+const SKY = {cv: null, w: 0, h: 0, ps: 0, stars: [], moon: null, shoot: null, next: 0};
+function makeSky(ps) {
+  const aw = Math.ceil(V.w / ps) + 1, ah = Math.ceil(V.h / ps) + 1;
+  const cv = SKY.cv || (SKY.cv = canvasOf(aw, ah)); cv.width = aw; cv.height = ah;
+  const g = cv.getContext('2d'), img = g.createImageData(aw, ah), d = img.data, cols = CITY.sky.map(hexRGB), n = cols.length - 1;
+  for (let y = 0; y < ah; y++) {
+    const tt = Math.pow(y / (ah - 1), 1.4) * n, i = Math.floor(tt), f = tt - i;
+    for (let x = 0; x < aw; x++) {
+      const c = cols[Math.min(n, f * 16 > BAYER[(y & 3) * 4 + (x & 3)] ? i + 1 : i)], k = (y * aw + x) * 4;
+      d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2]; d[k + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  // a small, pale moon tucked into the top right, below the buttons there
+  const px = (x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
+  const mx = aw - Math.round(70 / ps), my = Math.round(112 / ps), mr = 6.2, PAD = 12, MW = PAD * 2 + 15;
+  const sprite = canvasOf(MW, MW), sg = sprite.getContext('2d');   // the moon is drawn on top of its glow, so it keeps its shading
+  const mpx = (x, y, c) => { sg.fillStyle = c; sg.fillRect(x - mx + PAD + 7, y - my + PAD + 7, 1, 1); };
+  for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) {
+    const r = Math.hypot(dx, dy), cut = Math.hypot(dx - 3.2, dy + 2.2);   // a second circle bites the crescent out
+    if (r > mr || cut < mr * .92) continue;
+    mpx(mx + dx, my + dy, cut < mr * .92 + 1.2 ? '#b9b39c' : dx + dy < -4 ? '#f1ecd8' : '#ddd7c0');
+  }
+  mpx(mx - 4, my + 1, '#c4bea7'); mpx(mx - 2, my + 4, '#c4bea7'); mpx(mx - 5, my - 2, '#cfc9b2');
+  // its glow is the crescent itself, blurred by halving it down a few times and stretching it back up
+  const mask = canvasOf(MW, MW), mg = mask.getContext('2d');
+  mg.fillStyle = '#e6e0ff';
+  for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) if (Math.hypot(dx, dy) <= mr && Math.hypot(dx - 3.2, dy + 2.2) >= mr * .92) mg.fillRect(PAD + 7 + dx, PAD + 7 + dy, 1, 1);
+  const levels = []; let src = mask;
+  for (let i = 0; i < 4; i++) {
+    const c = canvasOf(Math.ceil(src.width / 2), Math.ceil(src.height / 2)), cg = c.getContext('2d');
+    cg.imageSmoothingEnabled = true; cg.imageSmoothingQuality = 'high'; cg.drawImage(src, 0, 0, c.width, c.height);
+    levels.push(c); src = c;
+  }
+  SKY.moon = {x: (mx - 7 - PAD) * ps, y: (my - 7 - PAD) * ps, size: MW * ps, sprite, blur: [levels[1], levels[2], levels[3]]};
+  // a few stars, each twinkling at its own pace; none down near the city
+  const R = rng(5), count = Math.round(aw * ah / 520);
+  SKY.stars = [];
+  for (let i = 0; i < count; i++) {
+    const x = R() * aw | 0, y = Math.pow(R(), 1.3) * ah * .55 | 0;
+    if (Math.hypot(x - mx, y - my) < 12) continue;
+    SKY.stars.push({x, y, b: .35 + R() * .55, sp: .6 + R() * 1.6, ph: R() * 6.28, big: R() < .12});
+  }
+  SKY.w = V.w; SKY.h = V.h; SKY.ps = ps;
+}
+// a shooting star every 5 to 12 seconds, streaking down and away
+function drawShoot(g, ps, t) {
+  if (!SKY.next) SKY.next = t + 2 + Math.random() * 4;
+  if (!SKY.shoot && t > SKY.next) {
+    const a = (14 + Math.random() * 16) * Math.PI / 180, dir = Math.random() < .5 ? -1 : 1;
+    SKY.shoot = {t0: t, x: V.w * (dir < 0 ? .45 + Math.random() * .45 : .1 + Math.random() * .45), y: V.h * (.03 + Math.random() * .16), dx: Math.cos(a) * dir, dy: Math.sin(a), sp: V.w * (.7 + Math.random() * .3), life: .9};
+  }
+  const S = SKY.shoot; if (!S) return;
+  const k = (t - S.t0) / S.life;
+  if (k >= 1) { SKY.shoot = null; SKY.next = t + 5 + Math.random() * 7; return; }
+  const fade = Math.sin(Math.PI * k), hx = S.x + S.dx * S.sp * (t - S.t0), hy = S.y + S.dy * S.sp * (t - S.t0);
+  const len = ps * 26, tx = hx - S.dx * len, ty = hy - S.dy * len;
+  const tr = g.createLinearGradient(hx, hy, tx, ty);
+  tr.addColorStop(0, `rgba(255,255,255,${fade})`); tr.addColorStop(.25, `rgba(200,210,255,${.5 * fade})`); tr.addColorStop(1, 'rgba(200,210,255,0)');
+  g.strokeStyle = tr; g.lineCap = 'round'; g.lineWidth = Math.max(1.5, ps * .45);
+  g.beginPath(); g.moveTo(hx, hy); g.lineTo(tx, ty); g.stroke();
+  const gl = g.createRadialGradient(hx, hy, 0, hx, hy, ps * 3); gl.addColorStop(0, `rgba(220,225,255,${.45 * fade})`); gl.addColorStop(1, 'rgba(220,225,255,0)');
+  g.fillStyle = gl; g.fillRect(hx - ps * 3, hy - ps * 3, ps * 6, ps * 6);
+  g.globalAlpha = 1;
+}
+
+// sky and skyline, behind everything
+function drawFar(g, camX, camY, s) {
+  const ps = s / ART, L = G.L, vh = V.h / s, t = performance.now() / 1000, low = Math.max(0, L.h - vh);
+  g.imageSmoothingEnabled = false;
+  if (SKY.w !== V.w || SKY.h !== V.h || SKY.ps !== ps) makeSky(ps);
+  g.drawImage(SKY.cv, 0, 0, SKY.cv.width * ps, SKY.cv.height * ps);
+  // the moon's glow, the same crescent shape, soft and breathing very slowly
+  const M = SKY.moon, br = 1 + Math.sin(t * .6) * .08;
+  g.save(); g.imageSmoothingEnabled = true; g.globalCompositeOperation = 'lighter';
+  [.22, .2, .14].forEach((a, i) => { g.globalAlpha = a * br; g.drawImage(M.blur[i], M.x, M.y, M.size, M.size); });
+  g.restore();
+  g.drawImage(M.sprite, M.x, M.y, M.size, M.size);
+  // stars
+  g.fillStyle = '#e4e7ff';
+  for (const st of SKY.stars) {
+    const a = st.b * (.5 + .5 * Math.sin(t * st.sp + st.ph));
+    g.globalAlpha = a; g.fillRect(st.x * ps, st.y * ps, ps, ps);
+    if (st.big && a > .55) { g.globalAlpha = (a - .55) * 1.2; g.fillRect((st.x - 1) * ps, st.y * ps, ps * 3, ps); g.fillRect(st.x * ps, (st.y - 1) * ps, ps, ps * 3); }
+  }
+  g.globalAlpha = 1;
+  drawShoot(g, ps, t);
+  // a purple haze rising off the city
+  const hz = g.createLinearGradient(0, V.h * .35, 0, V.h);
+  hz.addColorStop(0, 'rgba(90,40,150,0)'); hz.addColorStop(1, 'rgba(90,40,150,.2)');
+  g.fillStyle = hz; g.fillRect(0, V.h * .35, V.w, V.h * .65);
+  for (const S of SKYLINE) {
+    const o = S.o, pw = o.w * ps, H = o.h * ps;
+    const off = -Math.round(camX * s * o.para / ps) * ps;   // move in whole art pixels
+    const by = V.h + Math.round((low - camY) * s * o.lift / ps) * ps + ps * 2;
+    if (by < V.h) { g.fillStyle = o.col; g.fillRect(0, by - 1, V.w, V.h - by + 1); }
+    const x0 = ((off % pw) + pw) % pw - pw;
+    for (let x = x0; x < V.w; x += pw) g.drawImage(S.cv, x, by - H, pw, H);
+    // the windows' glow, stretched up smoothly so it blurs
+    g.imageSmoothingEnabled = true; g.globalCompositeOperation = 'lighter'; g.globalAlpha = o.glow;
+    for (let x = x0; x < V.w; x += pw) g.drawImage(S.gw, x, by - H, S.gw.width * GLOW * ps, S.gw.height * GLOW * ps);
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    for (let x = x0; x < V.w; x += pw) for (const l of S.lights) {   // blinking red lights on the aerials
+      if (Math.sin(t * 2.2 + l.ph) < .3) continue;
+      const lx = x + (l.x + .5) * ps, ly = by - H + (l.y + .5) * ps, rg = g.createRadialGradient(lx, ly, 0, lx, ly, ps * 3);
+      rg.addColorStop(0, 'rgba(255,60,70,.35)'); rg.addColorStop(1, 'rgba(255,60,70,0)');
+      g.fillStyle = rg; g.fillRect(lx - ps * 3, ly - ps * 3, ps * 6, ps * 6);
+    }
+    g.imageSmoothingEnabled = false;
+    for (let x = x0; x < V.w; x += pw) for (const l of S.lights) if (Math.sin(t * 2.2 + l.ph) >= .3) { g.fillStyle = '#ff4b4b'; g.fillRect(x + l.x * ps, by - H + l.y * ps, ps, ps); }
+  }
+  g.imageSmoothingEnabled = true;
+}
+
+// the level's rooftops, girders and spikes, painted once at art size into their own canvas,
+// plus a small glow picture of its lit windows and spikes. The canvas starts LTOP squares above
+// the level, so buildings hanging from the top carry on up out of sight.
+const lvlGlow = canvasOf(1, 1), LTOP = 3;
+function paintLevel() {
+  const L = G.L, A = ART, C = CITY, OY = LTOP * A;
+  lvlC.width = L.w * A; lvlC.height = (L.h + LTOP) * A;
+  lvlGlow.width = L.w * A / GLOW; lvlGlow.height = (L.h + LTOP) * A / GLOW;
+  const g = lvlC.getContext('2d'), gg = lvlGlow.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); gg.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, lvlC.width, lvlC.height); gg.clearRect(0, 0, lvlGlow.width, lvlGlow.height); gg.globalCompositeOperation = 'lighter';
+  const px = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y + OY, w, h); };
+  const glow = (x, y, c, a) => { gg.globalAlpha = a; gg.fillStyle = c; gg.fillRect(x / GLOW | 0, (y + OY) / GLOW | 0, 1, 1); };
+  const cell = (c, r) => L.g[r * L.w + c];
+  // solid for drawing: the world's sides count as solid, and above the level a column is solid if its top square is
+  const sol = (c, r) => c < 0 || c >= L.w || r >= L.h ? true : r < 0 ? cell(c, 0) === 1 : cell(c, r) === 1;
+
+  // 1. behind: the lower floors of floating buildings (and the ones hanging from the top), set back and in
+  // shadow, reaching down to whatever is below; and thin steel posts holding up the ends of girders
+  const back = new Uint8Array(L.w * L.h);
+  for (let c = 0; c < L.w; c++) for (let r = 0; r < L.h - 1; r++) {
+    if (cell(c, r) !== 1 || cell(c, r + 1) === 1) continue;   // the bottom of a run of solid squares
+    for (let k = r + 1; k < L.h && cell(c, k) !== 1; k++) back[k * L.w + c] = 1;
+  }
+  const isBack = (c, r) => c >= 0 && c < L.w && r >= 0 && r < L.h && back[r * L.w + c] === 1;
+  for (let r = 0; r < L.h; r++) for (let c = 0; c < L.w; c++) {
+    if (!isBack(c, r)) continue;
+    const x = c * A, y = r * A, lf = !isBack(c - 1, r) && !sol(c - 1, r), rt = !isBack(c + 1, r) && !sol(c + 1, r);
+    const x0 = x + (lf ? 2 : 0), x1 = x + A - (rt ? 2 : 0);
+    px(x0, y, x1 - x0, A, C.back);
+    if (lf) px(x0, y, 1, A, C.backEdge);
+    if (rt) px(x1 - 1, y, 1, A, C.backEdge);
+    if (!isBack(c, r - 1)) px(x0, y, x1 - x0, 2, C.line);   // shadow under the building in front
+    const h = hash2(c * 5 + 2, r * 11 + 1);
+    if (h < .45) { px(x + 2, y + 2, 4, 4, C.backWin); if (h < .04) { px(x + 2, y + 2, 4, 4, '#4a3a2a'); glow(x + 4, y + 4, '#a07040', .25); } }
+  }
+
+  for (let r = 0; r < L.h - 1; r++) for (let c = 0; c < L.w; c++) {
+    if (cell(c, r) !== 2 || (cell(c - 1, r) === 2 && cell(c + 1, r) === 2 && c > 0 && c < L.w - 1)) continue;   // girder ends only
+    const x = c * A + (c > 0 && cell(c - 1, r) === 2 ? 4 : 2);
+    let k = r + 1; while (k < L.h && cell(c, k) !== 1 && cell(c, k) !== 2) k++;
+    px(x, r * A + 4, 2, (k - r) * A - 4, C.post); px(x, r * A + 4, 1, (k - r) * A - 4, C.postHi);
+  }
+
+  // 2. the buildings: blocks are grouped in twos by twos; each full group is plain wall or gets one big
+  //    window design, and blocks in a group that isn't fully solid are plain wall
+  const block = (c, r) => {
+    const x = c * A, y = r * A;
+    const up = !sol(c, r - 1), dn = !sol(c, r + 1), lf = !sol(c - 1, r), rt = !sol(c + 1, r);
+    px(x, y, A, A, C.wall);
+    if (lf) { px(x, y, 1, A, C.line); px(x + 1, y, 1, A, C.rim); }
+    if (rt) { px(x + A - 1, y, 1, A, C.line); px(x + A - 2, y, 1, A, C.wallDk); }
+    if (dn) { px(x, y + A - 2, A, 1, C.wallDk); px(x, y + A - 1, A, 1, C.line); }
+    if (up) {   // the concrete edge of the roof, catching a little moonlight
+      px(x, y, A, 1, C.capHi); px(x, y + 1, A, 1, C.cap); px(x, y + 2, A, 1, C.line);
+      if (lf) { g.clearRect(x, y + OY, 1, 1); px(x, y + 1, 1, 2, C.line); }
+      if (rt) { g.clearRect(x + A - 1, y + OY, 1, 1); px(x + A - 1, y + 1, 1, 2, C.line); }
+    }
+  };
+  for (let r = -LTOP; r < L.h; r++) for (let c = 0; c < L.w; c++) {
+    if (r < 0) { if (cell(c, 0) === 1) block(c, r); continue; }
+    const k = cell(c, r), x = c * A, y = r * A;
+    if (k === 1) block(c, r);
+    else if (k === 2) {   // a ledge: a steel girder
+      px(x, y, A, 1, C.girderHi); px(x, y + 1, A, 2, C.girder); px(x, y + 3, A, 1, C.girderDk);
+      px(x + 1, y + 1, 1, 1, C.girderDk); px(x + 5, y + 1, 1, 1, C.girderDk);
+    }
+  }
+  const full = (c, r) => [[0, 0], [1, 0], [0, 1], [1, 1]].every(([a, b]) => sol(c + a, r + b) && c + a < L.w && c + a >= 0 && r + b < L.h);
+  for (let r = -LTOP & ~1; r < L.h; r += 2) for (let c = 0; c < L.w; c += 2) {
+    if (!full(c, r)) continue;
+    const x = c * A, y = r * A, D = 2 * A;
+    const roof = !sol(c, r - 1) || !sol(c + 1, r - 1), floor = !sol(c, r + 2) || !sol(c + 1, r + 2);
+    const lf = !sol(c - 1, r) || !sol(c - 1, r + 1), rt = !sol(c + 2, r) || !sol(c + 2, r + 1);
+    const kind = hash2(c + 31, r + 57), lit = hash2(c * 7 + 3, r * 13 + 5) < .1, top = roof ? 6 : 2;
+    const win = (wx, wy, ww, wh) => {
+      if (lit) {
+        const col = C.winOn[(hash2(c, r) * 4 | 0)];
+        px(wx, wy, ww, wh, col); px(wx, wy, ww, 1, C.winHi); px(wx + (ww >> 1), wy, 1, wh, 'rgba(0,0,0,.25)');
+        for (let gy = wy + 1; gy < wy + wh; gy += GLOW) for (let gx = wx + 1; gx < wx + ww; gx += GLOW) glow(gx, gy, col, .5);
+      } else {
+        px(wx, wy, ww, wh, C.winOff); px(wx, wy, ww, 1, C.line); px(wx + (ww >> 1), wy, 1, wh, C.line);
+        px(wx + ww - 2, wy + 2, 1, 1, C.glint); px(wx + ww - 3, wy + 3, 1, 1, C.glint);
+      }
+    };
+    const xl = x + (lf ? 4 : 3), xr = x + D - (rt ? 4 : 3), yb = y + D - (floor ? 4 : 2);
+    if (kind < .38) {   // one tall window with a sill
+      win(x + 4, y + top + 1, 8, yb - y - top - 3); px(x + 3, yb - 1, 10, 2, C.sill);
+    } else if (kind < .66) {   // a pair of narrow windows
+      win(x + 3, y + top + 1, 4, yb - y - top - 2); win(x + 9, y + top + 1, 4, yb - y - top - 2);
+    } else if (kind < .74 && !roof) {   // an air vent
+      px(x + 3, y + 4, 10, 8, C.wallDk); for (let k = y + 5; k < y + 12; k += 2) px(x + 3, k, 10, 1, C.line);
+    } else if (kind > .9) {   // a seam between floors
+      px(xl - 3, y + D - 1, xr - xl + 6, 1, C.wallDk);
+    }
+  }
+  // spikes: two metal teeth, drawn pointing up and turned to face their way, with a red glow
+  for (const sp of L.spikes) {
+    const x0 = sp.c * A, y0 = sp.r * A;
+    const put = (x, y, col) => {
+      const [X, Y] = sp.dir === 'down' ? [x, 7 - y] : sp.dir === 'right' ? [7 - y, x] : sp.dir === 'left' ? [y, x] : [x, y];
+      px(x0 + X, y0 + Y, 1, 1, col);
+    };
+    for (let x = 0; x < 8; x++) put(x, 7, C.spikeBase);
+    for (const t of [0, 4]) {
+      for (let y = 4; y <= 6; y++) { put(t, y, C.spikeHi); put(t + 1, y, C.spike); put(t + 2, y, C.spike); put(t + 3, y, C.spikeDk); }
+      for (let y = 2; y <= 3; y++) { put(t + 1, y, C.spikeHi); put(t + 2, y, C.spikeDk); }
+      put(t + 1, 1, C.spike);
+    }
+    glow(x0 + 2, y0 + 4, '#ff3050', .6); glow(x0 + 6, y0 + 4, '#ff3050', .6);
+  }
+}
+// drawn straight after the level picture, inside the camera's transform
+function drawLevelGlow(g, s) {
+  const L = G.L;
+  g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = .9; g.imageSmoothingEnabled = true;
+  g.drawImage(lvlGlow, 0, -LTOP * s, L.w * s, (L.h + LTOP) * s);
+  g.restore();
+}
 
 /* ======================================================================
    SCREENS
