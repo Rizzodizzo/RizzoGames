@@ -1,0 +1,1536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Stick Dash</title>
+<meta name="theme-color" content="#eef1f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16181d" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="stickdash" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show, #game:not(.hidden), #levels:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stick Dash">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   COLOURS: light or dark, following the device. The stick figure is ink
+   (black, or white in the dark) with a red scarf; the scarf goes grey when
+   the dash is used up. Blocks are soft blue-grey toy blocks.
+   ====================================================================== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);--pop:cubic-bezier(.34,1.56,.64,1);
+  --bg:#eef1f5;--bg2:#dfe5ee;--panel:#ffffff;--ink:#1b1f27;--muted:#667085;--line:#d8dee8;--soft:#eef1f6;
+  --accent:#ef3b3b;--hi:#ff5a4f;--edge:#b5262a;--onaccent:#ffffff;--shade:rgba(27,31,39,.12);--ok:#16a34a;--bad:#e5484d;--gold:#f5b70a;
+  --block:#ffffff;--blockEdge:#c9d1dd;--tile:#bcc7d6;--tileTop:#f5f8fc;--tileEdge:#8d9bb0;--spike:#e5484d;--orb:#f5b70a;--pad:#16a34a;
+  --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;
+  --bg:#16181d;--bg2:#1e2128;--panel:#252932;--ink:#eef1f6;--muted:#9aa3b2;--line:#353a45;--soft:#2c313b;
+  --accent:#ff5a4f;--hi:#ff7a6b;--edge:#b5262a;--onaccent:#ffffff;--shade:rgba(0,0,0,.45);--ok:#22c55e;--bad:#ff5a5f;--gold:#facc15;
+  --block:#2f343e;--blockEdge:#14161b;--tile:#343a46;--tileTop:#454c5a;--tileEdge:#1c1f26;--spike:#ff5a5f;--orb:#facc15;--pad:#22c55e}}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--ink);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.app{max-width:1100px;margin:0 auto;height:100%}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade)}
+.iconbtn:active{transform:scale(.94)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade)}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+/* ================= PANELS (How to play, Stats, History, Timelapse, Settings) ================= */
+.panel{position:fixed;inset:0;z-index:6;background:var(--bg);overflow-y:auto;overscroll-behavior:none;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25);
+  transform:translateY(100%);visibility:hidden;transition:transform .38s var(--ease),visibility 0s .38s}
+.panel.show{transform:none;visibility:visible;transition:transform .38s var(--ease),visibility 0s}
+.panelin{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phead h1{flex:1;margin:0;text-align:center;font-size:1.3rem;font-weight:900}
+.phead .sp{width:42px;text-align:right;color:var(--muted);font-weight:800;font-size:.85rem}
+/* how to play */
+.how h2{margin:0 0 12px;font-size:1.25rem;font-weight:900;display:flex;align-items:center;gap:10px}
+.how h2 .hn{width:30px;height:30px;border-radius:10px;background:var(--accent);color:var(--onaccent);display:grid;place-items:center;font-size:.95rem}
+.stage{background:var(--panel);border-radius:20px;padding:18px 12px;box-shadow:0 2px 10px var(--shade);min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;--ts:46px;--g:5px}
+.cap{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--panel);border-radius:14px;padding:12px 14px;font-weight:800;box-shadow:0 2px 8px var(--shade);min-height:56px;border-left:4px solid var(--accent);line-height:1.4}
+.cap .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.hownav{display:flex;align-items:center;justify-content:space-between;margin-top:16px;gap:8px}
+.hownav button{min-width:96px;padding:12px 16px;border-radius:14px;font-weight:900}
+.hownav .sec{background:var(--soft)}
+.howkeys{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.howkeys span{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:99px;padding:7px 12px;font-weight:900;font-size:.88rem}
+.howkeys svg.ic{width:17px;height:17px;color:var(--accent)}
+/* filters shared by Stats and History */
+.hfilt{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:14px;box-shadow:0 2px 8px var(--shade);margin-bottom:10px}
+.hfilt button{flex:1;padding:9px 0;border-radius:10px;font-weight:800;font-size:.85rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.hfilt button.on{background:var(--accent);color:var(--onaccent)}
+.hfilt svg.ic{width:17px;height:17px}
+.hsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 14px}
+.hsum div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.hsum b{display:block;font-size:1.25rem;font-weight:900;font-variant-numeric:tabular-nums}
+.hsum span{display:block;color:var(--muted);font-weight:800;font-size:.72rem;margin-top:2px}
+/* stats: how many guesses each win took */
+.dist{background:var(--panel);border-radius:16px;padding:12px 14px;box-shadow:0 2px 8px var(--shade);display:flex;flex-direction:column;gap:6px}
+.dist h3{margin:0 0 4px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:14px;text-align:center;color:var(--muted)}
+.dbar i{display:flex;justify-content:flex-end;align-items:center;min-width:26px;height:24px;padding:0 8px;border-radius:6px;background:var(--no);color:#fff;font-style:normal;font-size:.85rem;transition:width .5s var(--ease)}
+.snote{margin:10px 4px 0;text-align:center;font-weight:800;font-size:.82rem;color:var(--muted);min-height:1em}
+/* history */
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:14px;padding:10px 12px;box-shadow:0 2px 8px var(--shade);cursor:pointer}
+.hrow .hm{flex:1;min-width:0}
+.hrow .hm b{display:block;font-weight:900}
+.hrow .hm small{color:var(--muted);font-weight:700;font-size:.8rem}
+.hrow .hv{font-weight:900;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.hrow .hv svg.ic{width:16px;height:16px;color:#c88a00}
+.hrow .hv .lose{color:var(--boom)}
+.hplay{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);font-style:normal}
+.hrow .hv .hplay svg.ic{width:14px;height:14px;color:var(--onaccent)}
+.hempty{text-align:center;color:var(--muted);font-weight:800;padding:30px 10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.hempty svg.ic{width:40px;height:40px;opacity:.6}
+.danger{display:block;margin:18px auto 0;padding:11px 18px;border-radius:12px;background:var(--soft);color:var(--boom);font-weight:900}
+/* timelapse */
+#rpPanel .panelin{display:flex;flex-direction:column;min-height:100%}
+.rpsub{margin:-8px 0 10px;text-align:center;color:var(--muted);font-weight:800;font-size:.85rem}
+.rpwrap{flex:1 1 0;min-height:240px;display:flex;align-items:center;justify-content:center}
+.rpctl{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 10px}
+.rpctl .rpplay{width:52px;height:52px;padding:0;border-radius:50%;display:grid;place-items:center}
+.rpctl .rpbtn{height:44px;min-width:52px;padding:0 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:900;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.rpstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rpstats div{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px var(--shade)}
+.rpstats span{display:block;font-size:.72rem;font-weight:800;color:var(--muted)}
+.rpstats b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+/* settings */
+.sgh{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sgh:first-of-type{margin-top:4px}
+.sgroup{background:var(--panel);border-radius:16px;box-shadow:0 2px 8px var(--shade);overflow:hidden}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);cursor:pointer}
+.srow:last-child{border-bottom:0}
+.srow .sl{display:flex;flex-direction:column;min-width:0;gap:2px}
+.srow b{font-weight:800}
+.srow small{font-size:.78rem;font-weight:700;color:var(--muted)}
+.srow .sr{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.srow .sr svg.ic{width:18px;height:18px}
+.switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background-color .2s;margin:0}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+
+
+
+.dbar i{background:var(--accent);color:var(--onaccent)}
+.dbar{display:flex;align-items:center;gap:8px;font-weight:900;font-variant-numeric:tabular-nums}
+.dbar>span{width:46px;flex:none;height:24px;border-radius:6px;display:grid;place-items:center;font-size:.78rem}
+
+
+.hrow .ht{width:34px;height:46px;border-radius:7px;flex-shrink:0;display:grid;place-items:center;font-weight:900;font-size:.85rem;background:var(--felt);color:#fff}
+.hrow .ht.won{background:var(--accent);color:var(--onaccent)}
+/* ================= STICK DASH ================= */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.app{height:100%}
+/* ---------- home ---------- */
+.home{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(16px,5vh,40px);padding-bottom:3vh}
+.dtitle{display:flex;flex-direction:column;align-items:center;gap:2px}
+#titleCv{width:min(320px,80vw);height:clamp(110px,22vh,160px);display:block}
+.dtitle b{font-size:clamp(2.6rem,9vw,3.8rem);font-weight:900;font-style:italic;letter-spacing:-.03em;line-height:1;transform:skewX(-4deg)}
+.dtitle b span{color:var(--accent);position:relative}
+.bundle{display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,18px)}
+.side{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100px;height:96px;border-radius:20px;background:var(--panel);border:1px solid var(--line);box-shadow:0 3px 0 var(--line),0 8px 18px var(--shade);font-weight:800;font-size:.85rem}
+.side:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.side svg.ic{width:26px;height:26px;color:var(--accent)}
+.bbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 3px 0 var(--line),0 6px 14px var(--shade);font-weight:900;white-space:nowrap}
+.bbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.bbtn.go{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);border-color:transparent;box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade)}
+.bbtn.go:active{box-shadow:0 1px 0 var(--edge)}
+.bbtn.sq{width:44px;min-height:44px;height:44px;padding:0}
+.bbtn svg.ic{width:20px;height:20px}
+.bbtn.play{flex-direction:column;gap:3px;width:150px;height:116px;border-radius:26px;font-size:1.7rem}
+.bbtn.play small{font-size:.76rem;font-weight:800;opacity:.92;display:inline-flex;align-items:center;gap:2px}
+.mstar svg{width:13px;height:13px;fill:currentColor;display:block}
+/* ---------- level list ---------- */
+.levels{height:100%;display:flex;flex-direction:column;max-width:960px;margin:0 auto}
+.lhead{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.lhead h1{flex:1;margin:0;text-align:center;font-size:1.4rem;font-weight:900}
+.lhead .sp{width:44px;text-align:right;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+.lgrid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));align-content:start;gap:12px;padding:4px 2px 24px}
+.lv{background:var(--panel);border-radius:18px;padding:9px 9px 10px;box-shadow:0 2px 10px var(--shade);text-align:left;display:flex;flex-direction:column;gap:7px;border:2px solid transparent;transition:transform .15s var(--ease)}
+.lv:not(:disabled):active{transform:scale(.97)}
+.lv canvas{width:100%;aspect-ratio:3.4;border-radius:11px;background:var(--bg2);display:block}
+.lv.next{border-color:var(--accent)}
+.lv.locked{opacity:.5;cursor:default}
+.lv.locked canvas{filter:grayscale(1);opacity:.5}
+.lvm{display:flex;align-items:center;gap:8px;padding:0 2px}
+.lvm i{font-style:normal;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--soft);font-weight:900;font-size:.85rem;flex:none}
+.lv.done .lvm i{background:var(--accent);color:var(--onaccent)}
+.lvm b{flex:1;min-width:0;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv small{display:flex;align-items:center;gap:5px;padding:0 3px;font-size:.78rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.lv small svg.ic{width:15px;height:15px}
+.lv.next small{color:var(--accent)}
+.star svg{width:20px;height:20px;fill:var(--line);display:block;transition:fill .2s}
+.star.on svg{fill:var(--gold)}
+/* ---------- the game ---------- */
+.game{position:fixed;inset:0;z-index:3;background:var(--bg);overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud,.hudr{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;align-items:center;gap:8px;pointer-events:none;z-index:2}
+.hud{left:calc(env(safe-area-inset-left,0px) + 12px)}
+.hudr{right:calc(env(safe-area-inset-right,0px) + 12px)}
+.hud>*,.hudr>*{pointer-events:auto}
+.pill{height:38px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:12px;background:color-mix(in srgb,var(--panel) 82%,transparent);border:1px solid var(--line);font-weight:900;font-variant-numeric:tabular-nums;font-size:.92rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.pill svg.ic{width:18px;height:18px;color:var(--muted)}
+#lvPill b{max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#timePill{min-width:78px;justify-content:center}
+.hud .bbtn.sq{width:40px;height:40px;min-height:40px;border-radius:12px;box-shadow:0 2px 0 var(--line)}
+.note{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 60px);transform:translate(-50%,-8px);opacity:0;pointer-events:none;z-index:2;
+  background:var(--ink);color:var(--bg);padding:7px 16px;border-radius:99px;font-weight:900;font-size:.9rem;transition:opacity .25s,transform .25s var(--ease)}
+.note.show{opacity:1;transform:translate(-50%,0)}
+.cover{position:absolute;inset:0;z-index:4;display:grid;place-items:center;padding:16px;background:rgba(12,14,18,.38);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fadeIn .2s}
+.card{background:var(--panel);border-radius:24px;padding:16px 20px 20px;box-shadow:0 14px 50px rgba(0,0,0,.35);width:min(460px,100%);text-align:center;animation:popIn .32s var(--pop)}
+.card h2{margin:4px 0 0;font-size:1.6rem;font-weight:900;font-style:italic;letter-spacing:-.02em}
+.chead{display:flex;align-items:center;justify-content:space-between}
+.chead .sp{width:42px}
+.crow{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.dstats{display:flex;gap:8px;margin-top:14px}
+.dstats>div{flex:1;background:var(--soft);border-radius:16px;padding:9px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.dstats span{font-size:.7rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.dstats b{font-size:1.45rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.25}
+.dstats small{font-size:.74rem;font-weight:800;color:var(--muted)}
+.dstats small.nb{color:var(--accent)}
+.star.big svg{width:30px;height:30px;margin:2px 0}
+@keyframes popIn{from{transform:scale(.85);opacity:0}}
+@keyframes fadeIn{from{opacity:0}}
+/* turn sideways */
+.rotate{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg);text-align:center;padding:24px}
+.rotate b{font-size:1.3rem;font-weight:900}
+.rotate span{color:var(--muted);font-weight:800}
+.rphone{width:54px;height:92px;border:4px solid var(--ink);border-radius:14px;position:relative;margin-bottom:14px;animation:tilt 2.4s var(--ease) infinite}
+.rphone i{position:absolute;left:50%;bottom:6px;width:14px;height:4px;margin-left:-7px;border-radius:2px;background:var(--ink)}
+@keyframes tilt{0%,25%{transform:rotate(0)}55%,85%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+@media (orientation:portrait){html.rz-touch body.playing .rotate{display:flex}}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translate(-50%,20px);opacity:0;z-index:30;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:900;pointer-events:none;transition:opacity .25s,transform .25s var(--ease)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* ---------- panels ---------- */
+.panel{z-index:10}
+@media (min-width:700px){#setPanel .panelin{max-width:820px}.pcols{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}}
+.srow.red b{color:var(--bad)}
+.keys>div{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:800}
+.keys>div:last-child{border-bottom:0}
+.keys span{margin-left:6px;color:var(--muted)}
+kbd{font:inherit;font-weight:900;font-size:.8rem;min-width:28px;height:26px;padding:0 7px;display:inline-grid;place-items:center;border-radius:7px;background:var(--soft);border:1px solid var(--line);box-shadow:0 2px 0 var(--line)}
+html.rz-touch #sKeys{display:none}
+#howPanel .panelin{max-width:640px}
+.hows{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.howc{background:var(--panel);border-radius:18px;padding:8px 8px 12px;box-shadow:0 2px 10px var(--shade);display:flex;flex-direction:column;gap:5px}
+.howc canvas{width:100%;height:118px;border-radius:12px;background:var(--bg);display:block}
+.howc b{font-weight:900;padding:2px 4px 0}
+.howc span{font-size:.83rem;color:var(--muted);font-weight:700;padding:0 4px;line-height:1.35}
+/* ---------- sideways phones ---------- */
+@media (orientation:landscape) and (max-height:520px){
+  body{padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(16px,env(safe-area-inset-left,0px))}
+  .home{gap:12px;padding-bottom:0}
+  #titleCv{height:clamp(80px,26vh,120px);width:min(300px,50vw)}
+  .dtitle b{font-size:clamp(2rem,10vh,2.8rem)}
+  .bbtn.play{height:92px;width:140px;font-size:1.5rem}
+  .side{height:80px;width:92px}
+  .lgrid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+  .lhead{margin-bottom:8px}
+  .card{padding:12px 18px 16px}
+  .card h2{font-size:1.35rem}
+  .dstats{margin-top:10px}
+  .crow{margin-top:12px}
+  .hows{grid-template-columns:repeat(4,1fr)}
+  #howPanel .panelin{max-width:900px}
+  .howc canvas{height:96px}
+}
+@media (max-width:420px){.side{width:84px}.bbtn.play{width:128px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= HOME ================= -->
+  <section class="home" id="home">
+    <div class="dtitle" role="img" aria-label="Stick Dash">
+      <canvas id="titleCv" aria-hidden="true"></canvas>
+      <b>Stick <span>Dash</span></b>
+    </div>
+    <div class="bundle">
+      <button class="side" id="howBtn"><span class="tic" data-ic="help"></span><span>How to play</span></button>
+      <button class="bbtn go play" id="playBtn"><span>Play</span><small id="playSub"></small></button>
+      <button class="side" id="setBtnHome"><span class="tic" data-ic="settings"></span><span>Settings</span></button>
+    </div>
+  </section>
+
+  <!-- ================= LEVELS ================= -->
+  <section class="levels hidden" id="levels">
+    <div class="lhead"><button class="bbtn sq" id="lvBack" aria-label="Back" data-ic="back"></button><h1>Levels</h1><span class="sp" id="lvCount"></span></div>
+    <div class="lgrid" id="lgrid"></div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="game hidden" id="game">
+    <canvas id="cv" aria-label="The level"></canvas>
+    <div class="hud">
+      <button class="bbtn sq" id="pauseBtn" aria-label="Pause" data-ic="pause"></button>
+      <div class="pill" id="lvPill"><b id="lvName"></b></div>
+    </div>
+    <div class="hudr">
+      <div class="pill" id="starPill" aria-label="Star"><span class="star" id="starIc"></span></div>
+      <div class="pill" id="deathPill"><span data-ic="skull"></span><b id="deaths">0</b></div>
+      <div class="pill time" id="timePill"><b id="timer">0:00.0</b></div>
+    </div>
+    <div class="note" id="note" aria-live="polite"></div>
+    <div class="cover hidden" id="pauseCover"><div class="card">
+      <div class="chead"><span class="sp"></span><h2>Paused</h2><button class="iconbtn" id="pSet" aria-label="Settings" data-ic="settings"></button></div>
+      <div class="crow"><button class="bbtn" id="pLevels"></button><button class="bbtn" id="pRestart"></button><button class="bbtn go" id="pResume"></button></div>
+    </div></div>
+    <div class="cover hidden" id="doneCover"></div>
+  </section>
+</div>
+
+<div class="rotate" id="rotate" aria-live="polite">
+  <div class="rphone"><i></i></div>
+  <b>Turn your phone sideways</b>
+  <span>Stick Dash plays in landscape</span>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ================= PANELS ================= -->
+<div class="panel" id="setPanel" role="dialog" aria-label="Settings"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Settings</h1><span class="sp"></span></div>
+  <div class="pcols"><div>
+    <h3 class="sgh">Controls</h3>
+    <div class="sgroup">
+      <label class="srow"><span class="sl"><b>Joystick on the right</b><small>Then tap and swipe on the left</small></span><input type="checkbox" class="switch" data-p="swap"></label>
+      <label class="srow"><span class="sl"><b>Always show the joystick</b><small>Otherwise it appears where your thumb lands</small></span><input type="checkbox" class="switch" data-p="fixedStick"></label>
+      <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
+    </div>
+  </div><div>
+    <h3 class="sgh">Every game</h3>
+    <div class="sgroup">
+      <button class="srow" id="sMenu"><span class="sl"><b>Sound, motion &amp; updates</b><small>The Rizzo Games menu</small></span><span class="sr" data-ic="chevron"></span></button>
+    </div>
+    <h3 class="sgh">Data</h3>
+    <div class="sgroup">
+      <button class="srow red" id="sReset"><span class="sl"><b>Reset progress</b><small>Best times, stars and unlocked levels</small></span></button>
+    </div>
+    <div id="sKeys">
+      <h3 class="sgh">Keyboard</h3>
+      <div class="sgroup keys">
+        <div><kbd>←</kbd><kbd>→</kbd><span>Run</span></div>
+        <div><kbd>Space</kbd><span>Jump</span></div>
+        <div><kbd>X</kbd><span>Dash (aim with arrows)</span></div>
+        <div><kbd>R</kbd><span>Restart</span></div>
+        <div><kbd>Esc</kbd><span>Pause</span></div>
+      </div>
+    </div>
+  </div></div>
+</div></div>
+
+<div class="panel" id="howPanel" role="dialog" aria-label="How to play"><div class="panelin">
+  <div class="grab"></div>
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp"></span></div>
+  <div class="hows">
+    <div class="howc"><canvas data-demo="run"></canvas><b>Run</b><span>Hold the joystick on the left side and push left or right.</span></div>
+    <div class="howc"><canvas data-demo="jump"></canvas><b>Jump</b><span>Tap the right side. Hold for a higher jump. Jump off walls too.</span></div>
+    <div class="howc"><canvas data-demo="dash"></canvas><b>Dash</b><span>Swipe the right side: you dash that way, in any of 8 directions.</span></div>
+    <div class="howc"><canvas data-demo="touch"></canvas><b>Get it back</b><span>One dash at a time. Touch the ground, a wall, a gold orb or a spring to get it back.</span></div>
+  </div>
+</div></div>
+<script>
+const LEVELS = [
+ {
+  "name": "First steps",
+  "map": [
+   "..............................................................",
+   "..............................................................",
+   "..............................................................",
+   "..................................*...........................",
+   ".................................----.........................",
+   "..............................................................",
+   "....................................----......................",
+   "..............................................................",
+   "........................###.....----...............###........",
+   "...P.................######.....................######....G...",
+   "#############...###########...###########...##################",
+   "#############...###########...###########...##################",
+   "#############...###########...###########...##################"
+  ],
+  "hints": [
+   [
+    4,
+    6,
+    "Push the joystick to run"
+   ],
+   [
+    10,
+    6,
+    "Tap the right side to jump"
+   ],
+   [
+    20,
+    5,
+    "Hold for a higher jump"
+   ],
+   [
+    33,
+    1,
+    "Jump up through ledges"
+   ]
+  ]
+ },
+ {
+  "name": "Dash",
+  "map": [
+   "........................................................................",
+   ".......................................*................................",
+   "........................................................................",
+   "........................................................................",
+   "........................................................................",
+   "........................................................................",
+   ".............................################...........................",
+   ".............................################...........................",
+   ".............................################...........................",
+   "...P.........................################.....................G.....",
+   "###############......########################......#####################",
+   "###############......########################......#####################",
+   "###############......########################......#####################"
+  ],
+  "hints": [
+   [
+    6,
+    5,
+    "Swipe the right side to dash"
+   ],
+   [
+    14,
+    7,
+    "Jump, then swipe across"
+   ],
+   [
+    25,
+    3,
+    "Jump, then swipe up"
+   ],
+   [
+    46,
+    3,
+    "Dash diagonally too"
+   ]
+  ]
+ },
+ {
+  "name": "Walls",
+  "map": [
+   "............................................................",
+   "..............##....................................*.......",
+   "..............##............................................",
+   "..............##...###############......................G...",
+   "..............##...###############........##################",
+   "..............##...###############........##################",
+   "..............##...###############........##################",
+   "..............##...###############........##################",
+   "..............##...###############........##################",
+   "..............##...##################.....##################",
+   "..............##...##################.....##################",
+   "...................##################.....##################",
+   "...P...............##################.....##################",
+   "############################################################",
+   "############################################################",
+   "############################################################"
+  ],
+  "hints": [
+   [
+    6,
+    9,
+    "Jump into a wall, then jump again"
+   ],
+   [
+    36,
+    6,
+    "Touching a wall gives your dash back"
+   ]
+  ]
+ },
+ {
+  "name": "Orbs",
+  "map": [
+   "............................................................................",
+   "....................................................*.......................",
+   "............................................................................",
+   ".............................................o..............................",
+   ".................................................########...................",
+   ".........................................o.......########...................",
+   ".........................o.......................########...o...............",
+   "..................o..............................########...................",
+   ".................................................########...................",
+   "...P............................c................########..............G....",
+   "#############...............#########............########........###########",
+   "#############...............#########............########........###########",
+   "#############...............#########............########........###########"
+  ],
+  "hints": [
+   [
+    7,
+    5,
+    "Gold orbs give your dash back"
+   ]
+  ]
+ },
+ {
+  "name": "Springs and spikes",
+  "map": [
+   "......................................................................##########",
+   "....................................................................*.##########",
+   "......................................................................##########",
+   "......................................................................x.........",
+   "................................................................................",
+   "...............############.....................................................",
+   "...............############........o..........c.................................",
+   "...............############................########.....o.......................",
+   "...............############................########...............b.........G...",
+   "...............############................########.............################",
+   "...............############................########.............################",
+   "...P........b..############.xxxxxxxxxxxxxx.########xxxxxxxxxxxxx################",
+   "################################################################################",
+   "################################################################################",
+   "################################################################################"
+  ],
+  "hints": [
+   [
+    6,
+    7,
+    "Springs throw you up"
+   ],
+   [
+    30,
+    3,
+    "Spikes hurt: dash over them"
+   ]
+  ]
+ },
+ {
+  "name": "All together",
+  "map": [
+   "............................................................................##................................",
+   "........................##..................................................##................................",
+   "........................##........c..............................c..........##................................",
+   "........................##..#############....................##########.....##................................",
+   "........................##..#############....o...............##########.....##................................",
+   "........................##..#############....................##########.....##...............o................",
+   "........................##..#############........o...........##########.....##................................",
+   "........................##..#############..............b.....##########.....##................................",
+   "........................##..#############............##################.....##................................",
+   "............................#############............##################.....##............xxxxxx........G.....",
+   "................o...........#############............##################...............########################",
+   "............................#############............##################...............########################",
+   "...P........................#############............##################...............########################",
+   "###########...........###################............##################.......*.......########################",
+   "###########...........###################............##################...............########################",
+   "###########...........###################xxxxxxxxxxxx##################xxxxxxxxxxxxxxx########################"
+  ],
+  "hints": []
+ }
+];
+/* ======================================================================
+   Stick Dash for Rizzo Games: a 2D platformer starring a stick figure.
+   Joystick on one side to run; on the other, tap to jump (hold for higher)
+   and swipe to dash in any of 8 directions. One dash at a time: touching
+   the ground, a wall, a gold orb or a spring gives it back.
+
+   How it's built:
+     Setup      helpers, icons, sounds, saved settings and progress
+     Stick      the stick figure: poses for each move, blended smoothly, and a scarf
+     Levels     the level maps (one letter per square) and reading them
+     Physics    running, jumping, wall jumps, dashing, what you touch
+     Drawing    the level, the things in it, the stick figure, effects
+     Controls   the joystick, tap and swipe, and the keyboard
+     Screens    home, levels, pause, level clear, settings, how to play
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const RZ = window.RizzoGames || null;
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+// colours from the CSS, remembered until the light/dark scheme changes
+const cssCache = {};
+const css = n => cssCache[n] ?? (cssCache[n] = getComputedStyle(document.documentElement).getPropertyValue(n).trim());
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { for (const k in cssCache) delete cssCache[k]; if (typeof G !== 'undefined' && G) paintLevel(); });
+const fmtT = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), s = t - m * 60; return m + ':' + s.toFixed(1).padStart(4, '0'); };
+const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+
+/* ---------- icons ---------- */
+const ICONS = {
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/>',
+  settings: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="3"/>',
+  play: '<path d="M7 5l12 7-12 7z" fill="currentColor"/>',
+  skull: '<path d="M12 3.5c-4.4 0-7.5 3-7.5 7 0 2.5 1.2 4 2.5 5v3h10v-3c1.3-1 2.5-2.5 2.5-5 0-4-3.1-7-7.5-7z"/><circle cx="9" cy="11" r="1.6" fill="currentColor"/><circle cx="15" cy="11" r="1.6" fill="currentColor"/><path d="M10 18.5v-2M14 18.5v-2"/>',
+  again: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/>',
+  next: '<path d="M5 12h13M13 6l6 6-6 6"/>',
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>',
+  lock: '<rect x="5.5" y="10.5" width="13" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+};
+const ic = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.3L12 17.1l-5.7 3.1 1.2-6.3-4.7-4.4 6.4-.8z"/></svg>';
+
+/* ---------- sound effects (follow the shared Rizzo volume) ---------- */
+const Sound = (() => {
+  let ctx = null, noise = null;
+  const last = {};
+  const vol = () => RZ ? RZ.level('sfx') : 0.6;
+  const ac = () => { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+  const ok = (k, gap) => { const n = performance.now(); if (n - (last[k] || 0) < gap) return false; last[k] = n; return true; };
+  function tone(freq, dur, type = 'sine', gain = .2, delay = 0, slide = 0) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac(), t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq * slide), t + dur);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain * v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+    } catch {}
+  }
+  function hiss(dur, gain, freq = 900) {
+    const v = vol(); if (!v) return;
+    try {
+      const c = ac();
+      if (!noise) { noise = c.createBuffer(1, c.sampleRate * .6, c.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime;
+      s.buffer = noise; f.type = 'bandpass'; f.frequency.value = freq;
+      g.gain.setValueAtTime(gain * v, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      s.connect(f).connect(g).connect(c.destination); s.start(t); s.stop(t + dur);
+    } catch {}
+  }
+  return {
+    jump() { if (ok('jump', 60)) tone(420, .12, 'triangle', .07, 0, 1.8); },
+    wall() { if (ok('wall', 60)) { tone(360, .1, 'triangle', .06, 0, 1.9); hiss(.06, .05, 1800); } },
+    land() { if (ok('land', 90)) hiss(.07, .08, 500); },
+    dash() { if (ok('dash', 60)) { hiss(.18, .16, 2400); tone(880, .14, 'sawtooth', .025, 0, .5); } },
+    back() { if (ok('back', 60)) { tone(1320, .07, 'sine', .05); tone(1760, .09, 'sine', .04, .05); } },
+    orb() { if (ok('orb', 60)) { tone(988, .1, 'sine', .07); tone(1480, .14, 'sine', .06, .06); } },
+    pad() { if (ok('pad', 60)) tone(220, .22, 'square', .05, 0, 3.2); },
+    die() { if (ok('die', 200)) { hiss(.3, .2, 700); tone(300, .35, 'sawtooth', .05, 0, .3); } },
+    check() { if (ok('check', 200)) [660, 880].forEach((f, i) => tone(f, .14, 'triangle', .07, i * .08)); },
+    star() { if (ok('star', 200)) [880, 1175, 1568, 2093].forEach((f, i) => tone(f, .16, 'sine', .07, i * .07)); },
+    win() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .22, 'triangle', .08, i * .09)); },
+    tap() { tone(700, .03, 'triangle', .05); },
+    pop() { tone(620, .06, 'sine', .08); },
+  };
+})();
+
+/* ---------- saved settings and progress ---------- */
+const PREF_KEY = 'stickdash-prefs', PROG_KEY = 'stickdash-progress-v1';
+const prefs = Object.assign({swap: false, fixedStick: false, buzz: true}, load(PREF_KEY, {}));
+const savePrefs = () => keep(PREF_KEY, prefs);
+const prog = () => load(PROG_KEY, {});   // {levelId: {best (ms), star, deaths, done}}
+
+/* ======================================================================
+   THE STICK FIGURE
+   A pose is a set of joint angles. Each move has its own pose (and running
+   is a cycle of poses); the figure always eases towards the pose it should be
+   in, so every change of move flows instead of snapping.
+   Angles: limbs measure from straight down, positive = towards where it faces.
+   ====================================================================== */
+const BODY = {thigh: .3, shin: .3, torso: .4, neck: .05, head: .17, upper: .26, fore: .24, w: .09};
+const POSE_KEYS = ['lean', 'hip', 't0', 'k0', 't1', 'k1', 's0', 'e0', 's1', 'e1', 'rot', 'head'];
+function poseFor(st, t, ph, spd) {
+  const s = Math.sin(ph), c = Math.cos(ph);
+  switch (st) {
+    case 'run': {   // a running cycle: legs swing, the swinging-forward leg bends, arms pump opposite
+      const k = clamp(spd, .25, 1);
+      return {lean: .22 * k, hip: -.05 * Math.cos(2 * ph) * k + .03, t0: .72 * s * k, k0: .12 + 1.25 * Math.max(0, c) * k, t1: -.72 * s * k, k1: .12 + 1.25 * Math.max(0, -c) * k,
+        s0: -.8 * s * k, e0: 1.25, s1: .8 * s * k, e1: 1.25, rot: 0, head: .04 * k};
+    }
+    case 'up':   return {lean: .08, hip: 0, t0: 1.05, k0: 1.7, t1: -.15, k1: .45, s0: 2.5, e0: .35, s1: -.5, e1: .7, rot: 0, head: -.05};
+    case 'fall': return {lean: -.04, hip: 0, t0: .35, k0: .5, t1: -.25, k1: .35, s0: 2.1 + .15 * Math.sin(t * 14), e0: -.5, s1: 1.7 + .15 * Math.sin(t * 14 + 2), e1: -.4, rot: 0, head: .06};
+    case 'wall': return {lean: -.12, hip: .06, t0: .6, k0: 1.45, t1: 1.05, k1: 1.75, s0: 2.6, e0: .25, s1: .35, e1: .6, rot: 0, head: -.08};
+    case 'dash': return {lean: 0, hip: 0, t0: -.35, k0: .45, t1: -.7, k1: .9, s0: -1.25, e0: .2, s1: -1.5, e1: .3, rot: 0, head: 0};
+    case 'land': return {lean: .12, hip: .2, t0: .5, k0: 1.1, t1: -.25, k1: .9, s0: .5, e0: .8, s1: -.3, e1: .8, rot: 0, head: .02};
+    default:     return {lean: .03, hip: .012 * Math.sin(t * 2.2), t0: .1, k0: .1, t1: -.1, k1: .08, s0: .14 + .03 * Math.sin(t * 2.2), e0: .2, s1: -.12, e1: .22, rot: 0, head: .01 * Math.sin(t * 2.2)};
+  }
+}
+function newFigure() { const f = {face: 1, ph: 0, scarf: [], after: [], land: 0}; const p = poseFor('idle', 0); POSE_KEYS.forEach(k => f[k] = p[k]); return f; }
+// ease the figure towards a pose (rate: how snappy)
+function easePose(f, p, dt, rate) { const a = 1 - Math.exp(-rate * dt); POSE_KEYS.forEach(k => f[k] += (p[k] - f[k]) * a); }
+// where every joint is, for a figure whose feet are at (x, y), in tile units
+function joints(f, x, y) {
+  const F = f.face, B = BODY, dir = a => [Math.sin(a) * F, Math.cos(a)];
+  const hip = [x, y - (B.thigh + B.shin) + f.hip];
+  const leg = (th, kn) => { const d1 = dir(th), knee = [hip[0] + d1[0] * B.thigh, hip[1] + d1[1] * B.thigh], d2 = dir(th - kn); return [knee, [knee[0] + d2[0] * B.shin, knee[1] + d2[1] * B.shin]]; };
+  const up = [Math.sin(f.lean) * F, -Math.cos(f.lean)];
+  const neck = [hip[0] + up[0] * B.torso, hip[1] + up[1] * B.torso];
+  const sh = [hip[0] + up[0] * B.torso * .9, hip[1] + up[1] * B.torso * .9];
+  const hd = [neck[0] + Math.sin(f.lean + f.head) * F * (B.neck + B.head), neck[1] - Math.cos(f.lean + f.head) * (B.neck + B.head)];
+  const arm = (sa, el) => { const d1 = dir(sa + f.lean), elb = [sh[0] + d1[0] * B.upper, sh[1] + d1[1] * B.upper], d2 = dir(sa + f.lean + el); return [elb, [elb[0] + d2[0] * B.fore, elb[1] + d2[1] * B.fore]]; };
+  return {hip, neck, sh, hd, l0: leg(f.t0, f.k0), l1: leg(f.t1, f.k1), a0: arm(f.s0, f.e0), a1: arm(f.s1, f.e1)};
+}
+// draw a figure (s = pixels per tile); the far arm and leg are softer, for a little depth
+function drawFigure(g, f, x, y, s, ink, opts = {}) {
+  const J = joints(f, x, y), P = p => [p[0] * s, p[1] * s];
+  g.save();
+  if (f.rot) { const cx = J.hip[0] * s, cy = (J.hip[1] - .1) * s; g.translate(cx, cy); g.rotate(f.rot); g.translate(-cx, -cy); }
+  g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = ink; g.fillStyle = ink;
+  const line = (pts, w, a) => { g.globalAlpha = (opts.alpha ?? 1) * a; g.lineWidth = w * s; g.beginPath(); pts.forEach((p, i) => { const q = P(p); i ? g.lineTo(...q) : g.moveTo(...q); }); g.stroke(); };
+  line([J.sh, ...J.a1], BODY.w * .9, .55);
+  line([J.hip, ...J.l1], BODY.w * .95, .55);
+  if (opts.scarf !== false && f.scarf.length > 1) drawScarf(g, f, s, opts.scarfCol || css('--accent'), opts.alpha ?? 1);
+  line([J.hip, J.neck], BODY.w * 1.05, 1);
+  line([J.hip, ...J.l0], BODY.w, 1);
+  line([J.sh, ...J.a0], BODY.w * .95, 1);
+  g.globalAlpha = opts.alpha ?? 1; g.beginPath(); g.arc(J.hd[0] * s, J.hd[1] * s, BODY.head * s, 0, Math.PI * 2); g.fill();
+  g.restore();
+  return J;
+}
+// the scarf: a short chain that trails behind the neck and flutters
+function stepScarf(f, J, dt, wind) {
+  const n = 7, seg = .085, sc = f.scarf;
+  if (sc.length !== n) { sc.length = 0; for (let i = 0; i < n; i++) f.scarf.push({x: J.neck[0] - i * seg * f.face, y: J.neck[1] + .03, px: J.neck[0] - i * seg * f.face, py: J.neck[1]}); }
+  const S = f.scarf; S[0].x = J.neck[0] - .02 * f.face; S[0].y = J.neck[1] + .04;
+  for (let i = 1; i < n; i++) {
+    const p = S[i], vx = (p.x - p.px) * .86, vy = (p.y - p.py) * .86;
+    p.px = p.x; p.py = p.y; p.x += vx + (wind || 0) * dt * dt * 3; p.y += vy + 6 * dt * dt + Math.sin(performance.now() / 90 + i) * .0009;
+  }
+  for (let k = 0; k < 3; k++) for (let i = 1; i < n; i++) {
+    const a = S[i - 1], b = S[i], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, m = (d - seg) / d;
+    b.x -= dx * m; b.y -= dy * m;
+  }
+}
+function drawScarf(g, f, s, col, alpha) {
+  const S = f.scarf; g.globalAlpha = alpha; g.strokeStyle = col;
+  for (let i = 1; i < S.length; i++) { g.lineWidth = s * (.1 - i * .009); g.beginPath(); g.moveTo(S[i - 1].x * s, S[i - 1].y * s); g.lineTo(S[i].x * s, S[i].y * s); g.stroke(); }
+  g.fillStyle = col; g.beginPath(); g.arc(S[0].x * s, S[0].y * s, s * .06, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = css('--ink'); g.fillStyle = css('--ink');
+}
+
+/* ======================================================================
+   LEVELS: read a level's map into squares and things
+   ====================================================================== */
+// square kinds: 0 empty, 1 block, 2 ledge (stand on it from above), 3 spikes
+function readLevel(i) {
+  const src = LEVELS[i], h = src.map.length, w = Math.max(...src.map.map(r => r.length));
+  const L = {i, name: src.name, w, h, g: new Uint8Array(w * h), spikes: [], orbs: [], pads: [], checks: [], stars: [], goal: null, start: null, hints: (src.hints || []).map(([c, r, t]) => [c, r, hintText(t)])};
+  const at = (c, r) => (src.map[r] || '')[c] || '.';
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const ch = at(c, r), k = r * w + c;
+    if (ch === '#') L.g[k] = 1;
+    else if (ch === '-') L.g[k] = 2;
+    else if (ch === 'x') L.g[k] = 3;
+    else if (ch === 'o') L.orbs.push({x: c + .5, y: r + .5, off: 0});
+    else if (ch === 'b') L.pads.push({c, r, sq: 0});
+    else if (ch === 'c') L.checks.push({c, r, on: false, wave: 0});
+    else if (ch === '*') L.stars.push({x: c + .5, y: r + .5});
+    else if (ch === 'G') L.goal = {c, r};
+    else if (ch === 'P') L.start = {x: c + .5, y: r + 1};
+  }
+  // spikes point away from the block they sit on
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (L.g[r * w + c] === 3) {
+    const sol = (cc, rr) => rr >= h || (cc >= 0 && cc < w && rr >= 0 && L.g[rr * w + cc] === 1);   // below the level counts as solid
+    const dir = sol(c, r + 1) ? 'up' : sol(c, r - 1) ? 'down' : sol(c - 1, r) ? 'right' : sol(c + 1, r) ? 'left' : 'up';
+    L.spikes.push({c, r, dir});
+  }
+  return L;
+}
+
+/* ======================================================================
+   PHYSICS
+   Units are squares and seconds. The player is a box 0.5 wide and 1.3 tall,
+   x at its middle, y at its feet.
+   ====================================================================== */
+const PH = {
+  run: 7.5, accG: 75, accA: 50, fric: 70, grav: 55, maxFall: 17, apex: .55,
+  jump: 16, cut: .45, coyote: .1, buffer: .13,
+  wallSlide: 4.2, wjX: 8.5, wjY: 15, wjLock: .13, wallReach: .32,
+  dashV: 21, dashT: .155, dashKeep: .55, hitstop: .045,
+  pad: 24, W: .5, H: 1.3,
+};
+let G = null;   // the level being played
+function startLevel(i) {
+  const L = readLevel(i);
+  G = {L, t: 0, deaths: 0, star: false, done: false, spawn: {...L.start}, cam: {x: 0, y: 0, shake: 0}, parts: [], after: [], flash: 0, hit: 0, note: 0, paused: false};
+  spawnPlayer();
+  G.cam.x = G.p.x; G.cam.y = G.p.y;
+  paintLevel();
+}
+function spawnPlayer() {
+  const s = G.spawn;
+  G.p = {x: s.x, y: s.y, vx: 0, vy: 0, ground: true, wall: 0, coyote: 0, buf: 0, held: false, cut: true, dash: 1, dashT: 0, dx: 0, dy: 0,
+    lock: 0, dead: 0, fig: G.p ? G.p.fig : newFigure(), airT: 0, padT: 0, flash: 0, trail: 0};
+  G.p.fig.scarf = []; G.p.fig.after = [];
+  G.L.orbs.forEach(o => o.off = 0);
+}
+const tileAt = (c, r) => { const L = G.L; if (c < 0 || c >= L.w) return 1; if (r < 0 || r >= L.h) return 0; return L.g[r * L.w + c]; };
+const solid = (c, r) => tileAt(c, r) === 1;
+// is there a block right beside the player (within reach), and on which side?
+function wallSide(p, reach = .06) {
+  const top = p.y - PH.H + .15, bot = p.y - .2;
+  for (const side of [1, -1]) {
+    const c = Math.floor(side > 0 ? p.x + PH.W / 2 + reach : p.x - PH.W / 2 - reach);
+    for (let r = Math.floor(top); r <= Math.floor(bot); r++) if (solid(c, r)) return side;
+  }
+  return 0;
+}
+function moveX(p, dx) {
+  p.x += dx;
+  const top = p.y - PH.H + .01, bot = p.y - .01;
+  if (dx > 0) { const c = Math.floor(p.x + PH.W / 2); for (let r = Math.floor(top); r <= Math.floor(bot); r++) if (solid(c, r)) { p.x = c - PH.W / 2 - .001; p.vx = 0; return true; } }
+  if (dx < 0) { const c = Math.floor(p.x - PH.W / 2); for (let r = Math.floor(top); r <= Math.floor(bot); r++) if (solid(c, r)) { p.x = c + 1 + PH.W / 2 + .001; p.vx = 0; return true; } }
+  return false;
+}
+function moveY(p, dy) {
+  const was = p.y; p.y += dy;
+  const l = Math.floor(p.x - PH.W / 2 + .01), r = Math.floor(p.x + PH.W / 2 - .01);
+  if (dy > 0) {
+    const row = Math.floor(p.y);
+    for (let c = l; c <= r; c++) { const k = tileAt(c, row); if (k === 1 || (k === 2 && was <= row + .001)) { p.y = row; p.vy = 0; return 'floor'; } }
+  } else if (dy < 0) {
+    const row = Math.floor(p.y - PH.H);
+    for (let c = l; c <= r; c++) if (solid(c, row)) { p.y = row + 1 + PH.H; p.vy = 0; return 'ceil'; }
+  }
+  return null;
+}
+function onGround(p) {
+  const row = Math.floor(p.y + .02), l = Math.floor(p.x - PH.W / 2 + .01), r = Math.floor(p.x + PH.W / 2 - .01);
+  if (Math.abs(p.y - Math.round(p.y)) > .02) return false;
+  for (let c = l; c <= r; c++) { const k = tileAt(c, row); if (k === 1 || k === 2) return true; }
+  return false;
+}
+const IN = {x: 0, y: 0, jump: false, jumpEdge: false, dash: null};   // what the controls are asking for
+function jumpPress() { if (!G || G.done) return; G.p.buf = PH.buffer; G.p.held = true; }
+function jumpRelease() { if (!G) return; const p = G.p; p.held = false; if (!p.cut && p.vy < 0 && p.dashT <= 0) { p.vy *= PH.cut; p.cut = true; } }
+function dash(dx, dy) {
+  if (!G || G.done || G.paused) return;
+  const p = G.p; if (p.dead || p.dash < 1 || p.dashT > 0) return;
+  if (!dx && !dy) dx = p.fig.face;
+  const n = Math.hypot(dx, dy); dx /= n; dy /= n;
+  p.dash = 0; p.dashT = PH.dashT; p.dx = dx; p.dy = dy; p.vx = dx * PH.dashV; p.vy = dy * PH.dashV;
+  p.buf = 0; p.cut = true; G.hit = PH.hitstop; G.cam.shake = Math.max(G.cam.shake, .12);
+  if (dx) p.fig.face = Math.sign(dx);
+  burst(p.x, p.y - PH.H / 2, 10, css('--accent'), 5, .3);
+  Sound.dash(); vibrate(12);
+}
+function regain(p, why) {   // the dash comes back
+  if (p.dash >= 1) return;
+  p.dash = 1; p.flash = .25;
+  if (why !== 'quiet') Sound.back();
+}
+function die() {
+  const p = G.p; if (p.dead) return;
+  p.dead = .8; G.deaths++; G.flash = .25; G.cam.shake = .35;
+  // the figure comes apart: each limb flies off on its own
+  const J = joints(p.fig, p.x, p.y), ink = css('--ink');
+  [[J.hip, J.neck], [J.l0[0], J.l0[1]], [J.hip, J.l0[0]], [J.l1[0], J.l1[1]], [J.hip, J.l1[0]], [J.sh, J.a0[0]], [J.a0[0], J.a0[1]], [J.sh, J.a1[0]], [J.a1[0], J.a1[1]]].forEach(([a, b]) => {
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    G.parts.push({kind: 'bone', x: mx, y: my, len: Math.hypot(b[0] - a[0], b[1] - a[1]), a: Math.atan2(b[1] - a[1], b[0] - a[0]), va: (Math.random() - .5) * 18,
+      vx: (Math.random() - .5) * 9 - p.vx * .2, vy: -4 - Math.random() * 6, life: 1.1, max: 1.1, col: ink, g: 30});
+  });
+  G.parts.push({kind: 'head', x: J.hd[0], y: J.hd[1], vx: (Math.random() - .5) * 6, vy: -7, life: 1.1, max: 1.1, col: ink, g: 30});
+  burst(p.x, p.y - .6, 16, css('--accent'), 7, .5);
+  Sound.die(); vibrate([30, 40, 60]);
+}
+// little effects
+function burst(x, y, n, col, spd, life, up = 0) {
+  if (reduced()) n = Math.ceil(n / 3);
+  for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = spd * (.3 + Math.random() * .7); G.parts.push({kind: 'dot', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - up, life: life * (.6 + Math.random() * .4), max: life, col, g: 6, r: .05 + Math.random() * .05}); }
+}
+function dust(x, y, n, dir = 0) { for (let i = 0; i < n; i++) G.parts.push({kind: 'dust', x: x + (Math.random() - .5) * .4, y: y - .05, vx: (Math.random() - .5) * 2 + dir * 1.5, vy: -Math.random() * 1.5, life: .35, max: .35, r: .07 + Math.random() * .06, g: 0}); }
+function note(text, ms = 1600) { const n = $('#note'); n.textContent = text; n.classList.remove('show'); void n.offsetWidth; n.classList.add('show'); clearTimeout(note.t); note.t = setTimeout(() => n.classList.remove('show'), ms); }
+
+/* ---------- one step of the game (1/120 of a second) ---------- */
+function step(dt) {
+  const p = G.p, L = G.L;
+  if (!G.started && (IN.x || p.buf > 0 || p.dashT > 0)) G.started = true;   // the clock starts on your first move
+  if (G.started && !G.done) G.t += dt;
+  p.flash = Math.max(0, p.flash - dt);
+  if (p.dead) {
+    p.dead -= dt;
+    if (p.dead <= 0) { spawnPlayer(); G.cam.shake = 0; }
+    return;
+  }
+  // timers
+  p.buf = Math.max(0, p.buf - dt); p.lock = Math.max(0, p.lock - dt); p.padT = Math.max(0, p.padT - dt);
+  const wasGround = p.ground;
+  p.wall = wallSide(p);
+  const near = p.wall || wallSide(p, PH.wallReach);   // a little leeway for wall jumps
+  const ix = p.lock > 0 ? 0 : IN.x;
+  if (Math.abs(ix) > .1 && p.dashT <= 0 && !(p.lock > 0)) p.fig.face = Math.sign(ix);
+  // dashing: straight line, no gravity
+  if (p.dashT > 0) {
+    p.dashT -= dt;
+    p.trail -= dt; if (p.trail <= 0) { p.trail = .022; G.after.push({fig: {...p.fig, scarf: []}, x: p.x, y: p.y, life: .28}); }
+    if (p.buf > 0 && (p.ground || p.coyote > 0)) {   // jump out of a dash along the ground: keep the speed
+      p.dashT = 0; p.vy = -PH.jump; p.vx = clamp(p.vx, -13, 13); p.buf = 0; p.cut = false; p.ground = false; p.coyote = 0; Sound.jump(); dust(p.x, p.y, 6);
+    }
+    if (p.dashT <= 0 && p.vy !== -PH.jump) { p.vx *= PH.dashKeep; p.vy *= p.dy < 0 ? .45 : PH.dashKeep; if (Math.abs(p.vx) < PH.run * Math.abs(p.dx) * .9) p.vx = PH.run * p.dx * .9; }
+  } else {
+    // running
+    const target = ix * PH.run, acc = p.ground ? (ix ? PH.accG : PH.fric) : PH.accA * (ix ? 1 : .35);
+    const over = Math.abs(p.vx) > PH.run && Math.sign(p.vx) === Math.sign(target || p.vx);
+    const a = over ? (p.ground ? PH.fric * .6 : 14) : acc;
+    p.vx += clamp(target - p.vx, -a * dt, a * dt);
+    // gravity, a softer top to the jump while holding, and wall sliding
+    let g = PH.grav; if (p.held && Math.abs(p.vy) < 2.4 && !p.cut) g *= PH.apex;
+    p.vy += g * dt;
+    let maxF = PH.maxFall;
+    if (p.wall && !p.ground && p.vy > 0 && ix * p.wall >= 0) { maxF = PH.wallSlide; if (Math.random() < .25) dust(p.x + p.wall * PH.W / 2, p.y - PH.H * .6, 1); }
+    p.vy = Math.min(p.vy, maxF);
+    // jumping: from the ground (or just after leaving it), or off a wall
+    if (p.buf > 0) {
+      if (p.ground || p.coyote > 0) { p.vy = -PH.jump; p.buf = 0; p.coyote = 0; p.ground = false; p.cut = !p.held; if (!p.held) p.vy *= .7; Sound.jump(); dust(p.x, p.y, 5); vibrate(5); }
+      else if (near) { p.vx = -near * PH.wjX; p.vy = -PH.wjY; p.buf = 0; p.lock = PH.wjLock; p.cut = !p.held; p.fig.face = -near; Sound.wall(); dust(p.x + near * PH.W / 2, p.y - .6, 6, -near); vibrate(5); }
+    }
+  }
+  // move, one axis at a time
+  const sub = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / .2));
+  let landed = false;
+  for (let i = 0; i < sub; i++) {
+    moveX(p, p.vx * dt / sub);
+    const hitY = moveY(p, p.vy * dt / sub);
+    if (hitY === 'floor') landed = true;
+    if (hitY === 'ceil' && p.dashT > 0) p.dashT = Math.min(p.dashT, .02);
+  }
+  p.ground = p.vy >= 0 && onGround(p);
+  if (p.ground) { p.coyote = PH.coyote; if (p.dashT <= 0) regain(p, 'quiet'); }
+  else p.coyote -= dt;
+  if (p.wall && p.dashT <= 0 && !p.ground) regain(p);
+  if (p.ground && !wasGround) { const hard = p.airT > .35; p.fig.land = hard ? .16 : .08; if (hard) { dust(p.x, p.y, 8); Sound.land(); } }
+  p.airT = p.ground ? 0 : p.airT + dt;
+  // what you touch
+  const box = {l: p.x - PH.W / 2, r: p.x + PH.W / 2, t: p.y - PH.H, b: p.y};
+  const over = (l, t, r, b) => box.l < r && box.r > l && box.t < b && box.b > t;
+  for (const s of L.spikes) {
+    const c = s.c, r = s.r, d = s.dir;
+    const hb = d === 'up' ? [c + .15, r + .5, c + .85, r + 1] : d === 'down' ? [c + .15, r, c + .85, r + .5] : d === 'right' ? [c, r + .15, c + .5, r + .85] : [c + .5, r + .15, c + 1, r + .85];
+    if (over(...hb)) { die(); return; }
+  }
+  if (p.y > L.h + 2) { die(); return; }
+  for (const o of L.orbs) {
+    if (o.off > 0) { o.off -= dt; continue; }
+    if (p.dash < 1 && Math.hypot(p.x - o.x, p.y - PH.H / 2 - o.y) < .7) { o.off = 2.5; regain(p, 'quiet'); Sound.orb(); burst(o.x, o.y, 14, css('--orb'), 5, .45); vibrate(8); }
+  }
+  for (const d of L.pads) {
+    d.sq = Math.max(0, d.sq - dt * 4);
+    if (p.vy >= 0 && p.padT <= 0 && over(d.c + .1, d.r + .5, d.c + .9, d.r + 1.02)) {
+      p.vy = -PH.pad; p.dashT = 0; p.cut = true; p.padT = .2; p.ground = false; p.y = Math.min(p.y, d.r + .5); regain(p, 'quiet'); d.sq = 1;
+      Sound.pad(); dust(p.x, p.y, 8); vibrate(10);
+    }
+  }
+  for (const k of L.checks) if (!k.on && over(k.c, k.r - .5, k.c + 1, k.r + 1)) {
+    L.checks.forEach(x => x.on = false); k.on = true; k.wave = 1; G.spawn = {x: k.c + .5, y: k.r + 1}; Sound.check(); note('Checkpoint');
+  }
+  for (const s of L.stars) if (!G.star && Math.hypot(p.x - s.x, p.y - PH.H / 2 - s.y) < .75) { G.star = true; Sound.star(); burst(s.x, s.y, 22, css('--gold'), 6, .7); vibrate([10, 30, 10]); showHud(); }
+  if (L.goal && over(L.goal.c, L.goal.r - 1, L.goal.c + 1, L.goal.r + 1)) finish();
+}
+// the figure's pose follows what the player is doing
+function animate(dt, now) {
+  const p = G.p, f = p.fig; if (p.dead) return;
+  f.land = Math.max(0, f.land - dt);
+  let st, rate = 16;
+  if (p.dashT > 0) st = 'dash';
+  else if (p.wall && !p.ground && p.vy > 0) st = 'wall';
+  else if (!p.ground) st = p.vy < -1.5 ? 'up' : 'fall';
+  else if (f.land > 0) { st = 'land'; rate = 30; }
+  else if (Math.abs(p.vx) > .5) st = 'run';
+  else st = 'idle';
+  const spd = Math.min(1.3, Math.abs(p.vx) / PH.run);
+  if (st === 'run') f.ph += dt * (6 + 9 * spd);
+  const pose = poseFor(st, now, f.ph, spd);
+  // a dash tilts the body towards where it's going (a straight-down dash stays upright: a stomp)
+  if (st === 'dash') pose.rot = p.dy <= 0 ? .6 * Math.atan2(p.dx, -p.dy) : Math.sign(p.dx) * .94 * (1 - p.dy);
+  if (st === 'wall') f.face = p.wall;   // a hand on the wall it's sliding down
+  if (st === 'up' || st === 'fall') pose.lean += clamp(p.vx / PH.run, -1, 1) * f.face * .12;
+  easePose(f, pose, dt, st === 'run' ? 22 : rate);
+  const J = joints(f, p.x, p.y);
+  stepScarf(f, J, dt, -p.vx * 2.5);
+  G.after = G.after.filter(a => (a.life -= dt) > 0);
+}
+function stepFx(dt) {
+  G.parts = G.parts.filter(q => {
+    q.life -= dt; q.vy += (q.g || 0) * dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.va) q.a += q.va * dt;
+    if (q.kind === 'bone' || q.kind === 'head') { const row = Math.floor(q.y + .05); if (solid(Math.floor(q.x), row) && q.vy > 0) { q.vy *= -.35; q.vx *= .6; q.va = (q.va || 0) * .5; q.y = row - .05; } }
+    return q.life > 0;
+  });
+  G.flash = Math.max(0, G.flash - dt); G.cam.shake = Math.max(0, G.cam.shake - dt * 1.6);
+}
+
+/* ======================================================================
+   DRAWING
+   ====================================================================== */
+const cv = $('#cv'), cx = cv.getContext('2d'), lvlC = document.createElement('canvas');
+const V = {w: 0, h: 0, dpr: 1, s: 32};
+function layout() {
+  const r = cv.getBoundingClientRect(); V.dpr = Math.min(2.5, devicePixelRatio || 1);
+  V.w = r.width; V.h = r.height; cv.width = Math.round(V.w * V.dpr); cv.height = Math.round(V.h * V.dpr);
+  V.s = Math.max(20, Math.round(V.h / clamp(V.h / 36, 9.5, 12)));   // 9½ to 12 squares of height on screen
+  if (G) paintLevel();
+}
+// the level's blocks, ledges and spikes, painted once into their own canvas
+function paintLevel() {
+  const L = G.L, s = V.s, d = Math.min(2, V.dpr);
+  lvlC.width = Math.ceil(L.w * s * d); lvlC.height = Math.ceil(L.h * s * d);
+  const g = lvlC.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, L.w * s, L.h * s);
+  const T = css('--tile'), TT = css('--tileTop'), TE = css('--tileEdge'), SP = css('--spike');
+  const sol = (c, r) => c >= 0 && c < L.w && r >= 0 && r < L.h && L.g[r * L.w + c] === 1;
+  const rr = (x, y, w, h, rad) => { g.beginPath(); g.roundRect(x, y, w, h, rad); };
+  for (let r = 0; r < L.h; r++) for (let c = 0; c < L.w; c++) {
+    const k = L.g[r * L.w + c], x = c * s, y = r * s;
+    if (k === 1) {   // solid ground: smooth slabs, with a light top and a darker underside wherever they're open
+      const up = !sol(c, r - 1) && r > 0, dn = !sol(c, r + 1) && r < L.h - 1, lf = !sol(c - 1, r), rt = !sol(c + 1, r), R = s * .2;
+      g.save(); g.beginPath(); g.roundRect(x, y, s, s, [up && lf ? R : 0, up && rt ? R : 0, dn && rt ? R : 0, dn && lf ? R : 0]); g.clip();
+      g.fillStyle = T; g.fillRect(x, y, s, s);
+      g.fillStyle = TE;
+      if (dn) g.fillRect(x, y + s * .86, s, s * .14);
+      if (lf) g.fillRect(x, y, s * .07, s);
+      if (rt) g.fillRect(x + s * .93, y, s * .07, s);
+      if (up) { g.fillStyle = TT; g.fillRect(x, y, s, s * .24); g.fillStyle = TE; g.globalAlpha = .35; g.fillRect(x, y + s * .24, s, s * .05); g.globalAlpha = 1; }
+      // a faint stud in every block keeps the toy-block feel without the busy seams
+      g.fillStyle = TE; g.globalAlpha = .18; g.beginPath(); g.arc(x + s / 2, y + s * (up ? .6 : .5), s * .07, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+      g.restore();
+    } else if (k === 2) {   // a ledge: a thin plank
+      g.fillStyle = TE; rr(x + s * .02, y + s * .02, s * .96, s * .3, s * .1); g.fill();
+      g.fillStyle = TT; rr(x + s * .02, y + s * .02, s * .96, s * .22, s * .1); g.fill();
+    }
+  }
+  for (const sp of L.spikes) {   // spikes: three teeth
+    g.save(); g.translate((sp.c + .5) * s, (sp.r + .5) * s); g.rotate({up: 0, right: Math.PI / 2, down: Math.PI, left: -Math.PI / 2}[sp.dir]);
+    for (let i = 0; i < 3; i++) {
+      const x0 = -s * .5 + i * s / 3;
+      g.fillStyle = SP; g.beginPath(); g.moveTo(x0 + s * .02, s * .5); g.lineTo(x0 + s / 6, s * .02); g.lineTo(x0 + s / 3 - s * .02, s * .5); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.moveTo(x0 + s / 6, s * .06); g.lineTo(x0 + s / 6 + s * .05, s * .45); g.lineTo(x0 + s / 6, s * .45); g.fill();
+    }
+    g.restore();
+  }
+}
+function render(now) {
+  const g = cx, s = V.s, L = G.L, p = G.p, t = now;
+  g.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+  // the sky: a soft gradient and slow, far-off blocks
+  const grd = g.createLinearGradient(0, 0, 0, V.h); grd.addColorStop(0, css('--bg')); grd.addColorStop(1, css('--bg2'));
+  g.fillStyle = grd; g.fillRect(0, 0, V.w, V.h);
+  // the camera follows, looking a little ahead
+  const vw = V.w / s, vh = V.h / s;
+  const tx = clamp(p.x + p.fig.face * 1.6 + p.vx * .12 - vw / 2, 0, Math.max(0, L.w - vw)), ty = clamp(p.y - .8 - vh * .55, -1, Math.max(-1, L.h - vh));
+  const k = 1 - Math.exp(-6 * (1 / 60));
+  G.cam.x += (tx - G.cam.x) * k * 1.4; G.cam.y += (ty - G.cam.y) * k;
+  if (L.w < vw) G.cam.x = (L.w - vw) / 2;
+  const sh = G.cam.shake > 0 && !reduced() ? G.cam.shake * .25 : 0;
+  const ox = -(G.cam.x + (Math.random() - .5) * sh) * s, oy = -(G.cam.y + (Math.random() - .5) * sh) * s;
+  drawFar(g, G.cam.x, G.cam.y, s);
+  g.save(); g.translate(Math.round(ox), Math.round(oy));
+  g.drawImage(lvlC, 0, 0, L.w * s, L.h * s);
+  // hints written in the world
+  g.fillStyle = css('--muted'); g.font = `800 ${Math.round(s * .42)}px Nunito, system-ui, sans-serif`; g.textAlign = 'center';
+  L.hints.forEach(([c, r, txt]) => { g.globalAlpha = .75; g.fillText(txt, (c + .5) * s, (r + .5) * s); }); g.globalAlpha = 1;
+  drawThings(g, s, t);
+  // afterimages of a dash
+  G.after.forEach(a => drawFigure(g, a.fig, a.x, a.y, s, css('--accent'), {alpha: a.life / .28 * .4, scarf: false}));
+  if (!p.dead) {
+    const col = p.dash >= 1 ? css('--accent') : css('--muted');
+    drawFigure(g, p.fig, p.x, p.y, s, css('--ink'), {scarfCol: p.flash > 0 && (t * 20 | 0) % 2 ? '#ffffff' : col});
+  }
+  // bits and pieces
+  for (const q of G.parts) {
+    g.globalAlpha = Math.min(1, q.life / q.max * 1.5);
+    if (q.kind === 'bone') { g.save(); g.translate(q.x * s, q.y * s); g.rotate(q.a); g.strokeStyle = q.col; g.lineWidth = BODY.w * s; g.lineCap = 'round'; g.beginPath(); g.moveTo(-q.len / 2 * s, 0); g.lineTo(q.len / 2 * s, 0); g.stroke(); g.restore(); }
+    else if (q.kind === 'head') { g.fillStyle = q.col; g.beginPath(); g.arc(q.x * s, q.y * s, BODY.head * s, 0, Math.PI * 2); g.fill(); }
+    else if (q.kind === 'dust') { g.fillStyle = css('--tileEdge'); g.globalAlpha *= .6; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s * (1.5 - q.life / q.max), 0, Math.PI * 2); g.fill(); }
+    else { g.fillStyle = q.col; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s, 0, Math.PI * 2); g.fill(); }
+  }
+  g.globalAlpha = 1;
+  g.restore();
+  if (G.flash > 0) { g.fillStyle = `rgba(239,59,59,${G.flash * .6})`; g.fillRect(0, 0, V.w, V.h); }
+  drawStick(g);
+}
+// far-off scenery: big soft blocks drifting slower than the level
+function drawFar(g, camX, camY, s) {
+  const c1 = css('--bg2'), w = V.w;
+  g.fillStyle = c1; g.globalAlpha = .9;
+  for (let i = -1; i < 9; i++) {
+    const base = i * 7.3, x = ((base - camX * .25) % 66 + 66) % 66 - 6, hgt = 3 + (i * 37 % 5);
+    g.beginPath(); g.roundRect(x * s * .9, V.h - (hgt + 1.5 - camY * .05) * s * .6, s * 4.2, (hgt + 4) * s, s * .6); g.fill();
+  }
+  g.globalAlpha = .35;
+  for (let i = 0; i < 14; i++) { const x = ((i * 113.7 - camX * .12 * s) % (w + 40) + w + 40) % (w + 40) - 20, y = (i * 47 % 60) / 100 * V.h * .6 + 20; g.beginPath(); g.arc(x, y, 2 + i % 3, 0, Math.PI * 2); g.fill(); }
+  g.globalAlpha = 1;
+}
+function drawThings(g, s, t) {
+  const L = G.L, ink = css('--ink');
+  // springs
+  for (const d of L.pads) {
+    const x = (d.c + .5) * s, y = (d.r + 1) * s, ext = (1 - d.sq) * .12 + d.sq * .5;
+    g.fillStyle = css('--tileEdge'); g.beginPath(); g.roundRect(x - s * .38, y - s * .18, s * .76, s * .18, s * .06); g.fill();
+    g.strokeStyle = ink; g.lineWidth = s * .05; g.beginPath(); for (let i = 0; i <= 4; i++) g.lineTo(x + (i % 2 ? s * .18 : -s * .18), y - s * .18 - i * s * (.08 + ext * .1)); g.stroke();
+    g.fillStyle = css('--pad'); g.beginPath(); g.roundRect(x - s * .42, y - s * (.5 + ext * .45), s * .84, s * .16, s * .08); g.fill();
+  }
+  // gold orbs: give the dash back (dim while they recharge)
+  for (const o of L.orbs) {
+    const x = o.x * s, y = (o.y + Math.sin(t * 2.5 + o.x) * .08) * s, r = s * .26;
+    if (o.off > 0) { g.strokeStyle = css('--orb'); g.globalAlpha = .4; g.lineWidth = s * .04; g.setLineDash([s * .07, s * .07]); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; continue; }
+    g.fillStyle = css('--orb'); g.globalAlpha = .25 + .1 * Math.sin(t * 4); g.beginPath(); g.arc(x, y, r * 1.8, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    g.save(); g.translate(x, y); g.rotate(Math.sin(t * 1.5 + o.x) * .3);
+    g.beginPath(); g.moveTo(0, -r * 1.2); g.lineTo(r * .9, 0); g.lineTo(0, r * 1.2); g.lineTo(-r * .9, 0); g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.65)'; g.beginPath(); g.moveTo(0, -r * 1.1); g.lineTo(r * .35, -r * .1); g.lineTo(0, -r * .1); g.fill();
+    g.restore();
+  }
+  // checkpoints: a little flag that goes up when you reach it
+  for (const k of L.checks) {
+    const x = (k.c + .5) * s, y = (k.r + 1) * s, up = k.on ? 1 : 0;
+    k.wave = Math.max(0, k.wave - 1 / 60);
+    g.strokeStyle = css('--tileEdge'); g.lineWidth = s * .07; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - s * .2, y); g.lineTo(x - s * .2, y - s * 1.1); g.stroke();
+    const fy = y - s * (.45 + .55 * up), wv = Math.sin(t * 6) * s * .05;
+    g.fillStyle = k.on ? css('--accent') : css('--muted'); g.beginPath(); g.moveTo(x - s * .2, fy - s * .1); g.lineTo(x + s * .35, fy + wv); g.lineTo(x - s * .2, fy + s * .25); g.fill();
+  }
+  // the star
+  for (const st of L.stars) {
+    if (G.star) continue;
+    const x = st.x * s, y = (st.y + Math.sin(t * 2) * .1) * s, r = s * .34;
+    g.fillStyle = css('--gold'); g.globalAlpha = .22; g.beginPath(); g.arc(x, y, r * 1.6, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    g.save(); g.translate(x, y); g.rotate(Math.sin(t * 1.2) * .25); g.beginPath();
+    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? r * .45 : r; g.lineTo(Math.cos(a) * q, Math.sin(a) * q); } g.closePath(); g.fill();
+    g.restore();
+  }
+  // the finish: a flagpole with a big waving flag
+  if (L.goal) {
+    const x = (L.goal.c + .5) * s, y = (L.goal.r + 1) * s;
+    g.strokeStyle = ink; g.lineWidth = s * .08; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - s * 2.3); g.stroke();
+    g.fillStyle = ink; g.beginPath(); g.arc(x, y - s * 2.35, s * .1, 0, Math.PI * 2); g.fill();
+    g.fillStyle = css('--accent'); g.beginPath(); g.moveTo(x, y - s * 2.2);
+    for (let i = 0; i <= 8; i++) g.lineTo(x + i * s * .12, y - s * 2.2 + Math.sin(t * 6 - i * .7) * s * .07 + i * s * .01);
+    for (let i = 8; i >= 0; i--) g.lineTo(x + i * s * .12, y - s * 1.55 + Math.sin(t * 6 - i * .7) * s * .07 - i * s * .01);
+    g.fill();
+  }
+}
+
+/* ======================================================================
+   CONTROLS
+   One side of the screen is the joystick (it appears where your thumb lands);
+   the other side: tap to jump (hold for higher), swipe to dash.
+   ====================================================================== */
+const STICK_R = 52;
+const touch = {stick: null, act: null};   // the active pointers
+const stickSide = () => prefs.swap ? 'right' : 'left';
+function fixedStickAt() { return prefs.swap ? {x: V.w - 110, y: V.h - 100} : {x: 110, y: V.h - 100}; }
+function isStickSide(x) { return prefs.swap ? x > V.w / 2 : x < V.w / 2; }
+const snap8 = (dx, dy) => { const a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4); return [Math.round(Math.cos(a) * 100) / 100, Math.round(Math.sin(a) * 100) / 100]; };
+function setStick(dx, dy) {
+  const d = Math.hypot(dx, dy), m = Math.min(d, STICK_R), nx = d ? dx / d * m : 0, ny = d ? dy / d * m : 0;
+  touch.stick.kx = nx; touch.stick.ky = ny;
+  const v = nx / STICK_R, dz = .18;
+  IN.x = Math.abs(v) < dz ? 0 : Math.sign(v) * Math.min(1, (Math.abs(v) - dz) / (1 - dz) * 1.35);
+  IN.y = ny / STICK_R;
+}
+cv.addEventListener('pointerdown', e => {
+  if (!G || G.paused || G.done) return;
+  e.preventDefault();
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  if (isStickSide(x) && !touch.stick) {
+    const o = prefs.fixedStick ? fixedStickAt() : {x, y};
+    touch.stick = {id: e.pointerId, ox: o.x, oy: o.y, kx: 0, ky: 0};
+    setStick(x - o.x, y - o.y);
+  } else if (!touch.act) {
+    touch.act = {id: e.pointerId, x, y, t: performance.now(), swiped: false};
+    jumpPress();
+  }
+  try { cv.setPointerCapture(e.pointerId); } catch {}
+});
+cv.addEventListener('pointermove', e => {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, now = performance.now();
+  if (touch.stick && e.pointerId === touch.stick.id) setStick(x - touch.stick.ox, y - touch.stick.oy);
+  else if (touch.act && e.pointerId === touch.act.id) {
+    const a = touch.act;
+    if (now - a.t > 260) { a.x = x; a.y = y; a.t = now; a.swiped = false; return; }   // held a while: watch for a fresh flick from here
+    if (!a.swiped && Math.hypot(x - a.x, y - a.y) > 28) { a.swiped = true; dash(...snap8(x - a.x, y - a.y)); }
+  }
+});
+function endPointer(e) {
+  if (touch.stick && e.pointerId === touch.stick.id) { touch.stick = null; IN.x = 0; IN.y = 0; }
+  if (touch.act && e.pointerId === touch.act.id) { touch.act = null; jumpRelease(); }
+}
+cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
+// the joystick, drawn over the game
+function drawStick(g) {
+  const st = touch.stick, show = st || prefs.fixedStick;
+  if (!show || !matchMedia('(pointer: coarse)').matches && !st) return;
+  const o = st ? {x: st.ox, y: st.oy} : fixedStickAt();
+  g.fillStyle = css('--ink'); g.globalAlpha = .08; g.beginPath(); g.arc(o.x, o.y, STICK_R + 10, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = .18; g.lineWidth = 2; g.strokeStyle = css('--ink'); g.beginPath(); g.arc(o.x, o.y, STICK_R + 10, 0, Math.PI * 2); g.stroke();
+  g.globalAlpha = st ? .55 : .25; g.fillStyle = css('--ink'); g.beginPath(); g.arc(o.x + (st ? st.kx : 0), o.y + (st ? st.ky : 0), 24, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = 1;
+}
+// the keyboard: arrows or WASD to run and aim, Space / Z / C to jump, X / Shift / J to dash
+const KEYS = {};
+addEventListener('keydown', e => {
+  if (e.repeat || document.querySelector('.panel.show') || (RZ && RZ.menuOpen)) return;
+  if (!G || $('#game').classList.contains('hidden')) return;
+  const k = e.key.toLowerCase(); KEYS[k] = true;
+  if (k === 'escape' || k === 'p') { e.preventDefault(); togglePause(); return; }
+  if (G.paused || G.done) { if (G.done && k === 'enter') { const b = $('#dNext') || $('#dAgain'); if (b) b.click(); } return; }
+  if ([' ', 'z', 'c', 'arrowup', 'w'].includes(k)) { e.preventDefault(); jumpPress(); }
+  if (['x', 'shift', 'j', 'k'].includes(k)) { e.preventDefault(); const kx = (KEYS.arrowright || KEYS.d ? 1 : 0) - (KEYS.arrowleft || KEYS.a ? 1 : 0), ky = (KEYS.arrowdown || KEYS.s ? 1 : 0) - (KEYS.arrowup || KEYS.w ? 1 : 0); dash(kx, ky); }
+  if (k === 'r') restartLevel();
+  keysToX();
+});
+addEventListener('keyup', e => {
+  const k = e.key.toLowerCase(); KEYS[k] = false;
+  if ([' ', 'z', 'c', 'arrowup', 'w'].includes(k) && !([' ', 'z', 'c', 'arrowup', 'w'].some(q => KEYS[q]))) jumpRelease();
+  keysToX();
+});
+function keysToX() { if (touch.stick) return; IN.x = (KEYS.arrowright || KEYS.d ? 1 : 0) - (KEYS.arrowleft || KEYS.a ? 1 : 0); }
+addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; IN.x = 0; touch.stick = touch.act = null; });
+
+/* ======================================================================
+   SCREENS
+   ====================================================================== */
+const unlockAll = location.hash === '#unlockall';
+const touchy = () => document.documentElement.classList.contains('rz-touch') || matchMedia('(pointer: coarse)').matches;
+// hints in the levels follow how you're playing: touch (and which side the joystick is on) or keys
+function hintText(t) {
+  if (!touchy()) {
+    const K = {'Push the joystick to run': 'Arrow keys to run', 'Tap the right side to jump': 'Space to jump', 'Swipe the right side to dash': 'X to dash',
+      'Jump, then swipe across': 'Jump, then X', 'Jump, then swipe up': 'Jump, then hold ↑ and press X', 'Dash diagonally too': 'Hold two arrows to dash diagonally'};
+    return K[t] || t;
+  }
+  return prefs.swap ? t.replace('right side', 'left side') : t;
+}
+const levelId = i => LEVELS[i].name;
+const isOpen = i => unlockAll || i === 0 || !!(prog()[levelId(i - 1)] || {}).done;
+const inGame = () => !$('#game').classList.contains('hidden');
+function show(id) {
+  ['home', 'levels', 'game'].forEach(k => $('#' + k).classList.toggle('hidden', k !== id));
+  document.body.classList.toggle('playing', id === 'game');
+  if (id !== 'game') { G = null; touch.stick = touch.act = null; IN.x = 0; }
+  if (id === 'home') renderHome();
+}
+function toast(text) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800); }
+
+/* ---------- home ---------- */
+function renderHome() {
+  const P = prog(), done = LEVELS.filter((l, i) => (P[levelId(i)] || {}).done).length, stars = LEVELS.filter((l, i) => (P[levelId(i)] || {}).star).length;
+  $('#playSub').textContent = done ? `${done} of ${LEVELS.length} cleared` : `${LEVELS.length} levels`;
+  $('#playSub').insertAdjacentHTML('beforeend', stars ? ` · ${stars}<span class="mstar">${STAR}</span>` : '');
+}
+$('#playBtn').onclick = () => { Sound.tap(); showLevels(); };
+
+/* ---------- the level list ---------- */
+function showLevels() {
+  show('levels');
+  const P = prog(), grid = $('#lgrid'); grid.innerHTML = '';
+  let next = LEVELS.findIndex((l, i) => !(P[levelId(i)] || {}).done); if (next < 0) next = -1;
+  LEVELS.forEach((lv, i) => {
+    const r = P[levelId(i)] || {}, open = isOpen(i), b = document.createElement('button');
+    b.className = 'lv' + (open ? '' : ' locked') + (r.done ? ' done' : '') + (i === next ? ' next' : '');
+    b.innerHTML = `<canvas></canvas><div class="lvm"><i>${i + 1}</i><b>${lv.name}</b><span class="star${r.star ? ' on' : ''}">${STAR}</span></div>
+      <small>${open ? (r.best ? ic('clock') + 'Best ' + fmtT(r.best) : i === next ? 'Up next' : 'Not cleared yet') : ic('lock') + 'Clear level ' + i + ' first'}</small>`;
+    b.disabled = !open;
+    b.onclick = () => { Sound.tap(); play(i); };
+    grid.appendChild(b);
+    requestAnimationFrame(() => thumb(b.querySelector('canvas'), i));
+  });
+  const done = LEVELS.filter((l, i) => (P[levelId(i)] || {}).done).length;
+  $('#lvCount').textContent = done + '/' + LEVELS.length;
+  const nb = grid.querySelector('.next'); if (nb) setTimeout(() => nb.focus({preventScroll: true}), 60);
+}
+// a little map of the level
+function thumb(c, i) {
+  const src = LEVELS[i].map, h = src.length, w = src[0].length, r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+  if (!r.width) return;
+  c.width = r.width * d; c.height = r.height * d;
+  const g = c.getContext('2d'), s = Math.min(r.width / w, r.height / h) * d, ox = (c.width - w * s) / 2, oy = (c.height - h * s) / 2;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const ch = src[y][x];
+    const col = ch === '#' ? css('--tile') : ch === '-' ? css('--tileEdge') : ch === 'x' ? css('--spike') : ch === 'o' ? css('--orb') : ch === 'G' || ch === 'P' ? css('--accent') : ch === 'b' ? css('--pad') : ch === '*' ? css('--gold') : null;
+    if (!col) continue;
+    g.fillStyle = col;
+    if (ch === 'G' || ch === 'P' || ch === 'o' || ch === '*') { g.beginPath(); g.arc(ox + (x + .5) * s, oy + (y + .5) * s, s * .8, 0, Math.PI * 2); g.fill(); }
+    else g.fillRect(ox + x * s, oy + y * s + (ch === '-' ? 0 : 0), Math.ceil(s), Math.ceil(ch === '-' ? s * .4 : s));
+  }
+}
+$('#lvBack').onclick = () => { Sound.tap(); show('home'); };
+
+/* ---------- playing ---------- */
+function play(i) {
+  if (!isOpen(i)) return;
+  $('#pauseCover').classList.add('hidden'); $('#doneCover').classList.add('hidden');
+  show('game'); layout(); startLevel(i);
+  $('#lvName').textContent = (i + 1) + ' · ' + LEVELS[i].name;
+  $('#starPill').classList.toggle('hidden', !G.L.stars.length);
+  showHud(); last = performance.now();
+}
+const restartLevel = () => { if (G) play(G.L.i); };
+let hudT = '', hudD = -1;
+function showHud() {
+  if (!G) return;
+  $('#starIc').classList.toggle('on', G.star);
+  if (G.deaths !== hudD) { hudD = G.deaths; $('#deaths').textContent = G.deaths; }
+}
+function setPause(on) {
+  if (!G || G.done) return;
+  G.paused = on; $('#pauseCover').classList.toggle('hidden', !on);
+  touch.stick = touch.act = null; IN.x = 0; if (G.p) G.p.held = false;
+  if (on) setTimeout(() => $('#pResume').focus({preventScroll: true}), 30);
+}
+const togglePause = () => G && setPause(!G.paused);
+$('#pauseBtn').onclick = () => { Sound.tap(); setPause(true); };
+$('#pResume').innerHTML = ic('play') + '<span>Resume</span>';
+$('#pRestart').innerHTML = ic('again') + '<span>Restart</span>';
+$('#pLevels').innerHTML = ic('grid') + '<span>Levels</span>';
+$('#pResume').onclick = () => setPause(false);
+$('#pRestart').onclick = () => restartLevel();
+$('#pLevels').onclick = () => showLevels();
+$('#pSet').onclick = () => openSettings();
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && inGame() && !G.done) setPause(true); });
+
+// reaching the flag
+function finish() {
+  if (G.done) return;
+  G.done = true; G.p.buf = 0; IN.x = 0;
+  const L = G.L, id = levelId(L.i), P = prog(), r = P[id] || {}, ms = Math.round(G.t * 1000);
+  const firstClear = !r.done, newBest = !r.best || ms < r.best, starNew = G.star && !r.star;
+  r.done = true; if (newBest) r.best = ms; r.star = r.star || G.star; r.deaths = r.deaths == null ? G.deaths : Math.min(r.deaths, G.deaths);
+  P[id] = r; keep(PROG_KEY, P);
+  Sound.win(); vibrate([15, 40, 15]);
+  const gx = L.goal.c + .5, gy = L.goal.r - 1;
+  ['--accent', '--gold', '--pad', '--orb'].forEach(c => burst(gx, gy, 10, css(c), 8, 1.1, 3));
+  setTimeout(() => showDone({ms, best: r.best, newBest: newBest && !firstClear, firstClear, starNew}), 900);
+}
+function showDone(o) {
+  if (!G) return;
+  const i = G.L.i, hasNext = i + 1 < LEVELS.length, d = $('#doneCover');
+  const star = G.L.stars.length ? `<div><span>Star</span><b class="star big${G.star ? ' on' : ''}">${STAR}</b><small${o.starNew ? ' class="nb"' : ''}>${G.star ? (o.starNew ? 'Found it!' : 'Got it') : 'Missed it'}</small></div>` : '';
+  d.innerHTML = `<div class="card done">
+    <h2>${hasNext ? 'Level clear!' : 'All levels clear!'}</h2>
+    <div class="dstats">
+      <div><span>Time</span><b>${fmtT(o.ms)}</b><small${o.newBest ? ' class="nb"' : ''}>${o.newBest ? 'New best!' : o.firstClear ? 'First clear' : 'Best ' + fmtT(o.best)}</small></div>
+      <div><span>Deaths</span><b>${G.deaths}</b><small>${G.deaths ? (G.deaths === 1 ? 'Just one' : 'Keep at it') : 'Flawless'}</small></div>
+      ${star}
+    </div>
+    <div class="crow">
+      <button class="bbtn" id="dLevels">${ic('grid')}<span>Levels</span></button>
+      <button class="bbtn" id="dAgain">${ic('again')}<span>Replay</span></button>
+      ${hasNext ? `<button class="bbtn go" id="dNext"><span>Next</span>${ic('next')}</button>` : ''}
+    </div></div>`;
+  d.classList.remove('hidden');
+  $('#dLevels').onclick = () => showLevels();
+  $('#dAgain').onclick = () => play(i);
+  if (hasNext) $('#dNext').onclick = () => play(i + 1);
+  setTimeout(() => ($('#dNext') || $('#dAgain')).focus({preventScroll: true}), 40);
+}
+
+/* ---------- the loop: physics at a steady 120 steps a second, drawing every frame ---------- */
+let last = performance.now(), acc = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now;
+  if (!G || !inGame()) return;
+  const t = now / 1000;
+  if (!G.paused) {
+    if (G.done) IN.x = 0;
+    if (G.hit > 0) G.hit -= dt;   // a tiny freeze when a dash starts, so it lands with a punch
+    else { acc += dt; let n = 0; while (acc >= 1 / 120 && n++ < 8) { step(1 / 120); acc -= 1 / 120; if (!G) return; } }
+    animate(dt, t); stepFx(dt);
+  }
+  render(t);
+  const tt = fmtT(G.t * 1000); if (tt !== hudT) { hudT = tt; $('#timer').textContent = tt; }
+  showHud();
+}
+addEventListener('resize', () => { if (inGame()) layout(); });
+
+/* ======================================================================
+   PANELS
+   ====================================================================== */
+function openPanel(id) {
+  $('#' + id).classList.add('show');
+  if (id === 'howPanel') How.start();
+  setTimeout(() => { const b = $('#' + id + ' [data-close]'); if (b) b.focus({preventScroll: true}); }, 50);
+}
+function closePanel(p) {
+  p = p || [...document.querySelectorAll('.panel.show')].pop(); if (!p) return;
+  p.classList.remove('show');
+  if (p.id === 'howPanel') How.stop();
+}
+document.querySelectorAll('.panel [data-close]').forEach(b => b.onclick = () => closePanel(b.closest('.panel')));
+addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.panel.show')) { e.stopImmediatePropagation(); closePanel(); } }, true);
+document.querySelectorAll('.panel').forEach(p => {   // pull a panel down by its top to close it
+  let y0 = null;
+  p.addEventListener('pointerdown', e => { if (p.scrollTop <= 0 && e.target.closest('.grab, .phead h1')) { y0 = e.clientY; p.style.transition = 'none'; } });
+  addEventListener('pointermove', e => { if (y0 != null) p.style.transform = `translateY(${Math.max(0, e.clientY - y0)}px)`; });
+  addEventListener('pointerup', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; y0 = null; p.style.transition = ''; p.style.transform = '';
+    if (dy > 90) closePanel(p);
+  });
+});
+/* ---------- settings ---------- */
+let resetArmed = false;
+function renderSettings() {
+  document.querySelectorAll('#setPanel [data-p]').forEach(el => el.checked = !!prefs[el.dataset.p]);
+  $('#sBuzzRow').classList.toggle('hidden', !navigator.vibrate);
+  resetArmed = false; $('#sReset').querySelector('b').textContent = 'Reset progress';
+}
+document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () => {
+  prefs[el.dataset.p] = el.checked; savePrefs();
+  if (G) G.L.hints = (LEVELS[G.L.i].hints || []).map(([c, r, t]) => [c, r, hintText(t)]);
+});
+$('#sMenu').onclick = () => RZ && RZ.openMenu();
+$('#sReset').onclick = () => {
+  if (!resetArmed) { resetArmed = true; $('#sReset').querySelector('b').textContent = 'Tap again to reset'; return; }
+  keep(PROG_KEY, null); renderSettings(); renderHome(); toast('Progress reset');
+  if (!$('#levels').classList.contains('hidden')) showLevels();
+};
+const openSettings = () => { renderSettings(); openPanel('setPanel'); };
+$('#setBtnHome').onclick = () => { Sound.tap(); openSettings(); };
+$('#howBtn').onclick = () => { Sound.tap(); openPanel('howPanel'); };
+
+/* ======================================================================
+   LITTLE ANIMATED SCENES: the title, and the How to play cards
+   Each is a short script of moves that loops: the same figure and poses as the game.
+   ====================================================================== */
+// a script is a list of moves: {d: seconds, st: pose, to: [x, y] (relative to start), dash: [dx, dy], used: dash spent}
+function scene(moves) {
+  const total = moves.reduce((a, m) => a + m.d, 0);
+  return t => {
+    t %= total; let x = 0, y = 0;
+    for (const m of moves) {
+      const [tx, ty] = m.to || [x, y];
+      if (t < m.d) { const k = m.d ? t / m.d : 1, e = m.ease === 'out' ? 1 - (1 - k) * (1 - k) : m.ease === 'in' ? k * k : k; return {...m, x: lerp(x, tx, e), y: lerp(y, ty, e), k}; }
+      t -= m.d; x = tx; y = ty;
+    }
+    return {...moves[moves.length - 1], x, y, k: 1};
+  };
+}
+// draws one scene into a canvas each frame; the ground scrolls when `scroll` is set (running on the spot)
+function makeScene(c, script, o = {}) {
+  const f = newFigure(), S = {c, f, script, o, after: [], px: null, last: 0, extra: o.extra};
+  return S;
+}
+function drawScene(S, now) {
+  const c = S.c, r = c.getBoundingClientRect(); if (!r.width) return;
+  const d = Math.min(2, devicePixelRatio || 1);
+  if (c.width !== Math.round(r.width * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+  const g = c.getContext('2d'), s = S.o.scale ? S.o.scale(r) : r.height / 3.4, t = now / 1000, dt = Math.min(.05, S.last ? t - S.last : 0); S.last = t;
+  g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height);
+  const m = S.script(t), f = S.f;
+  const bx = r.width / s * (S.o.cx ?? .5) + m.x, by = r.height / s - (S.o.ground ?? .55) + m.y;
+  // the ground: toy blocks (scrolling under a figure running on the spot)
+  const gy = (r.height / s - (S.o.ground ?? .55)) * s, scroll = S.o.scroll ? (t * S.o.scroll * s) % s : 0;
+  for (let x = -s - scroll; x < r.width + s; x += s) {
+    g.fillStyle = css('--tileEdge'); g.beginPath(); g.roundRect(x + 2, gy + 2, s - 4, s - 4, s * .16); g.fill();
+    g.fillStyle = css('--tile'); g.beginPath(); g.roundRect(x + 2, gy + 2, s - 4, s - 10, s * .16); g.fill();
+    g.fillStyle = css('--tileTop'); g.beginPath(); g.roundRect(x + 2, gy + 2, s - 4, s * .24, s * .12); g.fill();
+  }
+  if (S.extra) S.extra(g, s, m, t, r, bx, by);
+  // the figure
+  if (m.face) f.face = m.face;
+  if (m.st === 'run') f.ph += dt * 14;
+  const pose = poseFor(m.st, t, f.ph, 1);
+  if (m.st === 'dash' && m.dash) { const [dx, dy] = m.dash, n = Math.hypot(dx, dy); pose.rot = dy / n <= 0 ? .6 * Math.atan2(dx / n, -dy / n) : Math.sign(dx) * .94 * (1 - dy / n); }
+  easePose(f, pose, dt, m.st === 'land' ? 30 : m.st === 'run' ? 22 : 16);
+  const J = joints(f, bx, by);
+  const vx = S.px == null || !dt ? 0 : (bx - S.px) / dt; S.px = bx;
+  stepScarf(f, J, dt, -(vx + (S.o.scroll || 0)) * 2.5);
+  if (m.st === 'dash') { S.trail = (S.trail || 0) - dt; if (S.trail <= 0) { S.trail = .025; S.after.push({fig: {...f, scarf: []}, x: bx, y: by, life: .28}); } }
+  S.after = S.after.filter(a => (a.life -= dt) > 0);
+  S.after.forEach(a => drawFigure(g, a.fig, a.x, a.y, s, css('--accent'), {alpha: a.life / .28 * .4, scarf: false}));
+  drawFigure(g, f, bx, by, s, css('--ink'), {scarfCol: m.used ? css('--muted') : css('--accent')});
+}
+// the title: running on the spot, a jump, a dash, a landing
+const titleScene = makeScene($('#titleCv'), scene([
+  {d: 1.3, st: 'run', to: [0, 0], face: 1},
+  {d: .38, st: 'up', to: [.2, -1.5], ease: 'out', face: 1},
+  {d: .16, st: 'dash', to: [2.1, -1.5], dash: [1, 0], used: true, face: 1},
+  {d: .42, st: 'fall', to: [1.9, 0], ease: 'in', used: true, face: 1},
+  {d: .14, st: 'land', to: [1.8, 0], face: 1},
+  {d: .9, st: 'run', to: [0, 0], face: 1},
+]), {cx: .38, scroll: 3.2, ground: .75, scale: r => r.height / 4});
+let titleOn = true;
+function titleLoop(now) {
+  requestAnimationFrame(titleLoop);
+  if ($('#home').classList.contains('hidden') || document.querySelector('.panel.show') || document.hidden) return;
+  drawScene(titleScene, reduced() ? 0 : now);
+}
+
+// How to play: four little looping scenes
+const How = (() => {
+  const joy = (g, s, r, kx) => {   // a joystick in the bottom corner
+    const x = 30, y = r.height - 30;
+    g.fillStyle = css('--ink'); g.globalAlpha = .1; g.beginPath(); g.arc(x, y, 20, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = .45; g.beginPath(); g.arc(x + kx * 11, y, 10, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+  };
+  const tapAt = (g, r, k, label) => {   // a ripple where a thumb taps
+    const x = r.width - 34, y = r.height - 34;
+    g.strokeStyle = css('--accent'); g.lineWidth = 2.5; g.globalAlpha = Math.max(0, 1 - k); g.beginPath(); g.arc(x, y, 8 + k * 18, 0, Math.PI * 2); g.stroke();
+    g.globalAlpha = Math.max(0, 1 - k * 1.5); g.fillStyle = css('--accent'); g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+  };
+  const swipe = (g, r, k, dx, dy) => {   // a swipe trail
+    const x0 = r.width - 46, y0 = r.height - 26, L = 30, e = Math.min(1, k * 1.6);
+    g.strokeStyle = css('--accent'); g.lineCap = 'round'; g.lineWidth = 4; g.globalAlpha = Math.max(0, 1 - k);
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + dx * L * e, y0 + dy * L * e); g.stroke();
+    g.beginPath(); g.arc(x0 + dx * L * e, y0 + dy * L * e, 5, 0, Math.PI * 2); g.fillStyle = css('--accent'); g.fill(); g.globalAlpha = 1;
+  };
+  const orb = (g, s, x, y, on, t) => {
+    if (!on) { g.strokeStyle = css('--orb'); g.globalAlpha = .4; g.setLineDash([3, 3]); g.lineWidth = 1.5; g.beginPath(); g.arc(x * s, y * s, s * .24, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; return; }
+    const r = s * .24; g.fillStyle = css('--orb'); g.save(); g.translate(x * s, (y + Math.sin(t * 2.5) * .06) * s);
+    g.beginPath(); g.moveTo(0, -r * 1.2); g.lineTo(r * .9, 0); g.lineTo(0, r * 1.2); g.lineTo(-r * .9, 0); g.closePath(); g.fill(); g.restore();
+  };
+  const list = [...document.querySelectorAll('#howPanel canvas[data-demo]')].map(c => {
+    const k = c.dataset.demo;
+    if (k === 'run') return makeScene(c, scene([
+      {d: 1.2, st: 'run', to: [2.4, 0], face: 1}, {d: .35, st: 'idle', to: [2.4, 0], face: 1}, {d: 1.2, st: 'run', to: [0, 0], face: -1}, {d: .35, st: 'idle', to: [0, 0], face: -1},
+    ]), {cx: .3, extra: (g, s, m, t, r) => joy(g, s, r, m.st === 'run' ? m.face : 0)});
+    if (k === 'jump') return makeScene(c, scene([
+      {d: .6, st: 'idle', face: 1}, {d: .34, st: 'up', to: [0, -1.6], ease: 'out', face: 1, tap: 1}, {d: .34, st: 'fall', to: [0, 0], ease: 'in', face: 1}, {d: .14, st: 'land', face: 1},
+    ].map(m => ({...m, to: m.to || [0, 0]}))), {extra: (g, s, m, t, r) => { if (m.tap) tapAt(g, r, m.k); }});
+    if (k === 'dash') return makeScene(c, scene([
+      {d: .5, st: 'idle', to: [-1.4, 0], face: 1}, {d: .3, st: 'up', to: [-1.3, -1.1], ease: 'out', face: 1},
+      {d: .16, st: 'dash', to: [.6, -2.1], dash: [1, -.6], used: true, face: 1, sw: 1}, {d: .45, st: 'fall', to: [1, 0], ease: 'in', used: true, face: 1},
+      {d: .15, st: 'land', to: [1, 0], face: 1}, {d: .3, st: 'idle', to: [1, 0], face: 1},
+    ]), {cx: .45, scale: r => r.height / 4.3, extra: (g, s, m, t, r) => { if (m.sw) swipe(g, r, m.k * .5, .86, -.5); }});
+    // get it back: dash (scarf goes grey), grab an orb (red again), dash once more
+    return makeScene(c, scene([
+      {d: .45, st: 'idle', to: [-2, 0], face: 1}, {d: .26, st: 'up', to: [-1.9, -1], ease: 'out', face: 1},
+      {d: .15, st: 'dash', to: [-.3, -1], dash: [1, 0], used: true, face: 1}, {d: .2, st: 'fall', to: [0, -.8], used: true, face: 1, orbOff: 1},
+      {d: .15, st: 'dash', to: [1.6, -1.6], dash: [1, -.4], face: 1, orbOff: 1, used: true}, {d: .4, st: 'fall', to: [1.9, 0], ease: 'in', used: true, face: 1, orbOff: 1},
+      {d: .12, st: 'land', to: [1.9, 0], face: 1, orbOff: 1}, {d: .35, st: 'idle', to: [1.9, 0], face: 1, orbOff: 1},
+    ]), {cx: .45, extra: (g, s, m, t, r, bx, by) => orb(g, s, r.width / s * .45 - .05, r.height / s - .55 - 1.45, !m.orbOff, t)});
+  });
+  let on = false;
+  function loop(now) { if (!on) return; requestAnimationFrame(loop); list.forEach(S => drawScene(S, now)); }
+  return {start() { if (on) return; on = true; requestAnimationFrame(loop); }, stop() { on = false; }};
+})();
+
+/* ======================================================================
+   START
+   ====================================================================== */
+fillIcons();
+$('#starIc').innerHTML = STAR;
+show('home');
+requestAnimationFrame(frame);
+requestAnimationFrame(titleLoop);
+// keys on the home and level screens
+addEventListener('keydown', e => {
+  if (document.querySelector('.panel.show') || (RZ && RZ.menuOpen) || e.repeat) return;
+  if (!$('#levels').classList.contains('hidden') && e.key === 'Escape') show('home');
+});
+window.RizzoHooks = {
+  onMenuOpen() { if (G && inGame() && !G.done) setPause(true); },
+  previewSound: () => Sound.orb(),
+  leaveWarning: () => G && inGame() && !G.done && G.started ? 'You’re partway through a level.' : '',
+  canReload: () => !inGame(),
+};
+</script>
+</body>
+</html>
