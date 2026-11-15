@@ -296,7 +296,7 @@ const GAMES = [
     blurb: 'Guess the hidden word! A new Daily word every day, Unlimited play and 4 to 7 letters.',
     colors: ['#3b3f47', '#8b9099'],
     art: 'words',
-    cat: 'word',
+    cat: ['word', 'puzzle'],
     stat() {
       let st = {};
       try { st = JSON.parse(localStorage.getItem('rizzle-stats-v1')) || {}; } catch {}
@@ -340,7 +340,7 @@ const GAMES = [
     blurb: 'Race through 25 quick sums! Add, subtract, multiply, divide or a mix, with or without negative numbers.',
     colors: ['#0d9488', '#2dd4bf'],
     art: 'maths',
-    cat: 'number',
+    cat: ['number', 'quiz'],
     stat() {
       let st = {};
       try { st = JSON.parse(localStorage.getItem('quickmaths-stats-v1')) || {}; } catch {}
@@ -527,6 +527,8 @@ const CATS = [
   {id: 'cards', name: 'Cards', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3.5" width="12" height="17" rx="2.5"/><path d="M4.5 6.5v11.5a2.5 2.5 0 0 0 2 2.4"/></svg>'},
 ];
 const CAT_KEY = 'hub-cat';
+// a game can be in more than one category: cat is one id, or a list of them
+const inCat = (g, id) => [].concat(g.cat || []).includes(id);
 const chevIc = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 const tickIc = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const allIc = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
@@ -555,10 +557,10 @@ function card(g, n, isFav) {
 function render(still) {
   const favs = loadFavs(), isFav = id => favs.includes(id);
   // the drop-down: All games, then each category that has games in it
-  const used = showCats() ? CATS.filter(c => GAMES.some(g => g.cat === c.id)) : [];
+  const used = showCats() ? CATS.filter(c => GAMES.some(g => inCat(g, c.id))) : [];
   if (cat !== 'all' && !used.some(c => c.id === cat)) cat = 'all';
   document.getElementById('cats').hidden = !showCats();
-  const opts = [{id: 'all', name: 'All games', icon: allIc}, ...used].map(c => ({...c, n: c.id === 'all' ? GAMES.length : GAMES.filter(g => g.cat === c.id).length}));
+  const opts = [{id: 'all', name: 'All games', icon: allIc}, ...used].map(c => ({...c, n: c.id === 'all' ? GAMES.length : GAMES.filter(g => inCat(g, c.id)).length}));
   const cur = opts.find(c => c.id === cat) || opts[0];
   document.getElementById('catBtn').innerHTML = `${cur.icon}<span class="lab">${cur.name}</span><small>${cur.n}</small>${chevIc}`;
   document.getElementById('catMenu').innerHTML = opts.map(c => `<button class="opt" role="option" data-cat="${c.id}" aria-selected="${c.id === cat}">${c.icon}<span class="nm">${c.name}</span><small>${c.n}</small>${tickIc}</button>`).join('');
@@ -567,7 +569,7 @@ function render(still) {
   const sections = [];
   if (!showCats()) sections.push({head: '', games: order(GAMES)});   // favourites first, then the most recently played
   else if (cat === 'all') sections.push({head: '', games: order(GAMES)});   // one list: favourites first, then the most recently played
-  else sections.push({head: '', games: order(GAMES.filter(g => g.cat === cat))});
+  else sections.push({head: '', games: order(GAMES.filter(g => inCat(g, cat)))});
   const el = document.getElementById('games');
   el.classList.toggle('nofx', !!still);
   el.classList.toggle('small', boxSize() === 'small');           // re-sorting after a tap shouldn't replay the slide-in
