@@ -402,6 +402,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .boosts{grid-template-columns:repeat(6,1fr)}.boost{padding:3px 5px}.boost .e{display:none}
   .bottom{flex-direction:row;padding:5px}.bottom .boosts{flex:1}.hudrow{max-width:36%}
   #app.hudmin .boosts{margin:0 -5px 0 0;flex:0}
+  #app.hudmin .hudrow{max-width:none;flex:1}
 }
 </style>
 </head>
@@ -1100,10 +1101,17 @@ const VIAL = {luck: '#52e07a', power: '#ff8a3d', points: '#ffd23d', auto: '#47d7
   let W = 0, H = 0, dpr = 1, stars = [];
   const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.random() * a.length | 0];
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.ceil(w * dpr); c.height = Math.ceil(h * dpr); const x = c.getContext('2d'); x.scale(dpr, dpr); return [c, x]; };
+  // match the canvas to the window's real size, so nothing gets stretched (also after the phone turns)
   function size() {
-    const r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
-    W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    if (!r.width || !r.height) return false;
+    if (Math.round(r.width) === Math.round(W) && Math.round(r.height) === Math.round(H) && d === dpr && cv.width === Math.round(W * dpr)) return false;
+    const oldW = W, oldH = H;
+    dpr = d; W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0);
     stars = Array.from({length: Math.round(W * H / 2400)}, () => ({x: Math.random() * W, y: Math.random() * H, z: Math.random(), t: Math.random() * 6}));
+    // keep whatever's out there, just moved to the same spot in the new shape
+    if (oldW && oldH) { for (const t of things) { t.x *= W / oldW; t.y *= H / oldH; } for (const a of asteroids) { a.x *= W / oldW; a.y *= H / oldH; } }
+    return true;
   }
 
   /* --- planets: each kind paints its own surface; then shading, a glowing rim, maybe rings --- */
@@ -1260,14 +1268,17 @@ const VIAL = {luck: '#52e07a', power: '#ff8a3d', points: '#ffd23d', auto: '#47d7
     addNebula(W * .35); addPlanet(W * rnd(.62, .8));
     tPlanet = rnd(25, 45);
   }
-  addEventListener('resize', () => { size(); start(); });
   size(); start();
+  if (window.ResizeObserver) new ResizeObserver(() => { if (size() && !things.length) start(); }).observe(cv);
+  addEventListener('resize', () => setTimeout(size, 50));
+  addEventListener('orientationchange', () => setTimeout(size, 300));
 
-  let last = performance.now();
+  let last = performance.now(), checkN = 0;
   function draw(now) {
     requestAnimationFrame(draw);
     const dt = Math.min(.1, (now - last) / 1000); last = now;
     if (document.querySelector('.panel.show') || document.hidden) return;   // nobody can see it: save the battery
+    if (++checkN % 60 === 0) size();   // a safety check, in case a size change was missed
     const sp = document.documentElement.classList.contains('rz-reduce-motion') ? .15 : 1;
     // timers: something new comes into view every so often
     tPlanet -= dt * sp; tMoon -= dt * sp; tRocks -= dt * sp; tGalaxy -= dt * sp; tNeb -= dt * sp; tShoot -= dt;
