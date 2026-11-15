@@ -89,19 +89,28 @@ header{text-align:center;margin:18px 0 26px}
 .logowrap{position:relative;display:inline-block;padding:4px 30px 10px}
 .tag{margin:14px 0 0;color:var(--muted);font-weight:700;font-size:.98rem}
 
-/* ---------- categories ---------- */
-.cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 16px;padding:2px 16px 4px;-webkit-overflow-scrolling:touch}
-.cats::-webkit-scrollbar{display:none}
-.cats[hidden]{display:none}
-@media (min-width:600px){.cats{justify-content:center;flex-wrap:wrap}}
-.cat{flex:none;display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
-  font:inherit;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:var(--shadow);-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,transform .15s}
-.cat svg{width:17px;height:17px;flex:none}
-.cat small{font-size:.75rem;font-weight:800;color:var(--muted);background:var(--soft);border-radius:99px;padding:1px 7px}
-.cat[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
-.cat[aria-pressed=true] small{background:rgba(255,255,255,.22);color:#fff}
-.cat:active{transform:scale(.94)}
-.cat:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* ---------- categories: a drop-down ---------- */
+.catpick{position:relative;display:flex;justify-content:center;margin:0 0 16px;z-index:5}
+.catpick[hidden]{display:none}
+.catbtn{display:inline-flex;align-items:center;gap:10px;min-width:230px;padding:10px 12px 10px 16px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);
+  font:inherit;font-weight:800;font-size:1rem;box-shadow:var(--shadow);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.catbtn:active{transform:scale(.97)}
+.catbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.catbtn svg{width:19px;height:19px;flex:none;color:var(--accent)}
+.catbtn .lab{flex:1;text-align:left}
+.catbtn small,.opt small{font-size:.75rem;font-weight:800;color:var(--muted);background:var(--soft);border-radius:99px;padding:1px 8px}
+.catbtn .chev{width:18px;height:18px;color:var(--muted);transition:transform .2s}
+.catbtn[aria-expanded=true] .chev{transform:rotate(180deg)}
+.catmenu{position:absolute;top:calc(100% + 8px);left:50%;width:min(280px,calc(100vw - 32px));padding:6px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:var(--shadow-hi);
+  opacity:0;pointer-events:none;transform:translate(-50%,-6px) scale(.97);transform-origin:top center;transition:opacity .16s,transform .18s cubic-bezier(.2,.8,.2,1)}
+.catmenu.open{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.opt{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:none;color:var(--ink);font:inherit;font-weight:800;font-size:.95rem;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.opt svg{width:18px;height:18px;flex:none}
+.opt .nm{flex:1}
+.opt:focus-visible,.opt:hover{background:var(--soft);outline:0}
+.opt[aria-selected=true]{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.opt .tick{width:16px;height:16px;flex:none;opacity:0}
+.opt[aria-selected=true] .tick{opacity:1}
 .sec+.sec{margin-top:24px}
 .sech{display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:.82rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
 .sech svg{width:17px;height:17px}
@@ -213,7 +222,10 @@ html.rz-vt .game,html.rz-vt .soon{animation:none}
     </div>
     <p class="tag">Pick a game to play</p>
   </header>
-  <nav class="cats" id="cats" aria-label="Categories"></nav>
+  <div class="catpick" id="cats" hidden>
+    <button class="catbtn" id="catBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="catMenu"></button>
+    <div class="catmenu" id="catMenu" role="listbox" aria-label="Categories"></div>
+  </div>
   <div id="games"></div>
 </div>
 
@@ -505,7 +517,7 @@ const loadFavs = () => { try { const f = JSON.parse(localStorage.getItem(FAV_KEY
 const infoIc = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 10.8v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.5" fill="currentColor"/></svg>`;
 const star = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>`;
 
-// Categories: each game has one; the chips at the top show them all, or just one
+// Categories: each game has one; the drop-down at the top shows them all, or just one
 const CATS = [
   {id: 'puzzle', name: 'Puzzles', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg>'},
   {id: 'word', name: 'Words', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18L7.5 6 12 18M4.6 14h5.8"/><path d="M15 10.5c.8-.7 1.7-1 2.8-1 1.9 0 3.2 1.1 3.2 3V18m0-4.2c-.9-.5-1.9-.8-3-.8-1.9 0-3.3.9-3.3 2.6 0 1.5 1.1 2.4 2.7 2.4 1.5 0 2.7-.7 3.6-2"/></svg>'},
@@ -515,6 +527,8 @@ const CATS = [
   {id: 'cards', name: 'Cards', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3.5" width="12" height="17" rx="2.5"/><path d="M4.5 6.5v11.5a2.5 2.5 0 0 0 2 2.4"/></svg>'},
 ];
 const CAT_KEY = 'hub-cat';
+const chevIc = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const tickIc = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const allIc = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
 const starIc = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z"/></svg>';
 // Categories only show once there are enough games to fill them; until then it's one list
@@ -540,21 +554,20 @@ function card(g, n, isFav) {
 }
 function render(still) {
   const favs = loadFavs(), isFav = id => favs.includes(id);
-  // the chips: All, then each category that has games in it
+  // the drop-down: All games, then each category that has games in it
   const used = showCats() ? CATS.filter(c => GAMES.some(g => g.cat === c.id)) : [];
   if (cat !== 'all' && !used.some(c => c.id === cat)) cat = 'all';
   document.getElementById('cats').hidden = !showCats();
-  document.getElementById('cats').innerHTML = [{id: 'all', name: 'All', icon: allIc}, ...used].map(c =>
-    `<button class="cat" data-cat="${c.id}" aria-pressed="${cat === c.id}">${c.icon}${c.name}${c.id === 'all' ? '' : `<small>${GAMES.filter(g => g.cat === c.id).length}</small>`}</button>`).join('');
+  const opts = [{id: 'all', name: 'All games', icon: allIc}, ...used].map(c => ({...c, n: c.id === 'all' ? GAMES.length : GAMES.filter(g => g.cat === c.id).length}));
+  const cur = opts.find(c => c.id === cat) || opts[0];
+  document.getElementById('catBtn').innerHTML = `${cur.icon}<span class="lab">${cur.name}</span><small>${cur.n}</small>${chevIc}`;
+  document.getElementById('catMenu').innerHTML = opts.map(c => `<button class="opt" role="option" data-cat="${c.id}" aria-selected="${c.id === cat}">${c.icon}<span class="nm">${c.name}</span><small>${c.n}</small>${tickIc}</button>`).join('');
   // most recently played first, favourites before the rest
   const order = list => list.map(g => ({...g, k: GAMES.indexOf(g)})).sort((a, b) => (isFav(b.id) - isFav(a.id)) || lastPlayed(b.id) - lastPlayed(a.id) || a.k - b.k);
   const sections = [];
   if (!showCats()) sections.push({head: '', games: order(GAMES)});   // favourites first, then the most recently played
-  else if (cat === 'all') {
-    const fav = order(GAMES.filter(g => isFav(g.id)));
-    if (fav.length) sections.push({head: `<h3 class="sech favh">${starIc}Favourites</h3>`, games: fav});
-    used.forEach(c => { const gs = order(GAMES.filter(g => g.cat === c.id && !isFav(g.id))); if (gs.length) sections.push({head: `<h3 class="sech">${c.icon}${c.name}</h3>`, games: gs}); });
-  } else sections.push({head: '', games: order(GAMES.filter(g => g.cat === cat))});
+  else if (cat === 'all') sections.push({head: '', games: order(GAMES)});   // one list: favourites first, then the most recently played
+  else sections.push({head: '', games: order(GAMES.filter(g => g.cat === cat))});
   const el = document.getElementById('games');
   el.classList.toggle('nofx', !!still);
   el.classList.toggle('small', boxSize() === 'small');           // re-sorting after a tap shouldn't replay the slide-in
@@ -562,8 +575,27 @@ function render(still) {
   el.innerHTML = sections.map((s, k) => `<section class="sec">${s.head}<ul class="games">${s.games.map(g => card(g, n++, isFav)).join('')}${
     k === sections.length - 1 && cat === 'all' ? `<li class="soon" style="animation-delay:${n * 60}ms;view-transition-name:rz-soon">${plus}<b>More games on the way</b><span>New ones will show up here</span></li>` : ''}</ul></section>`).join('');
 }
-document.getElementById('cats').addEventListener('click', e => {
-  const b = e.target.closest('.cat'); if (!b || b.dataset.cat === cat) return;
+// opening and closing the drop-down
+const catMenu = document.getElementById('catMenu'), catBtn = document.getElementById('catBtn');
+function menuOpen(on) {
+  catMenu.classList.toggle('open', on); catBtn.setAttribute('aria-expanded', on);
+  if (on) (catMenu.querySelector('[aria-selected=true]') || catMenu.querySelector('.opt')).focus({preventScroll: true});
+}
+catBtn.addEventListener('click', () => menuOpen(!catMenu.classList.contains('open')));
+document.addEventListener('click', e => { if (!e.target.closest('.catpick')) menuOpen(false); });
+document.addEventListener('keydown', e => {
+  if (!catMenu.classList.contains('open')) return;
+  if (e.key === 'Escape') { menuOpen(false); catBtn.focus(); }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const os = [...catMenu.querySelectorAll('.opt')], i = os.indexOf(document.activeElement);
+    os[(i + (e.key === 'ArrowDown' ? 1 : -1) + os.length) % os.length].focus();
+  }
+});
+catMenu.addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if (!b) return;
+  menuOpen(false); catBtn.focus({preventScroll: true});
+  if (b.dataset.cat === cat) return;
   cat = b.dataset.cat;
   try { localStorage.setItem(CAT_KEY, cat); } catch {}
   const redo = () => render(true);
