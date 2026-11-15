@@ -1,0 +1,1710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Crate Clicker</title>
+<meta name="theme-color" content="#060a1a">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="crateclicker" data-show-when="#app:not(.revealing)" data-hide-when=".panel.show" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Crate Clicker">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ======================================================================
+   COLOURS: always night in space. Cyan for the ship's lights, and every
+   rarity has its own colour: grey, green, blue, purple, gold, red.
+   ====================================================================== */
+:root{color-scheme:dark;--ease:cubic-bezier(.2,.8,.2,1);--pop:cubic-bezier(.3,1.6,.5,1);
+  --bg:#060a1a;--panel:rgba(16,24,54,.86);--ink:#e9f1ff;--muted:#8e9cc4;--line:rgba(130,170,255,.18);--soft:rgba(130,170,255,.09);
+  --accent:#47d7ff;--hi:#9aeeff;--edge:#1580aa;--onaccent:#03202c;--shade:rgba(0,0,0,.5);--ok:#3ee08a;--gold:#ffc83d;--gem:#5fdcff;
+  --r0:#9aa6c4;--r1:#38d47f;--r2:#4f93ff;--r3:#b867ff;--r4:#ffbf3a;--r5:#ff5266;
+  --metal:#1b2342;--metal2:#2a3459;--rim:#3a4876;
+  --head:Orbitron,Nunito,system-ui,sans-serif;
+  --rz-btn-bg:rgba(16,24,54,.9);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid rgba(71,215,255,.35);--rz-btn-radius:12px;--rz-btn-shadow:0 0 14px rgba(71,215,255,.18);--rz-btn-size:42px}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg)}
+body{margin:0;height:100%;overflow:hidden;color:var(--ink);background:var(--bg);
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid rgba(71,215,255,.35);box-shadow:0 0 14px rgba(71,215,255,.15);color:var(--accent);position:relative}
+.iconbtn:active{transform:scale(.94)}
+.dot{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--r5);color:#fff;font-size:.7rem;font-weight:900;display:grid;place-items:center;box-shadow:0 0 10px rgba(255,82,102,.6);pointer-events:none}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade);border-radius:14px;font-weight:900}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+.primary:disabled{filter:grayscale(.85) brightness(.75);opacity:.6;transform:none}
+.gemc{color:var(--gem);font-weight:900}
+.ico{width:1.15em;height:1.15em;display:inline-block;vertical-align:middle;overflow:visible}
+.gemi{width:1em;height:1em;vertical-align:-.12em}
+.primary.gem .gemi{filter:brightness(.3) saturate(2)}
+.card .e .ico{width:1.2em;height:1.2em;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--rc) 60%,transparent))}
+.dropcard .e .ico{width:1.25em;height:1.25em}
+.vial span .ico{width:22px;height:22px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.pupc .ico{width:13px;height:13px;color:var(--accent);vertical-align:-2px}
+
+/* ================= THE SHIP ================= */
+/* the big window onto space, the walls and the floor */
+.ship{position:fixed;inset:0;pointer-events:none;overflow:hidden;
+  background:repeating-linear-gradient(90deg,transparent 0 94px,rgba(150,180,255,.035) 94px 96px),
+    linear-gradient(180deg,#0b1128 0%,#0e1532 50%,#0a0f24 100%)}
+.win{position:absolute;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 6px);height:46%;border-radius:30px 30px 44% 44%/30px 30px 18% 18%;
+  border:9px solid #19213f;box-shadow:0 0 0 2px #2c3863,inset 0 0 40px rgba(0,0,0,.8),0 10px 40px rgba(0,0,0,.6);overflow:hidden;
+  background:radial-gradient(90% 70% at 50% 40%,#0a0c22,#03040d);max-width:760px;margin:0 auto}
+.win canvas{position:absolute;inset:0;width:100%;height:100%}
+.frame-bolt{position:absolute;width:8px;height:8px;border-radius:50%;background:#3a4876;box-shadow:inset 0 1px 1px rgba(255,255,255,.2)}
+.strip{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 46% + 14px);height:3px;background:linear-gradient(90deg,transparent,rgba(71,215,255,.55),transparent);box-shadow:0 0 18px rgba(71,215,255,.5)}
+.floor{position:absolute;left:-30%;right:-30%;bottom:0;height:46%;transform-origin:50% 100%;transform:perspective(420px) rotateX(58deg);
+  background:linear-gradient(rgba(71,215,255,.16) 2px,transparent 2px) 0 0/100% 48px,linear-gradient(90deg,rgba(71,215,255,.16) 2px,transparent 2px) 0 0/48px 100%,linear-gradient(#0c1330,#0a1028);
+  -webkit-mask:linear-gradient(transparent,#000 40%);mask:linear-gradient(transparent,#000 40%);animation:floor 6s linear infinite}
+@keyframes floor{to{background-position:0 48px,0 0,0 0}}
+
+/* ================= THE GAME SCREEN ================= */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 12px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.topbar{position:relative;width:100%;max-width:720px;height:42px;display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-shrink:0}
+.res{height:34px;padding:0 11px;border-radius:17px;display:flex;align-items:center;gap:5px;background:rgba(10,16,40,.78);border:1px solid var(--line);font-weight:900;font-variant-numeric:tabular-nums;font-size:.92rem}
+.res.gems{color:var(--gem);border-color:rgba(95,220,255,.4)}
+.res.stars{color:var(--gold);border-color:rgba(255,200,61,.4)}
+.score{text-align:center;margin-top:2px;flex-shrink:0;position:relative}
+.score .pts{font-family:var(--head);font-size:clamp(1.9rem,8vw,3rem);font-weight:900;line-height:1.05;letter-spacing:.02em;font-variant-numeric:tabular-nums;
+  color:#fff;text-shadow:0 0 18px rgba(71,215,255,.7),0 0 2px #fff}
+.score .sub{margin-top:3px;color:#b9c8ee;font-weight:800;font-size:.9rem;font-variant-numeric:tabular-nums;text-shadow:0 1px 4px #000}
+.score .sub b{color:#fff}
+/* the deck: stations on each side, the crate in the middle */
+.deck{position:relative;flex:1 1 auto;width:100%;max-width:720px;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.3fr) minmax(0,1fr);touch-action:manipulation}
+.side{display:flex;flex-direction:column;justify-content:space-around;align-items:center;min-height:0;padding:4px 0}
+.station{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;transition:transform .15s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
+.station:active{transform:scale(.92)}
+.station svg{width:min(110px,100%,11.5vh);height:auto;aspect-ratio:1;overflow:visible}
+.station .lbl{font-family:var(--head);font-size:.6rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:rgba(8,13,34,.85);border:1px solid var(--line);border-radius:7px;padding:3px 6px;color:var(--ink);white-space:nowrap}
+.station .sb{font-size:.62rem;font-weight:800;color:var(--muted);margin-top:1px}
+.station .dot{top:-2px;right:8%}
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;cursor:pointer}
+.rarity{font-family:var(--head);font-weight:900;font-size:.95rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rc);text-shadow:0 0 14px color-mix(in srgb,var(--rc) 70%,transparent);transition:color .3s;text-align:center}
+.kind{display:inline-block;font-family:Nunito,sans-serif;font-size:.68rem;font-weight:900;letter-spacing:.06em;padding:2px 8px;border-radius:9px;background:var(--rc);color:#071024;margin-left:6px;vertical-align:2px}
+.boxwrap{position:relative;width:min(100%,300px,max(140px,100vh - 470px));width:min(100%,300px,max(140px,100dvh - 470px));aspect-ratio:1;margin:2px 0 6px;pointer-events:none}
+.bob{position:absolute;inset:0;animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4%)}}
+/* the tractor pad the crate floats over */
+.pad{position:absolute;left:4%;right:4%;bottom:-6%;height:22%;border-radius:50%;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--rc) 55%,transparent),transparent 70%),radial-gradient(closest-side,transparent 72%,rgba(71,215,255,.75) 78%,transparent 86%),radial-gradient(closest-side,#1b2546,#0d1330);
+  box-shadow:0 0 30px rgba(71,215,255,.25)}
+.beam{position:absolute;left:14%;right:14%;bottom:2%;height:90%;background:linear-gradient(0deg,color-mix(in srgb,var(--rc) 30%,transparent),transparent);
+  -webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);opacity:.5;animation:beam 2.4s ease-in-out infinite}
+@keyframes beam{50%{opacity:.25}}
+.glow{position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--rc) 50%,transparent),transparent);opacity:.5;transition:opacity .3s}
+.boxwrap[data-r="0"] .glow{opacity:.15}
+.boxwrap[data-r="5"] .glow,.boxwrap[data-r="5"] .pad{animation:spinhue 3s linear infinite}
+#box{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform-origin:50% 92%}
+#box.mythic{animation:spinhue 3s linear infinite}
+@keyframes spinhue{to{filter:hue-rotate(360deg)}}
+.crack{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s;filter:drop-shadow(0 0 3px var(--rc))}
+.crack.show{opacity:.95}
+.lid{transform-box:fill-box;transform-origin:50% 100%}
+.boxwrap.open .lid{animation:lidoff .55s cubic-bezier(.3,.6,.4,1) forwards}
+@keyframes lidoff{to{transform:translate(18%,-130%) rotate(28deg);opacity:0}}
+.boxwrap.open #box{animation:boxgone .55s ease-in forwards}
+@keyframes boxgone{40%{transform:scale(1.12)}to{transform:scale(.4);opacity:0}}
+.boxwrap.drop .bob{animation:beamin .55s var(--pop),bob 3.2s ease-in-out .55s infinite}
+@keyframes beamin{from{transform:translateY(-40%) scale(.5);opacity:0;filter:brightness(3)}}
+.rays{position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 45%,transparent) 0 8deg,transparent 8deg 22deg);
+  -webkit-mask:radial-gradient(closest-side,#000 30%,transparent);mask:radial-gradient(closest-side,#000 30%,transparent);opacity:0;pointer-events:none}
+.boxwrap.open .rays{animation:rays .9s ease-out}
+@keyframes rays{20%{opacity:1}to{opacity:0;transform:rotate(40deg) scale(1.2)}}
+.hpbar{width:min(100%,260px);height:12px;border-radius:6px;background:rgba(5,9,25,.85);border:1px solid rgba(71,215,255,.3);overflow:hidden;position:relative;box-shadow:0 0 12px rgba(0,0,0,.5)}
+.hpbar i{position:absolute;inset:0;width:var(--p,0%);background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 60%,#fff),var(--rc));box-shadow:0 0 10px var(--rc);border-radius:6px;transition:width .08s linear}
+.hptext{margin-top:4px;font-weight:800;font-size:.82rem;color:#c9d6f5;font-variant-numeric:tabular-nums;text-shadow:0 1px 4px #000;text-align:center}
+.lvl{margin-top:1px;font-weight:800;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;text-align:center}
+.lvl b{color:var(--accent)}
+.taphint{margin-top:3px;color:var(--accent);font-weight:800;font-size:.82rem;animation:breathe 1.6s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.35}}
+/* numbers that float up where you tap */
+.float{position:fixed;left:0;top:0;pointer-events:none;font-family:var(--head);font-weight:900;font-size:1.1rem;color:#fff;text-shadow:0 0 10px rgba(71,215,255,.9);white-space:nowrap;z-index:5;will-change:transform,opacity}
+.float.crit{color:var(--gold);font-size:1.4rem;text-shadow:0 0 12px rgba(255,180,0,.8)}
+.chip-bits{position:fixed;left:0;top:0;width:7px;height:7px;border-radius:2px;pointer-events:none;z-index:4;box-shadow:0 0 6px currentColor}
+/* the console at the bottom: boosts and the next crate */
+.bottom{width:100%;max-width:720px;flex-shrink:0;display:flex;flex-direction:column;gap:7px;padding:8px;border-radius:18px;
+  background:linear-gradient(180deg,rgba(22,32,70,.92),rgba(10,15,36,.95));border:1px solid rgba(71,215,255,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 -8px 30px rgba(0,0,0,.45),0 0 24px rgba(71,215,255,.08)}
+.boosts{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.boost{background:rgba(4,8,22,.7);border:1px solid var(--line);border-radius:10px;padding:5px 7px;display:flex;align-items:center;gap:6px;min-width:0}
+.boost .e{font-size:1.05rem}
+.boost div{min-width:0}
+.boost small{display:block;font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.boost b{display:block;font-size:.88rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums;color:#dff6ff}
+.boost.bump{animation:bump .5s var(--pop)}
+@keyframes bump{40%{transform:scale(1.1);border-color:var(--accent)}}
+.boost.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 14px rgba(71,215,255,.4)}
+.hudrow{display:flex;gap:6px;align-items:stretch}.hudrow .next{flex:1}
+.hudbtn{flex-shrink:0;padding:0 10px 0 12px;border-radius:12px;background:rgba(4,8,22,.7);border:1px solid rgba(71,215,255,.35);color:var(--accent);font-family:var(--head);font-weight:800;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:3px}
+.hudbtn svg{width:18px;height:18px;transition:transform .25s var(--ease);transform:rotate(180deg)}
+.hudbtn:active{transform:scale(.95)}
+#app.hudmin .hudbtn svg{transform:none}
+.boosts{max-height:140px;overflow:hidden;transition:max-height .3s var(--ease),opacity .25s,margin .3s var(--ease)}
+#app.hudmin .boosts{max-height:0;opacity:0;margin-bottom:-7px}
+#app.hudmin .boxwrap{width:min(100%,300px,max(140px,100vh - 400px));width:min(100%,300px,max(140px,100dvh - 400px))}
+.boost{border-left:3px solid rgba(71,215,255,.45)}
+.next{background:rgba(4,8,22,.7);border:1px solid var(--line);border-radius:12px;padding:5px 10px;display:flex;align-items:center;gap:10px;min-width:0}
+.next .mini{width:32px;height:32px;flex-shrink:0}
+.next small{display:block;font-size:.62rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.next b{display:block;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pups{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:5px}
+.pups:empty{display:none}
+.pupc{background:rgba(10,16,40,.85);border:1.5px solid var(--accent);border-radius:10px;padding:2px 8px;font-weight:900;font-size:.78rem;font-variant-numeric:tabular-nums;box-shadow:0 0 12px rgba(71,215,255,.35)}
+.pupc.low{animation:breathe 1s ease-in-out infinite}
+/* small drop cards that slide in over the crate */
+.drops{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;z-index:6;width:min(88vw,330px)}
+.dropcard{display:flex;align-items:center;gap:10px;background:rgba(10,15,38,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid var(--rc);border-radius:14px;padding:3px 10px 3px 5px;box-shadow:0 6px 18px var(--shade),0 0 16px color-mix(in srgb,var(--rc) 40%,transparent);width:100%;animation:dropin .35s var(--pop)}
+.dropcard.out{animation:dropout .35s ease-in forwards}
+@keyframes dropin{from{transform:translateY(-40px) scale(.9);opacity:0}}
+@keyframes dropout{to{transform:translateY(-30px);opacity:0}}
+.dropcard .e{font-size:1.3rem;display:grid;place-items:center;width:32px;height:32px;border-radius:11px;flex-shrink:0;background:radial-gradient(closest-side,color-mix(in srgb,var(--rc) 35%,transparent),transparent)}
+.dropcard b{display:block;font-weight:900;font-size:.86rem;line-height:1.15}
+.dropcard small{display:block;color:var(--muted);font-weight:800;font-size:.7rem;line-height:1.2}
+.dropcard .tag{font-size:.64rem;padding:2px 7px}
+.tag{margin-left:auto;font-size:.72rem;font-weight:900;padding:3px 8px;border-radius:8px;background:rgba(130,170,255,.14);color:#c4d2f5;white-space:nowrap}
+.tag.new{background:var(--accent);color:var(--onaccent)}
+.tag.up{background:var(--gold);color:#3a2600}
+
+/* ================= THE BIG REVEAL ================= */
+.reveal{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(3,5,16,.8);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  opacity:0;pointer-events:none;transition:opacity .25s;padding:20px}
+.reveal.show{opacity:1;pointer-events:auto}
+.reveal .burst{position:absolute;width:900px;height:900px;left:50%;top:50%;margin:-450px 0 0 -450px;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 30%,transparent) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(closest-side,#000 10%,transparent 70%);mask:radial-gradient(closest-side,#000 10%,transparent 70%);animation:turn 14s linear infinite}
+@keyframes turn{to{transform:rotate(360deg)}}
+.reveal h2{position:relative;margin:0;color:#fff;font-family:var(--head);font-weight:900;font-size:1.35rem;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 0 22px var(--rc);text-align:center}
+.cards{position:relative;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:min(92vw,340px)}
+.cards.three{max-width:min(92vw,520px)}
+.card{width:min(150px,calc((100vw - 52px) / 2));padding:16px 12px 14px;border-radius:20px;background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 30%,#121a3a),#0b1130);border:2.5px solid var(--rc);color:var(--ink);
+  box-shadow:0 0 30px color-mix(in srgb,var(--rc) 55%,transparent),0 10px 30px rgba(0,0,0,.5);text-align:center;animation:cardin .55s var(--pop) both}
+.card:nth-child(2){animation-delay:.1s}.card:nth-child(3){animation-delay:.2s}.card:nth-child(4){animation-delay:.3s}
+@keyframes cardin{from{transform:scale(.3) rotate(-12deg);opacity:0}}
+.card .e{font-size:3.4rem;line-height:1.1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+.card .rn{font-size:.7rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--rc);margin-top:6px}
+.card b{display:block;font-weight:900;font-size:1.05rem;margin-top:2px}
+.card .fx{color:#b9c8ee;font-weight:800;font-size:.82rem;margin-top:4px}
+.card .tag{display:inline-block;margin-top:8px}
+.card .copies{display:block;font-family:var(--head);font-weight:900;color:var(--rc);font-size:1.1rem;margin-top:4px}
+.reveal .tapon{position:relative;color:rgba(255,255,255,.75);font-weight:800}
+.mythic-r{animation:spinhue 3s linear infinite}
+.card.pick{cursor:pointer;transition:transform .15s,opacity .3s,filter .3s}
+.card.pick:active{transform:scale(.95)}
+.card.dim{opacity:.35;filter:grayscale(.7);transform:scale(.92)}
+.card.chosen{transform:scale(1.06)}
+.cards.small{max-width:372px;gap:5px}
+.cards.small .card{width:min(82px,calc((100vw - 56px) / 4));padding:8px 3px 7px;border-width:2px;border-radius:14px}
+.cards.small .card .e{font-size:1.9rem}
+.cards.small .card b{font-size:.72rem;line-height:1.15}
+.cards.small .card .rn{font-size:.56rem;margin-top:3px}
+.cards.small .card .fx{display:none}
+.cards.small .card .tag{font-size:.56rem;padding:2px 4px;margin-top:5px}
+@media (max-height:700px){.card{width:min(136px,calc((100vw - 52px) / 2));padding:10px 8px}.card .e{font-size:2.6rem}.card b{font-size:.95rem}.reveal{gap:10px}}
+/* shorter phones: smaller stations and console */
+@media (max-height:760px){
+  .station .sb{display:none}.station svg{width:min(86px,100%,10vh)}
+  .bottom{gap:5px;padding:6px}.boost{padding:3px 6px}.boost b{font-size:.8rem}.boost small{font-size:.56rem}
+  .next{padding:3px 8px}.next .mini{width:26px;height:26px}
+  .score .pts{font-size:clamp(1.7rem,7vw,2.4rem)}
+}
+@media (max-height:620px){
+  .station .lbl{font-size:.5rem;padding:2px 4px}.station svg{width:min(70px,100%,9.5vh)}
+  .boost .e{display:none}.lvl{display:none}.taphint{display:none}
+}
+
+/* ================= THE ROOMS (panels) =================
+   Every station opens its own room with its own look:
+   Cargo Hold (amber shelves), Fabricator (steel and hazard stripes), Power Lab (glowing vials),
+   Trade Post (neon market), Star Map (gold stars), Help Bot (green screen), Controls (riveted metal). */
+.panel{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s var(--ease);visibility:hidden;
+  --acc:var(--accent);background:var(--bg)}
+.panel.show{transform:none;visibility:visible}
+.phead{display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px 6px;max-width:640px;width:100%;margin:0 auto;position:relative;z-index:1}
+.phead .iconbtn{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 50%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--acc) 25%,transparent)}
+.phead h2{margin:0;font-family:var(--head);font-size:1.15rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;flex:1;color:#fff;text-shadow:0 0 16px var(--acc)}
+.cur{text-align:right;line-height:1.25;font-weight:900;font-size:.9rem;color:#fff}
+.banner{position:relative;display:flex;align-items:center;gap:14px;padding:4px 18px 12px;max-width:640px;width:100%;margin:0 auto;z-index:1}
+.banner .art{width:92px;height:92px;flex-shrink:0;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--acc) 35%,transparent))}
+.banner .art svg{width:100%;height:100%;overflow:visible}
+.banner p{margin:0;font-weight:800;color:color-mix(in srgb,var(--acc) 45%,#fff);font-size:.95rem;line-height:1.35}
+.pbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 24px);max-width:640px;width:100%;margin:0 auto;position:relative;z-index:1}
+.note{color:var(--muted);font-weight:700;font-size:.88rem;margin:2px 2px 12px}
+.note b{color:#fff}
+/* shop items, shared */
+.shopitem{display:flex;align-items:center;gap:12px;border-radius:16px;padding:10px 12px;margin-bottom:9px;position:relative}
+.shopitem .mini{width:52px;height:52px;flex-shrink:0}
+.shopitem>div{flex:1;min-width:0}
+.shopitem b{display:block;font-weight:900;color:#fff}
+.shopitem small{display:block;color:var(--muted);font-weight:700;font-size:.8rem}
+.shopitem .primary{padding:10px 12px;font-size:.92rem;white-space:nowrap;min-width:78px}
+.shopitem.done{opacity:.5}
+.tagx{display:inline-block;font-size:.62rem;font-weight:900;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:2px;background:var(--r5);color:#fff}
+.tagx.blue{background:#1fa8e0}
+.act{color:var(--ok);font-weight:900}
+.btnwas{display:block;font-size:.66rem;text-decoration:line-through;opacity:.75;line-height:1}
+.primary.gem{background:linear-gradient(180deg,#9af0ff,#25b4ea);color:#03202c;box-shadow:0 4px 0 #0b78a8,0 0 16px rgba(95,220,255,.3)}
+.primary.gem:active{box-shadow:0 1px 0 #0b78a8}
+
+/* Fabricator: steel plate, hazard stripes, a conveyor */
+.env-fab{--acc:#ffc53d;background:repeating-linear-gradient(135deg,rgba(255,255,255,.022) 0 2px,transparent 2px 10px),linear-gradient(#1c1e25,#101116)}
+.env-fab .banner{padding-bottom:22px}
+.env-fab .banner::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:repeating-linear-gradient(45deg,#ffc53d 0 12px,#15161b 12px 24px);background-size:34px 100%;animation:belt 1.4s linear infinite;border-radius:3px}
+@keyframes belt{to{background-position:34px 0}}
+.env-fab .pbody{padding-top:14px}
+.env-fab .shopitem b{color:#ffd56b}.env-lab .shopitem b{color:#a8fff0}.env-trade .shopitem b{color:#ffc6f2}
+.env-fab .shopitem{background:linear-gradient(#2b2e38,#1f2129);border:1.5px solid #3c404d;border-left:6px solid var(--acc);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 12px rgba(0,0,0,.4)}
+.env-fab .shopitem::after{content:"";position:absolute;right:8px;top:6px;width:5px;height:5px;border-radius:50%;background:#555b6a;box-shadow:0 calc(100% + 40px) 0 #555b6a}
+.env-fab .primary:not(.gem){background:linear-gradient(#ffdd73,#f0a70a);color:#2a1d00;box-shadow:0 4px 0 #a46c00,0 8px 16px rgba(0,0,0,.4)}
+.env-fab .primary:not(.gem):active{box-shadow:0 1px 0 #a46c00}
+/* Power Lab: glowing glass and bubbling vials */
+.env-lab{--acc:#45f0c8;background:radial-gradient(60% 40% at 85% 8%,rgba(69,240,200,.2),transparent),radial-gradient(50% 40% at 8% 92%,rgba(71,215,255,.16),transparent),#03131a}
+.env-lab .shopitem{background:linear-gradient(135deg,rgba(69,240,200,.12),rgba(10,40,48,.5));border:1.5px solid rgba(69,240,200,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 18px rgba(69,240,200,.08)}
+.vial{position:relative;width:40px;height:56px;flex-shrink:0;margin:0 6px;border-radius:9px 9px 18px 18px;border:2px solid rgba(200,255,245,.6);background:rgba(255,255,255,.05);overflow:hidden;box-shadow:0 0 16px color-mix(in srgb,var(--vc) 45%,transparent)}
+.vial::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(color-mix(in srgb,var(--vc) 70%,#fff),var(--vc));opacity:.85}
+.vial::after{content:"";position:absolute;left:30%;bottom:6px;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.75);box-shadow:9px -8px 0 -1px rgba(255,255,255,.6),3px -18px 0 -2px rgba(255,255,255,.5);animation:bubble 2.2s ease-in infinite}
+@keyframes bubble{to{transform:translateY(-34px);opacity:0}}
+.vial span{position:absolute;inset:0;display:grid;place-items:center;font-size:1.4rem;padding-top:8px;z-index:1}
+.vial.on{animation:vialon 1.2s ease-in-out infinite}
+@keyframes vialon{50%{box-shadow:0 0 26px var(--vc)}}
+/* Trade Post: a neon market, deals on tickets */
+.env-trade{--acc:#ff4fd8;background:linear-gradient(rgba(255,79,216,.07) 1px,transparent 1px) 0 0/100% 28px,linear-gradient(90deg,rgba(255,79,216,.07) 1px,transparent 1px) 0 0/28px 100%,radial-gradient(90% 55% at 50% 0,#3d1050,#13061d 70%)}
+.env-trade .phead h2{color:#ffe1f8;text-shadow:0 0 8px #ff4fd8,0 0 22px #ff4fd8;animation:neon 4s infinite}
+@keyframes neon{0%,92%,96%,100%{opacity:1}94%{opacity:.5}}
+.env-trade .shopitem{background:linear-gradient(90deg,#2e1040,#1d0a2b);border:1.5px dashed rgba(255,79,216,.6);margin-left:4px;margin-right:4px}
+.env-trade .shopitem::before,.env-trade .shopitem::after{content:"";position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#1a0826;border:1.5px dashed rgba(255,79,216,.6)}
+.env-trade .shopitem::before{left:-9px;clip-path:inset(0 0 0 50%)}
+.env-trade .shopitem::after{right:-9px;clip-path:inset(0 50% 0 0)}
+.env-trade .primary:not(.gem){background:linear-gradient(#ff9be9,#e535bd);color:#2d0225;box-shadow:0 4px 0 #9b1680,0 0 16px rgba(255,79,216,.35)}
+.env-trade .primary:not(.gem):active{box-shadow:0 1px 0 #9b1680}
+.env-trade .pe,.env-lab .pe{width:52px;height:52px;display:grid;place-items:center;font-size:2rem;flex-shrink:0}
+.clock{display:inline-block;font-family:var(--head);color:#ffd1f5;text-shadow:0 0 10px #ff4fd8}
+/* Cargo Hold: a calm, warm storage bay; items sit in lit pods, tap one for its card */
+.env-cargo{--acc:#ffb347;background:radial-gradient(80% 35% at 50% 0,rgba(255,179,71,.13),transparent),linear-gradient(rgba(255,190,120,.035) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(#17130e,#0c0a08)}
+.holdsum{background:rgba(255,190,120,.05);border:1px solid rgba(255,190,120,.18);border-radius:18px;padding:12px;margin:4px 0 6px}
+.found{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.found .fl small{display:block;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#b59a74}
+.found .fl b{font-family:var(--head);font-size:1.15rem;color:#fff}
+.fbar{flex:1;height:8px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden}
+.fbar i{display:block;height:100%;width:var(--p,0%);border-radius:4px;background:linear-gradient(90deg,#ffb347,#ffe08a);box-shadow:0 0 10px rgba(255,179,71,.6)}
+.cstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,190,120,.14);border-radius:12px;overflow:hidden}
+.cstats div{background:#15110c;padding:7px 9px}
+.cstats small{display:block;font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#a08a6a}
+.cstats b{font-size:.92rem;font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
+.rack{margin-top:16px}
+.rhead{display:flex;align-items:center;gap:8px;margin:0 2px 8px;font-family:var(--head);font-weight:900;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rc)}
+.rhead::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--rc);box-shadow:0 0 8px var(--rc)}
+.rhead span{margin-left:auto;color:#8f7d62;font-family:Nunito,sans-serif;letter-spacing:.04em}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pod{position:relative;aspect-ratio:4/5;border-radius:16px;display:flex;flex-direction:column;align-items:center;padding:8px 5px 7px;gap:3px;color:var(--ink);
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,190,120,.12);transition:transform .15s}
+.pod:active{transform:scale(.95)}
+.pod.have{border-color:color-mix(in srgb,var(--rc) 55%,transparent);background:radial-gradient(70% 50% at 50% 38%,color-mix(in srgb,var(--rc) 26%,transparent),transparent 72%),linear-gradient(180deg,#1f1a13,#130f0a);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 16px -6px var(--rc)}
+.pod .pi{flex:1;display:grid;place-items:center;font-size:2.6rem;min-height:0}
+.pod .pi .ico{width:1em;height:1em;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55))}
+.pod.none .pi .ico{filter:brightness(0);opacity:.3}
+.pod.lost .pi .ico{filter:grayscale(1);opacity:.4}
+.pod .nm{font-size:.62rem;font-weight:800;color:#e8dcc8;text-align:center;line-height:1.15;min-height:2.3em;display:flex;align-items:center}
+.pod.none .nm,.pod.lost .nm{color:#6f6450}
+.pod .tier{position:absolute;top:6px;left:6px;font-size:.58rem;font-weight:900;padding:1px 6px;border-radius:6px;background:var(--rc);color:#120c02}
+.pod .pb{width:78%;height:4px;border-radius:2px;background:rgba(0,0,0,.5);overflow:hidden;flex-shrink:0}
+.pod .pb i{display:block;height:100%;background:var(--rc);box-shadow:0 0 6px var(--rc)}
+.pod.none .pb,.pod.lost .pb{visibility:hidden}
+/* the item card that slides up when you tap a pod */
+.sheet{position:absolute;inset:0;z-index:5;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+.sheetbg{position:absolute;inset:0;background:rgba(0,0,0,.6);opacity:0;transition:opacity .25s}
+.sheetcard{position:relative;width:calc(100% - 20px);max-width:480px;margin-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);border-radius:26px;padding:22px 18px 16px;text-align:center;
+  background:radial-gradient(80% 45% at 50% 0,color-mix(in srgb,var(--rc) 30%,transparent),transparent 70%),linear-gradient(180deg,#1d1912,#110e09);border:1.5px solid color-mix(in srgb,var(--rc) 60%,transparent);
+  box-shadow:0 -10px 40px rgba(0,0,0,.6),0 0 40px color-mix(in srgb,var(--rc) 22%,transparent);transform:translateY(115%);transition:transform .32s var(--ease)}
+.sheet.show{pointer-events:auto}.sheet.show .sheetbg{opacity:1}.sheet.show .sheetcard{transform:none}
+.sheetcard .big{font-size:5rem;line-height:1}
+.sheetcard .big .ico{width:1em;height:1em;filter:drop-shadow(0 0 22px color-mix(in srgb,var(--rc) 70%,transparent))}
+.sheetcard.none .big .ico{filter:brightness(0);opacity:.35}.sheetcard.lost .big .ico{filter:grayscale(1);opacity:.5}
+.sheetcard .rn{margin-top:8px;font-family:var(--head);font-size:.66rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--rc)}
+.sheetcard h3{margin:2px 0 4px;font-size:1.35rem;font-weight:900;color:#fff}
+.sheetcard .fl{margin:0 0 14px;color:#b9a687;font-weight:700;font-size:.9rem;font-style:italic}
+.fxrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.fxrow div{background:rgba(0,0,0,.35);border:1px solid rgba(255,190,120,.15);border-radius:12px;padding:8px}
+.fxrow small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a08a6a}
+.fxrow b{font-size:1.05rem;font-weight:900;color:#fff}
+.fxrow .nx b{color:var(--rc)}
+.cbar{height:8px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;margin:0 6px 5px}
+.cbar i{display:block;height:100%;background:var(--rc);box-shadow:0 0 8px var(--rc)}
+.ctext{font-size:.8rem;font-weight:800;color:#b9a687;margin-bottom:14px}
+.sheetcard .primary{width:100%;padding:12px;font-size:1rem;background:linear-gradient(#ffd27a,#f0a020);color:#2a1a00;box-shadow:0 4px 0 #a56a00}
+/* Star Map: deep space, gold */
+.env-star{--acc:var(--gold);background:radial-gradient(1.5px 1.5px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 90px 120px,#cfe0ff,transparent),radial-gradient(1.5px 1.5px at 160px 60px,#ffe9a8,transparent),radial-gradient(1px 1px at 60px 170px,#fff,transparent),radial-gradient(1px 1px at 140px 190px,#cfe0ff,transparent);background-size:200px 200px;background-color:#05061a}
+.env-star::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 40% at 70% 20%,rgba(255,200,61,.12),transparent),radial-gradient(50% 50% at 20% 80%,rgba(120,80,255,.16),transparent);pointer-events:none}
+.starbig{text-align:center;margin:4px 0 14px}
+.starbig .s{font-family:var(--head);font-size:2.8rem;font-weight:900;color:var(--gold);line-height:1;text-shadow:0 0 24px rgba(255,190,0,.6)}
+.starbig small{display:block;color:var(--muted);font-weight:800;margin-top:6px}
+.pcard{background:rgba(20,18,50,.7);border:1px solid rgba(255,200,61,.3);border-radius:16px;padding:14px;margin-bottom:10px}
+.pcard h3{margin:0 0 6px;font-size:.95rem;font-weight:900;color:var(--gold)}
+.pcard p{margin:0;color:#b9c3e6;font-weight:700;font-size:.9rem;line-height:1.45}
+.pcard p b{color:#fff}
+.pbtn{width:100%;padding:14px;font-size:1.05rem;margin-top:4px;font-family:var(--head);letter-spacing:.04em;background:linear-gradient(180deg,#ffe07a,#f5a90a);color:#3a2600;box-shadow:0 4px 0 #b97800,0 0 24px rgba(255,190,0,.35)}
+.pbtn:active{box-shadow:0 1px 0 #b97800}
+/* Help Bot: a green screen with scan lines */
+.env-bot{--acc:#5dff9b;background:repeating-linear-gradient(rgba(93,255,155,.045) 0 1px,transparent 1px 3px),radial-gradient(80% 60% at 50% 30%,#06261a,#020d07)}
+.how ul{padding-left:20px;margin:0}
+.how li{margin:0 0 11px;font-weight:700;line-height:1.45;color:#c8f7da}
+.how li::marker{color:var(--acc)}
+.how b{color:var(--acc)}
+.bubble{position:relative;background:rgba(93,255,155,.1);border:1.5px solid rgba(93,255,155,.5);border-radius:14px;padding:10px 12px;color:#dfffe9!important;font-family:var(--head);font-size:.78rem!important;letter-spacing:.03em}
+.bubble::before{content:"";position:absolute;left:-9px;top:50%;margin-top:-8px;border:8px solid transparent;border-right-color:rgba(93,255,155,.5);border-left:0}
+/* Controls: riveted metal */
+.env-ctrl{--acc:#47d7ff;background:radial-gradient(circle at 12px 12px,rgba(255,255,255,.07) 2px,transparent 3px) 0 0/48px 48px,linear-gradient(#192034,#0e131f)}
+.setrow{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#262f48,#1b2236);border:1px solid #33405f;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.switch{width:52px;height:30px;border-radius:15px;background:#0b1020;border:1px solid #33405f;position:relative;transition:background .2s;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:linear-gradient(#c9d3ea,#7d8aa8);box-shadow:0 1px 3px rgba(0,0,0,.5);transition:transform .2s var(--ease)}
+.switch.on{background:rgba(71,215,255,.35);border-color:var(--accent);box-shadow:0 0 12px rgba(71,215,255,.4)}.switch.on::after{transform:translateX(22px);background:linear-gradient(#fff,#9aeeff)}
+.danger{color:var(--r5);font-weight:900;padding:12px 14px;border-radius:14px;border:2px solid var(--r5);width:100%;background:rgba(255,82,102,.08)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.stats div{background:rgba(5,9,22,.6);border:1px solid #33405f;border-radius:12px;padding:9px 12px}
+.stats small{display:block;color:var(--muted);font-weight:800;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.stats b{font-size:1.1rem;font-weight:900;font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;top:150px;transform:translate(-50%,-20px);background:rgba(10,16,40,.95);border:1px solid var(--accent);color:var(--ink);font-weight:800;padding:10px 16px;border-radius:14px;opacity:0;transition:.3s var(--ease);z-index:40;pointer-events:none;text-align:center;max-width:90vw;box-shadow:0 0 24px rgba(71,215,255,.3)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* little animations inside the station drawings */
+.blink{animation:blink 1.8s ease-in-out infinite}
+.blink.b2{animation-delay:.6s}.blink.b3{animation-delay:1.2s}
+@keyframes blink{50%{opacity:.25}}
+.bub{animation:rise 2.4s ease-in infinite}
+.bub.b2{animation-delay:.8s}.bub.b3{animation-delay:1.6s}
+@keyframes rise{from{transform:translateY(0);opacity:.9}to{transform:translateY(-22px);opacity:0}}
+.holo{animation:holo 3s ease-in-out infinite}
+@keyframes holo{50%{opacity:.6;transform:translateY(-2px)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wave{transform-box:fill-box;transform-origin:50% 0;animation:wave 2.6s ease-in-out infinite}
+@keyframes wave{40%{transform:rotate(-24deg)}60%{transform:rotate(8deg)}}
+.rz-reduce-motion *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+/* short screens (phones on their side) */
+@media (max-height:520px){
+  .win{height:70%}.strip{display:none}
+  .score{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);margin:0;z-index:2}
+  .score .pts{font-size:1.5rem}.score .sub{font-size:.74rem;margin-top:0}.pups{margin-top:2px}
+  .taphint,.lvl{display:none}.rarity{font-size:.8rem}
+  .drops{left:calc(env(safe-area-inset-left,0px) + 12px);top:calc(env(safe-area-inset-top,0px) + 62px);transform:none;width:min(40vw,290px);align-items:stretch}
+  .deck{grid-template-columns:1fr 1.4fr 1fr}
+  .side{flex-direction:row;flex-wrap:wrap;justify-content:space-around;align-content:space-around}
+  .station{width:48%}.station svg{width:min(15vh,60px)}.station .sb{display:none}
+  .boxwrap{width:min(100%,38vh,200px)}
+  .boosts{grid-template-columns:repeat(6,1fr)}.boost{padding:3px 5px}.boost .e{display:none}
+  .bottom{flex-direction:row;padding:5px}.bottom .boosts{flex:1}.hudrow{max-width:36%}
+  #app.hudmin .boosts{margin:0 -5px 0 0;flex:0}
+}
+</style>
+</head>
+<body>
+<!-- the ship around you: a window onto space, the walls and the floor -->
+<div class="ship" aria-hidden="true">
+  <div class="win"><canvas id="space"></canvas></div>
+  <div class="strip"></div>
+  <div class="floor"></div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <button class="res gems" id="gemPill" aria-label="Gems: open the Power Lab"><svg class="ico gemi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6.2L12 21.5 2 9.2z" fill="#5fdcff"/><path d="M2 9.2h20M8.8 3L12 21.5 15.2 3" stroke="#d9f8ff" stroke-width="1" fill="none" opacity=".8"/></svg> <span id="gemN">0</span></button>
+    <button class="res stars" id="starPill" aria-label="Stars: open the Star Map">★ <span id="starN">0</span></button>
+    <button class="iconbtn" id="setBtn" aria-label="Controls (settings)"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></button>
+  </div>
+  <div class="score">
+    <div class="pts" id="pts">0</div>
+    <div class="sub" id="rate"></div>
+    <div class="pups" id="pups"></div>
+  </div>
+  <!-- the deck: stations on both sides, the crate in the middle -->
+  <div class="deck" id="deck">
+    <div class="side">
+      <button class="station" data-room="cargo" aria-label="Cargo Hold: your collection"><span class="dot hidden" id="colDot"></span><span class="art"></span><span class="lbl">Cargo Hold</span><span class="sb">Collection</span></button>
+      <button class="station" data-room="fab" aria-label="Fabricator: buy crates"><span class="art"></span><span class="lbl">Fabricator</span><span class="sb">Crates</span></button>
+      <button class="station" data-room="bot" aria-label="Help Bot: how to play"><span class="art"></span><span class="lbl">Help Bot</span><span class="sb">How to play</span></button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="rarity" id="rarityName">Common</div>
+      <div class="boxwrap" id="boxwrap" data-r="0">
+        <div class="pad"></div><div class="beam"></div><div class="glow"></div><div class="rays"></div>
+        <div class="bob"><svg id="box" viewBox="0 0 200 200" aria-hidden="true"></svg></div>
+      </div>
+      <div class="hpbar"><i id="hpFill"></i></div>
+      <div class="hptext" id="hpText"></div>
+      <div class="lvl" id="lvlText"></div>
+      <div class="taphint" id="tapHint">Tap the crate!</div>
+    </div>
+    <div class="side">
+      <button class="station" data-room="star" aria-label="Star Map: prestige"><span class="dot hidden" id="starDot" style="background:var(--gold);color:#3a2600;box-shadow:0 0 10px rgba(255,200,61,.7)">!</span><span class="art"></span><span class="lbl">Star Map</span><span class="sb">Prestige</span></button>
+      <button class="station" data-room="lab" aria-label="Power Lab: power-ups"><span class="art"></span><span class="lbl">Power Lab</span><span class="sb">Power-ups</span></button>
+      <button class="station" data-room="trade" aria-label="Trade Post: daily deals"><span class="dot hidden" id="tradeDot">!</span><span class="art"></span><span class="lbl">Trade Post</span><span class="sb">Daily deals</span></button>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="boosts" id="boosts"></div>
+    <div class="hudrow"><div class="next" id="nextBox"></div>
+      <button class="hudbtn" id="hudBtn" aria-label="Show or hide your stats"><span>Stats</span><svg class="ic" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button></div>
+  </div>
+</div>
+<div class="drops" id="drops"></div>
+
+<div class="reveal" id="reveal">
+  <div class="burst"></div>
+  <h2 id="revTitle">Rare!</h2>
+  <div class="cards" id="revCards"></div>
+  <div class="tapon" id="revTap">Tap to collect</div>
+</div>
+
+<!-- the rooms -->
+<div class="panel env-cargo" id="cargoPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Cargo Hold</h2></div>
+  <div class="pbody">
+    <div class="holdsum">
+      <div class="found"><div class="fl"><small>Collection</small><b id="colCount"></b></div><div class="fbar"><i id="colBar"></i></div></div>
+      <div class="cstats" id="colTotals"></div>
+    </div>
+    <div id="colGrid"></div>
+  </div>
+  <div class="sheet" id="itemSheet"><div class="sheetbg"></div><div class="sheetcard" id="sheetCard"></div></div>
+</div>
+
+<div class="panel env-fab" id="fabPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Fabricator</h2><b class="cur" id="fabCur"></b></div>
+  <div class="banner"><span class="art" data-art="fab"></span><p>Special crates, built to order. They go straight onto the pad, before the free ones.</p></div>
+  <div class="pbody"><p class="note" id="fabNote"></p><div id="fabList"></div></div>
+</div>
+
+<div class="panel env-lab" id="labPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Power Lab</h2><b class="cur" id="labCur"></b></div>
+  <div class="banner"><span class="art" data-art="lab"></span><p>Power-ups brewed from gems. They run out over time, even while the ship is parked.</p></div>
+  <div class="pbody"><p class="note" id="labNote"></p><div id="labList"></div></div>
+</div>
+
+<div class="panel env-trade" id="tradePanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Trade Post</h2><b class="cur" id="tradeCur"></b></div>
+  <div class="banner"><span class="art" data-art="trade"></span><p>Passing traders with one-time deals. New stock every day.</p></div>
+  <div class="pbody"><p class="note" id="tradeNote"></p><div id="tradeList"></div></div>
+</div>
+
+<div class="panel env-star" id="starPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Star Map</h2></div>
+  <div class="banner"><span class="art" data-art="star"></span><p>Prestige: warp to a fresh sector and start again, with stars that make you stronger for good.</p></div>
+  <div class="pbody" id="starBody"></div>
+</div>
+
+<div class="panel env-bot" id="botPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Help Bot</h2></div>
+  <div class="banner"><span class="art" data-art="bot"></span><p class="bubble">BEEP BOOP! Welcome aboard. Here's how this ship works.</p></div>
+  <div class="pbody how">
+    <ul>
+      <li><b>Tap the crate</b> on the pad to earn points and crack it open. Every tap counts, so tap fast (use more than one finger if you like).</li>
+      <li>Crates come in six rarities: <span style="color:var(--r0);font-weight:900">Common</span>, <span style="color:var(--r1);font-weight:900">Uncommon</span>, <span style="color:var(--r2);font-weight:900">Rare</span>, <span style="color:var(--r3);font-weight:900">Epic</span>, <span style="color:var(--r4);font-weight:900">Legendary</span> and <span style="color:var(--r5);font-weight:900">Mythic</span>. Rarer crates take many more taps, but hold better items and pay out more.</li>
+      <li><b>Every item gives a boost</b>: more points per tap, automatic taps every second, critical hits (5× taps), stronger taps (crates open quicker), luck (rarer crates) or a points multiplier.</li>
+      <li><b>Duplicates level up</b> that item. Each copy fills its bar, and a full bar raises its tier, which makes its boost bigger. Higher tiers need more copies.</li>
+      <li>Most crates are <b>standard</b> cargo crates with one item. Now and then a <b>Choice pod</b> (pick one of three items) or a <b>Multi stack</b> (four items) turns up. The <b>Fabricator</b> builds those and more: Lucky orbs, Copycat canisters and Mega containers.</li>
+      <li><b>Crates get tougher.</b> Every 25 crates you open, the crate level goes up and crates need more taps (and pay out more).</li>
+      <li>Every new crate level gives you a <b>gem</b> (two for a new best). Spend gems in the <b>Power Lab</b> on power-ups, and check the <b>Trade Post</b> for new one-time deals every day.</li>
+      <li>When it gets slow, go to the <b>Star Map</b> and <b>prestige</b>. You start again from crate level 1 with no items, but you earn <b>stars</b>, and every star makes your taps and points stronger for good.</li>
+      <li>Automatic taps keep earning points (at half speed) while you're away, for up to 4 hours.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="panel env-ctrl" id="setPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Controls</h2></div>
+  <div class="pbody">
+    <div class="stats" id="statsBox"></div>
+    <div class="setrow">Vibration<button class="switch" id="sBuzz" aria-label="Vibration"></button></div>
+    <div class="setrow">Sound and volume<button class="iconbtn" id="sMenu" aria-label="Open sound settings"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button></div>
+    <button class="danger" id="sReset">Start over (delete all progress)</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================================================================
+   CRATE CLICKER
+   Tap a box to earn points and crack it open. Boxes come in six rarities;
+   rarer ones need more taps and drop better items. Every item gives a boost,
+   and duplicates raise that item's tier, which makes the boost bigger.
+   Crates get tougher every 25 opened; prestige resets the run for stars,
+   which make taps and points stronger for good.
+
+   How it's built:
+     Data       rarities, items and what each boost does
+     State      what's saved: points, the box you're on, your items
+     Boosts     adding up every item's boost at its tier
+     Tapping    a tap: points, damage to the box, crits, floating numbers
+     Opening    rolling drops, duplicates and tiers, the reveal
+     Screen     drawing the box and keeping the numbers up to date
+     Panels     Collection, Shop, How to play, Settings
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const RZ = window.RizzoGames || null;
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const keep = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = () => document.documentElement.classList.contains('rz-reduce-motion');
+const SAVE = 'crateclicker-save-v2', STATS = 'crateclicker-stats-v1', PREFS = 'crateclicker-prefs-v1';
+
+// 1.2K, 3.4M, 5.6B ... (whole numbers below 1000)
+const UNITS = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (!isFinite(n)) return '∞';
+  if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : Math.floor(n).toLocaleString();
+  const u = Math.min(UNITS.length - 1, Math.floor(Math.log10(n) / 3)), v = n / Math.pow(1000, u);
+  return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.floor(v)) + UNITS[u];
+}
+const pct = n => (n * 100 >= 10 ? Math.round(n * 100) : +(n * 100).toFixed(1)) + '%';
+
+/* ---------- Data ---------- */
+// taps: how many taps the crate needs at crate level 1; weight: how often it turns up
+const RARITIES = [
+  {name: 'Common', taps: 15, weight: 64},
+  {name: 'Uncommon', taps: 40, weight: 25},
+  {name: 'Rare', taps: 110, weight: 8.5},
+  {name: 'Epic', taps: 300, weight: 2.2},
+  {name: 'Legendary', taps: 800, weight: .27},
+  {name: 'Mythic', taps: 2000, weight: .03},
+];
+const rc = r => `var(--r${r})`;
+// the three kinds of crate. Free crates are mostly standard; the shop sells the other two.
+const TYPES = {
+  std:    {name: 'Standard'},
+  choice: {name: 'Choice pod', short: 'Choice', blurb: 'Pick one of three items · never Common', price: 4000, chance: .05},
+  multi:  {name: 'Multi stack', short: 'Multi ×4', blurb: 'Four items, often all the same rarity', price: 2500, chance: .07, n: 4},
+  lucky:  {name: 'Lucky orb', short: 'Lucky', blurb: 'Always Rare or better', price: 6000, chance: 0},
+  copy:   {name: 'Copycat canister', short: 'Copycat', blurb: 'Three copies of one item you already have', price: 5000, chance: 0},
+  mega:   {name: 'Mega container', short: 'Mega ×8', blurb: 'Eight items, often all the same rarity', price: 12000, chance: 0, n: 8},
+};
+const SHOP_TYPES = ['choice', 'multi', 'lucky', 'copy', 'mega'];
+const SHOP_LOOK = {choice: 2, multi: 3, lucky: 4, copy: 1, mega: 5};   // which rarity colour each one is drawn in, in the shop
+// power-ups: bought with gems, they last a while (real time, even while the game is closed). Buying one that's on adds time.
+const PUPS = {
+  luck:   {e: '🍀', name: 'Lucky Charm', blurb: 'Double luck', secs: 90, gems: 4, boost: 'luck'},
+  power:  {e: '💪', name: 'Power Surge', blurb: 'Double tap power', secs: 90, gems: 4, boost: 'power'},
+  points: {e: '✨', name: 'Point Rush', blurb: 'Double points', secs: 120, gems: 3, boost: 'mult'},
+  auto:   {e: '⚙️', name: 'Overdrive', blurb: 'Triple auto taps', secs: 90, gems: 5, boost: 'auto'},
+  crit:   {e: '💥', name: 'Crit Storm', blurb: '+25% crit chance', secs: 90, gems: 4, boost: 'crit'},
+  hold:   {e: '👆', name: 'Hold to Tap', blurb: 'Hold the crate to tap it 12 times a second', secs: 120, gems: 3, boost: 'tap'},
+};
+const PUP_MAX = 30 * 60, HOLD_RATE = 12;
+const MULTI_SAME = .4;      // a multi crate's later items match the first one's rarity 40% of the time
+const PRICE_UP = 1.75, QUEUE_MAX = 5;
+// what each kind of boost does, and how it reads
+const KINDS = {
+  tap:   {name: 'Per tap', e: '👆', show: v => '+' + fmt(v)},
+  auto:  {name: 'Auto taps', e: '⚙️', show: v => fmt(v) + '/s'},
+  crit:  {name: 'Crit chance', e: '💥', show: v => pct(v)},
+  power: {name: 'Tap power', e: '💪', show: v => '+' + pct(v)},
+  luck:  {name: 'Luck', e: '🍀', show: v => '+' + pct(v)},
+  mult:  {name: 'Points', e: '✨', show: v => '×' + (1 + v).toFixed(2)},
+};
+const ITEMS = [
+  // common: bits and pieces from around the ship
+  {id: 'mallet', name: 'Hull Wrench', r: 0, kind: 'tap', v: 1},
+  {id: 'penny', name: 'Zero-G Dice', r: 0, kind: 'luck', v: .02},
+  {id: 'mouse', name: 'Repair Drone', r: 0, kind: 'auto', v: .1},
+  {id: 'pebble', name: 'Meteor Chunk', r: 0, kind: 'power', v: .05},
+  // uncommon
+  {id: 'gloves', name: 'Power Glove', r: 1, kind: 'tap', v: 3},
+  {id: 'clover', name: 'Star Compass', r: 1, kind: 'luck', v: .04},
+  {id: 'spark', name: 'Tesla Coil', r: 1, kind: 'crit', v: .01},
+  {id: 'coffee', name: 'Fuel Cell', r: 1, kind: 'auto', v: .25},
+  // rare
+  {id: 'pick', name: 'Laser Drill', r: 2, kind: 'tap', v: 8},
+  {id: 'magnet', name: 'Gravity Magnet', r: 2, kind: 'mult', v: .1},
+  {id: 'robot', name: 'Rover Bot', r: 2, kind: 'auto', v: .6},
+  {id: 'bolt', name: 'Ion Blaster', r: 2, kind: 'crit', v: .02},
+  // epic
+  {id: 'tnt', name: 'Plasma Charge', r: 3, kind: 'power', v: .2},
+  {id: 'ball', name: 'Nebula Orb', r: 3, kind: 'luck', v: .08},
+  {id: 'rocket', name: 'Rocket Booster', r: 3, kind: 'auto', v: 1.5},
+  {id: 'crown', name: "Captain's Badge", r: 3, kind: 'mult', v: .25},
+  // legendary
+  {id: 'dragon', name: 'Nova Hammer', r: 4, kind: 'tap', v: 60},
+  {id: 'map', name: 'Star Chart', r: 4, kind: 'luck', v: .15},
+  {id: 'egg', name: 'Golden Asteroid', r: 4, kind: 'mult', v: .5},
+  {id: 'comet', name: 'Comet Core', r: 4, kind: 'crit', v: .04},
+  // mythic: wonders of the universe
+  {id: 'hole', name: 'Black Hole', r: 5, kind: 'power', v: .6},
+  {id: 'phoenix', name: 'Warp Engine', r: 5, kind: 'auto', v: 4},
+  {id: 'gem', name: 'Dyson Sphere', r: 5, kind: 'mult', v: 1.2},
+  {id: 'rainbow', name: 'Quantum Prism', r: 5, kind: 'luck', v: .3},
+];
+// every item's picture (drawn, not emoji); `e` holds it so anything that shows an item shows its picture
+const STAR4 = (x, y, s, f) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0-10L2.6-2.6 10 0 2.6 2.6 0 10-2.6 2.6-10 0-2.6-2.6Z" fill="${f}"/>`;
+const ICON = {
+  mallet: `<path d="M44 7a12 12 0 0 0-11 16L9 47a5.5 5.5 0 0 0 8 8l24-24a12 12 0 0 0 16-11l-7 4-6-2-2-6z" fill="#c4cee6" stroke="#55617f" stroke-width="2.5" stroke-linejoin="round"/><circle cx="13.5" cy="50.5" r="2.5" fill="#55617f"/><path d="M36 14l-4 6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>`,
+  penny: `<g transform="rotate(-14 32 33)"><rect x="14" y="15" width="36" height="36" rx="9" fill="#eef2ff" stroke="#7d8aa8" stroke-width="2.5"/><circle cx="23.5" cy="24.5" r="3.6" fill="#3b82f6"/><circle cx="32" cy="33" r="3.6" fill="#3b82f6"/><circle cx="40.5" cy="41.5" r="3.6" fill="#3b82f6"/></g>${STAR4(52, 12, .55, '#cfe0ff')}${STAR4(10, 50, .4, '#cfe0ff')}`,
+  mouse: `<path d="M9 21h16M39 21h16" stroke="#7d8aa8" stroke-width="3" stroke-linecap="round"/><ellipse cx="16" cy="18" rx="10" ry="2.6" fill="#d4e2ff" opacity=".75"/><ellipse cx="48" cy="18" rx="10" ry="2.6" fill="#d4e2ff" opacity=".75"/><rect x="17" y="22" width="30" height="22" rx="10" fill="#a3aecb" stroke="#48536f" stroke-width="2.5"/><circle cx="32" cy="33" r="6.5" fill="#0b1128"/><circle cx="32" cy="33" r="3.2" fill="#47d7ff"/><path d="M25 44l-3 9M39 44l3 9" stroke="#48536f" stroke-width="3" stroke-linecap="round"/>`,
+  pebble: `<path d="M6 40l12 3M5 29l13 3M10 50l10-1" stroke="#ff8a3d" stroke-width="4" stroke-linecap="round" opacity=".75"/><path d="M22 19l14-6 14 6 7 14-7 15-16 4-13-8-4-14z" fill="#938273" stroke="#4a3e34" stroke-width="2.5" stroke-linejoin="round"/><circle cx="37" cy="27" r="4.5" fill="#6c5c50"/><circle cx="45" cy="40" r="3.2" fill="#6c5c50"/><circle cx="29" cy="41" r="2.8" fill="#6c5c50"/><path d="M28 18l8-3" stroke="#c9b8a6" stroke-width="2.5" stroke-linecap="round"/>`,
+  gloves: `<path d="M19 50V27c0-9 6-15 14-15s13 6 13 14v7l4-4c3-3 8 1 5 5l-9 12v4z" fill="#f2f5ff" stroke="#6c7aa0" stroke-width="2.5" stroke-linejoin="round"/><path d="M26 16v12M33 13v14M40 15v13" stroke="#c9d3ea" stroke-width="2" stroke-linecap="round"/><rect x="16" y="48" width="30" height="10" rx="3.5" fill="#2fbf71" stroke="#1a7d48" stroke-width="2"/><circle cx="31" cy="38" r="4.5" fill="#38d47f" stroke="#1a7d48" stroke-width="1.5"/>`,
+  clover: `<circle cx="32" cy="32" r="23" fill="#123a2a" stroke="#38d47f" stroke-width="3"/><circle cx="32" cy="32" r="17" fill="none" stroke="#38d47f" stroke-width="1.5" stroke-dasharray="2 4" opacity=".7"/><path d="M32 11l4.5 16.5L53 32l-16.5 4.5L32 53l-4.5-16.5L11 32l16.5-4.5z" fill="#8dffc0"/><path d="M32 11l4.5 16.5L32 32z" fill="#ff5266"/><circle cx="32" cy="32" r="3" fill="#0b1128"/>`,
+  spark: `<rect x="22" y="46" width="20" height="11" rx="3" fill="#48536f"/><rect x="25" y="24" width="14" height="23" rx="2" fill="#38435f"/><path d="M24 43h16M24 38h16M24 33h16M24 28h16" stroke="#e8b77c" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="17" r="8" fill="#a3aecb" stroke="#48536f" stroke-width="2.5"/><path d="M40 14l9-5-3 7 8-1-11 9 2-6-6 1z" fill="#ffe14d" stroke="#d99a00" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 12l-8-4 2 6-6 0" stroke="#ffe14d" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  coffee: `<rect x="26" y="6" width="12" height="7" rx="2" fill="#7d8aa8"/><rect x="18" y="12" width="28" height="45" rx="8" fill="#232b45" stroke="#7d8aa8" stroke-width="2.5"/><rect x="22" y="27" width="20" height="26" rx="5" fill="#38d47f"/><rect x="22" y="27" width="20" height="6" rx="3" fill="#8dffc0"/><path d="M34 31l-7 11h6l-3 9 9-13h-6l3-7z" fill="#fff"/>`,
+  pick: `<path d="M6 40h22V25H13a7 7 0 0 0-7 7z" fill="#3b82f6" stroke="#1d4fb8" stroke-width="2.5" stroke-linejoin="round"/><rect x="12" y="40" width="9" height="14" rx="2" fill="#1d4fb8"/><rect x="28" y="27" width="10" height="11" rx="1.5" fill="#a3aecb" stroke="#48536f" stroke-width="2"/><circle cx="14" cy="32" r="2.5" fill="#a5ceff"/><path d="M38 32.5h20" stroke="#ff4d6d" stroke-width="6" stroke-linecap="round"/><path d="M38 32.5h20" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="58" cy="32.5" r="4" fill="#ff4d6d" opacity=".5"/>`,
+  magnet: `<path d="M13 14v19a19 19 0 0 0 38 0V14H40v19a8 8 0 0 1-16 0V14z" fill="#3b82f6" stroke="#1d4fb8" stroke-width="2.5" stroke-linejoin="round"/><rect x="13" y="10" width="11" height="9" rx="1.5" fill="#e6efff" stroke="#1d4fb8" stroke-width="2"/><rect x="40" y="10" width="11" height="9" rx="1.5" fill="#e6efff" stroke="#1d4fb8" stroke-width="2"/><path d="M10 5q4-3 8 0M46 5q4-3 8 0" stroke="#a5ceff" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M20 38a12 12 0 0 0 6 7" stroke="#a5ceff" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+  robot: `<path d="M41 26v-8" stroke="#48536f" stroke-width="3"/><path d="M33 12a10 6 0 0 0 15 7z" fill="#d4e2ff" stroke="#48536f" stroke-width="2"/><rect x="10" y="25" width="44" height="17" rx="5" fill="#a3aecb" stroke="#48536f" stroke-width="2.5"/><rect x="15" y="29" width="14" height="7" rx="2" fill="#47d7ff"/><circle cx="17" cy="47" r="6.5" fill="#232b45" stroke="#7d8aa8" stroke-width="2.5"/><circle cx="32" cy="47" r="6.5" fill="#232b45" stroke="#7d8aa8" stroke-width="2.5"/><circle cx="47" cy="47" r="6.5" fill="#232b45" stroke="#7d8aa8" stroke-width="2.5"/>`,
+  bolt: `<path d="M8 25h30l8-6h9v22h-9l-8-6H26l-4 16h-9l2-16H8z" fill="#3b82f6" stroke="#1d4fb8" stroke-width="2.5" stroke-linejoin="round"/><rect x="38" y="21" width="5" height="18" fill="#1d4fb8"/><circle cx="18" cy="30" r="3.2" fill="#a5ceff"/><path d="M57 30h5" stroke="#47d7ff" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="30" r="5" fill="#47d7ff" opacity=".35"/>`,
+  tnt: `<circle cx="29" cy="37" r="20" fill="#2a1a4a" stroke="#a855f7" stroke-width="3"/><circle cx="29" cy="37" r="13" fill="#a855f7" opacity=".45"/><circle cx="29" cy="37" r="7" fill="#f0dcff"/><rect x="40" y="13" width="9" height="9" rx="2" transform="rotate(45 44.5 17.5)" fill="#7d8aa8"/><path d="M48 12l6-6M50 16l8-1M45 9l1-7" stroke="#ffe14d" stroke-width="2.5" stroke-linecap="round"/><path d="M18 30a12 12 0 0 1 7-6" stroke="#fff" stroke-width="2.5" opacity=".6" fill="none" stroke-linecap="round"/>`,
+  ball: `<path d="M21 52h22l-3-7H24z" fill="#6f27bd" stroke="#4a1a80" stroke-width="2"/><circle cx="32" cy="27" r="20" fill="#2c1258"/><path d="M15 28c6-10 20-12 31-4M17 34c8-5 18 2 27-4" stroke="#ff7ad9" stroke-width="4.5" fill="none" opacity=".85" stroke-linecap="round"/><path d="M19 22c6-4 14-5 22-2" stroke="#7fb4ff" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/><circle cx="26" cy="20" r="1.6" fill="#fff"/><circle cx="39" cy="33" r="1.3" fill="#fff"/><circle cx="31" cy="38" r="1.1" fill="#fff"/><circle cx="32" cy="27" r="20" fill="none" stroke="#e6c2ff" stroke-width="2.5"/><path d="M21 17a13 13 0 0 1 8-5" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round" fill="none"/>`,
+  rocket: `<path d="M26 43c0 8 6 15 6 15s6-7 6-15z" fill="#ffa53d"/><path d="M29 43c0 5 3 10 3 10s3-5 3-10z" fill="#ffe14d"/><path d="M24 33l-9 11 10-2M40 33l9 11-10-2" fill="#a855f7" stroke="#6f27bd" stroke-width="2" stroke-linejoin="round"/><path d="M32 5c11 8 13 23 8 37H24c-5-14-3-29 8-37z" fill="#eef2ff" stroke="#6c7aa0" stroke-width="2.5" stroke-linejoin="round"/><circle cx="32" cy="22" r="5.5" fill="#47d7ff" stroke="#1d4fb8" stroke-width="2"/><path d="M27 8.5Q32 5 37 8.5" stroke="#a855f7" stroke-width="3" fill="none"/>`,
+  crown: `<path d="M32 5l21 8v15c0 14-9 24-21 31C20 52 11 42 11 28V13z" fill="#2a1a4a" stroke="#a855f7" stroke-width="3" stroke-linejoin="round"/><path d="M32 13l15 6v10c0 10-6 17-15 22-9-5-15-12-15-22V19z" fill="none" stroke="#e6c2ff" stroke-width="1.5" opacity=".6"/><path d="M32 18l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="#ffc83d" stroke="#b5700a" stroke-width="1.5" stroke-linejoin="round"/>`,
+  dragon: `<path d="M17 57L36 25" stroke="#5f6c8f" stroke-width="7" stroke-linecap="round"/><path d="M17 57L36 25" stroke="#8b98ba" stroke-width="3" stroke-linecap="round"/><g transform="rotate(30 41 17)"><rect x="25" y="7" width="32" height="20" rx="5" fill="#f5a524" stroke="#b5700a" stroke-width="2.5"/><rect x="25" y="12" width="6" height="10" fill="#b5700a"/><rect x="51" y="12" width="6" height="10" fill="#b5700a"/></g>${STAR4(41, 17, .75, '#fff6d6')}<circle cx="41" cy="17" r="13" fill="#ffd36b" opacity=".18"/>`,
+  map: `<path d="M9 14l15-5 16 5 15-5v41l-15 5-16-5-15 5z" fill="#1b2546" stroke="#f5a524" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 9v41M40 14v41" stroke="#f5a524" stroke-width="1.5" opacity=".45"/><path d="M15 40l9-13 10 6 10-15 6 9" stroke="#ffe49e" stroke-width="2" fill="none" stroke-linejoin="round"/><circle cx="15" cy="40" r="2.6" fill="#fff"/><circle cx="24" cy="27" r="2.6" fill="#fff"/><circle cx="34" cy="33" r="2.6" fill="#fff"/><circle cx="44" cy="18" r="3.2" fill="#ffe49e"/><circle cx="50" cy="27" r="2.2" fill="#fff"/>`,
+  egg: `<path d="M13 27l12-13 19 2 9 14-4 19-17 6-15-8z" fill="#f5c542" stroke="#b5700a" stroke-width="2.5" stroke-linejoin="round"/><circle cx="35" cy="31" r="5.5" fill="#d9a21a"/><circle cx="24" cy="41" r="3.8" fill="#d9a21a"/><circle cx="43" cy="44" r="2.6" fill="#d9a21a"/><path d="M21 22l7-5" stroke="#fff6c8" stroke-width="3" stroke-linecap="round"/>${STAR4(53, 11, .6, '#fff')}${STAR4(9, 45, .4, '#fff6c8')}`,
+  comet: `<path d="M5 6l35 23-7 11z" fill="#47d7ff" opacity=".28"/><path d="M12 4l29 24-5 7z" fill="#9aeeff" opacity=".45"/><path d="M4 18l32 15-3 7z" fill="#9aeeff" opacity=".25"/><circle cx="42" cy="41" r="14" fill="#f5a524" opacity=".25"/><circle cx="42" cy="41" r="11" fill="#fff4d6" stroke="#f5a524" stroke-width="3"/><circle cx="42" cy="41" r="5" fill="#ffd36b"/>`,
+  hole: `<g transform="rotate(-18 32 32)"><ellipse cx="32" cy="32" rx="29" ry="10" fill="none" stroke="#ff8a3d" stroke-width="5"/><ellipse cx="32" cy="32" rx="22" ry="6" fill="none" stroke="#ffd36b" stroke-width="2" opacity=".7"/></g><circle cx="32" cy="32" r="15" fill="#ff8a3d" opacity=".3"/><circle cx="32" cy="32" r="12" fill="#000" stroke="#ffe0a0" stroke-width="2"/><g transform="rotate(-18 32 32)"><path d="M3 32a29 10 0 0 0 58 0" stroke="#ffd36b" stroke-width="5" fill="none"/></g>`,
+  phoenix: `<path d="M50 21l12 11-12 11" fill="#9aeeff" opacity=".85"/><path d="M50 25l7 7-7 7" fill="#fff"/><rect x="8" y="19" width="32" height="26" rx="7" fill="#5f6c8f" stroke="#232b45" stroke-width="2.5"/><path d="M40 21l10-4v30l-10-4z" fill="#38435f" stroke="#232b45" stroke-width="2.5" stroke-linejoin="round"/><rect x="15" y="19" width="5" height="26" fill="#47d7ff"/><rect x="27" y="19" width="5" height="26" fill="#47d7ff"/><rect x="8" y="23" width="32" height="3" fill="#fff" opacity=".2"/>`,
+  gem: `<circle cx="32" cy="32" r="18" fill="#ffd36b" opacity=".3"/><circle cx="32" cy="32" r="10" fill="#fff3b0"/><circle cx="32" cy="32" r="23" fill="none" stroke="#8b98ba" stroke-width="3"/><ellipse cx="32" cy="32" rx="23" ry="8" fill="none" stroke="#8b98ba" stroke-width="2.5"/><ellipse cx="32" cy="32" rx="8" ry="23" fill="none" stroke="#8b98ba" stroke-width="2.5"/><circle cx="32" cy="9" r="2.5" fill="#47d7ff"/><circle cx="55" cy="32" r="2.5" fill="#47d7ff"/><circle cx="32" cy="55" r="2.5" fill="#47d7ff"/><circle cx="9" cy="32" r="2.5" fill="#47d7ff"/>`,
+  rainbow: `<path d="M3 37l19-5" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>${['#ff5266', '#ff9a3d', '#ffe14d', '#38d47f', '#4f93ff', '#b867ff'].map((c, i) => `<path d="M41 ${30 + i * 2}L61 ${21 + i * 6.5}" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/>`).join('')}<path d="M32 10l17 32H15z" fill="#cfe9ff" fill-opacity=".3" stroke="#eef8ff" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 16l-9 19" stroke="#fff" stroke-width="2" opacity=".6"/>`,
+};
+ITEMS.forEach(it => it.e = `<svg class="ico" viewBox="0 0 64 64" aria-hidden="true">${ICON[it.id]}</svg>`);
+// small white pictures for the power-ups, and the gem
+const PUPI = {
+  luck: '<path d="M12 1.5l2.8 7.7L22.5 12l-7.7 2.8L12 22.5l-2.8-7.7L1.5 12l7.7-2.8z"/>',
+  power: '<path d="M13.5 1.5L4 13.5h7l-2 9 10-12.5h-7z"/>',
+  points: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 6l1.8 3.8 4.2.5-3.1 2.8.8 4.1L12 15.2l-3.7 2 .8-4.1L6 10.3l4.2-.5z"/>',
+  auto: '<path d="M10.3 1.5h3.4l.6 2.8 2 .9 2.4-1.6 2.4 2.4-1.6 2.4.9 2 2.8.6v3.4l-2.8.6-.9 2 1.6 2.4-2.4 2.4-2.4-1.6-2 .9-.6 2.8h-3.4l-.6-2.8-2-.9-2.4 1.6-2.4-2.4 1.6-2.4-.9-2-2.8-.6v-3.4l2.8-.6.9-2-1.6-2.4 2.4-2.4 2.4 1.6 2-.9zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" fill-rule="evenodd"/>',
+  crit: '<path d="M12 1l2.2 6.2 5.9-3-3 5.9L23 12l-5.9 2 3 5.9-5.9-3L12 23l-2.2-6.1-5.9 3 3-5.9L1 12l5.9-1.9-3-5.9 5.9 3z"/>',
+  hold: '<circle cx="12" cy="12" r="3.6"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="10.6" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".5"/>',
+};
+const GEMI = '<svg class="ico gemi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6.2L12 21.5 2 9.2z" fill="#5fdcff"/><path d="M2 9.2h20M8.8 3L12 21.5 15.2 3M6.5 3l2.3 6.2M17.5 3l-2.3 6.2" stroke="#d9f8ff" stroke-width="1" fill="none" opacity=".8"/><path d="M6.5 3h11l-2.3 6.2H8.8z" fill="#b8f1ff" opacity=".6"/></svg>';
+Object.entries(PUPS).forEach(([id, P]) => P.e = `<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${PUPI[id]}</svg>`);
+// a line about each item, for the Cargo Hold
+const FLAVOUR = {
+  mallet: 'Tightens every bolt on the ship. Cracks crates too.', penny: 'Tumbles forever in zero gravity, and always lands lucky.',
+  mouse: 'A little helper that taps crates while you rest.', pebble: 'Still warm from the trip through the atmosphere.',
+  gloves: 'Extra grip for the serious crate cracker.', clover: 'Always points towards treasure.',
+  spark: 'Every so often it zaps a crate really hard.', coffee: "Keeps the ship's helpers running all day.",
+  pick: 'Cuts through crate locks like butter.', magnet: 'Pulls loose points in from across the galaxy.',
+  robot: 'Rolls up to the pad and taps away.', bolt: 'Pew pew. Critical hits, now and then.',
+  tnt: 'Handle with care: cracks crates much faster.', ball: 'Swirling with lucky stardust.',
+  rocket: 'Taps faster than the speed of sound.', crown: 'Captains earn more. That is the rule.',
+  dragon: 'Forged in the heart of a dying star.', map: 'Shows where the rarest crates are hidden.',
+  egg: 'Pure gold, straight from the asteroid belt.', comet: 'Burns so bright it lands critical hits.',
+  hole: 'Nothing escapes it, not even crates.', phoenix: 'Folds space so the taps never stop.',
+  gem: "Harvests a whole star's worth of points.", rainbow: 'Splits your luck into every colour at once.',
+};
+const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+const MAX_TIER = 10;
+const CRIT_X = 5, CRIT_MAX = .5;          // a critical hit counts as five taps
+const OFFLINE_MAX = 4 * 3600, OFFLINE_RATE = .5;
+// copies needed to go from one tier to the next: 2, 4, 6, ... (so tier 10 takes 90 duplicates)
+const needFor = tier => 2 * tier;
+// an item's boost at a tier: half as much again for every tier (tier 10 is 5.5 times tier 1)
+const valueAt = (it, tier) => it.v * (1 + (tier - 1) * .5);
+// crates get tougher: every 25 crates in a run the crate level goes up, and crates need 8% more taps
+const PER_LEVEL = 25, LEVEL_HP = 1.08;
+const crateLevel = () => 1 + Math.floor(S.run / PER_LEVEL);
+// prestige: stars from the crate level you reach; every star adds 20% to tap power and points
+const STAR_MIN = 10, STAR_BONUS = .2;
+const starsAt = lv => lv < STAR_MIN ? 0 : Math.floor(Math.pow(lv / 4, 2));
+
+/* ---------- State (saved) ---------- */
+// run: crates opened since the last prestige; found: every item you've ever had; pending: a choice crate waiting for you to pick
+const fresh = () => ({pts: 0, total: 0, life: 0, taps: 0, run: 0, opened: [0, 0, 0, 0, 0, 0], items: {}, found: {}, bought: {choice: 0, multi: 0}, queue: [], box: null, next: null, pending: null,
+  seen: 0, last: Date.now(), best: -1, stars: 0, prestiges: 0, bestLevel: 1, gems: 0, pups: {}, daily: {day: '', bought: [], seen: ''}});
+let S = Object.assign(fresh(), load(SAVE, {}));
+let prefs = Object.assign({buzz: true}, load(PREFS, {}));
+const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+let dirty = false;
+function save() { S.last = Date.now(); keep(SAVE, S); keep(STATS, {boxes: S.opened.reduce((a, b) => a + b, 0), best: S.best, total: S.life, items: Object.keys(S.found).length, stars: S.stars}); dirty = false; }
+function earn(v) { S.pts += v; S.total += v; S.life += v; }
+
+/* ---------- Boosts ---------- */
+const pupLeft = id => Math.max(0, ((S.pups || {})[id] || 0) - Date.now()) / 1000;   // seconds left on a power-up
+let B = {};
+function calcBoosts() {
+  B = {tap: 1, auto: 0, crit: 0, power: 0, luck: 0, mult: 0};
+  for (const [id, h] of Object.entries(S.items)) { const it = ITEM[id]; if (it) B[it.kind] += valueAt(it, h.tier); }
+  B.crit = Math.min(CRIT_MAX, B.crit);
+  // power-ups on top
+  B.on = {};
+  for (const id in PUPS) if (pupLeft(id) > 0) B.on[PUPS[id].boost] = 1;
+  if (pupLeft('luck')) B.luck = (1 + B.luck) * 2 - 1;
+  if (pupLeft('power')) B.power = (1 + B.power) * 2 - 1;
+  if (pupLeft('points')) B.mult = (1 + B.mult) * 2 - 1;
+  if (pupLeft('auto')) B.auto *= 3;
+  if (pupLeft('crit')) B.crit = Math.min(.75, B.crit + .25);
+  B.star = 1 + STAR_BONUS * S.stars;         // what your stars are worth
+  B.perTap = B.tap * (1 + B.mult) * B.star;  // points for one tap
+  B.dmg = (1 + B.power) * B.star;            // how much one tap cracks the crate
+  B.avg = 1 + B.crit * (CRIT_X - 1);         // on average, what a tap is worth with crits
+  B.perSec = B.auto * B.perTap * B.avg;
+}
+
+/* ---------- Crates ---------- */
+// rarity: luck makes the rarer ones turn up more (gently: luck +100% makes a mythic about 6 times as likely)
+function rollRarity(min = 0, max = 5) {
+  const w = RARITIES.map((r, i) => i < min || i > max ? 0 : r.weight * Math.pow(1 + B.luck, i * .5));
+  let t = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < w.length; i++) { t -= w[i]; if (t <= 0) return i; }
+  return min;
+}
+function rollType() { const x = Math.random(); return x < TYPES.choice.chance ? 'choice' : x < TYPES.choice.chance + TYPES.multi.chance ? 'multi' : 'std'; }
+const makeCrate = t => ({t, r: rollRarity(t === 'choice' ? 1 : t === 'lucky' ? 2 : 0)});   // a choice crate is never common; a lucky crate is rare or better
+const boxHP = r => RARITIES[r].taps * Math.pow(LEVEL_HP, crateLevel() - 1);
+function newBox(c) { S.box = {r: c.r, t: c.t, hp: boxHP(c.r), max: boxHP(c.r)}; }
+function takeNext() {
+  const c = S.queue.length ? S.queue.shift() : (S.next || makeCrate(rollType()));
+  S.next = S.queue.length ? null : makeCrate(rollType());
+  newBox(c);
+}
+const upNext = () => S.queue.length ? S.queue[0] : S.next;
+
+/* ---------- Tapping ---------- */
+const revealing = () => $('#app').classList.contains('revealing');
+function hit(n, crits, x, y) {   // n taps, `crits` of them critical; (x, y) is where to show the number
+  const b = S.box, mult = n + crits * (CRIT_X - 1), pts = B.perTap * mult;
+  earn(pts); S.taps += n;
+  b.hp -= B.dmg * mult;
+  dirty = true;
+  if (x != null) floatNum(x, y, pts, crits > 0);
+  if (b.hp <= 0) openBox();
+}
+function tap(e) {
+  if (opening || revealing()) return;
+  const crit = Math.random() < B.crit;
+  hit(1, crit ? 1 : 0, e.clientX, e.clientY);
+  if (!S.seen) { S.seen = 1; $('#tapHint').classList.add('hidden'); }
+  kick(crit ? 1.6 : 1);
+  Sound.tap(1 - Math.max(0, S.box.hp) / S.box.max, crit);
+  vibrate(crit ? 12 : 6);
+  if (crit || Math.random() < .5) chips(e.clientX, e.clientY, crit ? 7 : 3);
+}
+// automatic taps: worked out in bulk every frame (crits by their average).
+// While a reveal is up they still earn points, but don't crack the next crate.
+let autoAcc = 0;
+function autoTaps(dt) {
+  if (!B.auto || opening) return;
+  if (revealing()) { earn(B.perSec * dt); dirty = true; return; }
+  autoAcc += B.auto * dt;
+  const n = Math.floor(autoAcc);
+  if (!n) return;
+  autoAcc -= n;
+  let crits = 0;
+  if (n < 20) { for (let i = 0; i < n; i++) if (Math.random() < B.crit) crits++; } else crits = Math.round(n * B.crit);
+  hit(n, crits);
+  kick(.35);
+  autoPop(B.perTap * (n + crits * (CRIT_X - 1)));
+}
+
+/* ---------- Opening ---------- */
+let opening = false;
+const pickFrom = r => { const pool = ITEMS.filter(i => i.r === r); return pool[Math.random() * pool.length | 0]; };
+function openBox() {
+  const {r, t} = S.box;
+  opening = true;
+  S.opened[r]++; S.run++; S.best = Math.max(S.best, r);
+  const lvlUp = S.run % PER_LEVEL === 0;
+  let gemsGot = 0;
+  if (lvlUp) { gemsGot = crateLevel() > S.bestLevel ? 2 : 1; S.gems += gemsGot; }   // a gem for every crate level, two for a new best
+  S.bestLevel = Math.max(S.bestLevel, crateLevel());
+  const bonus = S.box.max * B.perTap;          // a crate also pays out a burst of points
+  earn(bonus);
+  // what's inside
+  let got = [], offer = null;
+  if (t === 'std' || t === 'lucky') got.push(addItem(pickFrom(r)));
+  else if (TYPES[t].n) {
+    for (let k = 0; k < TYPES[t].n; k++) got.push(addItem(pickFrom(k === 0 || Math.random() < MULTI_SAME ? r : rollRarity(0, r))));
+  } else if (t === 'copy') {
+    // three copies of an item you have: of this rarity if you have one, else the rarest you have below it
+    let pool = ITEMS.filter(i => i.r === r && S.items[i.id]);
+    if (!pool.length) { const lower = ITEMS.filter(i => i.r < r && S.items[i.id]); const top = Math.max(-1, ...lower.map(i => i.r)); pool = lower.filter(i => i.r === top); }
+    if (!pool.length) pool = ITEMS.filter(i => i.r === r);
+    const it = pool[Math.random() * pool.length | 0];
+    let g; for (let k = 0; k < 3; k++) { const x = addItem(it); if (!g || x.status !== 'copy') g = x; }
+    if (g.status === 'up') g.tier = S.items[it.id].tier;
+    g.copies = 3; got.push(g);
+  } else {
+    // a choice crate: three different items of its rarity; you pick one
+    const pool = ITEMS.filter(i => i.r === r).sort(() => Math.random() - .5).slice(0, 3);
+    offer = S.pending = {r, ids: pool.map(i => i.id)};
+  }
+  calcBoosts(); save();
+  // the crate bursts, then the drops are shown
+  const bw = $('#boxwrap');
+  bw.classList.remove('drop'); void bw.offsetWidth; bw.classList.add('open');
+  Sound.open(r);
+  vibrate(r >= 3 ? [20, 40, 30] : 18);
+  const rect = bw.getBoundingClientRect();
+  chips(rect.left + rect.width / 2, rect.top + rect.height / 2, 14 + r * 4, r);
+  floatNum(rect.left + rect.width / 2, rect.top + rect.height * .25, bonus, false, 'Crate +');
+  setTimeout(() => {
+    if (offer) showChoice(offer);
+    else if (t !== 'std' && t !== 'lucky' || r >= 3) showReveal(r, got, t);
+    else got.forEach(showDrop);
+    takeNext(); drawBox(true); opening = false; refresh(true);
+    if (lvlUp) toast(`Crate level <b>${crateLevel()}</b>! <span class="gemc">+${gemsGot} ${GEMI}</span><br><small>Crates are tougher now, and pay out more</small>`, 2400);
+    if (starsAt(crateLevel()) > 0 && !S.starHint) { S.starHint = 1; setTimeout(() => toast('You can <b>prestige</b> now! Tap the ★ to see', 3200), 2600); }
+  }, reduced() ? 50 : 520);
+}
+// a new item, or a copy of one you have: copies fill the bar, a full bar raises the tier
+function addItem(it) {
+  let h = S.items[it.id], res;
+  if (!h) { h = S.items[it.id] = {tier: 1, copies: 0, at: Date.now()}; res = {it, status: S.found[it.id] ? 'back' : 'new'}; S.found[it.id] = 1; }
+  else if (h.tier >= MAX_TIER) { const extra = boxHP(it.r) * B.perTap * 3; earn(extra); res = {it, status: 'max', extra}; }
+  else {
+    h.copies++;
+    if (h.copies >= needFor(h.tier)) { h.copies = 0; h.tier++; res = {it, status: 'up', tier: h.tier}; Sound.tierUp(); }
+    else res = {it, status: 'copy'};
+  }
+  S.unseen = (S.unseen || 0) + (res.status === 'new' || res.status === 'up' ? 1 : 0);
+  return res;
+}
+const statusTag = g => g.status === 'new' ? '<span class="tag new">NEW!</span>'
+  : g.status === 'back' ? '<span class="tag new">BACK!</span>'
+  : g.status === 'up' ? `<span class="tag up">TIER ${g.tier}!</span>`
+  : g.status === 'max' ? `<span class="tag">MAX · +${fmt(g.extra)}</span>`
+  : `<span class="tag">${S.items[g.it.id].copies}/${needFor(S.items[g.it.id].tier)} to tier ${S.items[g.it.id].tier + 1}</span>`;
+const effectText = (it, tier) => `${KINDS[it.kind].name} ${KINDS[it.kind].show(valueAt(it, tier))}`;
+function showDrop(g) {
+  const el = document.createElement('div');
+  el.className = 'dropcard'; el.style.setProperty('--rc', rc(g.it.r));
+  el.innerHTML = `<span class="e">${g.it.e}</span><div><b>${g.it.name}</b><small>${effectText(g.it, S.items[g.it.id].tier)}</small></div>${statusTag(g)}`;
+  const box = $('#drops'); box.appendChild(el);
+  while (box.children.length > 2) box.firstChild.remove();
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 360); }, 2200);
+}
+// the big reveal: rare-and-up crates, multi crates and choice crates
+let revealAt = 0, revealMode = '', revealTimer = 0;
+const cardHTML = (it, inner, cls = '') => `<div class="card${cls}${it.r === 5 ? ' mythic-r' : ''}" style="--rc:${rc(it.r)}" data-id="${it.id}"><div class="e">${it.e}</div><div class="rn">${RARITIES[it.r].name}</div><b>${it.name}</b>${inner}</div>`;
+function openReveal(r, title, html, mode, cols3, small) {
+  const rv = $('#reveal');
+  rv.style.setProperty('--rc', rc(r));
+  $('#revTitle').textContent = title;
+  $('#revTitle').classList.toggle('mythic-r', r === 5);
+  $('#revCards').className = 'cards' + (cols3 ? ' three' : '') + (small ? ' small' : '');
+  $('#revCards').innerHTML = html;
+  $('#revTap').textContent = mode === 'choice' ? 'Tap the one you want' : 'Tap to collect';
+  revealMode = mode;
+  rv.classList.add('show'); $('#app').classList.add('revealing'); revealAt = performance.now();
+  clearTimeout(revealTimer);
+  // a plain reveal tidies itself away after a few seconds, so automatic taps carry on if you're not looking
+  if (mode === 'show') revealTimer = setTimeout(() => { revealAt = 0; closeReveal(); }, small ? 6000 : 4500);
+}
+function showReveal(r, got, t) {
+  const title = t === 'std' || t === 'lucky' ? RARITIES[r].name + '!' : TYPES[t].name + '!';
+  const html = got.map(g => cardHTML(g.it, `${g.copies ? `<span class="copies">×${g.copies}</span>` : ''}<div class="fx">${effectText(g.it, S.items[g.it.id].tier)}</div>${statusTag(g)}`)).join('');
+  openReveal(Math.max(...got.map(g => g.it.r)), title, html, 'show', false, got.length > 4);
+}
+function showChoice(offer) {
+  const its = offer.ids.map(id => ITEM[id]);
+  const html = its.map(it => {
+    const h = S.items[it.id];
+    const now = h ? `<div class="fx">${effectText(it, h.tier)}</div><span class="tag">Tier ${h.tier}${h.tier < MAX_TIER ? ` · ${h.copies}/${needFor(h.tier)}` : ' · MAX'}</span>`
+      : `<div class="fx">${effectText(it, 1)}</div><span class="tag new">${S.found[it.id] ? 'GET BACK' : 'NEW'}</span>`;
+    return cardHTML(it, now, ' pick');
+  }).join('');
+  openReveal(offer.r, 'Choose one!', html, 'choice', true);
+  $('#revCards').querySelectorAll('.card.pick').forEach(c => c.onclick = e => { e.stopPropagation(); choose(c.dataset.id); });
+}
+function choose(id) {
+  if (revealMode !== 'choice' || performance.now() - revealAt < 350) return;
+  const g = addItem(ITEM[id]);
+  S.pending = null; calcBoosts(); save(); refresh(true);
+  Sound.buy(); vibrate(15);
+  $('#revCards').querySelectorAll('.card').forEach(c => {
+    c.classList.remove('pick'); c.onclick = null;
+    if (c.dataset.id === id) { c.classList.add('chosen'); c.querySelector('.tag').outerHTML = statusTag(g); c.querySelector('.fx').textContent = effectText(g.it, S.items[id].tier); }
+    else c.classList.add('dim');
+  });
+  revealMode = 'show'; revealAt = performance.now(); $('#revTap').textContent = 'Tap to collect';
+  revealTimer = setTimeout(() => { revealAt = 0; closeReveal(); }, 2500);
+}
+function closeReveal() {
+  if (revealMode === 'choice') return;                  // you have to pick one
+  if (performance.now() - revealAt < 450) return;       // don't skip it by accident while tapping fast
+  clearTimeout(revealTimer);
+  $('#reveal').classList.remove('show'); $('#app').classList.remove('revealing');
+}
+$('#reveal').addEventListener('pointerdown', closeReveal);
+
+/* ---------- Crate art ----------
+   Every kind of crate has its own shape, drawn in its rarity's colours:
+     standard  a cargo crate with cross-bracing
+     choice    a round-topped pod with three "?" portholes
+     multi     four small crates strapped together
+     mega      a long ribbed shipping container
+     lucky     a capsule orb with a star in its glass dome
+     copy      a replicator canister with ghostly copies beside it
+   The part with class "lid" flies off when it opens. Cracks glow as you tap. */
+const RC = {
+  C: ['#7d8aa8', '#2fbf71', '#3b82f6', '#a855f7', '#f5a524', '#ef4458'],
+  D: ['#48536f', '#1a7d48', '#1d4fb8', '#6f27bd', '#b5700a', '#a31c33'],
+  L: ['#d4e2ff', '#8dffc0', '#a5ceff', '#e6c2ff', '#ffe49e', '#ffb7c2'],
+};
+const M1 = '#38435f', M2 = '#232b45', M3 = '#5f6c8f', M4 = '#8b98ba';
+const STAR = (x, y, s, fill, stroke) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0-14l4.1 8.4 9.2 1.3-6.7 6.5 1.6 9.2L0 7.1l-8.2 4.3 1.6-9.2-6.7-6.5 9.2-1.3z" fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/>`;
+const SHAPES = {
+  std: (C, D, L, r) => ({
+    body: `<rect x="24" y="80" width="152" height="102" rx="10" fill="${M2}"/>
+      <rect x="30" y="86" width="140" height="90" rx="7" fill="${C}"/><rect x="30" y="86" width="140" height="90" rx="7" fill="url(#sh)"/>
+      <path d="M40 96l120 70M160 96L40 166" stroke="${D}" stroke-width="8" stroke-linecap="round" opacity=".6"/>
+      <rect x="78" y="110" width="44" height="42" rx="7" fill="${M1}" stroke="${M3}" stroke-width="3"/>
+      <rect x="87" y="126" width="26" height="7" rx="3.5" fill="${L}"/>
+      ${[[24, 80], [164, 80], [24, 170], [164, 170]].map(([x, y]) => `<rect x="${x}" y="${y}" width="12" height="12" rx="3" fill="${M3}"/>`).join('')}
+      ${r >= 3 ? [[42, 98], [158, 98], [42, 164], [158, 164]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.5" fill="${L}"/>`).join('') : ''}`,
+    lid: `<rect x="70" y="42" width="60" height="12" rx="6" fill="${M3}"/>
+      <rect x="16" y="52" width="168" height="32" rx="8" fill="${M1}"/><rect x="16" y="52" width="168" height="32" rx="8" fill="url(#lsh)"/>
+      <rect x="28" y="64" width="144" height="8" rx="4" fill="${L}" opacity="${r ? .95 : .6}"/>`,
+    star: [100, 28],
+    cracks: ['M60 176l8-18-9-12 6-14', 'M150 88l-8 18 10 10-6 16', 'M34 122l18 4 6 16 16 2', 'M168 150l-20-6-8 14-14 2', 'M100 176l-4-20 8-12-6-16'],
+  }),
+  choice: (C, D, L, r) => ({
+    body: `<rect x="40" y="78" width="120" height="104" rx="24" fill="${M2}"/>
+      <rect x="46" y="84" width="108" height="92" rx="19" fill="${M1}"/><rect x="46" y="84" width="108" height="92" rx="19" fill="url(#sh)"/>
+      <rect x="40" y="152" width="120" height="12" fill="${C}"/>
+      ${[68, 100, 132].map(x => `<circle cx="${x}" cy="122" r="15" fill="${M2}" stroke="${C}" stroke-width="4"/><text x="${x}" y="122" dy=".36em" text-anchor="middle" font-family="Orbitron,Nunito,sans-serif" font-weight="900" font-size="17" fill="${L}">?</text>`).join('')}
+      <rect x="54" y="178" width="26" height="9" rx="3" fill="${M3}"/><rect x="120" y="178" width="26" height="9" rx="3" fill="${M3}"/>
+      ${r >= 3 ? `<circle cx="54" cy="158" r="4" fill="${L}"/><circle cx="146" cy="158" r="4" fill="${L}"/>` : ''}`,
+    lid: `<rect x="97" y="18" width="6" height="24" rx="2" fill="${M3}"/><circle cx="100" cy="17" r="7" fill="${L}"/>
+      <path d="M40 86Q40 40 100 38Q160 40 160 86Z" fill="${C}"/><path d="M40 86Q40 40 100 38Q160 40 160 86Z" fill="url(#lsh)"/>
+      <path d="M58 72Q62 52 90 46" stroke="#fff" stroke-opacity=".5" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <rect x="38" y="80" width="124" height="8" rx="4" fill="${D}"/>`,
+    star: null,
+    cracks: ['M62 176l6-14-8-10', 'M150 100l-10 12 8 10', 'M50 142l14 2 6 10', 'M152 140l-14 4-4 12', 'M100 176l-3-14 6-8'],
+  }),
+  multi: (C, D, L, r) => ({
+    body: [[22, 74], [104, 74], [22, 128], [104, 128]].map(([x, y]) => `<rect x="${x}" y="${y}" width="74" height="54" rx="6" fill="${M2}"/>
+      <rect x="${x + 4}" y="${y + 4}" width="66" height="46" rx="4" fill="${C}"/><rect x="${x + 4}" y="${y + 4}" width="66" height="46" rx="4" fill="url(#sh)"/>
+      <path d="M${x + 10} ${y + 10}l54 34M${x + 64} ${y + 10}l-54 34" stroke="${D}" stroke-width="5" stroke-linecap="round" opacity=".55"/>`).join('')
+      + `<rect x="16" y="123" width="168" height="10" rx="3" fill="${M3}"/><rect x="95" y="68" width="10" height="116" rx="3" fill="${M3}"/>
+      <rect x="80" y="113" width="40" height="30" rx="6" fill="${M1}" stroke="${L}" stroke-width="2.5"/>
+      <text x="100" y="128" dy=".36em" text-anchor="middle" font-family="Orbitron,Nunito,sans-serif" font-weight="900" font-size="15" fill="${L}">×4</text>
+      ${r >= 3 ? [[30, 82], [170, 82], [30, 174], [170, 174]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.5" fill="${L}"/>`).join('') : ''}`,
+    lid: `<rect x="18" y="56" width="164" height="18" rx="7" fill="${D}"/><rect x="28" y="61" width="144" height="6" rx="3" fill="${L}" opacity=".85"/>
+      <rect x="88" y="48" width="24" height="10" rx="4" fill="${M3}"/>`,
+    star: [100, 34],
+    cracks: ['M40 178l8-12-6-10', 'M160 82l-8 12 8 8', 'M30 104l14 2 4 10', 'M172 160l-14-4-6 10', 'M130 178l-4-12 6-8'],
+  }),
+  mega: (C, D, L, r) => ({
+    body: `<rect x="6" y="84" width="188" height="98" rx="8" fill="${M2}"/>
+      <rect x="12" y="90" width="176" height="86" rx="5" fill="${C}"/><rect x="12" y="90" width="176" height="86" rx="5" fill="url(#sh)"/>
+      ${Array.from({length: 14}, (_, i) => `<rect x="${18 + i * 12.4}" y="94" width="6" height="66" rx="2" fill="${D}" opacity=".5"/>`).join('')}
+      <rect x="66" y="108" width="68" height="34" rx="7" fill="${M1}" stroke="${M3}" stroke-width="3"/>
+      <text x="100" y="125" dy=".36em" text-anchor="middle" font-family="Orbitron,Nunito,sans-serif" font-weight="900" font-size="20" fill="${L}">×8</text>
+      ${Array.from({length: 8}, (_, i) => `<circle cx="${25 + i * 21.4}" cy="168" r="4.5" fill="${L}" opacity="${r >= 2 ? 1 : .7}"/>`).join('')}
+      <rect x="2" y="84" width="10" height="98" rx="3" fill="${M3}"/><rect x="188" y="84" width="10" height="98" rx="3" fill="${M3}"/>`,
+    lid: `<path d="M44 64v-16h18v16M138 64v-16h18v16" stroke="${M3}" stroke-width="6" fill="none"/>
+      <rect x="0" y="62" width="200" height="26" rx="6" fill="${M1}"/><rect x="0" y="62" width="200" height="26" rx="6" fill="url(#lsh)"/>
+      <rect x="14" y="71" width="172" height="7" rx="3.5" fill="${L}" opacity=".9"/>`,
+    star: [100, 40],
+    cracks: ['M40 178l8-14-6-10 4-10', 'M160 92l-8 14 8 10', 'M18 120l16 4 4 12', 'M184 150l-16-4-6 12', 'M100 178l-2-14 6-8'],
+  }),
+  lucky: (C, D, L, r) => ({
+    body: `<path d="M72 176h56l-6 12H78z" fill="${M3}"/>
+      <path d="M36 120A64 64 0 0 0 164 120Z" fill="${M1}"/><path d="M36 120A64 64 0 0 0 164 120Z" fill="url(#sh)"/>
+      <path d="M58 140Q100 160 142 140" stroke="${M3}" stroke-width="4" fill="none" opacity=".7"/>
+      <rect x="30" y="113" width="140" height="15" rx="7.5" fill="${D}"/>
+      ${[52, 76, 100, 124, 148].map(x => `<circle cx="${x}" cy="120.5" r="3.6" fill="${L}"/>`).join('')}`,
+    lid: `<path d="M36 116A64 64 0 0 1 164 116Z" fill="${C}" opacity=".9"/><path d="M36 116A64 64 0 0 1 164 116Z" fill="url(#lsh)"/>
+      <path d="M100 58L108 80 130 87 108 94 100 116 92 94 70 87 92 80Z" fill="${L}"/>
+      <path d="M56 100Q60 72 90 62" stroke="#fff" stroke-opacity=".55" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+    star: null,
+    cracks: ['M62 160l10-12-4-10', 'M140 160l-10-10 4-12', 'M100 182l-2-14 6-10', 'M48 136l14-2 4 8', 'M152 138l-14-4-2 8'],
+  }),
+  copy: (C, D, L, r) => ({
+    body: `<g opacity=".4" stroke="${L}" stroke-width="3" stroke-dasharray="7 6" fill="none">
+        <path d="M14 84v84a30 10 0 0 0 60 0V84"/><path d="M126 84v84a30 10 0 0 0 60 0V84"/></g>
+      <path d="M54 82v90a46 14 0 0 0 92 0V82z" fill="${M1}"/><path d="M54 82v90a46 14 0 0 0 92 0V82z" fill="url(#sh)"/>
+      <rect x="68" y="96" width="64" height="62" rx="10" fill="${M2}" stroke="${C}" stroke-width="4"/>
+      <path d="M84 142l16-15 16 15M84 125l16-15 16 15" stroke="${L}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M54 166a46 14 0 0 0 92 0" stroke="${C}" stroke-width="7" fill="none"/>
+      ${r >= 3 ? `<circle cx="62" cy="100" r="4" fill="${L}"/><circle cx="138" cy="100" r="4" fill="${L}"/>` : ''}`,
+    lid: `<rect x="92" y="52" width="16" height="18" rx="4" fill="${M3}"/>
+      <path d="M52 82v-6a48 15 0 0 1 96 0v6a48 15 0 0 1-96 0z" fill="${C}"/>
+      <ellipse cx="100" cy="76" rx="48" ry="15" fill="${M3}"/><ellipse cx="100" cy="76" rx="32" ry="8" fill="${L}" opacity=".85"/>`,
+    star: [100, 40],
+    cracks: ['M70 172l6-12-6-8', 'M136 100l-8 10 6 8', 'M60 128l12 2 2 10', 'M142 140l-12 2-2 10', 'M100 180l-2-14 6-6'],
+  }),
+};
+function boxSVG(r, mini, t = 'std') {
+  const C = RC.C[r], D = RC.D[r], L = RC.L[r], S0 = (SHAPES[t] || SHAPES.std)(C, D, L, r);
+  const defs = `<defs><linearGradient id="sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+    <linearGradient id="lsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient></defs>`;
+  const star = r >= 4 && S0.star ? STAR(S0.star[0], S0.star[1], 1, L, D) : '';
+  const lid = `<g class="lid">${S0.lid}${star}</g>`;
+  if (mini) return `<svg viewBox="0 8 200 184" class="mini" aria-hidden="true" overflow="visible">${defs}<ellipse cx="100" cy="188" rx="76" ry="6" fill="#000" opacity=".3"/>${S0.body}${lid}</svg>`;
+  return `${defs}${S0.body}${S0.cracks.map((d, i) => `<path class="crack" data-i="${i}" d="${d}"/>`).join('')}${lid}`;
+}
+
+/* ---------- Station art (the things around the crate you can tap) ---------- */
+const ART = {
+  // Cargo Hold: a glass-fronted shelf of treasures
+  cargo: `<svg viewBox="0 0 100 100"><rect x="12" y="8" width="76" height="86" rx="7" fill="#1c2341" stroke="#ffb347" stroke-opacity=".55" stroke-width="2.5"/>
+    <rect x="15" y="36" width="70" height="4" fill="#4a3c24"/><rect x="15" y="62" width="70" height="4" fill="#4a3c24"/>
+    <rect x="21" y="21" width="14" height="15" rx="2" fill="#3b82f6"/><circle cx="50" cy="29" r="7" fill="#a855f7"/><rect x="62" y="19" width="15" height="17" rx="3" fill="#2fbf71"/>
+    <path d="M22 62l8-14 8 14z" fill="#f5a524"/><rect x="45" y="48" width="11" height="14" rx="2" fill="#ef4458"/><circle cx="70" cy="55" r="7" fill="#9aa6c4"/>
+    <rect x="20" y="74" width="60" height="12" rx="3" fill="#2a3358"/><rect x="24" y="78" width="52" height="4" rx="2" fill="#ffb347" class="blink"/>
+    <path d="M18 12h16L18 40z" fill="#fff" opacity=".07"/></svg>`,
+  // Fabricator: a machine with a robot arm building a crate
+  fab: `<svg viewBox="0 0 100 100"><defs><pattern id="hz" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#17181d"/><rect width="4.5" height="9" fill="#ffc53d"/></pattern></defs>
+    <rect x="8" y="64" width="84" height="28" rx="4" fill="#2b2e38"/><rect x="8" y="84" width="84" height="8" rx="2" fill="url(#hz)"/>
+    <rect x="12" y="18" width="42" height="48" rx="6" fill="#3d4250"/><rect x="18" y="25" width="30" height="17" rx="3" fill="#0b2630"/>
+    <rect x="21" y="31" width="16" height="3" rx="1.5" fill="#47d7ff" class="blink"/><rect x="21" y="36" width="10" height="2.5" rx="1" fill="#47d7ff" opacity=".6"/>
+    <circle cx="22" cy="54" r="3.5" fill="#ffc53d"/><circle cx="32" cy="54" r="3.5" fill="#3ee08a" class="blink b2"/>
+    <circle cx="33" cy="12" r="4" fill="#ffc53d" class="blink"/>
+    <path d="M54 30L74 20 82 38" stroke="#8b98ba" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="74" cy="20" r="4" fill="#5f6c8f"/>
+    <path d="M76 40h12M78 40v6M86 40v6" stroke="#8b98ba" stroke-width="3" stroke-linecap="round"/>
+    <rect x="68" y="48" width="22" height="16" rx="2" fill="#ffc53d"/><path d="M70 50l18 12M88 50L70 62" stroke="#b5700a" stroke-width="2"/></svg>`,
+  // Power Lab: bubbling vials on a rack
+  lab: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="88" rx="40" ry="6" fill="#45f0c8" opacity=".18"/>
+    <rect x="10" y="78" width="80" height="12" rx="4" fill="#24304f"/><rect x="10" y="50" width="80" height="5" rx="2" fill="#3a4876"/>
+    ${[[16, '#52e07a', 36], [42, '#47d7ff', 22], [68, '#ff4fd8', 44]].map(([x, c, h], i) => `<rect x="${x}" y="20" width="16" height="58" rx="8" fill="rgba(255,255,255,.07)" stroke="#a8fff0" stroke-width="2"/>
+      <rect x="${x + 2}" y="${76 - h}" width="12" height="${h}" rx="6" fill="${c}" opacity=".9"/>
+      <circle cx="${x + 8}" cy="70" r="2.2" fill="#fff" opacity=".8" class="bub b${i + 1}"/><circle cx="${x + 6}" cy="66" r="1.5" fill="#fff" opacity=".7" class="bub b${(i + 1) % 3 + 1}"/>`).join('')}
+    <rect x="14" y="16" width="20" height="5" rx="2" fill="#5f6c8f"/><rect x="40" y="16" width="20" height="5" rx="2" fill="#5f6c8f"/><rect x="66" y="16" width="20" height="5" rx="2" fill="#5f6c8f"/></svg>`,
+  // Trade Post: a market stall with a neon awning and a hologram price tag
+  trade: `<svg viewBox="0 0 100 100"><rect x="10" y="62" width="80" height="30" rx="4" fill="#3a1450"/><rect x="14" y="70" width="72" height="3" rx="1.5" fill="#ff4fd8" class="blink"/>
+    <rect x="14" y="38" width="4" height="26" fill="#5d2a78"/><rect x="82" y="38" width="4" height="26" fill="#5d2a78"/>
+    <path d="M6 24h88l-6 16H12z" fill="#ff4fd8"/><path d="M22 24l-2 16M36 24v16M50 24v16M64 24v16M78 24l2 16" stroke="#fff" stroke-opacity=".55" stroke-width="5"/>
+    <g class="holo"><rect x="32" y="42" width="36" height="18" rx="3" fill="rgba(255,79,216,.2)" stroke="#ff8ae6" stroke-width="1.5"/>
+    <text x="50" y="51" dy=".36em" text-anchor="middle" font-family="Orbitron,Nunito,sans-serif" font-weight="900" font-size="11" fill="#ffd1f5">-50%</text></g>
+    <rect x="18" y="54" width="10" height="8" rx="1.5" fill="#47d7ff"/><circle cx="78" cy="58" r="4" fill="#ffc83d"/><rect x="66" y="56" width="6" height="6" rx="1" fill="#2fbf71"/></svg>`,
+  // Star Map: a projector throwing a golden star map into the air
+  star: `<svg viewBox="0 0 100 100"><defs><linearGradient id="bm" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd36b" stop-opacity=".55"/><stop offset="1" stop-color="#ffd36b" stop-opacity="0"/></linearGradient></defs>
+    <path d="M40 74L12 14h76L60 74z" fill="url(#bm)"/>
+    <ellipse cx="50" cy="38" rx="32" ry="10" fill="none" stroke="#ffd36b" stroke-opacity=".6" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <circle cx="20" cy="38" r="3" fill="#47d7ff"/><circle cx="80" cy="36" r="2.5" fill="#ff4fd8"/>
+    <g class="spin">${STAR(50, 34, 1.15, '#ffd36b', '#ffefb0')}</g>
+    <ellipse cx="50" cy="88" rx="30" ry="7" fill="#24304f"/><rect x="32" y="72" width="36" height="16" rx="4" fill="#3a4876"/>
+    <ellipse cx="50" cy="73" rx="12" ry="3.5" fill="#ffd36b" class="blink"/></svg>`,
+  // Help Bot: a friendly robot with a screen face
+  bot: `<svg viewBox="0 0 100 100"><rect x="30" y="86" width="40" height="9" rx="4.5" fill="#232b45"/>
+    <rect x="28" y="50" width="44" height="38" rx="10" fill="#3a4876"/><circle cx="50" cy="68" r="6" fill="#5dff9b" class="blink"/>
+    <rect x="18" y="54" width="10" height="24" rx="5" fill="#5f6c8f"/><g class="wave"><rect x="72" y="54" width="10" height="24" rx="5" fill="#5f6c8f"/></g>
+    <rect x="22" y="14" width="56" height="38" rx="13" fill="#5f6c8f"/><rect x="29" y="20" width="42" height="26" rx="8" fill="#04140b"/>
+    <circle cx="41" cy="31" r="4" fill="#5dff9b"/><circle cx="59" cy="31" r="4" fill="#5dff9b"/><path d="M42 39q8 5 16 0" stroke="#5dff9b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="48.5" y="4" width="3" height="11" fill="#8b98ba"/><circle cx="50" cy="5" r="4" fill="#ff4fd8" class="blink b2"/></svg>`,
+};
+const VIAL = {luck: '#52e07a', power: '#ff8a3d', points: '#ffd23d', auto: '#47d7ff', crit: '#ff4d6d', hold: '#b98aff'};
+
+/* ---------- Space outside the window ----------
+   The ship is flying: everything drifts past from right to left, nearer things faster.
+   Layers, back to front: nebula clouds, a far galaxy now and then, stars, planets
+   (a new kind each time, in turn), moons, asteroid fields, shooting stars.
+   Planets, moons and galaxies are painted once onto their own little canvas when they
+   appear, then just moved each frame. */
+(() => {
+  const cv = document.getElementById('space'), g = cv.getContext('2d');
+  let W = 0, H = 0, dpr = 1, stars = [];
+  const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.random() * a.length | 0];
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.ceil(w * dpr); c.height = Math.ceil(h * dpr); const x = c.getContext('2d'); x.scale(dpr, dpr); return [c, x]; };
+  function size() {
+    const r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
+    W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = Array.from({length: Math.round(W * H / 2400)}, () => ({x: Math.random() * W, y: Math.random() * H, z: Math.random(), t: Math.random() * 6}));
+  }
+
+  /* --- planets: each kind paints its own surface; then shading, a glowing rim, maybe rings --- */
+  const KINDS = [
+    {name: 'gas', base: ['#e8b77c', '#c98a52', '#f3dcb4', '#a8673b', '#efc999'], glow: '#ffcf96', ring: .25},
+    {name: 'ringed', base: ['#e9d29c', '#cdb27a', '#f5e6bd', '#b89a62'], glow: '#ffe6a8', ring: 1},
+    {name: 'ice', base: ['#5fd0ff', '#3a8ee6', '#8ae6ff', '#2f6fd0'], glow: '#7fd8ff', ring: .3},
+    {name: 'rock', base: ['#c4643d', '#9a4a2c', '#d98a5c'], glow: '#ff9a70', ring: 0},
+    {name: 'earth', base: ['#2a6fd6'], glow: '#7fc4ff', ring: 0},
+    {name: 'lava', base: ['#2a0f0c'], glow: '#ff6a2a', ring: 0},
+    {name: 'alien', base: ['#a35cf0', '#6b2fc0', '#e08aff', '#3f1f8a', '#ff7ad9'], glow: '#d89aff', ring: .5},
+    {name: 'toxic', base: ['#b6e04a', '#7fae2a', '#e6f59a', '#557a1a'], glow: '#d9ff7a', ring: .2},
+  ];
+  let kindOrder = [];
+  const nextKind = () => { if (!kindOrder.length) kindOrder = KINDS.slice().sort(() => Math.random() - .5); return kindOrder.pop(); };
+  function surface(x, R, k) {
+    const cols = k.base;
+    x.fillStyle = cols[0]; x.fillRect(-R, -R, R * 2, R * 2);
+    if (k.name === 'gas' || k.name === 'ringed' || k.name === 'alien' || k.name === 'toxic' || k.name === 'ice') {
+      // bands, with a little wave in them
+      let y = -R;
+      while (y < R) {
+        const h = rnd(R * .05, R * (k.name === 'ice' ? .35 : .18));
+        x.fillStyle = pick(cols); x.globalAlpha = k.name === 'ice' ? .35 : rnd(.55, .95);
+        x.beginPath(); x.moveTo(-R, y);
+        for (let i = 0; i <= 12; i++) x.lineTo(-R + i * R / 6, y + Math.sin(i * 1.3 + y) * R * .02);
+        for (let i = 12; i >= 0; i--) x.lineTo(-R + i * R / 6, y + h + Math.sin(i * 1.1 + y) * R * .02);
+        x.fill(); y += h;
+      }
+      x.globalAlpha = 1;
+      if (k.name === 'gas' && Math.random() < .8) { x.fillStyle = '#c0533a'; x.globalAlpha = .8; x.beginPath(); x.ellipse(rnd(-.3, .3) * R, rnd(.1, .4) * R, R * .18, R * .09, 0, 0, 7); x.fill(); x.globalAlpha = 1; }
+      if (k.name === 'alien') for (let i = 0; i < 6; i++) { x.fillStyle = pick(cols); x.globalAlpha = .5; x.beginPath(); x.arc(rnd(-R, R), rnd(-R, R), rnd(.05, .15) * R, 0, 7); x.fill(); }
+      x.globalAlpha = 1;
+    }
+    if (k.name === 'rock') {
+      for (let i = 0; i < 8; i++) { x.fillStyle = pick(cols); x.globalAlpha = .5; x.beginPath(); x.arc(rnd(-R, R), rnd(-R, R), rnd(.2, .5) * R, 0, 7); x.fill(); }
+      craters(x, R, 16, '#5a2414', '#f0a07a');
+    }
+    if (k.name === 'earth') {
+      // land, then clouds
+      for (let c = 0; c < 6; c++) {
+        const cx = rnd(-R, R), cy = rnd(-R * .8, R * .8), col = pick(['#3f9a4a', '#5aa84a', '#8a7a46', '#2f7d3c']);
+        x.fillStyle = col;
+        for (let i = 0; i < 10; i++) { x.beginPath(); x.arc(cx + rnd(-.25, .25) * R, cy + rnd(-.18, .18) * R, rnd(.06, .16) * R, 0, 7); x.fill(); }
+      }
+      x.fillStyle = '#eef6ff';
+      for (let i = 0; i < 14; i++) { x.globalAlpha = rnd(.35, .75); x.beginPath(); x.ellipse(rnd(-R, R), rnd(-R, R), rnd(.12, .3) * R, rnd(.03, .07) * R, rnd(-.3, .3), 0, 7); x.fill(); }
+      x.globalAlpha = .8; x.fillRect(-R, -R, R * 2, R * .14); x.fillRect(-R, R * .88, R * 2, R * .12);   // ice caps
+      x.globalAlpha = 1;
+    }
+    if (k.name === 'lava') {
+      x.strokeStyle = '#ff7a2a'; x.lineCap = 'round'; x.shadowColor = '#ff5a10'; x.shadowBlur = R * .08;
+      for (let i = 0; i < 9; i++) {
+        let px = rnd(-R, R), py = rnd(-R, R); x.lineWidth = rnd(.015, .04) * R; x.beginPath(); x.moveTo(px, py);
+        for (let j = 0; j < 7; j++) { px += rnd(-.18, .18) * R; py += rnd(-.18, .18) * R; x.lineTo(px, py); }
+        x.stroke();
+      }
+      x.shadowBlur = 0;
+      craters(x, R, 8, '#14060a', '#5a2a1a');
+    }
+  }
+  function craters(x, R, n, dark, light) {
+    for (let i = 0; i < n; i++) {
+      const cx = rnd(-R, R), cy = rnd(-R, R), r = rnd(.04, .14) * R;
+      x.fillStyle = light; x.globalAlpha = .45; x.beginPath(); x.arc(cx - r * .15, cy - r * .15, r, 0, 7); x.fill();
+      x.fillStyle = dark; x.globalAlpha = .55; x.beginPath(); x.arc(cx + r * .1, cy + r * .1, r * .85, 0, 7); x.fill();
+    }
+    x.globalAlpha = 1;
+  }
+  function shade(x, R, glow) {
+    // light from the upper left: lit side, a soft edge, then night
+    let gr = x.createRadialGradient(-R * .45, -R * .45, R * .1, -R * .2, -R * .2, R * 1.75);
+    gr.addColorStop(0, 'rgba(255,255,255,.18)'); gr.addColorStop(.35, 'rgba(0,0,0,0)'); gr.addColorStop(.72, 'rgba(2,3,14,.7)'); gr.addColorStop(1, 'rgba(2,3,14,.96)');
+    x.fillStyle = gr; x.fillRect(-R, -R, R * 2, R * 2);
+    // a thin bright edge of atmosphere on the lit side
+    gr = x.createRadialGradient(0, 0, R * .86, 0, 0, R);
+    gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, glow);
+    x.globalAlpha = .55; x.fillStyle = gr; x.beginPath(); x.arc(0, 0, R, Math.PI * .75, Math.PI * 1.75); x.lineTo(0, 0); x.fill(); x.globalAlpha = 1;
+  }
+  function ring(x, R, k, front) {
+    const rx = R * 2.05, ry = R * .42, cols = k.base;
+    x.save(); x.rotate(-.32);
+    for (let i = 0; i < 7; i++) {
+      x.strokeStyle = pick(cols); x.globalAlpha = rnd(.25, .65); x.lineWidth = R * rnd(.04, .09);
+      const s = 1 - i * .07;
+      x.beginPath(); front ? x.ellipse(0, 0, rx * s, ry * s, 0, 0, Math.PI) : x.ellipse(0, 0, rx * s, ry * s, 0, Math.PI, Math.PI * 2); x.stroke();
+    }
+    x.restore(); x.globalAlpha = 1;
+  }
+  function paintPlanet(R, k) {
+    const ringed = k.ring && Math.random() < k.ring, pad = ringed ? R * 2.3 : R * 1.25;
+    const [c, x] = mk(pad * 2, pad * 2); x.translate(pad, pad);
+    // a faint glow of atmosphere around it
+    const gr = x.createRadialGradient(0, 0, R * .9, 0, 0, R * 1.22); gr.addColorStop(0, k.glow + '55'); gr.addColorStop(1, k.glow + '00');
+    x.fillStyle = gr; x.beginPath(); x.arc(0, 0, R * 1.22, 0, 7); x.fill();
+    if (ringed) ring(x, R, k, false);
+    x.save(); x.beginPath(); x.arc(0, 0, R, 0, 7); x.clip(); x.rotate(rnd(-.4, .4)); surface(x, R, k); x.rotate(0); x.restore();
+    x.save(); x.beginPath(); x.arc(0, 0, R, 0, 7); x.clip(); shade(x, R, k.glow); x.restore();
+    if (ringed) ring(x, R, k, true);
+    return {c, w: pad * 2, h: pad * 2};
+  }
+  function paintMoon(R) {
+    const pad = R * 1.1, [c, x] = mk(pad * 2, pad * 2); x.translate(pad, pad);
+    const base = pick(['#b9bfd4', '#cbb89a', '#9aa6c4', '#d8d0c0', '#a78f7a']);
+    x.save(); x.beginPath(); x.arc(0, 0, R, 0, 7); x.clip();
+    x.fillStyle = base; x.fillRect(-R, -R, R * 2, R * 2);
+    craters(x, R, 10, 'rgba(40,40,60,.9)', 'rgba(255,255,255,.7)');
+    shade(x, R, 'rgba(255,255,255,.6)'); x.restore();
+    return {c, w: pad * 2, h: pad * 2};
+  }
+  function paintGalaxy(R) {
+    const [c, x] = mk(R * 2.2, R * 2.2); x.translate(R * 1.1, R * 1.1); x.scale(1, .45); x.rotate(rnd(0, 6));
+    const hue = pick(['200,170,255', '160,210,255', '255,190,220']);
+    let gr = x.createRadialGradient(0, 0, 0, 0, 0, R * .35); gr.addColorStop(0, 'rgba(255,245,230,.9)'); gr.addColorStop(1, `rgba(${hue},0)`);
+    x.fillStyle = gr; x.beginPath(); x.arc(0, 0, R * .35, 0, 7); x.fill();
+    for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 260; i++) {
+      const t = i / 260, a = arm * Math.PI + t * 4.2, d = R * (.1 + t * .9);
+      x.fillStyle = `rgba(${hue},${.5 * (1 - t)})`;
+      x.beginPath(); x.arc(Math.cos(a) * d + rnd(-4, 4), Math.sin(a) * d + rnd(-4, 4), rnd(.6, 1.6), 0, 7); x.fill();
+    }
+    return {c, w: R * 2.2, h: R * 2.2};
+  }
+  function paintNebula(R) {
+    const [c, x] = mk(R * 2, R * 2), cols = pick([['150,70,220', '60,120,240'], ['230,80,150', '120,60,220'], ['40,160,200', '70,90,220'], ['220,120,60', '170,50,120']]);
+    for (let i = 0; i < 9; i++) {
+      const px = R + rnd(-.5, .5) * R, py = R + rnd(-.35, .35) * R, r = rnd(.3, .6) * R, col = pick(cols);
+      const gr = x.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, `rgba(${col},.32)`); gr.addColorStop(1, `rgba(${col},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, R * 2, R * 2);
+    }
+    return {c, w: R * 2, h: R * 2};
+  }
+
+  /* --- what's out there right now --- */
+  let things = [], asteroids = [], shoot = null;
+  let tPlanet = 0, tMoon = 6, tRocks = 18, tGalaxy = 12, tNeb = 0, tShoot = 4;
+  const S0 = () => Math.min(W, H);
+  function addPlanet(x0) {
+    const R = S0() * rnd(.16, .36), k = nextKind(), img = paintPlanet(R, k);
+    things.push({img, x: x0 ?? W + img.w / 2, y: rnd(.2, .8) * H, vx: W / rnd(40, 60), vy: rnd(-1.5, 1.5), z: 3, planet: 1});
+    if (Math.random() < .5) { const r = R * rnd(.12, .22), m = paintMoon(r); things.push({img: m, x: (x0 ?? W + img.w / 2) + R * rnd(1.3, 1.9), y: things[things.length - 1].y + R * rnd(-1, 1), vx: W / rnd(36, 50), vy: rnd(-1, 1), z: 4}); }
+  }
+  function addMoon() { const r = S0() * rnd(.03, .07), m = paintMoon(r); things.push({img: m, x: W + m.w, y: rnd(.1, .9) * H, vx: W / rnd(22, 34), vy: rnd(-2, 2), z: 4}); }
+  function addGalaxy() { const r = S0() * rnd(.1, .18), m = paintGalaxy(r); things.push({img: m, x: W + m.w, y: rnd(.1, .6) * H, vx: W / rnd(160, 220), vy: 0, z: 1, a: rnd(.5, .8)}); }
+  function addNebula(x0) { const r = S0() * rnd(.6, 1), m = paintNebula(r); things.push({img: m, x: x0 ?? W + m.w / 2, y: rnd(.2, .8) * H, vx: W / rnd(200, 280), vy: 0, z: 0}); }
+  function addRocks() {
+    const cy = rnd(.2, .8) * H, n = 6 + (Math.random() * 10 | 0), v = W / rnd(9, 14);
+    for (let i = 0; i < n; i++) {
+      const r = rnd(2, 7), pts = Array.from({length: 7}, (_, j) => { const a = j / 7 * 6.283, d = r * rnd(.7, 1.15); return [Math.cos(a) * d, Math.sin(a) * d]; });
+      asteroids.push({x: W + rnd(10, W * .6), y: cy + rnd(-.18, .18) * H, r, pts, vx: v * rnd(.8, 1.3), vy: rnd(-4, 4), rot: rnd(0, 6), vr: rnd(-2, 2), col: pick(['#7a6f66', '#8f8a84', '#6c5a4c', '#9a8c7a'])});
+    }
+  }
+  function start() {
+    things = []; asteroids = [];
+    addNebula(W * .35); addPlanet(W * rnd(.62, .8));
+    tPlanet = rnd(25, 45);
+  }
+  addEventListener('resize', () => { size(); start(); });
+  size(); start();
+
+  let last = performance.now();
+  function draw(now) {
+    requestAnimationFrame(draw);
+    const dt = Math.min(.1, (now - last) / 1000); last = now;
+    if (document.querySelector('.panel.show') || document.hidden) return;   // nobody can see it: save the battery
+    const sp = document.documentElement.classList.contains('rz-reduce-motion') ? .15 : 1;
+    // timers: something new comes into view every so often
+    tPlanet -= dt * sp; tMoon -= dt * sp; tRocks -= dt * sp; tGalaxy -= dt * sp; tNeb -= dt * sp; tShoot -= dt;
+    if (tPlanet <= 0 && !things.some(t => t.planet && t.x + t.img.w / 2 > W * .45)) { addPlanet(); tPlanet = rnd(12, 28); }
+    if (tMoon <= 0) { addMoon(); tMoon = rnd(14, 30); }
+    if (tRocks <= 0) { addRocks(); tRocks = rnd(30, 60); }
+    if (tGalaxy <= 0) { addGalaxy(); tGalaxy = rnd(60, 120); }
+    if (tNeb <= 0 && things.filter(t => t.z === 0).length < 2) { addNebula(); tNeb = rnd(40, 80); }
+    g.clearRect(0, 0, W, H);
+    things.sort((a, b) => a.z - b.z);
+    const drawThing = t => { g.globalAlpha = t.a || 1; g.drawImage(t.img.c, t.x - t.img.w / 2, t.y - t.img.h / 2, t.img.w, t.img.h); g.globalAlpha = 1; };
+    for (const t of things) { t.x -= t.vx * dt * sp; t.y += t.vy * dt * sp; }
+    things = things.filter(t => t.x + t.img.w / 2 > -10);
+    things.filter(t => t.z <= 1).forEach(drawThing);
+    for (const s of stars) {
+      s.x -= (3 + s.z * 12) * dt * sp; if (s.x < -2) { s.x = W + 2; s.y = Math.random() * H; }
+      s.t += dt;
+      const a = .3 + .7 * s.z * (.6 + .4 * Math.sin(s.t * (1 + s.z * 2)));
+      g.fillStyle = `rgba(${s.z > .85 ? '255,236,200' : s.z < .15 ? '190,200,255' : '220,230,255'},${a})`;
+      const d = .6 + s.z * 1.3; g.fillRect(s.x, s.y, d, d);
+    }
+    things.filter(t => t.z > 1).forEach(drawThing);
+    for (const r of asteroids) {
+      r.x -= r.vx * dt * sp; r.y += r.vy * dt * sp; r.rot += r.vr * dt * sp;
+      g.save(); g.translate(r.x, r.y); g.rotate(r.rot); g.fillStyle = r.col; g.beginPath(); r.pts.forEach(([px, py], i) => i ? g.lineTo(px, py) : g.moveTo(px, py)); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.arc(r.r * .25, r.r * .25, r.r * .6, 0, 7); g.fill(); g.restore();
+    }
+    asteroids = asteroids.filter(r => r.x > -20);
+    if (!shoot && tShoot <= 0) { shoot = {x: W * rnd(.3, 1), y: rnd(0, .5) * H, t: 0}; tShoot = rnd(6, 14); }
+    if (shoot) {
+      shoot.t += dt; const k = shoot.t / .9, x = shoot.x - k * W * .5, y = shoot.y + k * H * .3;
+      const gr = g.createLinearGradient(x, y, x + 60, y - 36); gr.addColorStop(0, `rgba(255,255,255,${.9 * (1 - k)})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.strokeStyle = gr; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 60, y - 36); g.stroke();
+      if (k >= 1) shoot = null;
+    }
+  }
+  requestAnimationFrame(draw);
+  window._space = {addPlanet, addMoon, addRocks, addGalaxy, things: () => things, start};   // for testing
+})();
+
+/* ---------- Screen ---------- */
+function drawBox(dropIn) {
+  const r = S.box.r, t = S.box.t || 'std', bw = $('#boxwrap');
+  $('#box').innerHTML = boxSVG(r, false, t);
+  $('#box').classList.toggle('mythic', r === 5);
+  bw.dataset.r = r;
+  document.documentElement.style.setProperty('--rc', rc(r));
+  $('#rarityName').innerHTML = RARITIES[r].name + (t !== 'std' ? `<span class="kind">${TYPES[t].short}</span>` : '');
+  bw.classList.remove('open');
+  if (dropIn) { bw.classList.remove('drop'); void bw.offsetWidth; bw.classList.add('drop'); }
+  drawNext();
+}
+function drawNext() {
+  const c = upNext(), n = S.queue.length;
+  if (!c) return;
+  $('#nextBox').innerHTML = `${boxSVG(c.r, true, c.t)}<div><small>Next crate${n > 1 ? ` · +${n - 1} more bought` : ''}</small><b style="color:${rc(c.r)}">${RARITIES[c.r].name}${c.t !== 'std' ? ` <span style="color:var(--muted)">${TYPES[c.t].short}</span>` : ''}</b></div>`;
+}
+// the numbers on screen; cheap to call every frame
+let shown = {};
+function refresh(force) {
+  const set = (k, el, v) => { if (force || shown[k] !== v) { shown[k] = v; el.textContent = v; } };
+  set('pts', $('#pts'), fmt(S.pts));
+  const rate = `${fmt(B.perTap)} per tap` + (B.auto ? ` · ${fmt(B.perSec)}/s` : '') + '';
+  set('gems', $('#gemN'), fmt(S.gems)); set('stars', $('#starN'), fmt(S.stars));
+  if (force || shown.rate !== rate) { shown.rate = rate; $('#rate').innerHTML = rate.replace(/^([^ ]+)/, '<b>$1</b>').replace(/· ([^ ]+)\/s/, '· <b>$1</b>/s'); }
+  const b = S.box, left = Math.max(0, Math.ceil(b.hp / B.dmg));
+  $('#hpFill').style.setProperty('--p', (100 * (1 - Math.max(0, b.hp) / b.max)).toFixed(1) + '%');
+  set('hp', $('#hpText'), fmt(left) + (left === 1 ? ' tap' : ' taps') + ' to open');
+  const lv = crateLevel(), toGo = PER_LEVEL - S.run % PER_LEVEL;
+  if (force || shown.lv !== S.run) { shown.lv = S.run; $('#lvlText').innerHTML = `Crate level <b>${lv}</b> · ${toGo} more to level ${lv + 1}`; }
+  const prog = 1 - Math.max(0, b.hp) / b.max;
+  document.querySelectorAll('#box .crack').forEach(c => c.classList.toggle('show', prog > (+c.dataset.i + 1) / 6.2));
+  if (force) {
+    $('#boosts').innerHTML = Object.entries(KINDS).map(([k, K]) => `<div class="boost${B.on && B.on[k] ? ' on' : ''}" data-k="${k}"><div><small>${K.name}</small><b>${K.show(k === 'tap' ? B.perTap : k === 'auto' ? B.auto : B[k])}</b></div></div>`).join('');
+    const u = S.unseen || 0; $('#colDot').textContent = u; $('#colDot').classList.toggle('hidden', !u);
+    $('#starDot').classList.toggle('hidden', !(starsAt(crateLevel()) > 0));
+    $('#tradeDot').classList.toggle('hidden', dailyState().seen === today());
+    drawNext();
+  }
+}
+// the box squashes when you hit it, on a little spring
+const spring = {v: 0, x: 0, rot: 0, rv: 0};
+function kick(k) { spring.v -= 4 * k; spring.rv += (Math.random() - .5) * 18 * k; }
+function stepSpring(dt) {
+  const s = spring;
+  s.v += (-260 * s.x - 14 * s.v) * dt; s.x += s.v * dt;
+  s.rv += (-300 * s.rot - 16 * s.rv) * dt; s.rot += s.rv * dt;
+  const sq = Math.max(-.25, Math.min(.25, s.x));
+  if (!$('#boxwrap').classList.contains('open')) $('#box').style.transform = `rotate(${s.rot.toFixed(2)}deg) scale(${(1 - sq * .5).toFixed(3)},${(1 + sq).toFixed(3)})`;
+}
+// floating numbers and wood chips
+function floatNum(x, y, v, crit, pre = '+') {
+  if (reduced()) return;
+  const el = document.createElement('div');
+  el.className = 'float' + (crit ? ' crit' : '');
+  el.textContent = (crit ? 'CRIT ' : '') + pre + fmt(v);
+  el.style.transform = `translate(${x - 30}px, ${y - 20}px)`;
+  document.body.appendChild(el);
+  const dx = (Math.random() - .5) * 40, t0 = performance.now();
+  const anim = now => {
+    const k = (now - t0) / 800;
+    if (k >= 1) return el.remove();
+    el.style.transform = `translate(${x + dx * k - 30}px, ${y - 20 - 70 * k}px) scale(${crit ? 1 + .3 * Math.sin(Math.min(1, k * 4) * Math.PI) : 1})`;
+    el.style.opacity = k < .7 ? 1 : 1 - (k - .7) / .3;
+    requestAnimationFrame(anim);
+  };
+  requestAnimationFrame(anim);
+}
+let autoNumAt = 0;
+function autoPop(v) {   // automatic taps show a small number now and then
+  const now = performance.now(); if (now - autoNumAt < 450) return; autoNumAt = now;
+  const r = $('#boxwrap').getBoundingClientRect();
+  floatNum(r.left + r.width * (.25 + Math.random() * .5), r.top + r.height * .35, v);
+}
+function chips(x, y, n, r = S.box ? S.box.r : 0) {
+  if (reduced()) return;
+  const cols = r === 0 ? ['#b07a45', '#8a5a2e', '#d6a26b'] : [`var(--r${r})`, '#fff', `var(--r${r})`];
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement('div');
+    el.className = 'chip-bits'; el.style.background = cols[i % cols.length];
+    el.style.transform = `translate(${x}px, ${y}px)`;
+    document.body.appendChild(el);
+    const a = Math.random() * Math.PI * 2, sp = 150 + Math.random() * 250, vx = Math.cos(a) * sp, vy = Math.sin(a) * sp - 150, t0 = performance.now(), spin = Math.random() * 720;
+    const anim = now => {
+      const t = (now - t0) / 1000;
+      if (t > .7) return el.remove();
+      el.style.transform = `translate(${x + vx * t}px, ${y + vy * t + 600 * t * t}px) rotate(${spin * t}deg)`;
+      el.style.opacity = 1 - t / .7;
+      requestAnimationFrame(anim);
+    };
+    requestAnimationFrame(anim);
+  }
+}
+function toast(msg, ms = 2600) { const t = $('#toast'); t.innerHTML = msg; t.style.top = ($('#stage').getBoundingClientRect().top + 6) + 'px'; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms); }
+
+/* ---------- Sound ---------- */
+const Sound = (() => {
+  let ac = null;
+  const ctx = () => { if (!ac) try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch {} if (ac && ac.state === 'suspended') ac.resume(); return ac; };
+  const vol = () => RZ ? RZ.level('sfx') : .6;
+  function tone(f, d, type = 'sine', v = .2, at = 0, slide = 1) {
+    const a = ctx(), V = vol(); if (!a || !V) return;
+    const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (slide !== 1) o.frequency.exponentialRampToValueAtTime(f * slide, t + d);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * V, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + .02);
+  }
+  function knock(f, v) {   // a short, woody knock
+    const a = ctx(), V = vol(); if (!a || !V) return;
+    const t = a.currentTime, len = .07, buf = a.createBuffer(1, a.sampleRate * len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    const s = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = buf; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 3; g.gain.value = v * V;
+    s.connect(bp); bp.connect(g); g.connect(a.destination); s.start(t);
+  }
+  let last = 0;
+  return {
+    tap(prog, crit) { const now = performance.now(); if (now - last < 25) return; last = now; knock(1300 + prog * 1500, .45); tone(240 + prog * 260, .05, 'square', .035); tone(900 + prog * 700, .04, 'sine', .06); if (crit) tone(1400, .12, 'square', .05, 0, 1.4); },
+    door() { const a = ctx(), V = vol(); if (!a || !V) return; tone(320, .18, 'sine', .07, 0, 1.8); knock(2400, .2); },
+    open(r) { knock(300, .8); tone(1200, .35, 'sawtooth', .025, 0, .3); const base = [392, 440, 494, 523, 587, 659][r]; const n = 3 + r; for (let i = 0; i < n; i++) tone(base * Math.pow(2, [0, 4, 7, 12, 16, 19, 24, 28, 31][i] / 12), .22 + i * .02, 'triangle', .13, i * .07); if (r >= 4) tone(base * 4, .8, 'sine', .07, n * .07); },
+    tierUp() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, .18, 'square', .045, .35 + i * .06)); },
+    buy() { tone(660, .08, 'triangle', .12); tone(990, .12, 'triangle', .1, .07); },
+    no() { tone(200, .15, 'square', .06, 0, .7); },
+  };
+})();
+
+/* ---------- Panels ---------- */
+function openPanel(id) { $(id).classList.add('show'); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.panel').classList.remove('show'));
+// collection: every item by rarity; tap one to see its boost now and at the next tier
+// Cargo Hold: what you've found, rarity by rarity; tap an item for its card
+function renderCollection() {
+  const have = Object.keys(S.items).length;
+  $('#colCount').textContent = `${have} / ${ITEMS.length}`;
+  $('#colBar').style.setProperty('--p', (100 * have / ITEMS.length) + '%');
+  $('#colTotals').innerHTML = Object.entries(KINDS).map(([k, K]) => `<div><small>${K.name}</small><b>${K.show(k === 'tap' ? B.perTap : B[k])}</b></div>`).join('');
+  $('#colGrid').innerHTML = RARITIES.map((R, r) => {
+    const items = ITEMS.filter(i => i.r === r), got = items.filter(i => S.items[i.id]).length;
+    return `<div class="rack" style="--rc:${rc(r)}"><div class="rhead">${R.name}<span>${got}/${items.length}</span></div><div class="grid">` + items.map(it => {
+      const h = S.items[it.id];
+      if (!h) { const lost = S.found[it.id]; return `<button class="pod ${lost ? 'lost' : 'none'}" data-id="${it.id}" aria-label="${lost ? it.name : 'Not found yet'}"><span class="pi">${it.e}</span><span class="nm">${lost ? it.name : '???'}</span><span class="pb"></span></button>`; }
+      const p = h.tier >= MAX_TIER ? 100 : 100 * h.copies / needFor(h.tier);
+      return `<button class="pod have${it.r === 5 ? ' mythic-r' : ''}" data-id="${it.id}"><span class="tier">${h.tier >= MAX_TIER ? 'MAX' : 'T' + h.tier}</span><span class="pi">${it.e}</span><span class="nm">${it.name}</span><span class="pb"><i style="width:${p}%"></i></span></button>`;
+    }).join('') + '</div></div>';
+  }).join('');
+  $('#colGrid').querySelectorAll('.pod').forEach(t => t.onclick = () => openSheet(t.dataset.id));
+}
+function openSheet(id) {
+  const it = ITEM[id], h = S.items[id], lost = !h && S.found[id], c = $('#sheetCard');
+  c.className = 'sheetcard' + (h ? '' : lost ? ' lost' : ' none');
+  c.style.setProperty('--rc', rc(it.r));
+  const K = KINDS[it.kind];
+  let body;
+  if (h) {
+    const max = h.tier >= MAX_TIER, need = needFor(h.tier);
+    body = `<div class="fxrow"><div><small>Now · tier ${h.tier}</small><b>${K.name} ${K.show(valueAt(it, h.tier))}</b></div>
+      <div class="nx"><small>${max ? 'Max tier' : 'At tier ' + (h.tier + 1)}</small><b>${max ? 'Copies pay points' : K.show(valueAt(it, h.tier + 1))}</b></div></div>
+      ${max ? '' : `<div class="cbar"><i style="width:${100 * h.copies / need}%"></i></div><div class="ctext">${h.copies} / ${need} copies to tier ${h.tier + 1}</div>`}`;
+  } else body = `<div class="fxrow"><div><small>Gives</small><b>${K.name} ${K.show(valueAt(it, 1))}</b></div><div class="nx"><small>Found in</small><b>${RARITIES[it.r].name} crates</b></div></div>
+      <div class="ctext">${lost ? "You had this before you prestiged. Find it again to get its boost back." : 'Not found yet.'}</div>`;
+  c.innerHTML = `<div class="big">${it.e}</div><div class="rn">${RARITIES[it.r].name}</div><h3>${h || lost ? it.name : '???'}</h3>
+    <p class="fl">${h || lost ? FLAVOUR[id] : 'Keep opening crates to find out what this is.'}</p>${body}<button class="primary" id="sheetDone">Done</button>`;
+  $('#sheetDone').onclick = closeSheet;
+  $('#itemSheet').classList.add('show'); vibrate(6);
+}
+function closeSheet() { $('#itemSheet').classList.remove('show'); }
+$('#itemSheet .sheetbg').addEventListener('click', closeSheet);
+
+
+/* ---------- Shop: crates (points), power-ups (gems) and daily deals ---------- */
+const priceOf = t => Math.round(TYPES[t].price * Math.pow(PRICE_UP, S.bought[t] || 0) * (1 + STAR_BONUS * S.stars * .5));
+const fmtTime = sec => { sec = Math.ceil(sec); if (sec >= 3600) return Math.floor(sec / 3600) + 'h ' + Math.floor(sec % 3600 / 60) + 'm'; return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
+// the day, by the device's clock: deals change at midnight
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+function dailyState() { if (S.daily.day !== today()) S.daily = {day: today(), bought: [], seen: S.daily.seen || ''}; return S.daily; }
+// the day's deals come from a random sequence seeded by the date, so they're the same all day
+function seeded(str) { let h = 1779033703; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 3432918353), h = h << 13 | h >>> 19; return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; }
+function dailyDeals() {
+  const rnd = seeded('crates' + today());
+  const ids = Object.keys(PUPS).sort(() => rnd() - .5);
+  const types = SHOP_TYPES.slice().sort(() => rnd() - .5);
+  const x = rnd(), fixed = x < .06 && S.prestiges > 0 ? 5 : x < .4 ? 4 : 3;
+  return [
+    {k: 'pup', id: ids[0], secs: PUPS[ids[0]].secs * 3, gems: Math.ceil(PUPS[ids[0]].gems * 1.5)},       // three times as long for half again the gems
+    {k: 'pup', id: ids[1], secs: PUPS[ids[1]].secs * 3, gems: Math.ceil(PUPS[ids[1]].gems * 1.5)},
+    {k: 'sale', t: types[0], off: .5},
+    {k: 'sale', t: types[1], off: .3},
+    {k: 'fixed', r: fixed},
+  ];
+}
+const dealPrice = d => d.k === 'pup' ? d.gems : d.k === 'sale' ? Math.round(priceOf(d.t) * (1 - d.off)) : Math.round(priceOf('choice') * [0, 0, 0, 1.5, 4, 12][d.r]);
+function addCrate(c) {
+  if (!S.queue.length && S.next) S.next = null;   // bought crates go before the free one that was showing
+  S.queue.push(c);
+}
+function addPup(id, secs) {
+  S.pups[id] = Math.min(Date.now() + PUP_MAX * 1000, Math.max(Date.now(), S.pups[id] || 0) + secs * 1000);
+  calcBoosts(); drawPups(true);
+}
+let shopTab = 'fab', shopHTML = '';
+const msToMidnight = () => { const d = new Date(), m = new Date(d); m.setHours(24, 0, 0, 0); return (m - d) / 1000; };
+function renderShop(force) {
+  const day = dailyState();
+  if (shopTab === 'trade' && day.seen !== day.day) { day.seen = day.day; dirty = true; refresh(true); }
+  const full = S.queue.length >= QUEUE_MAX, waiting = full ? `You have ${QUEUE_MAX} crates waiting: open some first.` : S.queue.length ? `${S.queue.length} bought crate${S.queue.length > 1 ? 's' : ''} waiting.` : '';
+  const ptsBtn = (attr, price, was) => `<button class="primary" ${attr} ${S.pts < price || full ? 'disabled' : ''}>${was ? `<span class="btnwas">${fmt(was)}</span>` : ''}${fmt(price)}</button>`;
+  const gemBtn = (attr, price, was) => `<button class="primary gem" ${attr} ${S.gems < price ? 'disabled' : ''}>${was ? `<span class="btnwas">${GEMI} ${was}</span>` : ''}${GEMI} ${price}</button>`;
+  const left = id => pupLeft(id) ? ` · <span class="act">on ${fmtTime(pupLeft(id))}</span>` : '';
+  let note, list;
+  const vial = id => `<span class="vial${pupLeft(id) ? ' on' : ''}" style="--vc:${VIAL[id]}"><span>${PUPS[id].e}</span></span>`;
+  if (shopTab === 'fab') {
+    note = 'Their rarity is still up to luck. Each one you build makes the next of that kind cost more.';
+    list = SHOP_TYPES.map(t => `<div class="shopitem">${boxSVG(SHOP_LOOK[t], true, t)}<div><b>${TYPES[t].name}</b><small>${TYPES[t].blurb}</small></div>${ptsBtn(`data-t="${t}"`, priceOf(t))}</div>`).join('')
+      + `<p class="note">${waiting}</p>`;
+  } else if (shopTab === 'lab') {
+    note = `Power-ups cost <span class="gemc">gems</span>. You get one every time your crate level goes up, and two for a new best level. Buying one that's already on adds more time.`;
+    list = Object.entries(PUPS).map(([id, P]) => `<div class="shopitem">${vial(id)}<div><b>${P.name}</b><small>${P.blurb} for ${fmtTime(P.secs)}${left(id)}</small></div>${gemBtn(`data-p="${id}"`, P.gems)}</div>`).join('');
+  } else {
+    note = `One-time deals. New stock in <span class="clock">${fmtTime(msToMidnight())}</span>`;
+    list = dailyDeals().map((d, i) => {
+      const done = day.bought.includes(i), price = dealPrice(d);
+      let art, name, sub, btn;
+      if (d.k === 'pup') { const P = PUPS[d.id]; art = vial(d.id); name = `${P.name}<span class="tagx blue">3× TIME</span>`; sub = `${P.blurb} for ${fmtTime(d.secs)}${left(d.id)}`; btn = gemBtn(`data-d="${i}"`, price, PUPS[d.id].gems * 3); }
+      else if (d.k === 'sale') { art = boxSVG(SHOP_LOOK[d.t], true, d.t); name = `${TYPES[d.t].name}<span class="tagx">−${d.off * 100}%</span>`; sub = TYPES[d.t].blurb; btn = ptsBtn(`data-d="${i}"`, price, priceOf(d.t)); }
+      else { art = boxSVG(d.r, true); name = `<span style="color:${rc(d.r)}">${RARITIES[d.r].name} crate</span>`; sub = `Guaranteed ${RARITIES[d.r].name}`; btn = ptsBtn(`data-d="${i}"`, price); }
+      if (done) btn = `<button class="primary" disabled>Bought</button>`;
+      return `<div class="shopitem${done ? ' done' : ''}">${art}<div><b>${name}</b><small>${sub}</small></div>${btn}</div>`;
+    }).join('') + `<p class="note">${waiting}</p>`;
+  }
+  $(`#${shopTab}Cur`).innerHTML = shopTab === 'lab' ? `<span class="gemc">${GEMI} ${S.gems}</span>` : `${fmt(S.pts)} pts<br><span class="gemc">${GEMI} ${S.gems}</span>`;
+  const html = note + '|' + list;
+  if (!force && html === shopHTML) return;     // only redraw when something changed, so a tap on a button isn't lost
+  shopHTML = html;
+  const L = $(`#${shopTab}List`);
+  $(`#${shopTab}Note`).innerHTML = note; L.innerHTML = list;
+  L.querySelectorAll('button[data-t]').forEach(b => b.onclick = () => buyCrate(b.dataset.t));
+  L.querySelectorAll('button[data-p]').forEach(b => b.onclick = () => buyPup(b.dataset.p));
+  L.querySelectorAll('button[data-d]').forEach(b => b.onclick = () => buyDeal(+b.dataset.d));
+}
+function bought(msg) { Sound.buy(); vibrate(10); save(); renderShop(true); refresh(true); toast(msg, 1700); }
+function buyCrate(t) {
+  const p = priceOf(t);
+  if (S.pts < p || S.queue.length >= QUEUE_MAX) { Sound.no(); return; }
+  S.pts -= p; S.bought[t] = (S.bought[t] || 0) + 1;
+  const c = makeCrate(t); addCrate(c);
+  bought(`${R0(c.r)} ${TYPES[t].name} added: it's next!`);
+}
+function buyPup(id) {
+  const P = PUPS[id];
+  if (S.gems < P.gems) { Sound.no(); return; }
+  S.gems -= P.gems; addPup(id, P.secs);
+  bought(`${P.e} ${P.name} on!`);
+}
+function buyDeal(i) {
+  const day = dailyState(), d = dailyDeals()[i], price = dealPrice(d);
+  if (day.bought.includes(i)) return;
+  if (d.k === 'pup') {
+    if (S.gems < price) { Sound.no(); return; }
+    S.gems -= price; day.bought.push(i); addPup(d.id, d.secs);
+    bought(`${PUPS[d.id].e} ${PUPS[d.id].name} on for ${fmtTime(d.secs)}!`);
+  } else {
+    if (S.pts < price || S.queue.length >= QUEUE_MAX) { Sound.no(); return; }
+    S.pts -= price; day.bought.push(i);
+    const c = d.k === 'sale' ? makeCrate(d.t) : {t: 'std', r: d.r}; addCrate(c);
+    bought(`${R0(c.r)} ${d.k === 'sale' ? TYPES[d.t].name : 'crate'} added: it's next!`);
+  }
+}
+setInterval(() => { if ($(`#${shopTab}Panel`).classList.contains('show')) renderShop(); }, 500);
+// the power-ups that are on, with their time left, under the score
+let pupsHTML = '';
+function drawPups(force) {
+  const html = Object.entries(PUPS).filter(([id]) => pupLeft(id) > 0).map(([id, P]) => `<span class="pupc${pupLeft(id) < 10 ? ' low' : ''}">${P.e} ${fmtTime(pupLeft(id))}</span>`).join('');
+  if (force || html !== pupsHTML) { pupsHTML = html; $('#pups').innerHTML = html; }
+}
+const R0 = r => `<span style="color:${rc(r)}">${RARITIES[r].name}</span>`;
+// the stations around the crate, and the rooms they open
+function openRoom(room) {
+  if (room === 'cargo') { S.unseen = 0; refresh(true); renderCollection(); closeSheet(); }
+  else if (room === 'star') { prestigeArmed = 0; renderStars(); }
+  else if (room !== 'bot') { shopTab = room; renderShop(true); }
+  Sound.door(); vibrate(8);
+  openPanel(`#${room}Panel`);
+}
+document.querySelectorAll('.station').forEach(b => { b.querySelector('.art').innerHTML = ART[b.dataset.room]; b.onclick = () => openRoom(b.dataset.room); });
+document.querySelectorAll('[data-art]').forEach(el => el.innerHTML = ART[el.dataset.art]);
+$('#gemPill').onclick = () => openRoom('lab');
+// the stats console folds away (and remembers)
+$('#app').classList.toggle('hudmin', !!prefs.hudMin);
+$('#hudBtn').onclick = () => { prefs.hudMin = !prefs.hudMin; keep(PREFS, prefs); $('#app').classList.toggle('hudmin', prefs.hudMin); vibrate(6); };
+$('#starPill').onclick = () => openRoom('star');
+// prestige: start again from crate level 1 with no items, for stars that make you stronger for good
+let prestigeArmed = 0;
+function renderStars() {
+  const lv = crateLevel(), gain = starsAt(lv);
+  let nextLv = Math.max(STAR_MIN, lv + 1); while (starsAt(nextLv) <= gain) nextLv++;
+  const after = 1 + STAR_BONUS * (S.stars + gain);
+  $('#starBody').innerHTML = `
+    <div class="starbig"><div class="s">★ ${fmt(S.stars)}</div><small>${S.stars ? `Your stars make taps and points ×${(B.star).toFixed(1)}` : 'No stars yet'}</small></div>
+    <div class="pcard"><h3>This run</h3><p>You're on crate level <b>${lv}</b>.
+      ${gain ? `Prestige now for <b style="color:var(--gold)">+${fmt(gain)} ★</b>, which would make taps and points <b>×${after.toFixed(1)}</b>. Level ${nextLv} would give ${fmt(starsAt(nextLv))} ★.`
+             : `Reach crate level <b>${STAR_MIN}</b> to earn stars (${STAR_MIN - lv} more level${STAR_MIN - lv > 1 ? 's' : ''}). Level ${STAR_MIN} gives ${starsAt(STAR_MIN)} ★.`}</p></div>
+    <div class="pcard"><h3>How it works</h3><p>Every star adds <b>${STAR_BONUS * 100}%</b> to your tap power and points, for good. The higher the crate level you reach, the more stars you get, so with each prestige you'll get further.</p>
+      <p style="margin-top:8px">Prestige resets your points, items, tiers, crate level and shop prices. You keep your stars, gems, power-ups, stats and the record of every item you've found.</p></div>
+    <button class="primary pbtn" id="doPrestige" ${gain ? '' : 'disabled'}>${gain ? `Prestige for +${fmt(gain)} ★` : `Prestige at crate level ${STAR_MIN}`}</button>`;
+  $('#doPrestige').onclick = () => {
+    if (!gain) return;
+    if (Date.now() - prestigeArmed > 3000) { prestigeArmed = Date.now(); $('#doPrestige').textContent = 'Tap again to prestige'; return; }
+    prestige(gain);
+  };
+}
+function prestige(gain) {
+  const keepKeys = ['life', 'taps', 'opened', 'found', 'seen', 'best', 'bestLevel', 'gems', 'pups', 'daily'];
+  const old = S; S = fresh();
+  keepKeys.forEach(k => S[k] = old[k]);
+  S.stars = old.stars + gain; S.prestiges = old.prestiges + 1; S.starHint = 1;
+  calcBoosts(); takeNext(); save(); drawBox(true); refresh(true);
+  $('#starPanel').classList.remove('show');
+  Sound.tierUp(); Sound.open(5); vibrate([20, 40, 60]);
+  toast(`<b style="font-size:1.3rem;color:var(--gold)">+${fmt(gain)} ★</b><br>Taps and points are now ×${B.star.toFixed(1)}`, 3500);
+}
+
+// settings and stats
+function renderSettings() {
+  $('#sBuzz').classList.toggle('on', !!prefs.buzz);
+  const boxes = S.opened.reduce((a, b) => a + b, 0);
+  $('#statsBox').innerHTML = [['Crates opened', boxes.toLocaleString()], ['Taps', S.taps.toLocaleString()], ['Points earned', fmt(S.life)], ['Rarest crate', S.best >= 0 ? R0(S.best) : '—'],
+    ['Stars', '★ ' + fmt(S.stars)], ['Gems', GEMI + ' ' + S.gems], ['Prestiges', S.prestiges.toLocaleString()], ['Best crate level', S.bestLevel.toLocaleString()], ['Items found', Object.keys(S.found).length + '/' + ITEMS.length],
+    ...RARITIES.map((R, r) => [R.name + ' crates', S.opened[r].toLocaleString()])].map(([a, b]) => `<div><small>${a}</small><b>${b}</b></div>`).join('');
+}
+$('#setBtn').onclick = () => { renderSettings(); openPanel('#setPanel'); };
+$('#sBuzz').onclick = () => { prefs.buzz = !prefs.buzz; keep(PREFS, prefs); renderSettings(); vibrate(10); };
+$('#sMenu').onclick = () => RZ && RZ.openMenu();
+let resetArmed = 0;
+$('#sReset').onclick = () => {
+  if (Date.now() - resetArmed > 3000) { resetArmed = Date.now(); $('#sReset').textContent = 'Tap again to delete everything'; setTimeout(() => $('#sReset').textContent = 'Start over (delete all progress)', 3000); return; }
+  S = fresh(); calcBoosts(); takeNext(); save(); drawBox(true); refresh(true);
+  $('#setPanel').classList.remove('show'); $('#tapHint').classList.remove('hidden'); toast('Fresh start!');
+};
+
+/* ---------- Start ---------- */
+calcBoosts();
+if (!S.box) takeNext();
+if (!S.next && !S.queue.length) S.next = makeCrate(rollType());
+// automatic taps keep going while you're away (at half speed, for up to 4 hours)
+(() => {
+  const away = Math.min(OFFLINE_MAX, (Date.now() - (S.last || Date.now())) / 1000);
+  if (B.auto > 0 && away > 30) {
+    const earned = B.perSec * away * OFFLINE_RATE;
+    earn(earned);
+    setTimeout(() => toast(`While you were away<br><b style="font-size:1.3rem">+${fmt(earned)}</b> points`, 3500), 600);
+  }
+})();
+drawBox(false); refresh(true);
+if (S.pending) setTimeout(() => showChoice(S.pending), 300);   // a choice crate you hadn't picked from yet
+if (S.seen) $('#tapHint').classList.add('hidden');
+// hold to tap (a power-up): while your finger stays on the crate, it taps by itself
+let hold = null, holdAcc = 0;
+$('#deck').addEventListener('pointerdown', e => { if (e.button > 0 || e.target.closest('.station')) return; hold = {id: e.pointerId, x: e.clientX, y: e.clientY}; tap(e); });
+addEventListener('pointermove', e => { if (hold && e.pointerId === hold.id) { hold.x = e.clientX; hold.y = e.clientY; } });
+['pointerup', 'pointercancel'].forEach(ev => addEventListener(ev, e => { if (hold && e.pointerId === hold.id) hold = null; }));
+$('#deck').addEventListener('contextmenu', e => e.preventDefault());
+function holdTaps(dt) {
+  if (!hold || !pupLeft('hold') || document.querySelector('.panel.show')) { holdAcc = 0; return; }
+  holdAcc += dt * HOLD_RATE;
+  while (holdAcc >= 1) { holdAcc--; tap({clientX: hold.x + (Math.random() - .5) * 30, clientY: hold.y + (Math.random() - .5) * 30}); }
+}
+// keyboard: space or enter taps
+addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !document.querySelector('.panel.show') && !(RZ && RZ.menuOpen) && !e.repeat) { e.preventDefault(); if ($('#reveal').classList.contains('show')) { revealAt = 0; closeReveal(); } else { const r = $('#boxwrap').getBoundingClientRect(); tap({clientX: r.left + r.width / 2, clientY: r.top + r.height / 3}); } } });
+let lastT = performance.now(), saveAt = 0, lastBoost = '', pupSig = '';
+function frame(now) {
+  const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
+  if (!(RZ && RZ.menuOpen)) { autoTaps(dt); holdTaps(dt); }
+  // power-ups running out (or starting): work the boosts out again
+  const sig = Object.keys(PUPS).filter(id => pupLeft(id) > 0).join();
+  if (sig !== pupSig) { pupSig = sig; calcBoosts(); refresh(true); }
+  drawPups();
+  stepSpring(dt);
+  refresh(false);
+  const bs = JSON.stringify([B.perTap, B.auto, B.crit, B.power, B.luck, B.mult]);
+  if (bs !== lastBoost) {   // a boost changed: redraw the chips and bump the ones that grew
+    const old = lastBoost && JSON.parse(lastBoost); lastBoost = bs; refresh(true);
+    if (old) [B.perTap, B.auto, B.crit, B.power, B.luck, B.mult].forEach((v, i) => { if (v > old[i]) { const el = $('#boosts').children[i]; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } });
+  }
+  if (dirty && now - saveAt > 3000) { saveAt = now; save(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('pagehide', save);
+if (!load('crateclicker-seen-how', 0)) { keep('crateclicker-seen-how', 1); setTimeout(() => openPanel('#botPanel'), 500); }
+
+/* ---------- Rizzo Games hooks (menu, updates) ---------- */
+window.RizzoHooks = {
+  previewSound: () => Sound.tap(.5, false),
+  canReload: () => !$('#reveal').classList.contains('show'),
+  beforeReload() { save(); return null; },
+};
+</script>
+</body>
+</html>

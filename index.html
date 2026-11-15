@@ -353,7 +353,7 @@ const GAMES = [
     id: 'stickdash',
     name: 'Stick Dash',
     file: 'stickdash.html',
-    blurb: 'Run, jump and dash a stick figure through 6 levels! Swipe to dash any way you like, then touch the ground, a wall or a gold orb to dash again. Played sideways.',
+    blurb: 'Run, jump and dash a stick figure across a city at night: 31 levels in 5 worlds, with chain rings, ink, two worlds and rising lava. Played sideways.',
     colors: ['#ef3b3b', '#fb923c'],
     art: 'stick',
     cat: 'arcade',
@@ -362,6 +362,19 @@ const GAMES = [
       try { st = JSON.parse(localStorage.getItem('stickdash-progress-v1')) || {}; } catch {}
       const rows = Object.values(st), done = rows.filter(r => r && r.done).length, stars = rows.filter(r => r && r.star).length;
       return done ? `🏁 ${done} level${done > 1 ? 's' : ''} cleared` + (stars ? ` · ⭐ ${stars}` : '') : 'No levels yet';
+    },
+  },  {
+    id: 'crateclicker',
+    name: 'Crate Clicker',
+    file: 'crateclicker.html',
+    blurb: 'Tap crates open for points and items! Rarer crates drop better boosts, duplicates power them up, and when crates get too tough, prestige for stars.',
+    colors: ['#7c4dff', '#f2a81d'],
+    art: 'crate',
+    cat: 'arcade',
+    stat() {
+      let st = {};
+      try { st = JSON.parse(localStorage.getItem('crateclicker-stats-v1')) || {}; } catch {}
+      return st.boxes ? `📦 ${st.boxes.toLocaleString()} crate${st.boxes > 1 ? 's' : ''} opened` + (st.stars ? ` · ★ ${st.stars.toLocaleString()}` : '') : 'No crates yet';
     },
   },
 ];
@@ -453,6 +466,16 @@ const ART = {
       <path d="M46 43l-8-1-5 3" opacity=".55"/><path d="M46 43l9-3 5-5"/></g>
     <circle cx="50" cy="35" r="4.6" fill="#1b1f27"/>
     <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#b5262a" stroke-width="4"/></svg>`,
+  // a purple crate bursting open with gold light, a star flying out
+  crate: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="#2a1d55"/>
+    <path d="M48 46L30 10h36z" fill="#ffd36b" opacity=".35"/><path d="M48 46L12 26v20z M48 46l36-20v20z" fill="#ffd36b" opacity=".2"/>
+    <path d="M48 14l3.5 7 7.5 1-5.5 5 1.5 7.5-7-4-7 4 1.5-7.5-5.5-5 7.5-1z" fill="#ffd36b"/>
+    <rect x="20" y="52" width="56" height="32" rx="5" fill="#a347f0"/><rect x="44" y="52" width="8" height="32" fill="#7a2fc0"/>
+    <rect x="20" y="52" width="56" height="32" rx="5" fill="none" stroke="#7a2fc0" stroke-width="2.5"/>
+    <g transform="rotate(-14 30 42)"><rect x="16" y="38" width="62" height="12" rx="4" fill="#b867ff"/><rect x="43" y="38" width="9" height="12" fill="#7a2fc0"/></g>
+    <rect x="44" y="60" width="8" height="9" rx="2" fill="#fff6d0"/>
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#7c4dff" stroke-width="4"/></svg>`,
   // a 2048 board in a box: four tiles growing up to the gold 2048
   twenty48: `<svg viewBox="0 0 96 96" aria-hidden="true">
     <rect x="6" y="6" width="84" height="84" rx="14" fill="#c9d3e3"/>
