@@ -170,6 +170,14 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .dropcard b{display:block;font-weight:900;font-size:.86rem;line-height:1.15}
 .dropcard small{display:block;color:var(--muted);font-weight:800;font-size:.7rem;line-height:1.2}
 .dropcard .tag{font-size:.64rem;padding:2px 7px}
+.dropcard.group{padding:5px 10px}
+.dropcard .ghead{display:flex;align-items:center;gap:8px}
+.dropcard .icons{display:flex;gap:4px;margin:4px 0 2px;flex-wrap:wrap}
+.dropcard .mi{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:1rem;background:color-mix(in srgb,var(--rc) 25%,transparent);border:1px solid color-mix(in srgb,var(--rc) 70%,transparent)}
+.dropcard .mi .ico{width:1em;height:1em}
+.dropcard .mi.n{box-shadow:0 0 0 1.5px var(--accent)}
+.dropcard .mi.u{box-shadow:0 0 0 1.5px var(--gold)}
+.setrow small{display:block;font-size:.76rem;font-weight:700;color:var(--muted);margin-top:2px}
 .tag{margin-left:auto;font-size:.72rem;font-weight:900;padding:3px 8px;border-radius:8px;background:rgba(130,170,255,.14);color:#c4d2f5;white-space:nowrap}
 .tag.new{background:var(--accent);color:var(--onaccent)}
 .tag.up{background:var(--gold);color:#3a2600}
@@ -363,8 +371,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .bubble::before{content:"";position:absolute;left:-9px;top:50%;margin-top:-8px;border:8px solid transparent;border-right-color:rgba(93,255,155,.5);border-left:0}
 /* Controls: riveted metal */
 .env-ctrl{--acc:#47d7ff;background:radial-gradient(circle at 12px 12px,rgba(255,255,255,.07) 2px,transparent 3px) 0 0/48px 48px,linear-gradient(#192034,#0e131f)}
-.setrow{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#262f48,#1b2236);border:1px solid #33405f;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.switch{width:52px;height:30px;border-radius:15px;background:#0b1020;border:1px solid #33405f;position:relative;transition:background .2s;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(#262f48,#1b2236);border:1px solid #33405f;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.switch{flex-shrink:0;width:52px;height:30px;border-radius:15px;background:#0b1020;border:1px solid #33405f;position:relative;transition:background .2s;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
 .switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:linear-gradient(#c9d3ea,#7d8aa8);box-shadow:0 1px 3px rgba(0,0,0,.5);transition:transform .2s var(--ease)}
 .switch.on{background:rgba(71,215,255,.35);border-color:var(--accent);box-shadow:0 0 12px rgba(71,215,255,.4)}.switch.on::after{transform:translateX(22px);background:linear-gradient(#fff,#9aeeff)}
 .danger{color:var(--r5);font-weight:900;padding:12px 14px;border-radius:14px;border:2px solid var(--r5);width:100%;background:rgba(255,82,102,.08)}
@@ -522,9 +530,10 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 <div class="panel env-ctrl" id="setPanel">
   <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Controls</h2></div>
   <div class="pbody">
-    <div class="stats" id="statsBox"></div>
+    <div class="setrow"><div>Quick reveals<small>Skip the big reveal screen. Items show as small notifications, and Choice pods take their first item.</small></div><button class="switch" id="sQuick" aria-label="Quick reveals"></button></div>
     <div class="setrow">Vibration<button class="switch" id="sBuzz" aria-label="Vibration"></button></div>
     <div class="setrow">Sound and volume<button class="iconbtn" id="sMenu" aria-label="Open sound settings"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button></div>
+    <div class="stats" id="statsBox" style="margin-top:14px"></div>
     <button class="danger" id="sReset">Start over (delete all progress)</button>
   </div>
 </div>
@@ -841,8 +850,12 @@ function openBox() {
   chips(rect.left + rect.width / 2, rect.top + rect.height / 2, 14 + r * 4, r);
   floatNum(rect.left + rect.width / 2, rect.top + rect.height * .25, bonus, false, 'Crate +');
   setTimeout(() => {
-    if (offer) showChoice(offer);
-    else if (t !== 'std' && t !== 'lucky' || r >= 3) showReveal(r, got, t);
+    if (offer) prefs.quick ? autoChoose() : showChoice(offer);
+    else if (t !== 'std' && t !== 'lucky' || r >= 3) {
+      if (!prefs.quick) showReveal(r, got, t);
+      else if (got.length > 1) showGroup(TYPES[t].name, got);   // quick reveals: one small card for the whole crate
+      else showDrop(got[0]);
+    }
     else got.forEach(showDrop);
     takeNext(); drawBox(true); opening = false; refresh(true);
     if (lvlUp) toast(`Crate level <b>${crateLevel()}</b>! <span class="gemc">+${gemsGot} ${GEMI}</span><br><small>Crates are tougher now, and pay out more</small>`, 2400);
@@ -875,6 +888,24 @@ function showDrop(g) {
   const box = $('#drops'); box.appendChild(el);
   while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 360); }, 2200);
+}
+// quick reveals: a choice pod just takes its first item
+function autoChoose() {
+  const p = S.pending; if (!p) return;
+  const g = addItem(ITEM[p.ids[0]]);
+  S.pending = null; calcBoosts(); save(); refresh(true);
+  showDrop(g);
+}
+// quick reveals: everything from a multi stack or mega container on one card
+function showGroup(title, got) {
+  const el = document.createElement('div'), top = Math.max(...got.map(g => g.it.r));
+  el.className = 'dropcard group'; el.style.setProperty('--rc', rc(top));
+  const nNew = got.filter(g => g.status === 'new' || g.status === 'back').length, nUp = got.filter(g => g.status === 'up').length;
+  const tag = nNew || nUp ? `<span class="tag ${nNew ? 'new' : 'up'}">${[nNew && nNew + ' new', nUp && nUp + ' tier up'].filter(Boolean).join(' · ')}</span>` : `<span class="tag">${got.length} items</span>`;
+  el.innerHTML = `<div style="flex:1;min-width:0"><div class="ghead"><b>${title}</b>${tag}</div><span class="icons">${got.map(g => `<span class="mi${g.status === 'new' || g.status === 'back' ? ' n' : g.status === 'up' ? ' u' : ''}" style="--rc:${rc(g.it.r)}">${g.it.e}</span>`).join('')}</span></div>`;
+  const box = $('#drops'); box.appendChild(el);
+  while (box.children.length > 2) box.firstChild.remove();
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 360); }, 3200);
 }
 // the big reveal: rare-and-up crates, multi crates and choice crates
 let revealAt = 0, revealMode = '', revealTimer = 0;
@@ -1643,6 +1674,7 @@ function prestige(gain) {
 // settings and stats
 function renderSettings() {
   $('#sBuzz').classList.toggle('on', !!prefs.buzz);
+  $('#sQuick').classList.toggle('on', !!prefs.quick);
   const boxes = S.opened.reduce((a, b) => a + b, 0);
   $('#statsBox').innerHTML = [['Crates opened', boxes.toLocaleString()], ['Taps', S.taps.toLocaleString()], ['Points earned', fmt(S.life)], ['Rarest crate', S.best >= 0 ? R0(S.best) : '—'],
     ['Stars', '★ ' + fmt(S.stars)], ['Gems', GEMI + ' ' + S.gems], ['Prestiges', S.prestiges.toLocaleString()], ['Best crate level', S.bestLevel.toLocaleString()], ['Items found', Object.keys(S.found).length + '/' + ITEMS.length],
@@ -1650,6 +1682,7 @@ function renderSettings() {
 }
 $('#setBtn').onclick = () => { renderSettings(); openPanel('#setPanel'); };
 $('#sBuzz').onclick = () => { prefs.buzz = !prefs.buzz; keep(PREFS, prefs); renderSettings(); vibrate(10); };
+$('#sQuick').onclick = () => { prefs.quick = !prefs.quick; keep(PREFS, prefs); renderSettings(); vibrate(10); };
 $('#sMenu').onclick = () => RZ && RZ.openMenu();
 let resetArmed = 0;
 $('#sReset').onclick = () => {
@@ -1672,7 +1705,7 @@ if (!S.next && !S.queue.length) S.next = makeCrate(rollType());
   }
 })();
 drawBox(false); refresh(true);
-if (S.pending) setTimeout(() => showChoice(S.pending), 300);   // a choice crate you hadn't picked from yet
+if (S.pending) setTimeout(() => prefs.quick ? autoChoose() : showChoice(S.pending), 300);   // a choice crate you hadn't picked from yet
 if (S.seen) $('#tapHint').classList.add('hidden');
 // hold to tap (a power-up): while your finger stays on the crate, it taps by itself
 let hold = null, holdAcc = 0;
