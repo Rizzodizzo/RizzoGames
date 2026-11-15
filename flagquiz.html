@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://flagcdn.com">
+<link rel="preconnect" href="https://flagcdn.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ======================================================================
@@ -71,13 +71,20 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .reg.miss{grid-column:1/-1;--rc:var(--bad)}
 .play{margin-top:20px;padding:16px;font-size:1.2rem;display:flex;flex-direction:column;align-items:center;gap:1px;width:100%}
 .play small{font-size:.78rem;font-weight:800;opacity:.9}
+.dl{margin-top:20px;padding:14px 16px;border-radius:16px;background:var(--panel);box-shadow:0 2px 8px var(--shade);text-align:center}
+.dl b{display:block;font-weight:900;font-size:1.05rem}
+.dl small{display:block;color:var(--muted);font-weight:800;font-size:.86rem;margin-top:2px}
+.dl small.why{font-size:.78rem;margin-top:8px}
+.dl .bar{margin-top:10px}
+.dl.bad b{color:var(--bad)}
+.dl .primary{margin-top:12px;padding:11px 22px;font-size:1rem}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
 .tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
 .tile .tic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent)}
 @media (max-height:820px){
   .home{padding-top:40px}.hero svg{width:min(112px,28vw)}.hero h1{font-size:1.75rem;margin-top:2px}.hero p{font-size:.92rem}
   .lbl{margin:12px 4px 6px}.modehelp{margin-top:5px;font-size:.82rem}.seg button{padding:8px 4px}
-  .regions{gap:6px}.reg{padding:8px 11px;font-size:.9rem}.play{margin-top:14px;padding:13px}.tiles{margin-top:12px}
+  .regions{gap:6px}.reg{padding:8px 11px;font-size:.9rem}.play,.dl{margin-top:14px}.play{padding:13px}.tiles{margin-top:12px}
 }
 
 /* ================= THE QUIZ ================= */
@@ -241,6 +248,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   <div class="lbl">How many flags</div>
   <div class="seg" id="lenSeg"></div>
 
+  <div class="dl hidden" id="dlBox" role="status" aria-live="polite"></div>
   <button class="primary play" id="playBtn">Play<small id="playSub"></small></button>
 
   <div class="tiles">
@@ -306,6 +314,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
       <li>Get flags right in a row to build a <b>streak</b>.</li>
       <li>Flags you get wrong go into <b>Mistakes</b>, so you can practise just those. Get one right twice and it leaves the list.</li>
       <li>The <b>Flag atlas</b> shows every flag with its name, for learning. A green dot means you know it well.</li>
+      <li>The first time you play, the game downloads all 197 flags (a few MB) and keeps them, so after that it works without the internet. You can start once every flag is ready.</li>
     </ul>
   </div>
 </div>
@@ -561,14 +570,92 @@ const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.r
 const fmtTime = s => { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const vibrate = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
 
-// flag pictures come from flagcdn.com; if one can't load (no internet), the flag emoji stands in
-const flagURL = (code, w = 640) => `https://flagcdn.com/w${w}/${code}.png`;
+/* ======================================================================
+   THE FLAG PICTURES
+   All 197 are downloaded once and kept on the device (in the game's own
+   storage), so the game works without the internet afterwards. Every time
+   the game opens it checks they're all still there and fetches any that
+   are missing. You can't play until every flag is ready.
+   They come from flagcdn.com; if one can't be fetched from there, the
+   country-flags collection on jsDelivr is tried instead.
+   ====================================================================== */
+const SOURCES = [code => `https://flagcdn.com/w640/${code}.png`, code => `https://cdn.jsdelivr.net/gh/hampusborgos/country-flags@main/svg/${code}.svg`];
+const FLAG_CACHE = 'flagquiz-flags-v1';
+const flagKey = code => new URL(`flagquiz-flag/${code}`, location.href).href;   // just a name for it in storage
 const flagEmoji = code => code.toUpperCase().replace(/./g, ch => String.fromCodePoint(0x1F1E6 + ch.charCodeAt(0) - 65));
+const SRC = {};   // code -> a picture the page can show straight away
+const flagSrc = code => SRC[code] || SOURCES[0](code);
 function flagImg(code, w, alt = '') {
-  return `<img src="${flagURL(code, w)}" alt="${esc(alt)}" loading="lazy" decoding="async" onerror="this.outerHTML='<span class=em>${flagEmoji(code)}</span>'">`;
+  return `<img src="${flagSrc(code)}" alt="${esc(alt)}" decoding="async" onerror="this.outerHTML='<span class=em>${flagEmoji(code)}</span>'">`;
 }
-const preloaded = new Set();
-function preload(code) { if (!code || preloaded.has(code)) return; preloaded.add(code); const im = new Image(); im.src = flagURL(code); }
+const Flags = {have: 0, total: COUNTRIES.length, busy: false, failed: false, ready: false};
+async function fetchFlag(code) {
+  for (const src of SOURCES) {
+    try {
+      const res = await fetch(src(code), {mode: 'cors', cache: 'no-cache'});
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      if (blob.size < 60 || !/^image\//.test(blob.type)) continue;
+      return blob;
+    } catch {}
+  }
+  return null;
+}
+// with no storage (very old browsers, or some previews), just load every picture now and wait for them
+function loadPlain(code) {
+  return new Promise(ok => { const im = new Image(); im.onload = () => ok(true); im.onerror = () => ok(false); im.src = SOURCES[0](code); SRC[code] = im.src; });
+}
+async function checkFlags() {
+  if (Flags.busy) return;
+  Flags.busy = true; Flags.failed = false; renderHome();
+  let cache = null;
+  try { cache = await caches.open(FLAG_CACHE); } catch {}
+  const missing = [];
+  if (cache) {
+    // what's already saved
+    await Promise.all(COUNTRIES.map(async c => {
+      if (SRC[c.code] && SRC[c.code].startsWith('blob:')) return;
+      try { const r = await cache.match(flagKey(c.code)); if (r) { SRC[c.code] = URL.createObjectURL(await r.blob()); return; } } catch {}
+      missing.push(c.code);
+    }));
+  } else missing.push(...COUNTRIES.map(c => c.code).filter(code => !SRC[code]));
+  Flags.have = Flags.total - missing.length; renderHome();
+  // fetch the rest, six at a time
+  let k = 0, bad = 0;
+  const worker = async () => {
+    while (k < missing.length) {
+      const code = missing[k++];
+      let ok = false;
+      if (cache) {
+        const blob = await fetchFlag(code);
+        if (blob) {
+          try { await cache.put(flagKey(code), new Response(blob, {headers: {'content-type': blob.type}})); } catch {}
+          SRC[code] = URL.createObjectURL(blob); ok = true;
+        }
+      } else ok = await loadPlain(code);
+      if (ok) Flags.have++; else bad++;
+      renderDownload();
+    }
+  };
+  await Promise.all(Array.from({length: 6}, worker));
+  Flags.busy = false; Flags.failed = bad > 0; Flags.ready = Flags.have >= Flags.total;
+  if (Flags.ready && missing.length && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  renderHome();
+  if ($('#atlasPanel').classList.contains('show')) renderAtlas();
+}
+addEventListener('online', () => { if (!Flags.ready) checkFlags(); });
+// the box that stands in for the Play button until every flag is ready
+function renderDownload() {
+  const box = $('#dlBox'); if (!box) return;
+  const pct = Math.round(100 * Flags.have / Flags.total);
+  if (Flags.ready) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  box.classList.toggle('bad', Flags.failed && !Flags.busy);
+  if (Flags.busy) box.innerHTML = `<b>Getting the flags ready</b><small>${Flags.have} of ${Flags.total} downloaded</small><div class="bar"><i style="width:${pct}%"></i></div><small class="why">This happens once, so the game works without the internet after.</small>`;
+  else if (!Flags.have) box.innerHTML = `<b>The flags need downloading</b><small>Connect to the internet to download all ${Flags.total} flags. You only need to do this once.</small><button class="primary" id="dlRetry">Try again</button>`;
+  else box.innerHTML = `<b>Some flags are missing</b><small>${Flags.have} of ${Flags.total} downloaded. Connect to the internet to get the rest; you can play once every flag is here.</small><div class="bar"><i style="width:${pct}%"></i></div><button class="primary" id="dlRetry">Try again</button>`;
+  const r = $('#dlRetry'); if (r) r.onclick = () => checkFlags();
+}
 
 /* ---------- sound effects (follow the shared Rizzo volume) ---------- */
 const Sound = (() => {
@@ -658,7 +745,9 @@ function renderHome() {
   $('#lenSeg').innerHTML = LENS.map(l => `<button data-len="${l}" class="${prefs.len === l ? 'on' : ''}">${l ? l : `All <small>${n}</small>`}</button>`).join('');
   const len = roundLen();
   $('#playSub').textContent = `${len} flag${len === 1 ? '' : 's'} · ${prefs.mode === 'type' ? 'type the name' : 'choose from four'}`;
-  $('#playBtn').disabled = !n;
+  $('#playBtn').disabled = !n || !Flags.ready;
+  $('#playBtn').classList.toggle('hidden', !Flags.ready);
+  renderDownload();
 }
 const roundLen = () => { const n = pool().length; return prefs.len ? Math.min(prefs.len, n) : n; };
 $('#modeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; prefs.mode = b.dataset.mode; savePrefs(); Sound.tap(); renderHome(); });
@@ -682,10 +771,10 @@ $('#regions').addEventListener('click', e => {
 let G = null;   // the round being played
 const regionKey = regs => regs.includes('world') ? 'world' : regs.includes('miss') ? 'miss' : REGIONS.map(r => r.id).filter(id => regs.includes(id)).join('+');
 function startRound(codes) {
+  if (!Flags.ready) return;   // every flag has to be on the device first
   const list = codes || shuffle(pool().map(c => c.code)).slice(0, roundLen());
   if (!list.length) return;
   G = {mode: prefs.mode, regions: prefs.regions.slice(), lenKey: codes ? null : prefs.len ? list.length : 'all', list, i: 0, right: 0, streak: 0, bestStreak: 0, missed: [], hints: 0, start: Date.now(), done: false};
-  list.slice(0, 3).forEach(preload);
   $('#home').classList.add('hidden'); $('#results').classList.add('hidden'); $('#game').classList.remove('hidden');
   $('#game').classList.toggle('typing', G.mode === 'type');
   document.body.scrollTop = 0;
@@ -694,7 +783,6 @@ function startRound(codes) {
 function showQuestion() {
   const code = G.list[G.i], c = BY_CODE[code];
   G.answered = false; G.tries = 0; G.hintN = 0; G.usedHint = false;
-  preload(G.list[G.i + 1]); preload(G.list[G.i + 2]);
   $('#progText').textContent = `${G.i + 1} / ${G.list.length}`;
   $('#scoreText').textContent = `${G.right} right`;
   $('#progBar').style.width = (100 * G.i / G.list.length) + '%';
@@ -706,7 +794,7 @@ function showQuestion() {
   im.alt = 'A flag';
   im.onload = () => { if (G && G.list[G.i] === code) { fb.innerHTML = ''; fb.appendChild(im); } };
   im.onerror = () => { if (G && G.list[G.i] === code) fb.innerHTML = `<span class="emoji" role="img" aria-label="A flag">${flagEmoji(code)}</span>`; };
-  im.src = flagURL(code);
+  im.src = flagSrc(code);
   $('#feedback').className = 'feedback'; $('#feedback').innerHTML = ''; $('#tapnext').textContent = '';
   if (G.mode === 'choose') {
     $('#answers').classList.remove('hidden'); $('#typer').classList.add('hidden'); $('#tools').classList.add('hidden'); $('#pattern').classList.add('hidden');
@@ -927,6 +1015,7 @@ $('#recBtn').onclick = () => { renderRecords(); openPanel('#recPanel'); };
 $('#playBtn').onclick = () => { Sound.tap(); startRound(); };
 
 /* ---------- start ---------- */
+checkFlags();
 if (!LENS.includes(prefs.len)) prefs.len = 10;
 renderHome();
 if (!load('flagquiz-seen-how', 0)) { keep('flagquiz-seen-how', 1); setTimeout(() => openPanel('#howPanel'), 700); }
