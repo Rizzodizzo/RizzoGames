@@ -295,6 +295,17 @@ img.mini{object-fit:contain;display:block}
 .env-trade .shopitem::after{right:-9px;clip-path:inset(0 50% 0 0)}
 .env-trade .primary:not(.gem){background:linear-gradient(#ff9be9,#e535bd);color:#2d0225;box-shadow:0 4px 0 #9b1680,0 0 16px rgba(255,79,216,.35)}
 .env-trade .primary:not(.gem):active{box-shadow:0 1px 0 #9b1680}
+.twin{display:inline-block;padding:0 5px;border-radius:6px;background:var(--gem);color:#03202c;font-size:.75em;font-weight:900;vertical-align:.1em}
+.env-trade .xh{margin:16px 6px 8px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#ff9be9;font-weight:900}
+.env-trade .xh:first-child{margin-top:4px}
+.pips{display:inline-flex;gap:3px;margin-left:8px;vertical-align:.12em}
+.pips i{width:7px;height:7px;border-radius:2px;background:rgba(255,255,255,.18)}
+.pips i.on{background:var(--gem);box-shadow:0 0 6px var(--gem)}
+.shopitem .nxt{color:var(--gem);opacity:.85}
+#tradeTabs{border-color:rgba(255,79,216,.3)}
+#tradeTabs button.on{background:linear-gradient(#ff9be9,#e535bd);color:#2d0225}
+.shardbtn{display:flex;flex-direction:column;align-items:center;margin-bottom:8px;background:linear-gradient(180deg,#9af0ff,#25b4ea)!important;color:#03202c!important;box-shadow:0 4px 0 #0b78a8!important}
+.shardbtn small{font-size:.72rem;font-weight:800;opacity:.75}
 .env-trade .pe,.env-lab .pe{width:52px;height:52px;display:grid;place-items:center;font-size:2rem;flex-shrink:0}
 .clock{display:inline-block;font-family:var(--head);color:#ffd1f5;text-shadow:0 0 10px #ff4fd8}
 /* Cargo Hold: a calm, warm storage bay; items sit in lit pods, tap one for its card */
@@ -396,6 +407,8 @@ img.mini{object-fit:contain;display:block}
 .spin{transform-box:fill-box;transform-origin:center;animation:spin 8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .wave{transform-box:fill-box;transform-origin:50% 0;animation:wave 2.6s ease-in-out infinite}
+.sway{transform-box:view-box;transform-origin:59px 30px;animation:sway 3.4s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
 @keyframes wave{40%{transform:rotate(-24deg)}60%{transform:rotate(8deg)}}
 /* Collection: a dark display gallery. Every item stands on a lit plinth in its rank's colour, as a spinning 3D model */
 .env-shelf{--acc:#ff9ad5;background:radial-gradient(70% 30% at 50% 0,rgba(255,154,213,.12),transparent),linear-gradient(180deg,#120d1d,#07060d)}
@@ -536,7 +549,7 @@ img.mini{object-fit:contain;display:block}
     <div class="side">
       <button class="station" data-room="star" aria-label="Star Map: prestige"><span class="dot hidden" id="starDot" style="background:var(--gold);color:#3a2600;box-shadow:0 0 10px rgba(255,200,61,.7)">!</span><span class="art"></span><span class="lbl">Star Map</span><span class="sb">Prestige</span></button>
       <button class="station" data-room="lab" aria-label="Power Lab: power-ups"><span class="art"></span><span class="lbl">Power Lab</span><span class="sb">Power-ups</span></button>
-      <button class="station" data-room="trade" aria-label="Trade Post: daily deals"><span class="dot hidden" id="tradeDot">!</span><span class="art"></span><span class="lbl">Trade Post</span><span class="sb">Daily deals</span></button>
+      <button class="station" data-room="trade" aria-label="Trade Post: daily deals and the Gem Exchange"><span class="dot hidden" id="tradeDot">!</span><span class="art"></span><span class="lbl">Trade Post</span><span class="sb">Deals · Exchange</span></button>
     </div>
   </div>
   <div class="bottom">
@@ -589,7 +602,8 @@ img.mini{object-fit:contain;display:block}
 
 <div class="panel env-trade" id="tradePanel">
   <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Trade Post</h2><b class="cur" id="tradeCur"></b></div>
-  <div class="banner"><span class="art" data-art="trade"></span><p>Passing traders with one-time deals. New stock every day.</p></div>
+  <div class="banner"><span class="art" data-art="trade"></span><p>Passing traders with one-time deals, and an exchange that only takes gems.</p></div>
+  <div class="stabs" id="tradeTabs"><button data-t="daily" class="on">Daily deals</button><button data-t="gems">Gem Exchange</button></div>
   <div class="pbody"><p class="note" id="tradeNote"></p><div id="tradeList"></div></div>
 </div>
 
@@ -611,6 +625,7 @@ img.mini{object-fit:contain;display:block}
       <li>Most crates are <b>standard</b> cargo crates with one item. Now and then a <b>Choice pod</b> (pick one of three items) or a <b>Multi stack</b> (four items) turns up. The <b>Fabricator</b> builds those and more: Lucky orbs, Copycat canisters and Mega containers.</li>
       <li><b>Crates get tougher.</b> Every 25 crates you open, the crate level goes up and crates need more taps (and pay out more).</li>
       <li>Every new crate level gives you a <b>gem</b> (two for a new best). Spend gems in the <b>Power Lab</b> on power-ups, and check the <b>Trade Post</b> for new one-time deals every day.</li>
+      <li>Got gems piling up? The <b>Gem Exchange</b> in the Trade Post sells ship upgrades that last for good (Duplicator, Rank Amplifier, Deep Scanner, Long Haul), <b>rank shards</b> to push an item along, and exclusive crates.</li>
       <li><b>Ranks:</b> once an item reaches tier 10, every extra copy builds its rank: Bronze, Silver, Gold, Platinum, Diamond, then Grand. Each rank multiplies that item's boost and pays gems, and ranks are <b>kept through prestige</b>. Common items need the most copies, so getting everything to Grand takes a very long time.</li>
       <li>See your ranks as 3D models in the <b>Collection</b>, where you'll also find <b>achievements</b> that pay gems.</li>
       <li>When it gets slow, go to the <b>Star Map</b> and <b>prestige</b>. You start again from crate level 1 with no items, but you earn <b>stars</b>, and every star makes your taps and points stronger for good.</li>
@@ -799,7 +814,17 @@ const FLAVOUR = {
 const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 const MAX_TIER = 10;
 const CRIT_X = 5, CRIT_MAX = .5;          // a critical hit counts as five taps
-const OFFLINE_MAX = 4 * 3600, OFFLINE_RATE = .5;
+const OFFLINE_RATE = .5;
+/* ---------- The Exchange (in the Trade Post): gem-only ship upgrades that last for good ---------- */
+const UPGRADES = {
+  dup:   {e: '🔁', name: 'Duplicator', blurb: l => `${l * 6}% chance an item comes out as two copies`, costs: [30, 75, 150, 300, 600]},
+  amp:   {e: '📡', name: 'Rank Amplifier', blurb: l => `Copies of max-tier items count ${l + 1}× towards their rank`, costs: [80, 250, 700]},
+  scan:  {e: '🔭', name: 'Deep Scanner', blurb: l => `+${l * 10}% luck, always on`, costs: [40, 90, 180, 350, 700]},
+  haul:  {e: '🛰️', name: 'Long Haul', blurb: l => `Auto taps keep going for ${4 + l * 2} hours while you're away`, costs: [20, 50, 100, 200]},
+};
+const upLv = id => (S.up && S.up[id]) || 0;
+const OFFLINE_MAX_NOW = () => (4 + upLv('haul') * 2) * 3600;
+const SHARD = {gems: 8, pack: 5, packGems: 35, fill: .25};   // a rank shard fills a quarter of an item's current bar
 // copies needed to go from one tier to the next: 2, 4, 6, ... (so tier 10 takes 90 duplicates)
 const needFor = tier => 2 * tier;
 // an item's boost at a tier: half as much again for every tier (tier 10 is 5.5 times tier 1)
@@ -832,7 +857,7 @@ const starsAt = lv => lv < STAR_MIN ? 0 : Math.floor(Math.pow(lv / 4, 2));
 // run: crates opened since the last prestige; found: every item you've ever had; pending: a choice crate waiting for you to pick
 const fresh = () => ({pts: 0, total: 0, life: 0, taps: 0, run: 0, opened: [0, 0, 0, 0, 0, 0], items: {}, found: {}, bought: {choice: 0, multi: 0}, queue: [], box: null, next: null, pending: null,
   seen: 0, last: Date.now(), best: -1, stars: 0, prestiges: 0, bestLevel: 1, gems: 0, pups: {}, daily: {day: '', bought: [], seen: ''},
-  col: {}, maxed: {}, ach: {}, achSeen: {}, pupBuys: 0, dealBuys: 0});
+  col: {}, maxed: {}, ach: {}, achSeen: {}, pupBuys: 0, dealBuys: 0, up: {}, shards: 0, gemSpent: 0});
 let S = Object.assign(fresh(), load(SAVE, {}));
 let prefs = Object.assign({buzz: true}, load(PREFS, {}));
 const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
@@ -847,6 +872,7 @@ function calcBoosts() {
   B = {tap: 1, auto: 0, crit: 0, power: 0, luck: 0, mult: 0};
   for (const [id, h] of Object.entries(S.items)) { const it = ITEM[id]; if (it) B[it.kind] += valueAt(it, h.tier); }
   B.crit = Math.min(CRIT_MAX, B.crit);
+  B.luck += upLv('scan') * .1;                // the Deep Scanner
   // power-ups on top
   B.on = {};
   for (const id in PUPS) if (pupLeft(id) > 0) B.on[PUPS[id].boost] = 1;
@@ -979,8 +1005,32 @@ function openBox() {
     if (starsAt(crateLevel()) > 0 && !S.starHint) { S.starHint = 1; setTimeout(() => toast('You can <b>prestige</b> now! Tap the ★ to see', 3200), 2600); }
   }, reduced() ? 50 : Math.round(30 + 290 * pace));
 }
-// a new item, or a copy of one you have: copies fill the bar, a full bar raises the tier
-function addItem(it) {
+// a new item, or a copy of one you have: copies fill the bar, a full bar raises the tier.
+// With the Duplicator, an item can come out as two copies (the more exciting result is the one shown).
+const STATUS_RANK = {copy: 0, max: 1, grand: 1, back: 2, new: 3, up: 4, rank: 5};
+function addItem(it, single) {
+  let res = addOne(it);
+  if (!single && upLv('dup') && Math.random() < upLv('dup') * .06) {
+    const r2 = addOne(it);
+    if ((STATUS_RANK[r2.status] || 0) > (STATUS_RANK[res.status] || 0)) res = r2;
+    res.twin = true;
+  }
+  return res;
+}
+// moves an item's rank on by some copies; returns the new rank if it went up
+function rankGain(it, n) {
+  const c = S.col[it.id] = S.col[it.id] || {rank: 0, xp: 0};
+  if (c.rank >= RANKS.length) return 0;
+  c.xp += n;
+  const need = rankNeed(it, c.rank);
+  if (c.xp < need) return 0;
+  c.xp = Math.min(c.xp - need, c.rank + 1 < RANKS.length ? rankNeed(it, c.rank + 1) - 1 : 0); c.rank++;
+  const R = RANKS[c.rank - 1]; S.gems += R.gems;
+  Sound.rank(c.rank); vibrate([20, 30, 40]);
+  setTimeout(() => toast(`<b style="color:${R.col}">${R.name.toUpperCase()} RANK</b><br>${it.name} · boost ×${R.x}<br><span class="gemc">+${R.gems} ${GEMI}</span>`, 3000), 450);
+  return c.rank;
+}
+function addOne(it) {
   let h = S.items[it.id], res;
   if (!h) { h = S.items[it.id] = {tier: 1, copies: 0, at: Date.now()}; res = {it, status: S.found[it.id] ? 'back' : 'new'}; S.found[it.id] = 1; }
   else if (h.tier >= MAX_TIER) {
@@ -989,13 +1039,7 @@ function addItem(it) {
     const c = S.col[it.id] = S.col[it.id] || {rank: 0, xp: 0};
     S.maxed[it.id] = 1;
     if (c.rank >= RANKS.length) res = {it, status: 'grand', extra};
-    else if (++c.xp >= rankNeed(it, c.rank)) {
-      c.xp = 0; c.rank++;
-      const R = RANKS[c.rank - 1]; S.gems += R.gems;
-      res = {it, status: 'rank', rank: c.rank, extra};
-      Sound.rank(c.rank); vibrate([20, 30, 40]);
-      setTimeout(() => toast(`<b style="color:${R.col}">${R.name.toUpperCase()} RANK</b><br>${it.name} · boost ×${R.x}<br><span class="gemc">+${R.gems} ${GEMI}</span>`, 3000), 450);
-    } else res = {it, status: 'max', extra};
+    else { const k = rankGain(it, 1 + upLv('amp')); res = k ? {it, status: 'rank', rank: k, extra} : {it, status: 'max', extra}; }
   }
   else {
     h.copies++;
@@ -1016,7 +1060,7 @@ const effectText = (it, tier) => `${KINDS[it.kind].name} ${KINDS[it.kind].show(v
 function showDrop(g) {
   const el = document.createElement('div');
   el.className = 'dropcard'; el.style.setProperty('--rc', rc(g.it.r));
-  el.innerHTML = `<span class="e">${g.it.e}</span><div><b>${g.it.name}</b><small>${effectText(g.it, S.items[g.it.id].tier)}</small></div>${statusTag(g)}`;
+  el.innerHTML = `<span class="e">${g.it.e}</span><div><b>${g.it.name}${g.twin ? ' <span class="twin">×2</span>' : ''}</b><small>${effectText(g.it, S.items[g.it.id].tier)}</small></div>${statusTag(g)}`;
   const box = $('#drops'); placeDrops(); box.appendChild(el);
   while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 360); }, 2200);
@@ -1208,12 +1252,15 @@ function boxSVG(r, mini, t = 'std') {
 /* ---------- Station art (the things around the crate you can tap) ---------- */
 const ART = {
   // Cargo Hold: a glass-fronted shelf of treasures
-  cargo: `<svg viewBox="0 0 100 100"><rect x="12" y="8" width="76" height="86" rx="7" fill="#1c2341" stroke="#ffb347" stroke-opacity=".55" stroke-width="2.5"/>
-    <rect x="15" y="36" width="70" height="4" fill="#4a3c24"/><rect x="15" y="62" width="70" height="4" fill="#4a3c24"/>
-    <rect x="21" y="21" width="14" height="15" rx="2" fill="#3b82f6"/><circle cx="50" cy="29" r="7" fill="#a855f7"/><rect x="62" y="19" width="15" height="17" rx="3" fill="#2fbf71"/>
-    <path d="M22 62l8-14 8 14z" fill="#f5a524"/><rect x="45" y="48" width="11" height="14" rx="2" fill="#ef4458"/><circle cx="70" cy="55" r="7" fill="#9aa6c4"/>
-    <rect x="20" y="74" width="60" height="12" rx="3" fill="#2a3358"/><rect x="24" y="78" width="52" height="4" rx="2" fill="#ffb347" class="blink"/>
-    <path d="M18 12h16L18 40z" fill="#fff" opacity=".07"/></svg>`,
+  cargo: `<svg viewBox="0 0 100 100"><defs><pattern id="cgz" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#1d1a14"/><rect width="4" height="8" fill="#ffb347"/></pattern></defs>
+    <rect x="8" y="9" width="84" height="82" rx="6" fill="#141a30" stroke="#ffb347" stroke-opacity=".55" stroke-width="2.5"/>
+    <rect x="12" y="13" width="76" height="10" fill="#2a3150"/><path d="M12 16.5h76M12 19.5h76" stroke="#3d466e" stroke-width="1.2"/>
+    <rect x="14" y="26" width="72" height="3" rx="1" fill="#5f6c8f"/><rect x="53" y="24.5" width="12" height="6" rx="1.5" fill="#8b98ba"/>
+    <g class="sway"><path d="M59 30.5V44" stroke="#c7cfe6" stroke-width="1.6"/><rect x="51" y="44" width="16" height="13" rx="1.5" fill="#ffb347"/><path d="M51 50.5h16M59 44v13" stroke="#b5700a" stroke-width="1.8"/></g>
+    <rect x="14" y="60" width="36" height="18" rx="1.5" fill="#3b82f6"/><path d="M19 62v14M24 62v14M29 62v14M34 62v14M39 62v14M44 62v14" stroke="#1e4fa8" stroke-width="1.6"/>
+    <rect x="18" y="45" width="26" height="15" rx="1.5" fill="#2fbf71"/><path d="M23 47v11M28 47v11M33 47v11M38 47v11" stroke="#17824a" stroke-width="1.6"/>
+    <rect x="54" y="62" width="32" height="16" rx="1.5" fill="#ef4458"/><path d="M59 64v12M64 64v12M69 64v12M74 64v12M79 64v12" stroke="#a82233" stroke-width="1.6"/>
+    <rect x="12" y="78" width="76" height="9" fill="url(#cgz)"/><circle cx="84" cy="33" r="2.2" fill="#ffb347" class="blink"/></svg>`,
   // Fabricator: a machine with a robot arm building a crate
   fab: `<svg viewBox="0 0 100 100"><defs><pattern id="hz" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#17181d"/><rect width="4.5" height="9" fill="#ffc53d"/></pattern></defs>
     <rect x="8" y="64" width="84" height="28" rx="4" fill="#2b2e38"/><rect x="8" y="84" width="84" height="8" rx="2" fill="url(#hz)"/>
@@ -1661,11 +1708,26 @@ function openSheet(id) {
   } else body = `<div class="fxrow"><div><small>Gives</small><b>${K.name} ${K.show(valueAt(it, 1))}</b></div><div class="nx"><small>Found in</small><b>${RARITIES[it.r].name} crates</b></div></div>
       <div class="ctext">${lost ? "You had this before you prestiged. Find it again to get its boost back." : 'Not found yet.'}</div>`;
   c.innerHTML = `<div class="big">${it.e}</div><div class="rn">${RARITIES[it.r].name}</div><h3>${h || lost ? it.name : '???'}</h3>
-    <p class="fl">${h || lost ? FLAVOUR[id] : 'Keep opening crates to find out what this is.'}</p>${body}<button class="primary" id="sheetDone">Done</button>`;
+    <p class="fl">${h || lost ? FLAVOUR[id] : 'Keep opening crates to find out what this is.'}</p>${body}
+    ${h && (S.shards || 0) > 0 && !(h.tier >= MAX_TIER && col(id).rank >= RANKS.length) ? `<button class="primary shardbtn" id="sheetShard">💠 Use a rank shard<small>${S.shards} left · fills a quarter of the bar</small></button>` : ''}
+    <button class="primary" id="sheetDone">Done</button>`;
   $('#sheetDone').onclick = closeSheet;
+  if ($('#sheetShard')) $('#sheetShard').onclick = () => useShard(id);
   $('#itemSheet').classList.add('show'); vibrate(6);
 }
 function closeSheet() { $('#itemSheet').classList.remove('show'); }
+function useShard(id) {
+  const it = ITEM[id], h = S.items[id];
+  if (!h || !(S.shards > 0)) return;
+  S.shards--;
+  if (h.tier >= MAX_TIER) rankGain(it, Math.max(1, Math.ceil(rankNeed(it, col(id).rank) * SHARD.fill)));
+  else {
+    h.copies += Math.max(1, Math.ceil(needFor(h.tier) * SHARD.fill));
+    if (h.copies >= needFor(h.tier)) { h.copies = 0; h.tier++; Sound.tierUp(); if (h.tier >= MAX_TIER) S.maxed[id] = 1; toast(`${it.name} is now <b>tier ${h.tier}</b>!`, 1800); }
+    else Sound.buy();
+  }
+  vibrate(12); calcBoosts(); save(); refresh(true); renderCollection(); openSheet(id);
+}
 $('#itemSheet .sheetbg').addEventListener('click', closeSheet);
 
 
@@ -1717,6 +1779,22 @@ function renderShop(force) {
   } else if (shopTab === 'lab') {
     note = `Power-ups cost <span class="gemc">gems</span>. You get one every time your crate level goes up, and two for a new best level. Buying one that's already on adds more time.`;
     list = Object.entries(PUPS).map(([id, P]) => `<div class="shopitem">${vial(id)}<div><b>${P.name}</b><small>${P.blurb} for ${fmtTime(P.secs)}${left(id)}</small></div>${gemBtn(`data-p="${id}"`, P.gems)}</div>`).join('');
+  } else if (tradeSub === 'gems') {
+    const have = ITEMS.filter(i => !S.items[i.id]).length;
+    const row = (art, name, sub, btn) => `<div class="shopitem">${art}<div><b>${name}</b><small>${sub}</small></div>${btn}</div>`;
+    note = `Exclusive to the Exchange. Upgrades are <b>for good</b>: they stay when you prestige.`;
+    list = '<h3 class="xh">Ship upgrades</h3>' + Object.entries(UPGRADES).map(([id, U]) => {
+      const l = upLv(id), max = l >= U.costs.length;
+      const pips = `<span class="pips">${U.costs.map((_, k) => `<i${k < l ? ' class="on"' : ''}></i>`).join('')}</span>`;
+      const sub = (l ? U.blurb(l) : 'Not fitted yet') + (max ? '' : `<br><span class="nxt">Next: ${U.blurb(l + 1)}</span>`);
+      return row(`<span class="pe">${U.e}</span>`, U.name + pips, sub, max ? '<button class="primary" disabled>Maxed</button>' : gemBtn(`data-u="${id}"`, U.costs[l]));
+    }).join('')
+      + '<h3 class="xh">Supplies</h3>'
+      + row('<span class="pe">💠</span>', 'Rank shard', `Fills a quarter of any item's bar, tier or rank. Use it from the item's card in the Cargo Hold.${S.shards ? ` <span class="act">You have ${S.shards}</span>` : ''}`, gemBtn('data-x="shard"', SHARD.gems))
+      + row('<span class="pe">💠</span>', `Shard crate<span class="tagx blue">×${SHARD.pack}</span>`, `${SHARD.pack} rank shards, for less`, gemBtn('data-x="pack"', SHARD.packGems, SHARD.gems * SHARD.pack))
+      + (have ? row('<span class="pe">🧭</span>', 'Finder\'s crate', `An item you don't have yet this run (${have} left to find)`, gemBtn('data-x="find"', 25)) : '')
+      + row(boxSVG(5, true), `<span style="color:${rc(5)}">Mythic crate</span>`, 'Guaranteed Mythic', S.queue.length >= QUEUE_MAX ? '<button class="primary" disabled>Hold full</button>' : gemBtn('data-x="mythic"', 60))
+      + `<p class="note">${waiting}</p>`;
   } else {
     note = `One-time deals. New stock in <span class="clock">${fmtTime(msToMidnight())}</span>`;
     list = dailyDeals().map((d, i) => {
@@ -1729,7 +1807,7 @@ function renderShop(force) {
       return `<div class="shopitem${done ? ' done' : ''}">${art}<div><b>${name}</b><small>${sub}</small></div>${btn}</div>`;
     }).join('') + `<p class="note">${waiting}</p>`;
   }
-  $(`#${shopTab}Cur`).innerHTML = shopTab === 'lab' ? `<span class="gemc">${GEMI} ${S.gems}</span>` : `${fmt(S.pts)} pts<br><span class="gemc">${GEMI} ${S.gems}</span>`;
+  $(`#${shopTab}Cur`).innerHTML = shopTab === 'lab' || (shopTab === 'trade' && tradeSub === 'gems') ? `<span class="gemc">${GEMI} ${S.gems}</span>` : `${fmt(S.pts)} pts<br><span class="gemc">${GEMI} ${S.gems}</span>`;
   const html = note + '|' + list;
   if (!force && html === shopHTML) return;     // only redraw when something changed, so a tap on a button isn't lost
   shopHTML = html;
@@ -1738,6 +1816,34 @@ function renderShop(force) {
   L.querySelectorAll('button[data-t]').forEach(b => b.onclick = () => buyCrate(b.dataset.t));
   L.querySelectorAll('button[data-p]').forEach(b => b.onclick = () => buyPup(b.dataset.p));
   L.querySelectorAll('button[data-d]').forEach(b => b.onclick = () => buyDeal(+b.dataset.d));
+  L.querySelectorAll('button[data-u]').forEach(b => b.onclick = () => buyUpgrade(b.dataset.u));
+  L.querySelectorAll('button[data-x]').forEach(b => b.onclick = () => buyExtra(b.dataset.x));
+}
+let tradeSub = 'daily';
+document.querySelectorAll('#tradeTabs button').forEach(b => b.onclick = () => {
+  tradeSub = b.dataset.t; Sound.tap(.3, false);
+  document.querySelectorAll('#tradeTabs button').forEach(x => x.classList.toggle('on', x === b));
+  renderShop(true); $('#tradeList').parentElement.scrollTop = 0;
+});
+const spend = n => { if (S.gems < n) { Sound.no(); return false; } S.gems -= n; S.gemSpent = (S.gemSpent || 0) + n; return true; };
+function buyUpgrade(id) {
+  const U = UPGRADES[id], l = upLv(id);
+  if (l >= U.costs.length || !spend(U.costs[l])) return;
+  S.up[id] = l + 1; calcBoosts();
+  bought(`${U.e} <b>${U.name}</b> level ${l + 1}!<br><small>${U.blurb(l + 1)}</small>`);
+}
+function buyExtra(x) {
+  if (x === 'shard') { if (!spend(SHARD.gems)) return; S.shards = (S.shards || 0) + 1; bought('💠 Rank shard bought.<br><small>Use it from an item\'s card in the Cargo Hold</small>'); }
+  else if (x === 'pack') { if (!spend(SHARD.packGems)) return; S.shards = (S.shards || 0) + SHARD.pack; bought(`💠 ${SHARD.pack} rank shards bought.`); }
+  else if (x === 'mythic') {
+    if (S.queue.length >= QUEUE_MAX) { Sound.no(); return; }
+    if (!spend(60)) return;
+    addCrate({t: 'std', r: 5}); bought(`${R0(5)} crate added: it's next!`);
+  } else if (x === 'find') {
+    const pool = ITEMS.filter(i => !S.items[i.id]); if (!pool.length || !spend(25)) return;
+    const it = pool[Math.random() * pool.length | 0], g = addItem(it, true);
+    calcBoosts(); bought(`🧭 Found: <b style="color:${rc(it.r)}">${it.name}</b>`); showDrop(g);
+  }
 }
 function bought(msg) { Sound.buy(); vibrate(10); save(); renderShop(true); refresh(true); toast(msg, 1700); }
 function buyCrate(t) {
@@ -1813,7 +1919,7 @@ function renderStars() {
   };
 }
 function prestige(gain) {
-  const keepKeys = ['life', 'taps', 'opened', 'found', 'seen', 'best', 'bestLevel', 'gems', 'pups', 'daily', 'col', 'maxed', 'ach', 'achSeen', 'pupBuys', 'dealBuys'];
+  const keepKeys = ['life', 'taps', 'opened', 'found', 'seen', 'best', 'bestLevel', 'gems', 'pups', 'daily', 'col', 'maxed', 'ach', 'achSeen', 'pupBuys', 'dealBuys', 'up', 'shards', 'gemSpent'];
   const old = S; S = fresh();
   keepKeys.forEach(k => S[k] = old[k]);
   S.stars = old.stars + gain; S.prestiges = old.prestiges + 1; S.starHint = 1;
@@ -2496,6 +2602,7 @@ const ACH = [
   {id: 'prestige', name: 'Star Traveller', what: n => `Prestige ${n} time${n > 1 ? 's' : ''}`, goals: [1, 3, 10, 25, 50], gems: [3, 5, 10, 20, 30], val: () => S.prestiges},
   {id: 'level', name: 'Deep Space', what: n => `Reach crate level ${n}`, goals: [10, 25, 50, 100, 200], gems: [2, 4, 8, 15, 25], val: () => S.bestLevel},
   {id: 'pups', name: 'Powered Up', what: n => `Buy ${n} power-up${n > 1 ? 's' : ''}`, goals: [1, 10, 50, 200], gems: [1, 3, 6, 12], val: () => S.pupBuys},
+  {id: 'spend', name: 'Big Spender', what: n => `Spend ${nice(n)} gems at the Gem Exchange`, goals: [50, 250, 1000, 5000], gems: [3, 10, 30, 80], val: () => S.gemSpent || 0},
   {id: 'deals', name: 'Deal Hunter', what: n => `Buy ${n} daily deal${n > 1 ? 's' : ''}`, goals: [1, 10, 50], gems: [2, 5, 10], val: () => S.dealBuys},
 ];
 const MEDAL = ['#9aa6c4', '#d98b4a', '#cfd8e8', '#ffcc33', '#8ff0e0', '#7fd8ff', '#ff5fd2', '#ff5fd2'];
@@ -2689,9 +2796,9 @@ calcBoosts();
 if (!S.achSeen || !Object.keys(S.achSeen).length) { S.achSeen = {}; ACH.forEach(a => S.achSeen[a.id] = achReached(a)); }
 if (!S.box) takeNext();
 if (!S.next && !S.queue.length) S.next = makeCrate(rollType());
-// automatic taps keep going while you're away (at half speed, for up to 4 hours)
+// automatic taps keep going while you're away (at half speed, for up to 4 hours, or longer with Long Haul)
 (() => {
-  const away = Math.min(OFFLINE_MAX, (Date.now() - (S.last || Date.now())) / 1000);
+  const away = Math.min(OFFLINE_MAX_NOW(), (Date.now() - (S.last || Date.now())) / 1000);
   if (B.auto > 0 && away > 30) {
     const earned = B.perSec * away * OFFLINE_RATE;
     earn(earned);
