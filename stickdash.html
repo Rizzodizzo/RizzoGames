@@ -4,16 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Stick Dash</title>
-<meta name="theme-color" content="#eef1f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16181d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0b0a1f">
 <link rel="manifest" href="manifest.webmanifest">
-<script src="games.js" data-game="stickdash" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show, #game:not(.hidden), #levels:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<script src="games.js" data-game="stickdash" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show, #game:not(.hidden), #levels:not(.hidden), #locker:not(.hidden), #editor:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Stick Dash">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -23,15 +22,11 @@
    (black, or white in the dark) with a red scarf; the scarf goes grey when
    the dash is used up. Blocks are soft blue-grey toy blocks.
    ====================================================================== */
-:root{--ease:cubic-bezier(.2,.8,.2,1);--pop:cubic-bezier(.34,1.56,.64,1);
-  --bg:#eef1f5;--bg2:#dfe5ee;--panel:#ffffff;--ink:#1b1f27;--muted:#667085;--line:#d8dee8;--soft:#eef1f6;
-  --accent:#ef3b3b;--hi:#ff5a4f;--edge:#b5262a;--onaccent:#ffffff;--shade:rgba(27,31,39,.12);--ok:#16a34a;--bad:#e5484d;--gold:#f5b70a;
-  --block:#ffffff;--blockEdge:#c9d1dd;--tile:#bcc7d6;--tileTop:#f5f8fc;--tileEdge:#8d9bb0;--spike:#e5484d;--orb:#f5b70a;--pad:#16a34a;
+:root{color-scheme:dark;--ease:cubic-bezier(.2,.8,.2,1);--pop:cubic-bezier(.34,1.56,.64,1);
+  --bg:#0b0a1f;--bg2:#15133a;--panel:#1c1a40;--ink:#eef0ff;--muted:#9a96cf;--line:#34306a;--soft:#262356;
+  --accent:#ff4a5a;--hi:#ff6d78;--edge:#a8202f;--onaccent:#ffffff;--shade:rgba(0,0,0,.45);--ok:#3ddc84;--bad:#ff5a5f;--gold:#ffc93c;
+  --block:#2f2c63;--blockEdge:#14122f;--tile:#3d3f7c;--tileTop:#a3a8e6;--tileEdge:#26285a;--spike:#ff5a5f;--orb:#ffc93c;--pad:#3ddc84;
   --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;
-  --bg:#16181d;--bg2:#1e2128;--panel:#252932;--ink:#eef1f6;--muted:#9aa3b2;--line:#353a45;--soft:#2c313b;
-  --accent:#ff5a4f;--hi:#ff7a6b;--edge:#b5262a;--onaccent:#ffffff;--shade:rgba(0,0,0,.45);--ok:#22c55e;--bad:#ff5a5f;--gold:#facc15;
-  --block:#2f343e;--blockEdge:#14161b;--tile:#343a46;--tileTop:#454c5a;--tileEdge:#1c1f26;--spike:#ff5a5f;--orb:#facc15;--pad:#22c55e}}
 *{box-sizing:border-box}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
 body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--ink);
@@ -267,10 +262,7 @@ html.rz-touch #sKeys{display:none}
 }
 @media (max-width:420px){.side{width:84px}.bbtn.play{width:128px}}
 /* the game itself is always night in the city, so its buttons and covers are always dark */
-#game{color-scheme:dark;background:#0b0a1f;color:var(--ink);
-  --bg:#16181d;--bg2:#1e2128;--panel:#252932;--ink:#eef1f6;--muted:#9aa3b2;--line:#353a45;--soft:#2c313b;
-  --accent:#ff5a4f;--hi:#ff7a6b;--shade:rgba(0,0,0,.45);--ok:#22c55e;--bad:#ff5a5f;--gold:#facc15;
-  --rz-btn-bg:var(--panel);--rz-btn-border:1px solid var(--line)}
+#game{background:#0b0a1f}
 
 /* world headings in the level list */
 .wh{grid-column:1/-1;display:flex;align-items:baseline;gap:9px;margin:10px 4px 0;font-size:1.05rem}
@@ -278,9 +270,131 @@ html.rz-touch #sKeys{display:none}
 .wh span{font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 .wh b{font-weight:900}
 .wh small{margin-left:auto;font-size:.8rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ================= THE BIG UPDATE: night everywhere, medals, locker, level maker ================= */
+#bgCv{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none}
+.app{position:relative;z-index:1}
+.home{gap:clamp(12px,3.4vh,30px)}
+.dtitle b{text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 34px rgba(255,74,90,.35)}
+.hmenu{display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.6vh,20px)}
+.hstats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center}
+.hstats span{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 11px;border-radius:99px;background:color-mix(in srgb,var(--panel) 80%,transparent);border:1px solid var(--line);font-weight:800;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.hstats b{color:var(--ink);font-weight:900}
+.hstats svg.ic{width:16px;height:16px;color:var(--accent)}
+.hstats .mstar svg{width:15px;height:15px;fill:var(--gold)}
+.hstats .medal{width:17px;height:17px}
+.bbtn.play{width:min(250px,70vw);height:104px;border-radius:26px;font-size:1.75rem;animation:glow 2.6s ease-in-out infinite}
+.bbtn.play small{max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+@keyframes glow{0%,100%{box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade),0 0 0 rgba(255,74,90,0)}50%{box-shadow:0 4px 0 var(--edge),0 8px 18px var(--shade),0 0 34px rgba(255,74,90,.5)}}
+html.rz-reduce-motion .bbtn.play{animation:none}
+.hbtns{display:flex;gap:8px;justify-content:center}
+.side{position:relative;width:66px;height:70px;border-radius:18px;gap:5px;font-size:.72rem;background:color-mix(in srgb,var(--panel) 84%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.side svg.ic{width:24px;height:24px}
+.side.new::after{content:'';position:absolute;top:7px;right:9px;width:11px;height:11px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px var(--panel);animation:popIn .3s var(--pop)}
+@media (min-width:560px){.side{width:84px;height:78px;font-size:.8rem}}
+@media (max-width:520px){.lgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.lv{padding:7px 7px 9px}.lvm{gap:5px}.lvm i{width:23px;height:23px;font-size:.78rem}.lvm b{font-size:.9rem}.lv small{font-size:.7rem}.star svg{width:17px;height:17px}.lvm .medal{width:17px;height:17px}}
+/* medals */
+.medal{width:20px;height:20px;display:block;flex:none}
+.medal .rb{fill:#5b6bd6}.medal .dk{fill:var(--line)}.medal .in{fill:none}
+.medal.m0 .rb{fill:var(--line)}.medal.m0{opacity:.7}
+.medal.m1 .dk{fill:#c47a3c}.medal.m1 .in{fill:#eaa870}
+.medal.m2 .dk{fill:#aab6cc}.medal.m2 .in{fill:#eef3fb}
+.medal.m3 .dk{fill:#f0a800}.medal.m3 .in{fill:#ffe07a}
+.medal.big{width:34px;height:34px;margin:0 0 -1px}
+.medal.pop{animation:medalIn .6s var(--pop) .25s backwards}
+@keyframes medalIn{from{transform:scale(0) rotate(-40deg)}}
+/* level list: a tab for each world */
+.levels,.locker{position:relative}
+.wtabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 -2px;scrollbar-width:none;flex:none}
+.wtabs::-webkit-scrollbar{display:none}
+.wtab{flex:none;display:flex;align-items:center;gap:8px;height:44px;padding:0 13px 0 8px;border-radius:14px;background:var(--panel);border:2px solid transparent;box-shadow:0 2px 8px var(--shade);font-weight:900;white-space:nowrap;color:var(--muted)}
+.wtab i{font-style:normal;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--soft);font-size:.85rem}
+.wtab i svg.ic{width:15px;height:15px}
+.wtab small{font-size:.76rem;font-weight:800;font-variant-numeric:tabular-nums;opacity:.8}
+.wtab.on{border-color:var(--accent);color:var(--ink)}
+.wtab.on i{background:var(--accent);color:var(--onaccent)}
+.wtab.full small{color:var(--gold);opacity:1}
+.lvm .medal{margin-right:-2px}
+.lv.mine{cursor:default}
+.mrow{display:flex;gap:8px}
+.mrow .bbtn{flex:1;min-height:40px;padding:0 10px;font-size:.9rem;box-shadow:0 2px 0 var(--line)}
+.mrow .bbtn.go{box-shadow:0 2px 0 var(--edge)}
+.lv.add{align-items:center;justify-content:center;gap:8px;min-height:128px;border:2px dashed var(--line);background:transparent;box-shadow:none;font-weight:900;color:var(--muted);text-align:center}
+.lv.add svg.ic{width:30px;height:30px;color:var(--accent)}
+.lvnote{grid-column:1/-1;margin:2px 4px 0;font-size:.85rem;font-weight:700;color:var(--muted);line-height:1.4}
+.okdot{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#06240f;display:grid;place-items:center;flex:none}
+.okdot svg.ic{width:14px;height:14px;stroke-width:3}
+/* the clear screen */
+.dnext{margin-top:10px;font-size:.84rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.dnext b{color:var(--ink)}
+.unl{margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:14px;background:color-mix(in srgb,var(--gold) 16%,transparent);font-weight:800;font-size:.86rem;animation:popIn .4s var(--pop) .5s backwards}
+.unl svg.ic{width:18px;height:18px;color:var(--gold)}
+.unl b{font-weight:900}
+/* ---------- locker ---------- */
+.locker{height:100%;display:flex;flex-direction:column;max-width:960px;margin:0 auto}
+.lkbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.lkprev{flex:none;height:clamp(150px,26vh,220px);border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#15133a,#0b0a1f);border:1px solid var(--line);position:relative}
+#lkCv{width:100%;height:100%;display:block}
+.lkside{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
+#lkTabs{align-self:center;max-width:100%}
+.lkgrid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-content:start;gap:10px;padding:2px 2px 24px}
+.sk{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:var(--panel);border:2px solid transparent;box-shadow:0 2px 8px var(--shade);text-align:left;min-height:64px}
+.sk .sw{width:40px;height:40px;border-radius:12px;flex:none;background:var(--c,var(--soft));display:grid;place-items:center;border:2px solid rgba(255,255,255,.14)}
+.sk .sw.rainbow{background:conic-gradient(#ff4a5a,#ffc93c,#7ee04a,#4ff0ff,#5b8cff,#b98bff,#ff4fa3,#ff4a5a)}
+.sk .sw.streak{background:linear-gradient(90deg,transparent,var(--c))}
+.sk .sw.rainbow.streak{background:linear-gradient(90deg,#ff4a5a,#ffc93c,#7ee04a,#4ff0ff,#b98bff)}
+.sk .sw canvas{width:36px;height:36px;display:block}
+.sk .st{display:flex;flex-direction:column;gap:1px;min-width:0}
+.sk b{font-weight:900;font-size:.92rem}
+.sk small{font-size:.72rem;font-weight:700;color:var(--muted);line-height:1.25}
+.sk.on{border-color:var(--accent)}
+.sk.on small{color:var(--accent);font-weight:900}
+.sk.locked .sw{filter:grayscale(.8) brightness(.6)}
+.sk.locked b{color:var(--muted)}
+@media (orientation:landscape) and (max-height:520px){.lkbody{flex-direction:row}.lkprev{height:auto;flex:0 0 36%}.lkgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+/* ---------- level maker ---------- */
+.editor{position:fixed;inset:0;z-index:3;background:#0b0a1f;overflow:hidden;touch-action:none}
+#edCv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.edtop{position:absolute;left:calc(env(safe-area-inset-left,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;align-items:center;gap:8px;pointer-events:none}
+.edtop>*{pointer-events:auto}
+.edtop .sp{flex:1}
+.edtop .bbtn{min-height:42px;box-shadow:0 2px 0 var(--line)}
+.edtop .bbtn.sq{width:42px;height:42px}
+.edtop .bbtn.go{box-shadow:0 2px 0 var(--edge);padding:0 16px}
+.edtop .bbtn:disabled{opacity:.4}
+#edName{max-width:38vw;cursor:pointer}
+#edName b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.edpal{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;overflow-x:auto;padding:8px max(10px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 8px) max(10px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(11,10,31,0),rgba(11,10,31,.92) 34%);scrollbar-width:none;touch-action:pan-x}
+.edpal::-webkit-scrollbar{display:none}
+.tool{flex:none;width:54px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px 5px;border-radius:13px;background:var(--panel);border:2px solid var(--line);font-size:.62rem;font-weight:900;color:var(--muted);white-space:nowrap}
+.tool canvas{width:28px;height:28px;display:block}
+.tool svg.ic{width:28px;height:28px;padding:3px}
+.tool.on{border-color:var(--accent);color:var(--ink);background:var(--soft)}
+.edtip{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 62px);transform:translateX(-50%);padding:6px 14px;border-radius:99px;background:rgba(28,26,64,.9);border:1px solid var(--line);font-size:.8rem;font-weight:800;color:var(--muted);pointer-events:none;white-space:nowrap;transition:opacity .4s}
+.edtip.gone{opacity:0}
+.editor .cover{z-index:5}
+.edcard{text-align:left;width:min(440px,100%);max-height:calc(100% - 8px);overflow-y:auto}
+.edcard h2{text-align:center;margin-bottom:10px}
+.frow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font-weight:800}
+.frow input[type=text],.edcard textarea{font:inherit;font-weight:800;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;flex:1;-webkit-user-select:text;user-select:text}
+.edcard textarea{width:100%;height:110px;resize:none;font-size:.78rem;font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.stepper{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.stepper button{width:40px;height:40px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-weight:900;font-size:1.2rem}
+.stepper b{min-width:34px;text-align:center}
+.bbtn.red{color:var(--bad)}
+@media (orientation:landscape) and (max-height:520px){
+  .home{flex-direction:row;gap:clamp(18px,6vw,60px)}
+  .hmenu{gap:10px}
+  .bbtn.play{height:84px;width:230px;font-size:1.5rem}
+  .side{height:62px}
+  .wtabs{padding-bottom:8px}.wtab{height:40px}
+  .lgrid{grid-template-columns:repeat(auto-fill,minmax(215px,1fr))}
+  .edcard{padding:10px 18px 14px}.frow{padding:5px 0}
+}
 </style>
 </head>
 <body>
+<canvas id="bgCv" aria-hidden="true"></canvas>
 <div class="app">
 
   <!-- ================= HOME ================= -->
@@ -289,17 +403,48 @@ html.rz-touch #sKeys{display:none}
       <canvas id="titleCv" aria-hidden="true"></canvas>
       <b>Stick <span>Dash</span></b>
     </div>
-    <div class="bundle">
-      <button class="side" id="howBtn"><span class="tic" data-ic="help"></span><span>How to play</span></button>
+    <div class="hmenu">
+      <div class="hstats" id="hstats"></div>
       <button class="bbtn go play" id="playBtn"><span>Play</span><small id="playSub"></small></button>
-      <button class="side" id="setBtnHome"><span class="tic" data-ic="settings"></span><span>Settings</span></button>
+      <div class="hbtns">
+        <button class="side" id="lvBtn"><span class="tic" data-ic="grid"></span><span>Levels</span></button>
+        <button class="side" id="lockBtn"><span class="tic" data-ic="shirt"></span><span>Locker</span></button>
+        <button class="side" id="editBtn"><span class="tic" data-ic="build"></span><span>Build</span></button>
+        <button class="side" id="howBtn"><span class="tic" data-ic="help"></span><span>Help</span></button>
+        <button class="side" id="setBtnHome"><span class="tic" data-ic="settings"></span><span>Settings</span></button>
+      </div>
     </div>
   </section>
 
   <!-- ================= LEVELS ================= -->
   <section class="levels hidden" id="levels">
     <div class="lhead"><button class="bbtn sq" id="lvBack" aria-label="Back" data-ic="back"></button><h1>Levels</h1><span class="sp" id="lvCount"></span></div>
+    <div class="wtabs" id="wtabs"></div>
     <div class="lgrid" id="lgrid"></div>
+  </section>
+
+  <!-- ================= LOCKER ================= -->
+  <section class="locker hidden" id="locker">
+    <div class="lhead"><button class="bbtn sq" id="lkBack" aria-label="Back" data-ic="back"></button><h1>Locker</h1><span class="sp" id="lkCount"></span></div>
+    <div class="lkbody">
+      <div class="lkprev"><canvas id="lkCv" aria-hidden="true"></canvas></div>
+      <div class="lkside"><div class="seg" id="lkTabs"></div><div class="lkgrid" id="lkGrid"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= LEVEL MAKER ================= -->
+  <section class="editor hidden" id="editor">
+    <canvas id="edCv" aria-label="Your level"></canvas>
+    <div class="edtop">
+      <button class="bbtn sq" id="edBack" aria-label="Back" data-ic="back"></button>
+      <button class="pill" id="edName" aria-label="Level name and settings"><b></b></button>
+      <span class="sp"></span>
+      <button class="bbtn sq" id="edUndo" aria-label="Undo" data-ic="undo"></button>
+      <button class="bbtn sq" id="edMore" aria-label="Level settings" data-ic="settings"></button>
+      <button class="bbtn go" id="edTest" data-ic="play"><span>Test</span></button>
+    </div>
+    <div class="edtip gone" id="edTip"></div>
+    <div class="edpal" id="edPal"></div>
   </section>
 
   <!-- ================= GAME ================= -->
@@ -336,6 +481,7 @@ html.rz-touch #sKeys{display:none}
     <div class="pebtns"><button class="bbtn" id="peReset">Reset</button><button class="bbtn go" id="peDone">Done</button></div>
   </div>
 </div>
+<div class="cover hidden" id="sheet" style="position:fixed;z-index:12"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- ================= PANELS ================= -->
@@ -349,6 +495,7 @@ html.rz-touch #sKeys{display:none}
       <div class="srow"><span class="sl"><b>Joystick</b><small id="sStickNote"></small></span><div class="seg" id="sStick"><button data-v="fixed">Fixed</button><button data-v="free">Free</button></div></div>
       <button class="srow" id="sMove"><span class="sl"><b>Move the joystick</b><small>Put it where your thumb rests, and pick its size</small></span><span class="sr" data-ic="chevron"></span></button>
       <label class="srow" id="sBuzzRow"><span class="sl"><b>Vibration</b></span><input type="checkbox" class="switch" data-p="buzz"></label>
+      <label class="srow"><span class="sl"><b>Ghost</b><small>Race your best run on each level</small></span><input type="checkbox" class="switch" data-p="ghost"></label>
     </div>
   </div><div>
     <h3 class="sgh">Every game</h3>
@@ -357,7 +504,7 @@ html.rz-touch #sKeys{display:none}
     </div>
     <h3 class="sgh">Data</h3>
     <div class="sgroup">
-      <button class="srow red" id="sReset"><span class="sl"><b>Reset progress</b><small>Best times, stars and unlocked levels</small></span></button>
+      <button class="srow red" id="sReset"><span class="sl"><b>Reset progress</b><small>Best times, stars, medals, ghosts and the locker</small></span></button>
     </div>
     <div id="sKeys">
       <h3 class="sgh">Keyboard</h3>
@@ -424,7 +571,8 @@ const LEVELS = [
     1,
     "Jump up through ledges"
    ]
-  ]
+  ],
+  "par": 9.5
  },
  {
   "name": "Dash",
@@ -465,7 +613,8 @@ const LEVELS = [
     3,
     "Dash diagonally too"
    ]
-  ]
+  ],
+  "par": 8.0
  },
  {
   "name": "Dash jump",
@@ -496,7 +645,8 @@ const LEVELS = [
     8,
     "You keep all your speed"
    ]
-  ]
+  ],
+  "par": 8.0
  },
  {
   "name": "Walls",
@@ -530,7 +680,26 @@ const LEVELS = [
     4,
     "Walls give you a jump, not a dash"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    13,
+    3,
+    21,
+    13,
+    0,
+    -3
+   ],
+   [
+    34,
+    6,
+    43,
+    13,
+    1,
+    -2.5
+   ]
+  ],
+  "par": 9.0
  },
  {
   "name": "Orbs",
@@ -556,7 +725,8 @@ const LEVELS = [
     5,
     "Gold orbs give your dash back"
    ]
-  ]
+  ],
+  "par": 10.0
  },
  {
   "name": "Springs and spikes",
@@ -589,7 +759,8 @@ const LEVELS = [
     3,
     "Spikes hurt: dash over them"
    ]
-  ]
+  ],
+  "par": 11.0
  },
  {
   "name": "All together",
@@ -603,16 +774,17 @@ const LEVELS = [
    "........................##..#############....................##########......................o................",
    "........................##..#############........o...........##########.......................................",
    "........................##..#############..............b.....##########.......................................",
-   "........................##..#############............##################.......................................",
+   "........................##..#############............##################....*..................................",
    "............................#############............##################......##...........xxxxxx........G.....",
    "................o...........#############............##################......##.......########################",
    "............................#############............##################......##.......########################",
-   "...P........................#############............##################...*..##.......########################",
+   "...P........................#############............##################......##.......########################",
    "###########...........###################............##################......##.......########################",
    "###########...........###################............##################......##.......########################",
    "###########...........###################xxxxxxxxxxxx##################xxxxxxxxxxxxxxx########################"
   ],
-  "hints": []
+  "hints": [],
+  "par": 17.5
  },
  {
   "name": "Rings",
@@ -643,7 +815,18 @@ const LEVELS = [
     4,
     "Rings work in any direction"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    36,
+    3,
+    47,
+    10,
+    0,
+    -2.5
+   ]
+  ],
+  "par": 8.0
  },
  {
   "name": "Ring road",
@@ -670,7 +853,18 @@ const LEVELS = [
     2,
     "Out of one chain, into the next"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    34,
+    2,
+    47,
+    11,
+    2,
+    -3
+   ]
+  ],
+  "par": 10.5
  },
  {
   "name": "Turns",
@@ -699,7 +893,26 @@ const LEVELS = [
     7,
     "After a ring you can dash a new way"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    12,
+    4,
+    21,
+    13,
+    0,
+    -3
+   ],
+   [
+    53,
+    3,
+    62,
+    13,
+    0,
+    -3
+   ]
+  ],
+  "par": 10.5
  },
  {
   "name": "Ring climb",
@@ -747,7 +960,18 @@ const LEVELS = [
     26,
     "Dash up through the rings"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    16,
+    5,
+    24,
+    27,
+    0,
+    -3
+   ]
+  ],
+  "par": 11.5
  },
  {
   "name": "Rings and orbs",
@@ -768,7 +992,18 @@ const LEVELS = [
    "##########....................#######...............####........####################",
    "##########xxxxxxxxxxxxxxxxxxxx#######xxxxxxxxxxxxxxx####xxxxxxxx####################"
   ],
-  "hints": []
+  "hints": [],
+  "cams": [
+   [
+    12,
+    2,
+    30,
+    11,
+    0,
+    -2.5
+   ]
+  ],
+  "par": 11.5
  },
  {
   "name": "Ring run",
@@ -785,19 +1020,30 @@ const LEVELS = [
    ".............................................############................########.###...................................",
    "...........................................r.############......r.....r...########.###..............................G....",
    ".............................................############................########.###................###################",
-   "............................r..r..r..........############.........o......########.###................###################",
-   "...P.....................................c.....##########................########.###................###################",
+   ".............................................############.........o......########.###................###################",
+   "...P............r..r..r..r..r..r..r......c.....##########................########.###................###################",
    "###############.......................#######..##########................########.###................###################",
    "###############.......................#######..##########................########.###................###################",
    "###############xxxxxxxxxxxxxxxxxxxxxxx#######xx##########xxxxxxxxxxxxxxxx########x###xxxxxxxxxxxxxxxx###################"
   ],
   "hints": [
    [
-    6,
+    7,
     8,
-    "Dash jump, then chain"
+    "One long chain"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    36,
+    1,
+    46,
+    13,
+    0,
+    -3.5
+   ]
+  ],
+  "par": 17.0
  },
  {
   "name": "Ink",
@@ -805,8 +1051,8 @@ const LEVELS = [
   "map": [
    "..........................................................................",
    "..........................................................................",
+   "..........................................................................",
    ".....................................................................G....",
-   "...........................................###############################",
    "...........................................###############################",
    "...........................................###############################",
    "....................*......................###############################",
@@ -836,7 +1082,18 @@ const LEVELS = [
     6,
     "Dash up to build a step"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    31,
+    3,
+    43,
+    13,
+    1,
+    -3.5
+   ]
+  ],
+  "par": 10.0
  },
  {
   "name": "Ink bridges",
@@ -863,7 +1120,8 @@ const LEVELS = [
     3,
     "Grab the next drop from your ink"
    ]
-  ]
+  ],
+  "par": 9.5
  },
  {
   "name": "Ink steps",
@@ -873,7 +1131,7 @@ const LEVELS = [
    "................................................................",
    "...............................*................................",
    "................................................................",
-   "..................................##############................",
+   "................................................................",
    "..................................##############................",
    "..................................##############................",
    "..................................##############................",
@@ -881,8 +1139,8 @@ const LEVELS = [
    "..................................##############......##########",
    "..................................##############......##########",
    "..................................##############......##########",
+   "..................................##############......##########",
    "..........................c...i...##############......##########",
-   "..................##############################......##########",
    "..................##############################......##########",
    "..................##############################......##########",
    "..................##############################......##########",
@@ -902,7 +1160,26 @@ const LEVELS = [
     7,
     "One drop, one step"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    8,
+    10,
+    18,
+    23,
+    1,
+    -3.5
+   ],
+   [
+    24,
+    1,
+    34,
+    13,
+    1,
+    -3.5
+   ]
+  ],
+  "par": 10.0
  },
  {
   "name": "Quick ink",
@@ -929,36 +1206,38 @@ const LEVELS = [
     5,
     "Ink fades: keep moving"
    ]
-  ]
+  ],
+  "par": 13.0
  },
  {
   "name": "Ink and rings",
   "world": "Ink",
   "map": [
-   "..........................................................................................",
-   "........................................................*.................................",
-   "...................................................................i......................",
-   "................................................................#######r..r...............",
-   "................................................................#######...................",
-   "................................................................#######...................",
-   "....................................................r...........#######...................",
-   "................................................................#######...................",
-   "..................................................r.............#######...............G...",
-   "................................................................#######...........########",
-   "................................................r...............#######...........########",
-   "..............r..r..r..r..r.....................................#######...........########",
-   "...P....i..................................c..i.................#######...........########",
-   "###########.............................#######.................#######...........########",
-   "###########.............................#######.................#######...........########",
-   "###########xxxxxxxxxxxxxxxxxxxxxxxxxxxxx#######xxxxxxxxxxxxxxxxx#######xxxxxxxxxxx########"
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "............##############################.........#############################....................",
+   "....................................................................................................",
+   "....................................................................................................",
+   "............................................................................*.......................",
+   "..............r..r..r..r..r..r.......................r..r..r..r..r..r...............................",
+   "...P....i....................................c..i...............................................G...",
+   "###########...............................########...............................###################",
+   "###########...............................########...............................###################",
+   "###########xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx########xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx###################"
   ],
   "hints": [
    [
-    6,
-    7,
+    5,
+    9,
     "Ink through rings for a long bridge"
    ]
-  ]
+  ],
+  "par": 18.0
  },
  {
   "name": "Ink run",
@@ -972,18 +1251,29 @@ const LEVELS = [
    "................................##########..............................##....................................",
    "................................##########.........o...r..r..r..........##....................................",
    "................................##########....................................................................",
-   "................................##########..........................................o....................G....",
-   "................................##########..........................c..i....................##################",
-   "................................##########........................######....................##################",
-   "................................##########........................######....r..r............##################",
-   "....................o.......b...##########........................######....................##################",
-   "..........................################........................######....................##################",
-   "...P.....i................################........................######....................##################",
-   "###########...............################........................######....................##################",
-   "###########...............################........................######....................##################",
-   "###########xxxxxxxxxxxxxxx################xxxxxxxxxxxxxxxxxxxxxxxx######xxxxxxxxxxxxxxxxxxxx##################"
+   "................................##########.................................r..r..r............................",
+   "................................##########..........................c....................................G....",
+   "................................##########........................######..................####################",
+   "................................##########........................######..................####################",
+   "....................o.......b...##########........................######..................####################",
+   "..........................################........................######..................####################",
+   "...P.....i................################........................######..................####################",
+   "###########...............################........................######..................####################",
+   "###########...............################........................######..................####################",
+   "###########xxxxxxxxxxxxxxx################xxxxxxxxxxxxxxxxxxxxxxxx######xxxxxxxxxxxxxxxxxx####################"
   ],
-  "hints": []
+  "hints": [],
+  "cams": [
+   [
+    14,
+    3,
+    32,
+    15,
+    0,
+    -3.5
+   ]
+  ],
+  "par": 15.5
  },
  {
   "name": "Two worlds",
@@ -1019,7 +1309,8 @@ const LEVELS = [
     5,
     "Dash through a wall to swap it away"
    ]
-  ]
+  ],
+  "par": 8.5
  },
  {
   "name": "Flip floors",
@@ -1046,7 +1337,8 @@ const LEVELS = [
     6,
     "Dash along the floor as it changes"
    ]
-  ]
+  ],
+  "par": 10.5
  },
  {
   "name": "Swap walls",
@@ -1073,7 +1365,8 @@ const LEVELS = [
     8,
     "Wall, wall, wall"
    ]
-  ]
+  ],
+  "par": 12.0
  },
  {
   "name": "Swap and orbs",
@@ -1102,7 +1395,18 @@ const LEVELS = [
     6,
     "An orb gives you another swap"
    ]
-  ]
+  ],
+  "cams": [
+   [
+    37,
+    2,
+    70,
+    13,
+    0,
+    -2.5
+   ]
+  ],
+  "par": 14.0
  },
  {
   "name": "Swap rings",
@@ -1131,7 +1435,8 @@ const LEVELS = [
     7,
     "A whole chain is one dash: one swap"
    ]
-  ]
+  ],
+  "par": 14.5
  },
  {
   "name": "Two worlds run",
@@ -1146,9 +1451,9 @@ const LEVELS = [
    ".........................................######..i.....AA...................................................G...",
    ".........................................######........AA......................................BBBB...##########",
    ".........................................######........AA...................................o.........##########",
-   ".........................................######........AA...r..r..r...BBBB............................##########",
+   ".........................................######........AAr..r..r..r...................................##########",
    ".........................................######........AA......................c......AAAA............##########",
-   "..............................b..........######........AA....................######...................##########",
+   "..............................b..........######........AA.............####...######...................##########",
    ".............................AAA.........######..............................######...................##########",
    "........................AAAA.............######..............................######...................##########",
    "...P.....................................######..............................######...................##########",
@@ -1156,7 +1461,18 @@ const LEVELS = [
    "#############............................######..............................######...................##########",
    "#############xxxxxxxxxxxxxxxxxxxxxxxxxxxx######xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx######xxxxxxxxxxxxxxxxxxx##########"
   ],
-  "hints": []
+  "hints": [],
+  "cams": [
+   [
+    24,
+    3,
+    41,
+    15,
+    0,
+    -3
+   ]
+  ],
+  "par": 17.0
  },
  {
   "name": "Lava",
@@ -1227,7 +1543,8 @@ const LEVELS = [
    "delay": 2.0,
    "gap": 7,
    "stop": 2
-  }
+  },
+  "par": 10.5
  },
  {
   "name": "Hot springs",
@@ -1297,7 +1614,8 @@ const LEVELS = [
    "delay": 2.0,
    "gap": 7,
    "stop": 2
-  }
+  },
+  "par": 17.0
  },
  {
   "name": "Lava rings",
@@ -1367,7 +1685,8 @@ const LEVELS = [
    "delay": 2.0,
    "gap": 7,
    "stop": 2
-  }
+  },
+  "par": 10.5
  },
  {
   "name": "Lava ink",
@@ -1383,7 +1702,7 @@ const LEVELS = [
    "..........................",
    "..........................",
    "..........................",
-   "...*......................",
+   "..........................",
    "..........................",
    "............i.c...........",
    ".........--------.........",
@@ -1391,7 +1710,7 @@ const LEVELS = [
    "..........................",
    "..........................",
    "..........................",
-   "..........................",
+   ".....*....................",
    "..........................",
    "............i.............",
    ".........--------.........",
@@ -1435,7 +1754,8 @@ const LEVELS = [
    "delay": 2.0,
    "gap": 7,
    "stop": 2
-  }
+  },
+  "par": 11.5
  },
  {
   "name": "Lava worlds",
@@ -1444,7 +1764,7 @@ const LEVELS = [
    "............................",
    "............................",
    "............................",
-   "..*.........G...............",
+   "....*.......G...............",
    "..........BBBBBB............",
    "............................",
    "............................",
@@ -1499,7 +1819,8 @@ const LEVELS = [
    "delay": 2.0,
    "gap": 7,
    "stop": 2
-  }
+  },
+  "par": 19.5
  },
  {
   "name": "Inferno",
@@ -1577,7 +1898,424 @@ const LEVELS = [
    "delay": 2.0,
    "gap": 7,
    "stop": 2
-  }
+  },
+  "par": 21.0
+ },
+ {
+  "name": "Updraft",
+  "world": "Updraft",
+  "map": [
+   "................................................................................",
+   "................................................................................",
+   "................................................................................",
+   "........................*..............................^^^.................G....",
+   ".......................................................^^^######################",
+   "...........^^^.........................................^^^######################",
+   "...........^^^#####....................................^^^######################",
+   "...........^^^#####....................................^^^######################",
+   "...........^^^#####..............^^^....^^^............^^^######################",
+   "...........^^^#####..............^^^....^^^............^^^######################",
+   "...........^^^#####..............^^^....^^^............^^^######################",
+   "...........^^^#####..............^^^....^^^............^^^######################",
+   "...........^^^#####..............^^^....^^^............^^^######################",
+   "...........^^^#####..............^^^....^^^............^^^######################",
+   "...P.......^^^#####..............^^^....^^^.....c......^^^######################",
+   "##############################...^^^....^^^...##################################",
+   "##############################...^^^....^^^...##################################",
+   "##############################xxxxxxxxxxxxxxxx##################################"
+  ],
+  "hints": [
+   [
+    6,
+    11,
+    "Step into the wind"
+   ],
+   [
+    37,
+    5,
+    "Float from gust to gust"
+   ]
+  ],
+  "par": 10.5
+ },
+ {
+  "name": "Tailwind",
+  "world": "Updraft",
+  "map": [
+   "........................................................................................",
+   "........................................................................................",
+   "........................................................................................",
+   "........................................................................................",
+   "........................................................................................",
+   "........................>>>>>>>>>>>>>>>>..............................^^^...........G...",
+   "........................>>>>>>>>>>>>>>>>......<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   ".......>>>>>>>>>>>>>....>>>>>>>>>*>>>>>>......<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   ".......>>>>>>>>>>>>>....>>>>>>>>>>>>>>>>......<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   ".......>>>>>>>>>>>>>....>>>>>>>>>>>>>>>>......<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   ".......>>>>>>>>>>>>>....>>>>>>>>>>>>>>>>......<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   ".......>>>>>>>>>>>>>....>>>>>>>>>>>>>>>>......<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   "...P...>>>>>>>>>>>>>....>>>>>>>>>>>>>>>>c.....<<<<<<<<<<<<<<<<<<<<<...^^^###############",
+   "###########.......##########..........##########...####...####...#######################",
+   "###########.......##########..........##########...####...####...#######################",
+   "###########xxxxxxx##########xxxxxxxxxx##########xxx####xxx####xxx#######################"
+  ],
+  "hints": [
+   [
+    9,
+    5,
+    "Jump with the wind"
+   ],
+   [
+    27,
+    3,
+    "Jump, then dash"
+   ],
+   [
+    52,
+    4,
+    "A dash cuts through wind"
+   ]
+  ],
+  "par": 10.0
+ },
+ {
+  "name": "Thermals",
+  "world": "Updraft",
+  "map": [
+   "..............................",
+   "..............................",
+   "..............................",
+   ".......................*......",
+   "..............................",
+   "..............................",
+   "..............................",
+   "..............................",
+   "......................^^^.....",
+   ".......G..............^^^.....",
+   "....###############...^^^.....",
+   "....###############...^^^.....",
+   "......................^^^.....",
+   "......................^^^.....",
+   ".#######..............^^^.....",
+   "..xxxxx...............^^^.....",
+   "......................^^^.....",
+   "...^^^................^^^.....",
+   "...^^^................^^^.....",
+   "...^^^...###################..",
+   "...^^^...###################..",
+   "...^^^........................",
+   "...^^^..............#######...",
+   "...^^^...............xxxxx....",
+   "...^^^........................",
+   "...^^^................^^^.....",
+   "...^^^........c.......^^^.....",
+   "..#################...^^^.....",
+   "..#################...^^^.....",
+   "......................^^^.....",
+   ".#######..............^^^.....",
+   "..xxxxx...............^^^.....",
+   "......................^^^.....",
+   "...^^^................^^^.....",
+   "...^^^................^^^.....",
+   "...^^^...###################..",
+   "...^^^...###################..",
+   "...^^^........................",
+   "...^^^........................",
+   "...^^^........................",
+   "...^^^........................",
+   "...^^^........................",
+   "...^^^...P....................",
+   "##############################",
+   "##############################",
+   "##############################"
+  ],
+  "hints": [
+   [
+    13,
+    40,
+    "Ride it up, then steer out"
+   ]
+  ],
+  "par": 13.0
+ },
+ {
+  "name": "Crosswind",
+  "world": "Updraft",
+  "map": [
+   "............................................................................................",
+   "............................................................................................",
+   "..........>>>>>>>>>>>>>>>...................................................................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<...............................................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<...............................................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<...............................................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<...............................................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<*<<<<<<<........####################...................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<.........xxxxxxxxxxxxxxxxxx....................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<o<<<o<<<<<.......>>>>>>>>>>>>>>>>>>>>>>..................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<.......>>>>>>>>>>>>>>>>>>>>>>..................",
+   "..........>>>>>>>>>>>>>>>....<<<<<<<<<<<<<<<<.......>>>>>>>>>>>>>>>>>>>>>>..................",
+   "...P.....b>>xxxxxxxx>>>>>....<<<<<<<<<<<<<<<<c......>>>>>xx>>>xx>>>xx>>>>>..............G...",
+   "###############################............#################################################",
+   "###############################............#################################################",
+   "###############################xxxxxxxxxxxx#################################################"
+  ],
+  "hints": [
+   [
+    49,
+    9,
+    "Short hops"
+   ]
+  ],
+  "par": 11.5
+ },
+ {
+  "name": "Wind rings",
+  "world": "Updraft",
+  "map": [
+   "............................................................................................",
+   "......................*.....................................................................",
+   "............................................................................................",
+   "............................................................................................",
+   ".......................................................................r................G...",
+   ".....................^^^...............r..r..r..r..........................#################",
+   ".....................^^^.............................c...............r.....#################",
+   ".....................^^^.############..............##########..............#################",
+   ".....................^^^.############..............##########...^^^........#################",
+   ".....................^^^.############..............##########...^^^........#################",
+   ".....................^^^.############..............##########...^^^........#################",
+   ".....................^^^.############..............##########...^^^........#################",
+   "............r..r..r..^^^.############..............##########...^^^........#################",
+   ".....................^^^.############..............##########...^^^........#################",
+   "...P.................^^^.############xxxxxxxxxxxxxx##########xxxxxxxxxxxxxx#################",
+   "##########...........^^^.###################################################################",
+   "##########...........^^^.###################################################################",
+   "##########xxxxxxxxxxxxxxx###################################################################"
+  ],
+  "hints": [],
+  "par": 13.5
+ },
+ {
+  "name": "Storm run",
+  "world": "Updraft",
+  "map": [
+   "......................................................................................................#####.............",
+   "......................................................................................................xxxxx.............",
+   "..............................................................*.................>>>>>>>>>>>>>>>.........................",
+   "....................................................r..r..r.....................>>>>>>>>>>>>>>>........^^^..............",
+   "...........................................^^^..................................>>>>>>>>>>>>>>>........^^^..............",
+   "...........................................^^^####..............................>>>>>>>>>>>>>>>........^^^..........G...",
+   "...........................................^^^####...........^^^................>>>>>>>>>>>>>>>........^^^..############",
+   "...........................................^^^####...........^^^....c...........>>>>>>>>>>>>>>>........^^^..############",
+   "........>>>>>>>>>>>>>>>>>>>..<<<<<<<<<<<<..^^^####...........^^^..###########...>>>>>>>>>>>>>>>........^^^..############",
+   "........>>>>>>>>>>>>>>>>>>>..<<<<<<<<<<<<..^^^####...........^^^..###########...>>>>>>>>>>>>>>>........^^^..############",
+   "........>>>>>>>>>>>>>>>>>>>..<<<<<<<<<<<<..^^^####...........^^^..###########...>>>>>>>>>>>>>>>........^^^..############",
+   "........>>>>>>>>>>>>>>>>>>>..<<<<<<<<<<<<..^^^####...........^^^..###########...>>>>>>>>>>>>>>>........^^^..############",
+   "........>>>>>>>>>>>>>>>>>>>..<<<<<<<<<<<<..^^^####...........^^^..###########...>>>>>>>>>>>##########..^^^..############",
+   "........>>>>>>>>>>>>>>>>>>>..<<<<<<<<<<<<..^^^####...........^^^..###########...>>>>>>>>>>>##########..^^^..############",
+   "...P....>>>>>>>>>>>>>>>>>>>..<<<<<<<<<c<<..^^^####xxxxxxxxxxxxxxxx###########..b.xxxxxxxxxx##########..^^^..############",
+   "############...........#########....####################################################################################",
+   "############...........#########....####################################################################################",
+   "############xxxxxxxxxxx#########xxxx####################################################################################"
+  ],
+  "hints": [],
+  "par": 18.5
+ },
+ {
+  "name": "Crumble",
+  "world": "Crumble",
+  "map": [
+   "................................................................................",
+   "................................................................................",
+   "..............................................................C.................",
+   "..............................................................C.............G...",
+   ".........................................*....................C...##############",
+   "..................................................c...........C...##############",
+   "................................................#########.....C...##############",
+   "............................................CC..#########.....C...##############",
+   "................................................#########.....C...##############",
+   "........................................CC......#########.....C...##############",
+   "................................................#########.....C...##############",
+   "....................................CC..........#########.........##############",
+   "...P............................................#########.........##############",
+   "#############CCCCCCCCCCCC#######################################################",
+   "#############............#######################################################",
+   "#############xxxxxxxxxxxx#######################################################"
+  ],
+  "hints": [
+   [
+    16,
+    10,
+    "These crumble: keep moving"
+   ],
+   [
+    58,
+    8,
+    "Walls crumble too"
+   ]
+  ],
+  "par": 11.0
+ },
+ {
+  "name": "Don't stop",
+  "world": "Crumble",
+  "map": [
+   "....................................................................................................",
+   "....................................................................................................",
+   "....................................................................................................",
+   "...........................................................................C........................",
+   "...........................................................................C...................G....",
+   ".......................................................*...................C...#####################",
+   "...........................................................................C...#####################",
+   "...........................................................................C...#####################",
+   "...........................................................................C...#####################",
+   "...........................................................................C...#####################",
+   "......................................................CC...................C...#####################",
+   ".................................................CC........CC..................#####################",
+   "...P................................c.......CC.................................#####################",
+   "#########CCCCCC...CCCCCC...CCCCCC.########.....................#####################################",
+   "#########.........................########.....................#####################################",
+   "#########xxxxxxxxxxxxxxxxxxxxxxxxx########xxxxxxxxxxxxxxxxxxxxx#####################################"
+  ],
+  "hints": [],
+  "par": 13.0
+ },
+ {
+  "name": "Crumble climb",
+  "world": "Crumble",
+  "map": [
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "............................",
+   "...................G........",
+   "............###########.....",
+   "............###########.....",
+   "......CCCC...............*..",
+   "............................",
+   "............CCCC............",
+   "............................",
+   "..................CCCC......",
+   "............................",
+   "............................",
+   "...............C............",
+   "...............C.........b..",
+   "...............C...C#######.",
+   "...............C...C#######.",
+   "...............C...C........",
+   "...............C...C........",
+   "...............C...C........",
+   "...............C...C........",
+   "...............C...C........",
+   "...............C...C........",
+   "...............C...C........",
+   "...............C............",
+   "...............C......c.....",
+   "...............##########...",
+   "...............##########...",
+   ".........CCCC...............",
+   "............................",
+   "...............CCCC.........",
+   "............................",
+   ".........CCCC...............",
+   "............................",
+   "...............CCCC.........",
+   "............................",
+   ".........CCCC...............",
+   "....P.......................",
+   "############################",
+   "############################",
+   "############################"
+  ],
+  "hints": [],
+  "par": 15.5
+ },
+ {
+  "name": "Shaky ground",
+  "world": "Crumble",
+  "map": [
+   "................................................................................................",
+   "................................................................................................",
+   ".............................................*..................................................",
+   "................................................................................................",
+   "...........................................................................CCCC.................",
+   "................................................CC.............CCCC.........................G...",
+   ".....................o...........o...............................................###############",
+   "...................................................CC............................###############",
+   "............CCCCC........CCCC........CCCC......c........................b........###############",
+   ".............................................##########CCCC.b...........#........###############",
+   ".............................................##########.....#...........#........###############",
+   ".............................................##########.....#...........#........###############",
+   "...P.....b.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx##########.....#...........#........###############",
+   "#######################################################.....#...........#........###############",
+   "#######################################################.....#...........#........###############",
+   "#######################################################xxxxx#xxxxxxxxxxx#xxxxxxxx###############"
+  ],
+  "hints": [],
+  "par": 13.0
+ },
+ {
+  "name": "Trapdoors",
+  "world": "Crumble",
+  "map": [
+   "..................................................####......................................",
+   "..................................................####......................................",
+   "..........^^^^^...................................####^^^^^.................................",
+   "......####^^^^^####...............................####^^^^^............................G....",
+   "......####^^^^^####...............................####^^^^^#####CCCCCCC#####################",
+   "......####CCCCC####...............................####^^^^^#####..^^^..#####################",
+   "......####^^^^^####...............................####CCCCC#####..^^^..#####################",
+   "......####^^^^^####...............................####^^^^^#####..^^^..#####################",
+   "......####^^^^^####...............................####^^^^^#####..^*^..#####################",
+   "......####^^^^^####...>>>>>>>>>>>>>>>>>>>>>>>>....####CCCCC#####..^^^..#####################",
+   "......####^^^^^####...>>>>>>>>>>>>>>>>>>>>>>>>....####^^^^^#####xxxxxxx#####################",
+   "......####^^^^^####...>>>>>>>>>>>>>>>>>>>>>>>>....####^^^^^#################################",
+   "..........^^^^^####...>>>>>>>>>>>>>>>>>>>>>>>>........^^^^^#################################",
+   "..........^^^^^####...>>>>>>>>>>>>>>>>>>>>>>>>........^^^^^#################################",
+   "...P......^^^^^####...>>>>>>>>>>>>>>>>>>>>>>>>.c......^^^^^#################################",
+   "########################......CC.....CC......###############################################",
+   "########################.....................###############################################",
+   "########################xxxxxxxxxxxxxxxxxxxxx###############################################"
+  ],
+  "hints": [
+   [
+    5,
+    9,
+    "Bump it from below"
+   ]
+  ],
+  "par": 16.0
+ },
+ {
+  "name": "Last dash",
+  "world": "Crumble",
+  "map": [
+   "..............................................*.....>>>>>>>>>>>>>>>>>>>.........................................................",
+   "....................................................>>>>>>>>>>>>>>>>>>>..........<<<<<<<<<<<<<<<<<..............................",
+   "....................................................>>>>>>>>>>>>>>>>>>>..........<<<<<<<<<<<<<<<<<...........r..................",
+   ".........................................####^^^....>>>>>>>>>>>>>>>>>>>..........<<<<<<<<<<<<<<<<<..........................G...",
+   ".........................................####^^^####>>>>>>>>>>>>>>>>>>>..........<<<<<<<<<<<<<<<<<.........r....################",
+   ".........................................####^^^####>>>>>>>>>>>>>>>>>>>..c.......<<<<<<<<<<<<<<<<<..............################",
+   ".........................................####CCC####.....CC.....CC.....##########<<<<<<<<<<<<<<<<<..c...........################",
+   ".........................................####^^^####...................##########...CC...CC...CC..#######.......################",
+   ".........................................####^^^####...................##########.................#######.......################",
+   ".........................................####^^^####...................##########.................#######.......################",
+   ".........................................####^^^####...................##########.................#######.......################",
+   ".........................................####^^^####...................##########.................#######.......################",
+   "...................r..r..r...................^^^####...................##########.................#######.......################",
+   ".............................................^^^####...................##########.................#######.......################",
+   "...P.............................c...........^^^####xxxxxxxxxxxxxxxxxxx##########xxxxxxxxxxxxxxxxx#######xxxxxxx################",
+   "##########CCCCCCC..............#################################################################################################",
+   "##########.....................#################################################################################################",
+   "##########xxxxxxxxxxxxxxxxxxxxx#################################################################################################"
+  ],
+  "hints": [],
+  "par": 17.5
  }
 ];
 /* ======================================================================
@@ -1625,6 +2363,15 @@ const ICONS = {
   grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>',
   lock: '<rect x="5.5" y="10.5" width="13" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  flag: '<path d="M6 21V4"/><path d="M6 4.5l11 3.5-11 4" fill="currentColor"/>',
+  shirt: '<path d="M8.5 4L4 6.5l1.8 3.6L8 9v11h8V9l2.2 1.1L20 6.5 15.5 4a3.5 3.5 0 0 1-7 0z"/>',
+  build: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M13.5 7.5l3 3"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  paste: '<rect x="5.5" y="5" width="13" height="16" rx="2.5"/><path d="M9 5V3.5h6V5M9 11h6M9 15h4"/>',
+  hand: '<path d="M12 3v18M3 12h18M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/>',
+  erase: '<path d="M4.5 15.5l9-9 5 5-7 7H8z"/><path d="M10 10l5 5M8 18.5h12"/>',
+  undo: '<path d="M8 8H14.5a4.5 4.5 0 0 1 0 9H8"/><path d="M11 4.5L7.5 8 11 11.5"/>',
 };
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
@@ -1676,13 +2423,18 @@ const Sound = (() => {
     inkPick() { if (ok('inkp', 100)) [523, 784, 1047].forEach((f, i) => tone(f, .12, 'sine', .06, i * .05)); },
     ink() { if (ok('ink', 100)) { hiss(.12, .08, 1200); tone(330, .16, 'triangle', .06, 0, 1.5); } },
     swap(w) { if (ok('swap', 50)) tone(w ? 660 : 495, .1, 'square', .03, 0, w ? 1.3 : .77); },
+    crack() { if (ok('crack', 60)) { hiss(.08, .07, 1400); tone(180, .08, 'square', .03, 0, .7); } },
+    fall() { if (ok('fall', 60)) { hiss(.16, .1, 500); tone(120, .14, 'triangle', .05, 0, .5); } },
+    medal(k) { [784, 988, 1175, 1568].slice(0, k + 1).forEach((f, i) => tone(f, .2, 'triangle', .08, .5 + i * .1)); },
+    unlock() { [660, 880, 1320].forEach((f, i) => tone(f, .16, 'sine', .08, i * .07)); },
   };
 })();
 
 /* ---------- saved settings and progress ---------- */
 const PREF_KEY = 'stickdash-prefs', PROG_KEY = 'stickdash-progress-v1';
 // stick: 'fixed' (stays where you put it) or 'free' (appears under your thumb); stickPos: px in from the bottom corner
-const prefs = Object.assign({swap: false, stick: 'fixed', stickPos: null, stickSize: 'M', buzz: true}, load(PREF_KEY, {}));
+const prefs = Object.assign({swap: false, stick: 'fixed', stickPos: null, stickSize: 'M', buzz: true, ghost: true}, load(PREF_KEY, {}));
+prefs.skin = Object.assign({band: 'red', trail: 'red', hat: 'none', body: 'white'}, prefs.skin || {});
 if ('fixedStick' in prefs) { delete prefs.fixedStick; }
 const savePrefs = () => keep(PREF_KEY, prefs);
 const prog = () => load(PROG_KEY, {});   // {levelId: {best (ms), star, deaths, done}}
@@ -1804,6 +2556,7 @@ function drawFigure(g, f, x, y, s, ink, opts = {}) {
   line([J.sh, ...J.a0], BODY.w * .95, 1);
   const h = P(J.hd); g.globalAlpha = A; g.beginPath(); g.arc(h[0], h[1], BODY.head * s, 0, Math.PI * 2); g.fill();
   if (opts.scarf !== false) drawFace(g, f, h, BODY.head * s, opts.scarfCol || css('--accent'), A);
+  if (opts.hat && opts.hat !== 'none') drawHat(g, f, h, BODY.head * s, opts.hat, A);
   g.restore();
   return J;
 }
@@ -1899,10 +2652,11 @@ function targetPose(f, m) {
 /* ======================================================================
    LEVELS: read a level's map into squares and things
    ====================================================================== */
-// square kinds: 0 empty, 1 block, 2 ledge (stand on it from above), 3 spikes, 4 ink, 5 pink world, 6 blue world
+// square kinds: 0 empty, 1 block, 2 ledge (stand on it from above), 3 spikes, 4 ink, 5 pink world, 6 blue world, 7 crumbling block
+// wind (a separate layer): 1 up, 2 left, 3 right
 function readLevel(i) {
-  const src = LEVELS[i], h = src.map.length, w = Math.max(...src.map.map(r => r.length));
-  const L = {i, name: src.name, w, h, g: new Uint8Array(w * h), spikes: [], orbs: [], pads: [], checks: [], stars: [], rings: [], inks: [], goal: null, start: null,
+  const src = typeof i === 'object' ? i : LEVELS[i], h = src.map.length, w = Math.max(...src.map.map(r => r.length));
+  const L = {i: typeof i === 'object' ? -1 : i, src, name: src.name, w, h, g: new Uint8Array(w * h), wind: new Uint8Array(w * h), spikes: [], orbs: [], pads: [], checks: [], stars: [], rings: [], inks: [], cams: src.cams || [], goal: null, start: null,
     lava: src.lava ? {y0: src.lava.y, v: src.lava.speed, delay: src.lava.delay ?? 1, gap: src.lava.gap ?? 6, stop: src.lava.stop ?? 1} : null, hints: (src.hints || []).map(([c, r, t]) => [c, r, hintText(t)])};
   const at = (c, r) => (src.map[r] || '')[c] || '.';
   for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
@@ -1912,6 +2666,10 @@ function readLevel(i) {
     else if (ch === 'x') L.g[k] = 3;
     else if (ch === 'A') L.g[k] = 5;
     else if (ch === 'B') L.g[k] = 6;
+    else if (ch === 'C') L.g[k] = 7;
+    else if (ch === '^') L.wind[k] = 1;
+    else if (ch === '<') L.wind[k] = 2;
+    else if (ch === '>') L.wind[k] = 3;
     else if (ch === 'r') L.rings.push({x: c + .5, y: r + .5, off: 0});
     else if (ch === 'i') L.inks.push({x: c + .5, y: r + .5, off: false});
     else if (ch === 'o') L.orbs.push({x: c + .5, y: r + .5, off: 0});
@@ -1945,7 +2703,7 @@ const PH = {
 let G = null;   // the level being played
 function startLevel(i) {
   const L = readLevel(i);
-  G = {L, t: 0, deaths: 0, star: false, done: false, spawn: {...L.start}, cam: {x: 0, y: 0, fx: 0, fy: 0, look: 0, shake: 0}, parts: [], after: [], flash: 0, hit: 0, note: 0, paused: false};
+  G = {L, t: 0, deaths: 0, star: false, done: false, rec: [], recN: 0, ghost: loadGhost(L), spawn: {...L.start}, cam: {x: 0, y: 0, fx: 0, fy: 0, look: 0, shake: 0}, parts: [], after: [], flash: 0, hit: 0, note: 0, paused: false};
   mechStart();
   spawnPlayer();
   paintLevel(); paintWorlds();
@@ -1969,6 +2727,20 @@ function wallSide(p, reach = .06) {
     for (let r = Math.floor(top); r <= Math.floor(bot); r++) if (solid(c, r)) return side;
   }
   return 0;
+}
+// which column the wall beside the player is in (so a wall jump can't be repeated off the same wall)
+function wallCol(p, side, reach) {
+  const top = p.y - PH.H + .15, bot = p.y - .2;
+  const c = Math.floor(side > 0 ? p.x + PH.W / 2 + reach : p.x - PH.W / 2 - reach);
+  for (let r = Math.floor(top); r <= Math.floor(bot); r++) if (solid(c, r)) return c;
+  return c;
+}
+// after a wall jump you can't wall jump off that same wall again until you land (or a spring throws you):
+// climbing means going between two walls
+function sameWall(p, near) {
+  if (!p.wjSide) return false;
+  const side = near || p.wallS, col = near ? wallCol(p, near, PH.wallReach) : p.wallC;
+  return side === p.wjSide && col === p.wjCol;
 }
 function moveX(p, dx) {
   p.x += dx;
@@ -2006,7 +2778,7 @@ function dash(dx, dy) {
   p.dash = 0; p.dashT = PH.dashT; p.dx = dx; p.dy = dy; p.vx = dx * PH.dashV; p.vy = dy * PH.dashV;
   p.buf = 0; p.cut = true; G.hit = PH.hitstop; G.cam.shake = Math.max(G.cam.shake, .12);
   mechDash(p);
-  burst(p.x, p.y - PH.H / 2, 10, wc('--accent'), 5, .3);
+  burst(p.x, p.y - PH.H / 2, 10, bandCol(performance.now() / 1000), 5, .3);
   Sound.dash(); vibrate(12);
 }
 function regain(p, why) {   // the dash comes back
@@ -2016,7 +2788,7 @@ function regain(p, why) {   // the dash comes back
 }
 function die() {
   const p = G.p; if (p.dead) return;
-  p.dead = .8; G.deaths++; G.flash = .25; G.cam.shake = .35;
+  p.dead = .8; G.deaths++; G.flash = .25; G.cam.shake = .35; bump('deaths');
   // the figure comes apart: each limb flies off on its own
   const J = joints(p.fig, p.x, p.y), ink = wc('--ink');
   [[J.hip, J.neck], [J.l0[0], J.l0[1]], [J.hip, J.l0[0]], [J.l1[0], J.l1[1]], [J.hip, J.l1[0]], [J.sh, J.a0[0]], [J.a0[0], J.a0[1]], [J.sh, J.a1[0]], [J.a1[0], J.a1[1]]].forEach(([a, b]) => {
@@ -2062,12 +2834,12 @@ function step(dt) {
   const near = p.wall || wallSide(p, PH.wallReach);   // a little leeway for wall jumps
   const ix = p.lock > 0 ? 0 : IN.x;
   p.kickT = Math.max(0, p.kickT - dt); p.superT = Math.max(0, p.superT - dt);
-  if (p.wall && !p.ground) { p.wallT = PH.wallCoyote; p.wallS = p.wall; } else p.wallT = Math.max(0, p.wallT - dt);   // a moment's grace to jump after leaving a wall
+  if (p.wall && !p.ground) { p.wallT = PH.wallCoyote; p.wallS = p.wall; p.wallC = wallCol(p, p.wall, .06); } else p.wallT = Math.max(0, p.wallT - dt);   // a moment's grace to jump after leaving a wall
   // dashing: straight line, no gravity
   if (p.mom && !p.ground) { p.trail -= dt; if (p.trail <= 0) { p.trail = .045; G.after.push({fig: {...p.fig, scarf: []}, x: p.x, y: p.y, life: .2}); } }
   if (p.dashT > 0) {
     p.dashT -= dt;
-    p.trail -= dt; if (p.trail <= 0) { p.trail = .022; G.after.push({fig: {...p.fig, scarf: []}, x: p.x, y: p.y, life: .28}); }
+    p.trail -= dt; if (p.trail <= 0) { p.trail = .022; G.after.push({fig: {...p.fig, scarf: []}, x: p.x, y: p.y, life: .28}); trailFx(p); }
     let leapt = false;
     if (p.buf > 0 && (p.ground || p.coyote > 0) && Math.abs(p.dx) > .3) { leapt = true; dashJump(p); }
     if (p.dashT <= 0 && !leapt) {
@@ -2095,13 +2867,22 @@ function step(dt) {
     if (p.buf > 0) {
       if ((p.ground || p.coyote > 0) && p.superT > 0) dashJump(p);
       else if (p.ground || p.coyote > 0) { p.vy = -PH.jump; p.buf = 0; p.coyote = 0; p.ground = false; p.cut = !p.held; if (!p.held) p.vy *= .7; p.fig.sq = 1.2; p.fig.sqv = 0; Sound.jump(); dust(p.x, p.y, 5); vibrate(5); }
-      else if (near || p.wallT > 0) {   // touching a wall (or just left one) gives you a jump
+      else if ((near || p.wallT > 0) && !sameWall(p, near)) {   // touching a wall (or just left one) gives you a jump, but not the same wall twice running
         const side = near || p.wallS;
+        p.wjSide = side; p.wjCol = near ? wallCol(p, near, PH.wallReach) : p.wallC;
         p.vx = -side * PH.wjX; p.vy = -PH.wjY; p.buf = 0; p.lock = PH.wjLock; p.cut = !p.held; p.wallT = 0; p.kickT = .2; p.fig.face = -side; p.fig.sq = 1.14; p.fig.sqv = 0;
         Sound.wall(); dust(p.x + side * PH.W / 2, p.y - .6, 6, -side); vibrate(5);
       }
     }
   }
+  // wind: an updraft lifts you, a side wind carries you along. A dash cuts straight through both.
+  let windX = 0;
+  if (L.windCells && L.windCells.length && p.dashT <= 0) {
+    const wc0 = clamp(Math.floor(p.x), 0, L.w - 1), wr0 = clamp(Math.floor(p.y - PH.H / 2), 0, L.h - 1), wk = L.wind[wr0 * L.w + wc0];
+    p.wind = wk;
+    if (wk === 1) { p.vy = Math.max(-MECH.windMax, p.vy - MECH.windUp * dt); p.cut = true; }
+    else if (wk === 2) windX = -MECH.windSide; else if (wk === 3) windX = MECH.windSide;
+  } else p.wind = 0;
   // move, one axis at a time
   const vyPrev = p.vy;
   const sub = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / .2));
@@ -2112,9 +2893,10 @@ function step(dt) {
     if (hitY === 'floor') landed = true;
     if (hitY === 'ceil' && p.dashT > 0) p.dashT = Math.min(p.dashT, .02);
   }
+  if (windX) { const keepV = p.vx; moveX(p, windX * dt); p.vx = keepV; }
   if (p.dashT > 0) mechDashStep(p);
   p.ground = p.vy >= 0 && onGround(p);
-  if (p.ground) { p.coyote = PH.coyote; if (p.dashT <= 0) regain(p, 'quiet'); }
+  if (p.ground) { p.coyote = PH.coyote; p.wjSide = 0; if (p.dashT <= 0) regain(p, 'quiet'); }
   else p.coyote -= dt;
   if (p.ground && !wasGround) {   // landing: the harder you come down, the deeper the knees bend
     const imp = clamp(vyPrev / PH.maxFall, 0, 1), f = p.fig;
@@ -2139,7 +2921,7 @@ function step(dt) {
   for (const d of L.pads) {
     d.sq = Math.max(0, d.sq - dt * 4);
     if (p.vy >= 0 && p.padT <= 0 && over(d.c + .1, d.r + .5, d.c + .9, d.r + 1.02)) {
-      p.vy = -PH.pad; p.dashT = 0; p.fig.sq = 1.28; p.fig.sqv = 0; p.cut = true; p.padT = .2; p.ground = false; p.y = Math.min(p.y, d.r + .5); regain(p, 'quiet'); d.sq = 1;
+      p.vy = -PH.pad; p.dashT = 0; p.wjSide = 0; p.fig.sq = 1.28; p.fig.sqv = 0; p.cut = true; p.padT = .2; p.ground = false; p.y = Math.min(p.y, d.r + .5); regain(p, 'quiet'); d.sq = 1;
       Sound.pad(); dust(p.x, p.y, 8); vibrate(10);
     }
   }
@@ -2217,7 +2999,17 @@ function render(now, dt = 1 / 60) {
     if (p.ground) C.fy = p.y;
     else if (p.y < C.fy - 2.8) C.fy = p.y + 2.8; else if (p.y > C.fy + .4) C.fy = p.y - .4;
   }
-  const tx = camX(C.fx, vw), ty = camY(C.fy, vh);
+  // look up or down: hold the stick that way while standing still
+  const still = p.ground && Math.abs(p.vx) < 1 && Math.abs(IN.y) > .6 && !p.dead;
+  G.lookT = still ? (G.lookT || 0) + dt : 0;
+  const lookY = G.lookT > .3 ? (IN.y < 0 ? -4 : 3) : 0;
+  C.ly = (C.ly || 0) + (lookY - (C.ly || 0)) * (1 - Math.exp(-dt * 4));
+  // camera zones set in the level (e.g. show what's above), and climbing levels keep you low on the screen
+  let zx = 0, zy = L.lava ? -2.5 : 0;
+  for (const z of L.cams) if (p.x >= z[0] && p.x <= z[2] + 1 && p.y >= z[1] && p.y <= z[3] + 1) { zx = z[4]; zy = z[5]; break; }
+  zy = Math.max(zy, -.3 * vh);   // never so far that you'd be pushed off the bottom of the screen
+  C.zx = (C.zx || 0) + (zx - (C.zx || 0)) * (1 - Math.exp(-dt * 2.5)); C.zy = (C.zy || 0) + (zy - (C.zy || 0)) * (1 - Math.exp(-dt * 2.5));
+  const tx = camX(C.fx + C.zx, vw), ty = camY(C.fy + C.zy + C.ly, vh);
   C.x += (tx - C.x) * (1 - Math.exp(-dt * 6)); C.y += (ty - C.y) * (1 - Math.exp(-dt * 4.5));
   const sh = G.cam.shake > 0 && !reduced() ? G.cam.shake * .25 : 0;
   const ox = -(G.cam.x + (Math.random() - .5) * sh) * s, oy = -(G.cam.y + (Math.random() - .5) * sh) * s;
@@ -2225,16 +3017,17 @@ function render(now, dt = 1 / 60) {
   g.save(); g.translate(Math.round(ox * V.dpr) / V.dpr, Math.round(oy * V.dpr) / V.dpr);
   g.imageSmoothingEnabled = false; g.drawImage(lvlC, 0, -LTOP * s, L.w * s, (L.h + LTOP) * s); g.imageSmoothingEnabled = true;
   drawLevelGlow(g, s);
-  drawWorlds(g, s); drawInk(g, s, t);
+  drawWorlds(g, s); drawInk(g, s, t); drawCrumbs(g, s, t); drawWind(g, s, t);
   // hints written in the world
   g.fillStyle = wc('--muted'); g.font = `800 ${Math.round(s * .42)}px Nunito, system-ui, sans-serif`; g.textAlign = 'center';
   L.hints.forEach(([c, r, txt]) => { g.globalAlpha = .75; g.fillText(txt, (c + .5) * s, (r + .5) * s); }); g.globalAlpha = 1;
   drawThings(g, s, t); drawMechThings(g, s, t);
   // afterimages of a dash
-  G.after.forEach(a => drawFigure(g, a.fig, a.x, a.y, s, wc('--accent'), {alpha: a.life / .28 * .4, scarf: false}));
+  drawGhost(g, s, t);
+  G.after.forEach((a, k) => drawFigure(g, a.fig, a.x, a.y, s, trailCol(t, a.life / .28, k), {alpha: a.life / .28 * .4, scarf: false}));
   if (!p.dead) {
-    const col = p.ink || p.inking ? COL.ink : p.dash >= 1 ? wc('--accent') : wc('--muted');
-    drawFigure(g, p.fig, p.x, p.y, s, wc('--ink'), {scarfCol: p.flash > 0 && (t * 20 | 0) % 2 ? '#ffffff' : col});
+    const col = p.ink || p.inking ? COL.ink : p.dash >= 1 ? bandCol(t) : wc('--muted');
+    drawFigure(g, p.fig, p.x, p.y, s, bodyCol(), {scarfCol: p.flash > 0 && (t * 20 | 0) % 2 ? '#ffffff' : col, hat: prefs.skin.hat});
   }
   // bits and pieces
   for (const q of G.parts) {
@@ -2242,6 +3035,8 @@ function render(now, dt = 1 / 60) {
     if (q.kind === 'bone') { g.save(); g.translate(q.x * s, q.y * s); g.rotate(q.a); g.strokeStyle = q.col; g.lineWidth = BODY.w * s; g.lineCap = 'round'; g.beginPath(); g.moveTo(-q.len / 2 * s, 0); g.lineTo(q.len / 2 * s, 0); g.stroke(); g.restore(); }
     else if (q.kind === 'head') { g.fillStyle = q.col; g.beginPath(); g.arc(q.x * s, q.y * s, BODY.head * s, 0, Math.PI * 2); g.fill(); }
     else if (q.kind === 'dust') { g.fillStyle = wc('--tileEdge'); g.globalAlpha *= .6; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s * (1.5 - q.life / q.max), 0, Math.PI * 2); g.fill(); }
+    else if (q.kind === 'sq') { g.fillStyle = q.col; const w = Math.max(2, Math.round(q.r * s)); g.fillRect(Math.round(q.x * s - w / 2), Math.round(q.y * s - w / 2), w, w); }
+    else if (q.kind === 'starp') { g.fillStyle = q.col; g.save(); g.translate(q.x * s, q.y * s); g.rotate(q.a || 0); const R = q.r * s * (q.life / q.max); g.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, d = i % 2 ? R * .4 : R; g.lineTo(Math.cos(a) * d, Math.sin(a) * d); } g.fill(); g.restore(); }
     else { g.fillStyle = q.col; g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s, 0, Math.PI * 2); g.fill(); }
   }
   g.globalAlpha = 1;
@@ -2757,22 +3552,24 @@ function drawLevelGlow(g, s) {
    - Rising lava (level setting): starts rising a moment after you first move,
      and drops back below you when you respawn.
    ====================================================================== */
-const MECH = {inkLife: 4.5, inkBlink: 1.2, ringBack: 2.5};
-const COL = {ring: '#4ff0ff', ink: '#b98bff', inkHi: '#e6d6ff', inkFill: '#26164a', A: '#ff4fa3', B: '#5b8cff', lava: '#ff7a1a'};
+const MECH = {inkLife: 4.5, inkBlink: 1.2, ringBack: 2.5, crumbleT: .5, crumbleBack: 2.8, windUp: 100, windMax: 10.5, windSide: 5};
+const COL = {ring: '#4ff0ff', ink: '#b98bff', inkHi: '#e6d6ff', inkFill: '#26164a', A: '#ff4fa3', B: '#5b8cff', lava: '#ff7a1a', wind: '#bfe9ff', crumb: '#c9a26a'};
 
 // is this kind of square solid right now?
-const solidK = k => k === 1 || k === 4 || (k === 5 && G.world === 0) || (k === 6 && G.world === 1);
+const solidK = k => k === 1 || k === 4 || k === 7 || (k === 5 && G.world === 0) || (k === 6 && G.world === 1);
 
 function mechStart() {   // once per level
   const L = G.L;
   L.base = L.g.slice();
-  G.world = 0; G.inkCells = [];
+  G.world = 0; G.inkCells = []; G.crumbs = [];
+  L.crumbCells = []; for (let k = 0; k < L.g.length; k++) if (L.g[k] === 7) L.crumbCells.push(k);
+  L.windCells = []; for (let k = 0; k < L.wind.length; k++) if (L.wind[k]) L.windCells.push(k);
   G.lava = L.lava ? {y: L.lava.y0, on: false, wait: L.lava.delay} : null;
 }
 function mechSpawn() {   // every time the player (re)appears
   const L = G.L, p = G.p;
   if (L.base) L.g.set(L.base);
-  G.inkCells = [];
+  G.inkCells = []; G.crumbs = [];
   G.world = G.spawn.world || 0;
   L.rings.forEach(r => r.off = 0);
   L.inks.forEach(k => k.off = false);
@@ -2855,6 +3652,22 @@ function mechStep(p, dt, over) {
     G.inkCells = G.inkCells.filter(q => { q.t -= dt; if (q.t > 0) return true; if (L.g[q.k] === 4) L.g[q.k] = 0; return false; });
   }
   for (const k of L.inks) if (k.off && p.ink !== k && p.inking !== k && !G.inkCells.some(q => q.src === k)) k.off = false;
+  // crumbling blocks: standing on one (or holding on to its side) starts it shaking; it falls away, and grows back later
+  if (L.crumbCells.length) {
+    const touch = k => { if (L.g[k] === 7 && !G.crumbs.some(q => q.k === k)) { G.crumbs.push({k, t: MECH.crumbleT, gone: false}); Sound.crack(); } };
+    if (p.ground) { const row = Math.floor(p.y + .02); for (let c = Math.floor(p.x - PH.W / 2 + .01); c <= Math.floor(p.x + PH.W / 2 - .01); c++) if (tileAt(c, row) === 7) touch(row * L.w + c); }
+    else if (p.wall) { const c = Math.floor(p.wall > 0 ? p.x + PH.W / 2 + .06 : p.x - PH.W / 2 - .06); for (let r = Math.floor(p.y - PH.H + .15); r <= Math.floor(p.y - .2); r++) if (tileAt(c, r) === 7) touch(r * L.w + c); }
+    if (!p.ground) { const row = Math.floor(p.y - PH.H - .04); if (row >= 0) for (let c = Math.floor(p.x - PH.W / 2 + .01); c <= Math.floor(p.x + PH.W / 2 - .01); c++) if (tileAt(c, row) === 7) touch(row * L.w + c); }   // bumped from underneath
+    const l = p.x - PH.W / 2, r = p.x + PH.W / 2, t = p.y - PH.H, b = p.y;
+    G.crumbs = G.crumbs.filter(q => {
+      q.t -= dt;
+      if (q.t > 0) return true;
+      const c = q.k % L.w, rr = (q.k / L.w) | 0;
+      if (!q.gone) { q.gone = true; q.t = MECH.crumbleBack; L.g[q.k] = 0; if (G.parts) for (let i = 0; i < 5; i++) G.parts.push({kind: 'dot', x: c + .2 + Math.random() * .6, y: rr + .3 + Math.random() * .5, vx: (Math.random() - .5) * 3, vy: -1 - Math.random() * 2, life: .6, max: .6, col: COL.crumb, g: 30, r: .07}); Sound.fall(); return true; }
+      if (l < c + 1 && r > c && t < rr + 1 && b > rr) { q.t = .1; return true; }   // wait until you're out of the way
+      L.g[q.k] = 7; return false;
+    });
+  }
   // lava
   const V = G.lava;
   if (V) {
@@ -3000,11 +3813,263 @@ function drawLava(g, s, t) {
   g.globalAlpha = 1;
 }
 const V_w = () => V.w / V.s, V_h = () => V.h / V.s;
+const unlockAll = location.hash === '#unlockall';
+
+/* ======================================================================
+   CRUMBLING BLOCKS AND WIND (drawing)
+   ====================================================================== */
+function drawCrumbs(g, s, t) {
+  const L = G.L; if (!L.crumbCells || !L.crumbCells.length) return;
+  const ps = s / ART, x0 = G.cam.x - 1, x1 = G.cam.x + V.w / s + 1;
+  for (const k of L.crumbCells) {
+    const c = k % L.w, r = (k / L.w) | 0; if (c < x0 || c > x1) continue;
+    const q = G.crumbs.find(o => o.k === k);
+    if (q && q.gone) {   // fallen away: a faint dotted outline that fills in as it grows back
+      const back = clamp(1 - q.t / MECH.crumbleBack, 0, 1);
+      g.globalAlpha = .18 + back * .3; g.fillStyle = COL.crumb;
+      for (let i = 0; i < 8; i += 2) { g.fillRect(c * s + i * ps, r * s, ps, ps); g.fillRect(c * s + (i + 1) * ps, r * s + 7 * ps, ps, ps); g.fillRect(c * s, r * s + (i + 1) * ps, ps, ps); g.fillRect(c * s + 7 * ps, r * s + i * ps, ps, ps); }
+      g.globalAlpha = 1; continue;
+    }
+    const w = q ? 1 - q.t / MECH.crumbleT : 0;   // how far gone
+    const ox = q && !reduced() ? Math.round(Math.sin(t * 70 + k) * (1 + w)) * ps * .5 : 0, oy = q ? w * ps : 0;
+    const P = (x, y, ww, h, col) => { g.fillStyle = col; g.fillRect(c * s + x * ps + ox, r * s + y * ps + oy, ww * ps, h * ps); };
+    const same = d => L.g[k + d] === 7, lf = c > 0 && same(-1), rt = c < L.w - 1 && same(1);
+    P(0, 0, 8, 8, '#4d3d4f'); P(0, 0, 8, 1, '#e4c189'); P(0, 1, 8, 1, COL.crumb); P(0, 7, 8, 1, '#2c2233');
+    if (!lf) P(0, 1, 1, 7, '#6a5566'); if (!rt) P(7, 1, 1, 7, '#2c2233');
+    // cracks: a few to begin with, more as it goes
+    P(2, 2, 1, 2, '#2c2233'); P(3, 4, 1, 1, '#2c2233'); P(5, 3, 1, 3, '#2c2233');
+    if (w > .25) { P(1, 5, 2, 1, '#1a1322'); P(4, 2, 1, 1, '#1a1322'); P(6, 6, 1, 1, '#1a1322'); }
+    if (w > .6) { P(3, 1, 1, 6, '#1a1322'); P(4, 5, 3, 1, '#1a1322'); }
+  }
+}
+const windHash = (c, r) => { let h = (c * 374761393 + r * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+function drawWind(g, s, t) {
+  const L = G.L; if (!L.windCells || !L.windCells.length) return;
+  const ps = s / ART, x0 = G.cam.x - 1, x1 = G.cam.x + V.w / s + 1, y0 = G.cam.y - 1, y1 = G.cam.y + V.h / s + 1, still = reduced();
+  g.fillStyle = COL.wind;
+  for (const k of L.windCells) {
+    const c = k % L.w, r = (k / L.w) | 0; if (c < x0 || c > x1 || r < y0 || r > y1) continue;
+    const d = L.wind[k], h = windHash(c, r);
+    g.globalAlpha = .045; g.fillRect(c * s, r * s, s, s);
+    // streaks that slide along with the wind
+    for (let i = 0; i < 2; i++) {
+      const hh = (h + i * .47) % 1, u = still ? hh : (t * (d === 1 ? 1.9 : 1.5) * (.7 + hh * .6) + hh * 7) % 1, a = Math.sin(u * Math.PI);
+      const off = Math.floor(((hh * 13.7 + i * .31) % 1) * 7), len = 2 + Math.floor(hh * 3);
+      g.globalAlpha = .1 + a * .42;
+      if (d === 1) g.fillRect(c * s + off * ps, (r + 1 - u) * s - len * ps / 2, ps, len * ps);
+      else g.fillRect((c + (d === 3 ? u : 1 - u)) * s - len * ps / 2, r * s + off * ps, len * ps, ps);
+    }
+  }
+  g.globalAlpha = 1;
+}
+
+/* ======================================================================
+   GHOSTS: your best run on each level, saved and played back beside you
+   ====================================================================== */
+const REC_EVERY = 8, REC_MAX = 2700;   // 15 samples a second; runs longer than three minutes aren't kept
+const ghostKey = L => 'stickdash-ghost:' + L.name;
+function recTick() {
+  if (!G || G.done) return;
+  if (G.recN++ % REC_EVERY) return;
+  if (G.rec.length >= REC_MAX * 3) { G.recOver = true; return; }
+  recPush();
+}
+function recPush() {
+  const p = G.p;
+  G.rec.push(Math.round(clamp(p.x, 0, 1000) * 64), Math.round(clamp(p.y + 8, 0, 1000) * 64),
+    (p.ground ? 1 : 0) | (p.dashT > 0 ? 2 : 0) | (p.wall && !p.ground && p.vy > 0 ? 4 : 0) | (p.fig.face > 0 ? 8 : 0) | (p.dead ? 16 : 0) | (p.mom ? 32 : 0));
+}
+function saveGhost() {
+  if (!G || G.L.i < 0 || G.recOver) return;
+  recPush();
+  const n = G.rec.length / 3, b = new Uint8Array(n * 5);
+  for (let i = 0; i < n; i++) { const x = G.rec[i * 3], y = G.rec[i * 3 + 1]; b[i * 5] = x & 255; b[i * 5 + 1] = x >> 8; b[i * 5 + 2] = y & 255; b[i * 5 + 3] = y >> 8; b[i * 5 + 4] = G.rec[i * 3 + 2]; }
+  let str = ''; for (let i = 0; i < b.length; i += 4096) str += String.fromCharCode.apply(null, b.subarray(i, i + 4096));
+  try { localStorage.setItem(ghostKey(G.L), btoa(str)); } catch {}
+}
+function loadGhost(L) {
+  if (L.i < 0 || !prefs.ghost) return null;
+  try {
+    const raw = localStorage.getItem(ghostKey(L)); if (!raw) return null;
+    const str = atob(raw), n = Math.floor(str.length / 5); if (n < 4) return null;
+    const o = {n, x: new Float32Array(n), y: new Float32Array(n), f: new Uint8Array(n), fig: newFigure(), at: null};
+    for (let i = 0; i < n; i++) { const q = i * 5; o.x[i] = (str.charCodeAt(q) | str.charCodeAt(q + 1) << 8) / 64; o.y[i] = (str.charCodeAt(q + 2) | str.charCodeAt(q + 3) << 8) / 64 - 8; o.f[i] = str.charCodeAt(q + 4); }
+    return o;
+  } catch { return null; }
+}
+function ghostAnim(dt, now) {
+  const H = G.ghost; if (!H) return;
+  H.at = null;
+  if (!G.started) return;
+  const u = Math.max(0, (G.recN - 1) / REC_EVERY), i = Math.floor(u), w = u - i;
+  if (i >= H.n - 1) return;
+  const fl = H.f[i]; if ((fl & 16) || (H.f[i + 1] & 16)) return;
+  const dx = H.x[i + 1] - H.x[i], dy = H.y[i + 1] - H.y[i]; if (Math.hypot(dx, dy) > 4) return;
+  const f = H.fig, vx = dx * 120 / REC_EVERY, vy = dy * 120 / REC_EVERY, ground = !!(fl & 1), sp = Math.hypot(vx, vy) || 1;
+  f.face = fl & 8 ? 1 : -1; f.fs += (f.face - f.fs) * (1 - Math.exp(-dt * 22));
+  const run = ground ? Math.min(1.15, Math.abs(vx) / PH.run) : 0; if (run > .03) f.ph += dt * (5 + 8 * run);
+  const r8 = v => Math.abs(v) < .38 ? 0 : Math.sign(v);
+  easePose(f, targetPose(f, {mom: !!(fl & 32) && !ground, ground, vx, vy, dash: fl & 2 ? [r8(vx / sp) || (r8(vy / sp) ? 0 : f.face), r8(vy / sp)] : null, wall: !!(fl & 4), kick: 0, skid: 0, turn: 0, land: 0, run, t: now}), dt, fl & 2 ? 24 : 16);
+  H.at = [H.x[i] + dx * w, H.y[i] + dy * w];
+}
+function drawGhost(g, s, t) {
+  const H = G.ghost; if (!H || !H.at || G.done) return;
+  const far = Math.hypot(H.at[0] - G.p.x, H.at[1] - G.p.y);
+  drawFigure(g, H.fig, H.at[0], H.at[1], s, '#8fa6ff', {alpha: clamp(far / 1.2, .08, 1) * .34, scarf: false});
+}
+
+/* ======================================================================
+   MEDALS: each level has a gold time; silver and bronze are a little kinder
+   ====================================================================== */
+const MEDAL = ['No medal', 'Bronze', 'Silver', 'Gold'];
+const parOf = lv => lv && lv.par ? [lv.par * 2.2, lv.par * 1.45, lv.par] : null;   // bronze, silver, gold (seconds)
+function medalFor(lv, ms) { const p = parOf(lv); if (!p || !ms) return 0; const t = Math.floor(ms / 100) / 10; return t <= p[2] ? 3 : t <= p[1] ? 2 : t <= p[0] ? 1 : 0; }
+const medalIcon = (m, cls = '') => `<svg class="medal m${m} ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path class="rb" d="M7.2 2h3.6l2 5.2-3 1.6zM16.8 2h-3.6l-2 5.2 3 1.6z"/><circle class="dk" cx="12" cy="14.6" r="7"/><circle class="in" cx="12" cy="14.6" r="4.6"/></svg>`;
+const STATS_KEY = 'stickdash-stats-v1';
+const stats = Object.assign({deaths: 0, made: 0}, load(STATS_KEY, {}));
+const bump = (k, n = 1) => { stats[k] = (stats[k] || 0) + n; keep(STATS_KEY, stats); };
+// everything the locker and the home screen count
+function tally() {
+  const P = prog(), T = {done: 0, stars: 0, medals: 0, silver: 0, gold: 0, flawless: 0, worlds: {}, total: LEVELS.length, deaths: stats.deaths, made: stats.made};
+  const left = {};
+  LEVELS.forEach(lv => {
+    const r = P[lv.name] || {};
+    if (r.done) { T.done++; if (r.deaths === 0) T.flawless++; } else left[lv.world] = 1;
+    if (r.star) T.stars++;
+    const m = medalFor(lv, r.best); if (m >= 1) T.medals++; if (m >= 2) T.silver++; if (m >= 3) T.gold++;
+  });
+  LEVELS.forEach(lv => { if (!left[lv.world]) T.worlds[lv.world] = 1; });
+  T.all = T.done === T.total;
+  return T;
+}
+
+/* ======================================================================
+   THE LOCKER: headbands, dash trails, hats and colours, earned by playing
+   ====================================================================== */
+const SKINS = {
+  band: [
+    {id: 'red', name: 'Red', col: '#ff4a5a'},
+    {id: 'sky', name: 'Sky', col: '#4fb4ff', need: ['done', 3]},
+    {id: 'lime', name: 'Lime', col: '#7ee04a', need: ['stars', 5]},
+    {id: 'sun', name: 'Sunset', col: '#ff9a3c', need: ['medals', 6]},
+    {id: 'ring', name: 'Ring cyan', col: '#4ff0ff', need: ['world', 'Chain rings']},
+    {id: 'ink', name: 'Ink purple', col: '#b98bff', need: ['world', 'Ink']},
+    {id: 'pink', name: 'Hot pink', col: '#ff4fa3', need: ['world', 'Two worlds']},
+    {id: 'ember', name: 'Ember', col: '#ff5a1f', need: ['world', 'Rising lava']},
+    {id: 'gust', name: 'Gust', col: '#bfe9ff', need: ['world', 'Updraft']},
+    {id: 'sand', name: 'Sandstone', col: '#e4c189', need: ['world', 'Crumble']},
+    {id: 'gold', name: 'Gold', col: '#ffc93c', need: ['gold', 10]},
+    {id: 'rainbow', name: 'Rainbow', col: 'rainbow', need: ['all']}
+  ],
+  trail: [
+    {id: 'red', name: 'Classic', col: 'band'},
+    {id: 'spark', name: 'Sparks', col: 'band', fx: 'spark', need: ['done', 6]},
+    {id: 'frost', name: 'Frost', col: '#9fe8ff', fx: 'snow', need: ['medals', 10]},
+    {id: 'star', name: 'Stardust', col: '#ffe27a', fx: 'star', need: ['stars', 12]},
+    {id: 'flame', name: 'Flames', col: '#ff8a2a', fx: 'flame', need: ['world', 'Rising lava']},
+    {id: 'pixel', name: 'Pixels', col: '#7ee04a', fx: 'pixel', need: ['made', 1]},
+    {id: 'shadow', name: 'Shadow', col: '#151331', fx: 'smoke', need: ['silver', 15]},
+    {id: 'rainbow', name: 'Rainbow', col: 'rainbow', fx: 'spark', need: ['gold', 20]}
+  ],
+  hat: [
+    {id: 'none', name: 'No hat'},
+    {id: 'cap', name: 'Cap', need: ['done', 2]},
+    {id: 'beanie', name: 'Beanie', need: ['done', 12]},
+    {id: 'ears', name: 'Cat ears', need: ['stars', 8]},
+    {id: 'horns', name: 'Horns', need: ['deaths', 100]},
+    {id: 'halo', name: 'Halo', need: ['flawless', 8]},
+    {id: 'party', name: 'Party hat', need: ['stars', 25]},
+    {id: 'top', name: 'Top hat', need: ['silver', 12]},
+    {id: 'wizard', name: 'Wizard hat', need: ['done', 30]},
+    {id: 'crown', name: 'Crown', need: ['gold', 30]}
+  ],
+  body: [
+    {id: 'white', name: 'Chalk', col: '#eef0ff'},
+    {id: 'mint', name: 'Mint', col: '#9df5c9', need: ['done', 8]},
+    {id: 'peach', name: 'Peach', col: '#ffc9a8', need: ['stars', 15]},
+    {id: 'ice', name: 'Ice', col: '#a8dcff', need: ['medals', 18]},
+    {id: 'lilac', name: 'Lilac', col: '#d3b8ff', need: ['flawless', 15]},
+    {id: 'lemon', name: 'Lemon', col: '#fff1a0', need: ['silver', 25]},
+    {id: 'rose', name: 'Rose', col: '#ffa8c4', need: ['done', 40]},
+    {id: 'gold', name: 'Solid gold', col: '#ffc93c', need: ['gold', 43]}
+  ]
+};
+const SKIN_KINDS = [['band', 'Headband'], ['trail', 'Trail'], ['hat', 'Hat'], ['body', 'Colour']];
+const skinOf = kind => SKINS[kind].find(o => o.id === prefs.skin[kind]) || SKINS[kind][0];
+function hasSkin(o, T) {
+  if (!o.need || unlockAll) return true;
+  const [k, n] = o.need;
+  return k === 'all' ? T.all : k === 'world' ? !!T.worlds[n] : (T[k] || 0) >= Math.min(n, k === 'deaths' || k === 'made' ? n : T.total);
+}
+function needText(o, T) {
+  const [k, n] = o.need, m = Math.min(n, T.total), left = (a, b) => ` (${Math.min(a, b)}/${b})`;
+  return k === 'all' ? 'Clear every level' + left(T.done, T.total) : k === 'world' ? 'Clear all of ' + n
+    : k === 'done' ? `Clear ${m} levels` + left(T.done, m) : k === 'stars' ? `Find ${m} stars` + left(T.stars, m)
+    : k === 'medals' ? `Win ${m} medals` + left(T.medals, m) : k === 'silver' ? `Win ${m} silver or gold medals` + left(T.silver, m)
+    : k === 'gold' ? `Win ${m} gold medals` + left(T.gold, m) : k === 'flawless' ? `Clear ${m} levels without dying` + left(T.flawless, m)
+    : k === 'deaths' ? `Fall apart ${n} times` + left(T.deaths, n) : 'Build a level and beat it';
+}
+const ownedSkins = T => { const s = []; for (const [kind] of SKIN_KINDS) for (const o of SKINS[kind]) if (o.need && hasSkin(o, T)) s.push(kind + ':' + o.id); return s; };
+const rainbow = (t, k = 0) => `hsl(${Math.round((t * 140 + k * 26) % 360)},95%,64%)`;
+const bandCol = t => { const c = skinOf('band').col; return c === 'rainbow' ? rainbow(t) : c; };
+const bodyCol = () => skinOf('body').col;
+function trailCol(t, life, k) { const c = skinOf('trail').col; return c === 'band' ? bandCol(t) : c === 'rainbow' ? rainbow(t, k) : c; }
+// little extras that fly off a dash
+function trailFx(p, parts = G.parts, t = performance.now() / 1000) {
+  const fx = skinOf('trail').fx; if (!fx || reduced()) return;
+  const x = p.x + (Math.random() - .5) * .4, y = p.y - PH.H * (.2 + Math.random() * .6), col = trailCol(t, 1, parts.length);
+  const R = () => Math.random() - .5;
+  if (fx === 'spark') parts.push({kind: 'dot', x, y, vx: R() * 5, vy: R() * 5, life: .32, max: .32, col, g: 14, r: .055});
+  else if (fx === 'snow') parts.push({kind: 'dot', x, y, vx: R() * 1.5, vy: -.5 + R(), life: .7, max: .7, col: Math.random() < .5 ? '#ffffff' : col, g: 5, r: .05});
+  else if (fx === 'star') parts.push({kind: 'starp', x, y, vx: R() * 2, vy: R() * 2, life: .6, max: .6, col: Math.random() < .3 ? '#ffffff' : col, g: 3, r: .13, a: Math.random() * 6, va: R() * 8});
+  else if (fx === 'flame') parts.push({kind: 'dot', x, y, vx: R() * 1.6, vy: -1.5 - Math.random() * 2.5, life: .45, max: .45, col: ['#ffd23c', '#ff8a2a', '#ff4a1f'][Math.random() * 3 | 0], g: -6, r: .09});
+  else if (fx === 'pixel') parts.push({kind: 'sq', x, y, vx: R() * 3, vy: R() * 3, life: .5, max: .5, col: ['#7ee04a', '#4ff0ff', '#ff4fa3', '#ffe27a'][Math.random() * 4 | 0], g: 18, r: .09});
+  else if (fx === 'smoke') parts.push({kind: 'dot', x, y, vx: R(), vy: -.6 - Math.random(), life: .7, max: .7, col: Math.random() < .5 ? '#3a3566' : '#151331', g: -1.5, r: .14});
+}
+// hats sit on the head and turn with it
+function drawHat(g, f, h, r, hat, A) {
+  const F = f.fs ?? f.face, sgn = Math.sign(F || 1), w = Math.abs(F);
+  g.save(); g.translate(h[0], h[1]); g.rotate((f.lean + f.head) * sgn * .55); g.globalAlpha = A; g.lineJoin = 'round'; g.lineCap = 'round';
+  const poly = (pts, col) => { g.fillStyle = col; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0] * r, p[1] * r) : g.moveTo(p[0] * r, p[1] * r)); g.closePath(); g.fill(); };
+  if (hat === 'cap') {
+    g.fillStyle = '#3d7bff'; g.beginPath(); g.arc(0, -r * .5, r * .95, Math.PI, 0); g.fill();
+    poly([[0, -.72], [F * 1.75, -.52], [F * 1.7, -.36], [0, -.42]], '#2a57c9');
+    g.fillStyle = '#ffffff'; g.beginPath(); g.arc(0, -r * 1.42, r * .13, 0, 7); g.fill();
+  } else if (hat === 'beanie') {
+    g.fillStyle = '#e8554e'; g.beginPath(); g.arc(0, -r * .42, r * 1.02, Math.PI, 0); g.fill();
+    g.fillStyle = '#ffe3d6'; g.fillRect(-r * 1.06, -r * .62, r * 2.12, r * .3);
+    g.beginPath(); g.arc(0, -r * 1.5, r * .26, 0, 7); g.fill();
+  } else if (hat === 'ears') {
+    for (const d of [-1, 1]) { poly([[d * .95 - F * .1, -.5], [d * .78 - F * .1, -1.5], [d * .18 - F * .1, -.92]], '#eef0ff'); poly([[d * .8 - F * .1, -.7], [d * .72 - F * .1, -1.22], [d * .4 - F * .1, -.92]], '#ff9ec0'); }
+  } else if (hat === 'horns') {
+    for (const d of [-1, 1]) poly([[d * .9, -.45], [d * 1.25, -1.5], [d * .35, -.9]], '#ff3b3b');
+  } else if (hat === 'halo') {
+    g.strokeStyle = '#ffe27a'; g.lineWidth = r * .2; g.shadowColor = '#ffe27a'; g.shadowBlur = r * .9;
+    g.beginPath(); g.ellipse(0, -r * 1.55, r * .85, r * .26, 0, 0, 7); g.stroke();
+  } else if (hat === 'party') {
+    poly([[-.72, -.68], [.72, -.68], [0, -2.25]], '#ff4fa3');
+    poly([[-.5, -1.14], [.5, -1.14], [.37, -1.44], [-.37, -1.44]], '#ffe27a');
+    g.fillStyle = '#4ff0ff'; g.beginPath(); g.arc(0, -r * 2.25, r * .2, 0, 7); g.fill();
+  } else if (hat === 'top') {
+    g.fillStyle = '#1b1d42'; g.fillRect(-r * .72, -r * 2.05, r * 1.44, r * 1.4); g.fillRect(-r * 1.3, -r * .82, r * 2.6, r * .22);
+    g.fillStyle = '#ff4a5a'; g.fillRect(-r * .72, -r * 1.12, r * 1.44, r * .26);
+    g.strokeStyle = '#7a80c0'; g.lineWidth = Math.max(1, r * .08); g.strokeRect(-r * .72, -r * 2.05, r * 1.44, r * 1.23);
+  } else if (hat === 'wizard') {
+    poly([[-.95, -.6], [.95, -.6], [.25, -1.6], [-F * .75, -2.5], [-.2, -1.5]], '#6a3fd6');
+    g.fillStyle = '#4a2aa0'; g.fillRect(-r * 1.4, -r * .74, r * 2.8, r * .22);
+    g.fillStyle = '#ffe27a'; g.beginPath(); g.arc(F * r * .15, -r * 1.12, r * .16, 0, 7); g.fill();
+  } else if (hat === 'crown') {
+    poly([[-.9, -.6], [-.98, -1.5], [-.48, -1.05], [0, -1.68], [.48, -1.05], [.98, -1.5], [.9, -.6]], '#ffc93c');
+    g.fillStyle = '#ff4a5a'; g.beginPath(); g.arc(0, -r * .88, r * .14, 0, 7); g.fill();
+    g.fillStyle = '#4ff0ff'; for (const d of [-1, 1]) { g.beginPath(); g.arc(d * r * .5, -r * .82, r * .09, 0, 7); g.fill(); }
+  }
+  g.restore();
+}
+
 
 /* ======================================================================
    SCREENS
    ====================================================================== */
-const unlockAll = location.hash === '#unlockall';
 const touchy = () => document.documentElement.classList.contains('rz-touch') || matchMedia('(pointer: coarse)').matches;
 // hints in the levels follow how you're playing: touch (and which side the joystick is on) or keys
 function hintText(t) {
@@ -3016,10 +4081,17 @@ function hintText(t) {
   return prefs.swap ? t.replace('right side', 'left side') : t;
 }
 const levelId = i => LEVELS[i].name;
-const isOpen = i => unlockAll || i === 0 || !!(prog()[levelId(i - 1)] || {}).done || !!(prog()[levelId(i)] || {}).done;
+const WORLDS = [];
+LEVELS.forEach((lv, i) => { let w = WORLDS.find(o => o.name === lv.world); if (!w) WORLDS.push(w = {name: lv.world, ids: []}); w.ids.push(i); lv.wi = WORLDS.indexOf(w); });
+const doneIn = (w, P = prog()) => w.ids.filter(j => (P[levelId(j)] || {}).done).length;
+// a level opens when the one before it is cleared; a world's first level also opens after four clears in the world before
+function isOpen(i, P = prog()) {
+  if (unlockAll || i === 0 || (P[levelId(i)] || {}).done || (P[levelId(i - 1)] || {}).done) return true;
+  const w = LEVELS[i].wi; return w > 0 && WORLDS[w].ids[0] === i && doneIn(WORLDS[w - 1], P) >= 4;
+}
 const inGame = () => !$('#game').classList.contains('hidden');
 function show(id) {
-  ['home', 'levels', 'game'].forEach(k => $('#' + k).classList.toggle('hidden', k !== id));
+  ['home', 'levels', 'locker', 'game', 'editor'].forEach(k => $('#' + k).classList.toggle('hidden', k !== id));
   document.body.classList.toggle('playing', id === 'game');
   if (id !== 'game') { G = null; touch.stick = touch.act = null; IN.x = 0; }
   if (id === 'home') renderHome();
@@ -3027,55 +4099,87 @@ function show(id) {
 function toast(text) { const t = $('#toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800); }
 
 /* ---------- home ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const nextLevel = (P = prog()) => LEVELS.findIndex((l, i) => !(P[levelId(i)] || {}).done && isOpen(i, P));
 function renderHome() {
-  const P = prog(), done = LEVELS.filter((l, i) => (P[levelId(i)] || {}).done).length, stars = LEVELS.filter((l, i) => (P[levelId(i)] || {}).star).length;
-  $('#playSub').textContent = done ? `${done} of ${LEVELS.length} cleared` : `${LEVELS.length} levels`;
-  $('#playSub').insertAdjacentHTML('beforeend', stars ? ` · ${stars}<span class="mstar">${STAR}</span>` : '');
+  const P = prog(), T = tally(), n = nextLevel(P);
+  $('#playBtn').querySelector('span').textContent = T.done && n >= 0 ? 'Continue' : 'Play';
+  $('#playSub').textContent = n < 0 ? 'Every level cleared!' : `Level ${n + 1} · ${LEVELS[n].name}`;
+  $('#hstats').innerHTML = `<span aria-label="Levels cleared">${ic('flag')}<b>${T.done}</b>/${T.total}</span><span class="mstar" aria-label="Stars">${STAR}<b>${T.stars}</b></span>`
+    + `<span aria-label="Gold medals">${medalIcon(3)}<b>${T.gold}</b></span><span aria-label="Silver medals">${medalIcon(2)}<b>${T.silver - T.gold}</b></span><span aria-label="Bronze medals">${medalIcon(1)}<b>${T.medals - T.silver}</b></span>`;
+  $('#lockBtn').classList.toggle('new', ownedSkins(T).length > (prefs.skinSeen || 0));
 }
-$('#playBtn').onclick = () => { Sound.tap(); showLevels(); };
+$('#playBtn').onclick = () => { Sound.tap(); const n = nextLevel(); n < 0 ? showLevels() : play(n); };
+$('#lvBtn').onclick = () => { Sound.tap(); showLevels(); };
+$('#lockBtn').onclick = () => { Sound.tap(); Locker.open(); };
+$('#editBtn').onclick = () => { Sound.tap(); showLevels('mine'); };
 
-/* ---------- the level list ---------- */
-function showLevels() {
+/* ---------- the level list: one tab per world, and one for levels you've built ---------- */
+let lvTab = null;
+function showLevels(tab) {
   show('levels');
-  const P = prog(), grid = $('#lgrid'); grid.innerHTML = '';
-  let next = LEVELS.findIndex((l, i) => !(P[levelId(i)] || {}).done); if (next < 0) next = -1;
-  let wn = 0;
-  LEVELS.forEach((lv, i) => {
-    if (i === 0 || lv.world !== LEVELS[i - 1].world) {   // a heading for each world
-      wn++;
-      const inW = LEVELS.map((l, j) => j).filter(j => LEVELS[j].world === lv.world), got = inW.filter(j => (P[levelId(j)] || {}).done).length;
-      const h = document.createElement('h3'); h.className = 'wh';
-      h.innerHTML = `<span>World ${wn}</span><b>${lv.world || ''}</b><small>${got}/${inW.length}</small>`;
-      grid.appendChild(h);
-    }
-    const r = P[levelId(i)] || {}, open = isOpen(i), b = document.createElement('button');
-    b.className = 'lv' + (open ? '' : ' locked') + (r.done ? ' done' : '') + (i === next ? ' next' : '');
-    b.innerHTML = `<canvas></canvas><div class="lvm"><i>${i + 1}</i><b>${lv.name}</b><span class="star${r.star ? ' on' : ''}">${STAR}</span></div>
-      <small>${open ? (r.best ? ic('clock') + 'Best ' + fmtT(r.best) : i === next ? 'Up next' : 'Not cleared yet') : ic('lock') + 'Clear level ' + i + ' first'}</small>`;
-    b.disabled = !open;
-    b.onclick = () => { Sound.tap(); play(i); };
-    grid.appendChild(b);
-    requestAnimationFrame(() => thumb(b.querySelector('canvas'), i));
-  });
+  const P = prog(), next = nextLevel(P), grid = $('#lgrid'), tabs = $('#wtabs');
+  if (tab != null) lvTab = tab; else if (lvTab == null) lvTab = next < 0 ? 0 : LEVELS[next].wi;
+  tabs.innerHTML = ''; grid.innerHTML = ''; grid.scrollTop = 0;
+  const addTab = (key, badge, name, count, cls) => {
+    const b = document.createElement('button'); b.className = 'wtab' + (lvTab === key ? ' on' : '') + cls;
+    b.innerHTML = `<i>${badge}</i><b>${name}</b><small>${count}</small>`; b.setAttribute('aria-pressed', lvTab === key);
+    b.onclick = () => { Sound.tap(); showLevels(key); }; tabs.appendChild(b);
+  };
+  WORLDS.forEach((w, k) => { const got = doneIn(w, P); addTab(k, isOpen(w.ids[0], P) ? k + 1 : ic('lock'), w.name, got + '/' + w.ids.length, got === w.ids.length ? ' full' : ''); });
+  addTab('mine', ic('build'), 'My levels', Custom.list().length || '', '');
+  const on = tabs.querySelector('.on'); if (on) tabs.scrollLeft = on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2;
   const done = LEVELS.filter((l, i) => (P[levelId(i)] || {}).done).length;
   $('#lvCount').textContent = done + '/' + LEVELS.length;
+  if (lvTab === 'mine') return renderMine(grid);
+  const W = WORLDS[lvTab];
+  W.ids.forEach(i => {
+    const lv = LEVELS[i], r = P[levelId(i)] || {}, open = isOpen(i, P), b = document.createElement('button'), m = medalFor(lv, r.best), par = parOf(lv);
+    b.className = 'lv' + (open ? '' : ' locked') + (r.done ? ' done' : '') + (i === next ? ' next' : '');
+    const why = W.ids[0] === i && lvTab > 0 ? `Clear 4 ${WORLDS[lvTab - 1].name} levels` : 'Clear level ' + i + ' first';
+    const goal = par && m < 3 ? ` · ${MEDAL[m + 1]} ${fmtT(par[m] * 1000)}` : '';
+    b.innerHTML = `<canvas></canvas><div class="lvm"><i>${i + 1}</i><b>${lv.name}</b>${par ? medalIcon(m) : ''}<span class="star${r.star ? ' on' : ''}">${STAR}</span></div>
+      <small>${open ? (r.best ? ic('clock') + fmtT(r.best) + goal : i === next ? 'Up next' : 'Not cleared yet') : ic('lock') + why}</small>`;
+    b.disabled = !open; b.setAttribute('aria-label', `Level ${i + 1}, ${lv.name}` + (r.done ? `, cleared, ${MEDAL[m]}` : ''));
+    b.onclick = () => { Sound.tap(); play(i); };
+    grid.appendChild(b);
+    requestAnimationFrame(() => thumb(b.querySelector('canvas'), lv));
+  });
   const nb = grid.querySelector('.next'); if (nb) setTimeout(() => nb.focus({preventScroll: true}), 60);
 }
+function renderMine(grid) {
+  const list = Custom.list();
+  list.forEach(lv => {
+    const d = document.createElement('div'); d.className = 'lv mine';
+    d.innerHTML = `<canvas></canvas><div class="lvm"><b>${esc(lv.name)}</b>${lv.beaten ? `<span class="okdot" aria-label="Beaten">${ic('check')}</span>` : ''}</div>
+      <div class="mrow"><button class="bbtn go" data-a="play">${ic('play')}<span>Play</span></button><button class="bbtn" data-a="edit">${ic('build')}<span>Edit</span></button></div>`;
+    d.querySelector('[data-a=play]').onclick = () => { Sound.tap(); const bad = Custom.problem(lv); bad ? toast(bad) : play(Custom.playable(lv)); };
+    d.querySelector('[data-a=edit]').onclick = () => { Sound.tap(); Editor.open(lv.id); };
+    grid.appendChild(d);
+    requestAnimationFrame(() => thumb(d.querySelector('canvas'), lv));
+  });
+  const add = (icon, text, fn) => { const b = document.createElement('button'); b.className = 'lv add'; b.innerHTML = ic(icon) + `<span>${text}</span>`; b.onclick = () => { Sound.tap(); fn(); }; grid.appendChild(b); };
+  if (list.length < Custom.MAX) { add('plus', 'New level', () => Editor.open(Custom.add(Custom.blank()).id)); add('paste', 'Paste a level code', () => Editor.paste()); }
+  const p = document.createElement('p'); p.className = 'lvnote';
+  p.textContent = list.length ? 'Share a level: open it, tap the settings button, then Copy level code.' : 'Build your own levels with every block in the game, then send the code to a friend.';
+  grid.appendChild(p);
+}
 // a little map of the level
-function thumb(c, i) {
-  const src = LEVELS[i].map, h = src.length, w = src[0].length, r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+const THUMB = {r: '#22b8c8', i: '#9a6bff', A: '#ff4fa3', B: '#5b8cff', C: '#c9a26a', '#': '#4b4f8a', '-': '#7a80c0', x: '#ff5a5f', o: '#ffc93c', G: '#ff4a5a', P: '#eef0ff', b: '#3ddc84', '*': '#ffc93c', c: '#9a96cf'};
+function thumb(c, lv) {
+  const src = lv.map, h = src.length, w = src[0].length, r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
   if (!r.width) return;
   c.width = r.width * d; c.height = r.height * d;
   const g = c.getContext('2d'), s = Math.min(r.width / w, r.height / h) * d, ox = (c.width - w * s) / 2, oy = (c.height - h * s) / 2;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const ch = src[y][x];
-    const col = ch === 'r' ? '#22b8c8' : ch === 'i' ? '#9a6bff' : ch === 'A' ? '#ff4fa3' : ch === 'B' ? '#5b8cff' : ch === '#' ? css('--tile') : ch === '-' ? css('--tileEdge') : ch === 'x' ? css('--spike') : ch === 'o' ? css('--orb') : ch === 'G' || ch === 'P' ? css('--accent') : ch === 'b' ? css('--pad') : ch === '*' ? css('--gold') : null;
-    if (!col) continue;
+    if (ch === '^' || ch === '<' || ch === '>') { g.fillStyle = 'rgba(191,233,255,.22)'; g.fillRect(ox + x * s, oy + y * s, Math.ceil(s), Math.ceil(s)); continue; }
+    const col = THUMB[ch]; if (!col) continue;
     g.fillStyle = col;
-    if (ch === 'G' || ch === 'P' || ch === 'o' || ch === '*' || ch === 'r' || ch === 'i') { g.beginPath(); g.arc(ox + (x + .5) * s, oy + (y + .5) * s, s * .8, 0, Math.PI * 2); g.fill(); }
-    else g.fillRect(ox + x * s, oy + y * s + (ch === '-' ? 0 : 0), Math.ceil(s), Math.ceil(ch === '-' ? s * .4 : s));
+    if ('GPo*ric'.includes(ch)) { g.beginPath(); g.arc(ox + (x + .5) * s, oy + (y + .5) * s, Math.max(1.6 * d, s * .8), 0, Math.PI * 2); g.fill(); }
+    else g.fillRect(ox + x * s, oy + y * s, Math.ceil(s), Math.ceil(ch === '-' ? s * .4 : s));
   }
-  if (LEVELS[i].lava) {   // rising lava: a glowing band along the bottom
+  if (lv.lava) {   // rising lava: a glowing band along the bottom
     const gr = g.createLinearGradient(0, oy + (h - 3) * s, 0, oy + h * s); gr.addColorStop(0, 'rgba(255,122,26,0)'); gr.addColorStop(1, 'rgba(255,122,26,.9)');
     g.fillStyle = gr; g.fillRect(ox, oy + (h - 3) * s, w * s, 3 * s);
   }
@@ -3083,15 +4187,24 @@ function thumb(c, i) {
 $('#lvBack').onclick = () => { Sound.tap(); show('home'); };
 
 /* ---------- playing ---------- */
-function play(i) {
-  if (!isOpen(i)) return;
+function play(i, from) {
+  const custom = typeof i === 'object';
+  if (!custom && !isOpen(i)) return;
   $('#pauseCover').classList.add('hidden'); $('#doneCover').classList.add('hidden');
   show('game'); layout(); resetTouch(); startLevel(i);
-  $('#lvName').textContent = (i + 1) + ' · ' + LEVELS[i].name;
+  G.from = from || (custom ? 'mine' : '');
+  $('#pLevels').querySelector('span').textContent = G.from === 'editor' ? 'Editor' : 'Levels';
+  $('#lvName').textContent = custom ? i.name : (i + 1) + ' · ' + LEVELS[i].name;
   $('#starPill').classList.toggle('hidden', !G.L.stars.length);
   showHud(); last = performance.now();
 }
-const restartLevel = () => { if (G) play(G.L.i); };
+const restartLevel = () => { if (G) play(G.L.i < 0 ? G.L.src : G.L.i, G.from); };
+// back out of a level: to the level maker if that's where it was started, else to the list it's in
+function leaveLevel() {
+  if (!G) return showLevels();
+  if (G.from === 'editor') return Editor.open(G.L.src.id);
+  showLevels(G.L.i < 0 ? 'mine' : LEVELS[G.L.i].wi);
+}
 let hudT = '', hudD = -1;
 function showHud() {
   if (!G) return;
@@ -3111,7 +4224,7 @@ $('#pRestart').innerHTML = ic('again') + '<span>Restart</span>';
 $('#pLevels').innerHTML = ic('grid') + '<span>Levels</span>';
 $('#pResume').onclick = () => setPause(false);
 $('#pRestart').onclick = () => restartLevel();
-$('#pLevels').onclick = () => showLevels();
+$('#pLevels').onclick = () => leaveLevel();
 $('#pSet').onclick = () => openSettings();
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && inGame() && !G.done) setPause(true); });
 
@@ -3119,34 +4232,55 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 function finish() {
   if (G.done) return;
   G.done = true; G.p.buf = 0; resetTouch();
-  const L = G.L, id = levelId(L.i), P = prog(), r = P[id] || {}, ms = Math.round(G.t * 1000);
-  const firstClear = !r.done, newBest = !r.best || ms < r.best, starNew = G.star && !r.star;
-  r.done = true; if (newBest) r.best = ms; r.star = r.star || G.star; r.deaths = r.deaths == null ? G.deaths : Math.min(r.deaths, G.deaths);
-  P[id] = r; keep(PROG_KEY, P);
+  const L = G.L, ms = Math.round(G.t * 1000), had = ownedSkins(tally());
   Sound.win(); vibrate([15, 40, 15]);
   const gx = L.goal.c + .5, gy = L.goal.r - 1;
   ['--accent', '--gold', '--pad', '--orb'].forEach(c => burst(gx, gy, 10, css(c), 8, 1.1, 3));
-  setTimeout(() => showDone({ms, best: r.best, newBest: newBest && !firstClear, firstClear, starNew}), 900);
+  let o;
+  if (L.i < 0) {   // a level of your own
+    const first = Custom.beaten(L.src.id);
+    if (first) bump('made');
+    o = {ms, custom: true, firstClear: first};
+  } else {
+    const lv = LEVELS[L.i], id = levelId(L.i), P = prog(), r = P[id] || {}, was = medalFor(lv, r.best);
+    const firstClear = !r.done, newBest = !r.best || ms < r.best, starNew = G.star && !r.star;
+    r.done = true; if (newBest) r.best = ms; r.star = r.star || G.star; r.deaths = r.deaths == null ? G.deaths : Math.min(r.deaths, G.deaths);
+    P[id] = r; keep(PROG_KEY, P);
+    if (newBest) saveGhost();
+    const medal = medalFor(lv, ms);
+    o = {ms, best: r.best, newBest: newBest && !firstClear, firstClear, starNew, medal, medalNew: medal > was};
+  }
+  const T = tally();
+  o.unlocked = ownedSkins(T).filter(k => !had.includes(k));
+  setTimeout(() => showDone(o), 900);
 }
 function showDone(o) {
   if (!G) return;
-  const i = G.L.i, hasNext = i + 1 < LEVELS.length, d = $('#doneCover');
+  const i = G.L.i, custom = i < 0, lv = custom ? null : LEVELS[i], hasNext = !custom && i + 1 < LEVELS.length, d = $('#doneCover'), par = parOf(lv), m = o.medal || 0;
   const star = G.L.stars.length ? `<div><span>Star</span><b class="star big${G.star ? ' on' : ''}">${STAR}</b><small${o.starNew ? ' class="nb"' : ''}>${G.star ? (o.starNew ? 'Found it!' : 'Got it') : 'Missed it'}</small></div>` : '';
+  const medal = par ? `<div><span>Medal</span><b>${medalIcon(m, 'big' + (m ? ' pop' : ''))}</b><small${o.medalNew ? ' class="nb"' : ''}>${m ? MEDAL[m] + (o.medalNew ? '!' : '') : 'Not yet'}</small></div>` : '';
+  const bestM = par ? medalFor(lv, o.best) : 0;
+  const nextM = par && bestM < 3 ? `<div class="dnext">${MEDAL[bestM + 1]} medal: finish in <b>${fmtT(par[bestM] * 1000)}</b></div>` : par ? `<div class="dnext">Gold on this level. Can you beat your ghost?</div>` : '';
+  const names = (o.unlocked || []).map(k => { const [kind, id] = k.split(':'), it = SKINS[kind].find(x => x.id === id); return it.name + (kind === 'band' ? ' headband' : kind === 'trail' ? ' trail' : kind === 'body' ? ' colour' : ''); });
+  const unl = names.length ? `<div class="unl">${ic('shirt')}<span>Unlocked: <b>${names.join(', ')}</b></span></div>` : '';
+  const editing = G.from === 'editor';
   d.innerHTML = `<div class="card done">
-    <h2>${hasNext ? 'Level clear!' : 'All levels clear!'}</h2>
+    <h2>${custom ? (o.firstClear ? 'You beat your level!' : 'Level clear!') : hasNext ? 'Level clear!' : 'The last level. Clear!'}</h2>
     <div class="dstats">
-      <div><span>Time</span><b>${fmtT(o.ms)}</b><small${o.newBest ? ' class="nb"' : ''}>${o.newBest ? 'New best!' : o.firstClear ? 'First clear' : 'Best ' + fmtT(o.best)}</small></div>
+      <div><span>Time</span><b>${fmtT(o.ms)}</b><small${o.newBest ? ' class="nb"' : ''}>${custom ? '&nbsp;' : o.newBest ? 'New best!' : o.firstClear ? 'First clear' : 'Best ' + fmtT(o.best)}</small></div>
       <div><span>Deaths</span><b>${G.deaths}</b><small>${G.deaths ? (G.deaths === 1 ? 'Just one' : 'Keep at it') : 'Flawless'}</small></div>
-      ${star}
-    </div>
+      ${star}${medal}
+    </div>${nextM}${unl}
     <div class="crow">
-      <button class="bbtn" id="dLevels">${ic('grid')}<span>Levels</span></button>
-      <button class="bbtn" id="dAgain">${ic('again')}<span>Replay</span></button>
+      <button class="bbtn" id="dLevels">${ic(editing ? 'build' : 'grid')}<span>${editing ? 'Editor' : 'Levels'}</span></button>
+      <button class="bbtn${hasNext ? '' : ' go'}" id="dAgain">${ic('again')}<span>Replay</span></button>
       ${hasNext ? `<button class="bbtn go" id="dNext"><span>Next</span>${ic('next')}</button>` : ''}
     </div></div>`;
   d.classList.remove('hidden');
-  $('#dLevels').onclick = () => showLevels();
-  $('#dAgain').onclick = () => play(i);
+  if (o.medalNew) setTimeout(() => Sound.medal(m), 250);
+  if (names.length) setTimeout(() => Sound.unlock(), 900);
+  $('#dLevels').onclick = () => leaveLevel();
+  $('#dAgain').onclick = () => restartLevel();
   if (hasNext) $('#dNext').onclick = () => play(i + 1);
   setTimeout(() => ($('#dNext') || $('#dAgain')).focus({preventScroll: true}), 40);
 }
@@ -3162,8 +4296,8 @@ function frame(now) {
     touchTick(now);
     if (G.done) IN.x = 0;
     if (G.hit > 0) G.hit -= dt;   // a tiny freeze when a dash starts, so it lands with a punch
-    else { acc += dt; let n = 0; while (acc >= 1 / 120 && n++ < 8) { step(1 / 120); acc -= 1 / 120; if (!G) return; } }
-    animate(dt, t); stepFx(dt);
+    else { acc += dt; let n = 0; while (acc >= 1 / 120 && n++ < 8) { step(1 / 120); recTick(); acc -= 1 / 120; if (!G) return; } }
+    animate(dt, t); ghostAnim(dt, t); stepFx(dt);
   }
   render(t, dt);
   const tt = fmtT(G.t * 1000); if (tt !== hudT) { hudT = tt; $('#timer').textContent = tt; }
@@ -3209,7 +4343,7 @@ function renderSettings() {
 }
 document.querySelectorAll('#setPanel [data-p]').forEach(el => el.onchange = () => {
   prefs[el.dataset.p] = el.checked; savePrefs();
-  if (G) G.L.hints = (LEVELS[G.L.i].hints || []).map(([c, r, t]) => [c, r, hintText(t)]);
+  if (G) { G.L.hints = (G.L.src.hints || []).map(([c, r, t]) => [c, r, hintText(t)]); G.ghost = loadGhost(G.L); }
 });
 $('#sMenu').onclick = () => RZ && RZ.openMenu();
 document.querySelectorAll('#sStick button').forEach(b => b.onclick = () => { prefs.stick = b.dataset.v; savePrefs(); Sound.tap(); renderSettings(); });
@@ -3258,9 +4392,341 @@ const PadEdit = (() => {
 $('#sMove').onclick = () => { Sound.tap(); PadEdit.open(); };
 $('#sReset').onclick = () => {
   if (!resetArmed) { resetArmed = true; $('#sReset').querySelector('b').textContent = 'Tap again to reset'; return; }
-  keep(PROG_KEY, null); renderSettings(); renderHome(); toast('Progress reset');
+  keep(PROG_KEY, null); stats.deaths = 0; stats.made = 0; keep(STATS_KEY, null);
+  try { Object.keys(localStorage).filter(k => k.startsWith('stickdash-ghost:')).forEach(k => localStorage.removeItem(k)); } catch {}
+  prefs.skin = {band: 'red', trail: 'red', hat: 'none', body: 'white'}; prefs.skinSeen = 0; savePrefs();
+  renderSettings(); renderHome(); toast('Progress reset');
   if (!$('#levels').classList.contains('hidden')) showLevels();
+  if (!$('#locker').classList.contains('hidden')) Locker.open();
 };
+/* ======================================================================
+   THE NIGHT CITY BEHIND THE MENUS
+   ====================================================================== */
+function menuBg(now) {
+  if (inGame() || !$('#editor').classList.contains('hidden') || document.hidden || document.querySelector('.panel.show')) return;
+  const c = $('#bgCv'), r = c.getBoundingClientRect(); if (!r.width) return;
+  V.dpr = Math.min(2.5, devicePixelRatio || 1); V.w = r.width; V.h = r.height;
+  if (c.width !== Math.round(V.w * V.dpr) || c.height !== Math.round(V.h * V.dpr)) { c.width = Math.round(V.w * V.dpr); c.height = Math.round(V.h * V.dpr); }
+  const want = Math.max(20, V.h / clamp(V.h / 36, 9.5, 12)); V.s = Math.max(1, Math.round(want * V.dpr / ART)) * ART / V.dpr;
+  const g = c.getContext('2d'), was = G; g.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+  G = {L: {h: V.h / V.s}};
+  try { drawFar(g, reduced() ? 0 : now / 1000 * 1.1, 0, V.s); } finally { G = was; }
+  g.fillStyle = 'rgba(11,10,31,.28)'; g.fillRect(0, 0, V.w, V.h);
+}
+function bgLoop(now) { requestAnimationFrame(bgLoop); menuBg(now); }
+function drawParts(g, parts, s) {
+  for (const q of parts) {
+    g.globalAlpha = Math.min(1, q.life / q.max * 1.5); g.fillStyle = q.col;
+    if (q.kind === 'sq') { const w = Math.max(2, Math.round(q.r * s)); g.fillRect(Math.round(q.x * s - w / 2), Math.round(q.y * s - w / 2), w, w); }
+    else if (q.kind === 'starp') { g.save(); g.translate(q.x * s, q.y * s); g.rotate(q.a || 0); const R = q.r * s * (q.life / q.max); g.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, d = i % 2 ? R * .4 : R; g.lineTo(Math.cos(a) * d, Math.sin(a) * d); } g.fill(); g.restore(); }
+    else { g.beginPath(); g.arc(q.x * s, q.y * s, q.r * s, 0, Math.PI * 2); g.fill(); }
+  }
+  g.globalAlpha = 1;
+}
+
+/* ======================================================================
+   THE LOCKER
+   ====================================================================== */
+const Locker = (() => {
+  const c = $('#lkCv'), f = newFigure(); let on = false, kind = 'band', after = [], parts = [], last = 0, trail = 0;
+  function open() {
+    show('locker'); on = true; last = 0;
+    prefs.skinSeen = ownedSkins(tally()).length; savePrefs();
+    render(); requestAnimationFrame(loop);
+  }
+  function render() {
+    const T = tally(), tabs = $('#lkTabs'), grid = $('#lkGrid');
+    tabs.innerHTML = SKIN_KINDS.map(([k, n]) => `<button class="${k === kind ? 'on' : ''}" data-k="${k}">${n}</button>`).join('');
+    tabs.querySelectorAll('button').forEach(b => b.onclick = () => { kind = b.dataset.k; Sound.tap(); render(); grid.scrollTop = 0; });
+    grid.innerHTML = '';
+    SKINS[kind].forEach(o => {
+      const has = hasSkin(o, T), worn = prefs.skin[kind] === o.id, b = document.createElement('button');
+      b.className = 'sk' + (worn ? ' on' : '') + (has ? '' : ' locked');
+      let col = o.col; if (col === 'band') col = skinOf('band').col;
+      const sw = kind === 'hat' ? '<span class="sw"><canvas width="72" height="72"></canvas></span>'
+        : `<span class="sw${col === 'rainbow' ? ' rainbow' : ''}${kind === 'trail' ? ' streak' : ''}" style="--c:${col}"></span>`;
+      b.innerHTML = `${sw}<span class="st"><b>${o.name}</b><small>${worn ? 'Wearing' : has ? 'Tap to wear' : needText(o, T)}</small></span>`;
+      b.setAttribute('aria-pressed', worn);
+      b.onclick = () => {
+        if (!has) { Sound.back(); toast(needText(o, T)); return; }
+        prefs.skin[kind] = o.id; savePrefs(); Sound.pop(); render();
+      };
+      grid.appendChild(b);
+      if (kind === 'hat') { const g = b.querySelector('canvas').getContext('2d'); g.fillStyle = '#eef0ff'; g.beginPath(); g.arc(36, 48, 15, 0, 7); g.fill(); drawHat(g, {fs: 1, face: 1, lean: 0, head: 0}, [36, 48], 15, o.id, 1); }
+    });
+    let own = 0, all = 0; for (const [k] of SKIN_KINDS) for (const o of SKINS[k]) { all++; if (hasSkin(o, T)) own++; }
+    $('#lkCount').textContent = own + '/' + all;
+  }
+  // the figure runs on the spot, and every so often jumps and dashes to show the trail
+  function loop(now) {
+    if (!on || $('#locker').classList.contains('hidden')) { on = false; return; }
+    requestAnimationFrame(loop);
+    const r = c.getBoundingClientRect(); if (!r.width) return;
+    const d = Math.min(2, devicePixelRatio || 1);
+    if (c.width !== Math.round(r.width * d) || c.height !== Math.round(r.height * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+    const g = c.getContext('2d'), t = now / 1000, dt = Math.min(.05, last ? t - last : 0); last = t;
+    g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height);
+    const s = r.height / 3.7, gy = r.height / s - .75, still = reduced(), scroll = still ? 0 : (t * 7.5) % 1;
+    for (let x = -1 - scroll; x < r.width / s + 1; x++) {
+      g.fillStyle = '#2a2758'; g.fillRect(x * s, gy * s, s + 1, s);
+      g.fillStyle = '#a3a8e6'; g.fillRect(x * s, gy * s, s + 1, s * .1);
+      g.fillStyle = '#1b1942'; g.fillRect(x * s, gy * s + s * .1, s * .06, s);
+    }
+    const u = still ? 0 : t % 2.7; let x = r.width / s * .34, y = gy, st = 'run', dash = null;
+    if (u > 1.5 && u <= 1.82) { const k = (u - 1.5) / .32; y = gy - 1.35 * (1 - (1 - k) * (1 - k)); st = 'up'; }
+    else if (u > 1.82 && u <= 1.98) { const k = (u - 1.82) / .16; y = gy - 1.35; x += 2.6 * k; st = 'dash'; dash = [1, 0]; }
+    else if (u > 1.98 && u <= 2.36) { const k = (u - 1.98) / .38; y = gy - 1.35 * (1 - k * k); x += 2.6 - .5 * k; st = 'fall'; }
+    else if (u > 2.36) { const k = (u - 2.36) / .34; x += 2.1 * (1 - k) * (1 - k); }
+    f.face = 1; f.fs = 1;
+    if (st === 'run' && !still) f.ph += dt * 13;
+    const pose = still ? POSES.idle(t) : targetPose(f, {mom: false, ground: st === 'run', vx: 7.5, vy: st === 'up' ? -6 : st === 'fall' ? 6 : 0, dash, wall: false, kick: 0, skid: 0, turn: 0, land: 0, run: st === 'run' ? 1 : 0, t});
+    easePose(f, pose, dt, st === 'dash' ? 32 : st === 'run' ? 30 : 13);
+    stepScarf(f, joints(f, x, y), dt, still ? -3 : st === 'dash' ? -50 : -19);
+    if (st === 'dash') { trail -= dt; if (trail <= 0) { trail = .022; after.push({fig: {...f, scarf: []}, x, y, life: .28}); trailFx({x, y}, parts, t); trailFx({x, y}, parts, t); } }
+    after = after.filter(a => (a.life -= dt) > 0);
+    parts = parts.filter(q => { q.life -= dt; q.vy += (q.g || 0) * dt; q.x += (q.vx - 3) * dt; q.y += q.vy * dt; if (q.va) q.a += q.va * dt; return q.life > 0; });
+    after.forEach((a, k) => { a.x -= 3 * dt; drawFigure(g, a.fig, a.x, a.y, s, trailCol(t, a.life / .28, k), {alpha: a.life / .28 * .45, scarf: false}); });
+    drawParts(g, parts, s);
+    drawFigure(g, f, x, y, s, bodyCol(), {scarfCol: st === 'fall' ? '#6d68a3' : bandCol(t), hat: prefs.skin.hat});
+  }
+  $('#lkBack').onclick = () => { Sound.tap(); on = false; show('home'); };
+  return {open, get on() { return on; }};
+})();
+
+/* ======================================================================
+   YOUR OWN LEVELS: kept on this device, shared as a code
+   ====================================================================== */
+const Custom = (() => {
+  const KEY = 'stickdash-custom-v1', OK = '.#-xobc*GPriABC^<>', MAX = 24;
+  let list = load(KEY, []); if (!Array.isArray(list)) list = [];
+  const save = () => keep(KEY, list);
+  const has = (lv, ch) => lv.map.some(r => r.includes(ch));
+  function blank() {
+    const w = 48, h = 16, m = []; for (let r = 0; r < h; r++) m.push((r >= 13 ? '#' : '.').repeat(w));
+    const put = (c, r, ch) => m[r] = m[r].slice(0, c) + ch + m[r].slice(c + 1); put(3, 12, 'P'); put(44, 12, 'G');
+    let n = list.length + 1; while (list.some(l => l.name === 'My level ' + n)) n++;
+    return {name: 'My level ' + n, map: m, lava: 0};
+  }
+  function code(lv) {
+    const body = lv.map.join('').replace(/(.)\1{2,}/g, (m, ch) => ch + m.length);
+    return 'SD1' + btoa(JSON.stringify([encodeURIComponent(lv.name), lv.lava | 0, lv.map[0].length, body]));
+  }
+  function parse(str) {
+    try {
+      str = String(str).replace(/\s+/g, ''); if (!str.startsWith('SD1')) return null;
+      const [name, lava, w, body] = JSON.parse(atob(str.slice(3)));
+      const flat = String(body).replace(/(\D)(\d+)/g, (m, ch, n) => ch.repeat(Math.min(20000, +n)));
+      if (!(w >= 12 && w <= 160) || flat.length % w || [...flat].some(ch => !OK.includes(ch))) return null;
+      const map = []; for (let i = 0; i < flat.length; i += w) map.push(flat.slice(i, i + w));
+      if (map.length < 8 || map.length > 70) return null;
+      return {name: decodeURIComponent(name).slice(0, 24) || 'A level', lava: clamp(lava | 0, 0, 2), map};
+    } catch { return null; }
+  }
+  return {
+    MAX, list: () => list, get: id => list.find(l => l.id === id), save, blank, code, parse,
+    add(lv) { lv.id = 'c' + Date.now().toString(36) + (Math.random() * 1e5 | 0).toString(36); list.push(lv); save(); return lv; },
+    remove(id) { list = list.filter(l => l.id !== id); save(); },
+    beaten(id) { const lv = list.find(l => l.id === id); if (!lv || lv.beaten) return false; lv.beaten = true; save(); return true; },
+    problem: lv => !has(lv, 'P') ? 'Add a start first (the little figure)' : !has(lv, 'G') ? 'Add a flag to finish at' : '',
+    playable: lv => ({id: lv.id, name: lv.name, map: lv.map.slice(), hints: [], lava: lv.lava ? {y: lv.map.length + 1, speed: lv.lava === 2 ? 1.1 : .7, delay: 2, gap: 7, stop: 2} : null}),
+  };
+})();
+// one square of a level, drawn simply (the level maker and its palette)
+function drawCell(g, ch, x, y, s) {
+  const R = (a, b, w, h, col) => { g.fillStyle = col; g.fillRect(x + a * s, y + b * s, w * s, h * s); };
+  const tri = (pts, col) => { g.fillStyle = col; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(x + p[0] * s, y + p[1] * s) : g.moveTo(x + p[0] * s, y + p[1] * s)); g.closePath(); g.fill(); };
+  const arrow = (a) => { g.save(); g.translate(x + s / 2, y + s / 2); g.rotate(a); g.strokeStyle = COL.wind; g.lineWidth = Math.max(1.5, s * .1); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(0, s * .28); g.lineTo(0, -s * .28); g.moveTo(-s * .2, -s * .08); g.lineTo(0, -s * .28); g.lineTo(s * .2, -s * .08); g.stroke(); g.restore(); };
+  if (ch === '#') { R(0, 0, 1, 1, '#3d3f7c'); R(0, 0, 1, .16, '#a3a8e6'); R(0, .16, .1, .84, '#565aa0'); R(.9, .16, .1, .84, '#26285a'); }
+  else if (ch === '-') { R(0, 0, 1, .3, '#7a80c0'); R(0, 0, 1, .1, '#d6d9ff'); }
+  else if (ch === 'x') { for (let i = 0; i < 3; i++) tri([[i / 3, 1], [i / 3 + 1 / 6, .3], [i / 3 + 1 / 3, 1]], '#ff5a5f'); }
+  else if (ch === 'C') { R(0, 0, 1, 1, '#4d3d4f'); R(0, 0, 1, .16, '#e4c189'); R(.25, .3, .1, .3, '#2c2233'); R(.6, .4, .1, .4, '#2c2233'); R(.35, .6, .15, .1, '#2c2233'); }
+  else if (ch === 'A' || ch === 'B') { const col = ch === 'A' ? COL.A : COL.B; g.globalAlpha *= .3; R(0, 0, 1, 1, col); g.globalAlpha /= .3; g.strokeStyle = col; g.lineWidth = Math.max(1.5, s * .1); g.strokeRect(x + s * .08, y + s * .08, s * .84, s * .84); }
+  else if (ch === '^') { R(0, 0, 1, 1, 'rgba(191,233,255,.1)'); arrow(0); }
+  else if (ch === '>') { R(0, 0, 1, 1, 'rgba(191,233,255,.1)'); arrow(Math.PI / 2); }
+  else if (ch === '<') { R(0, 0, 1, 1, 'rgba(191,233,255,.1)'); arrow(-Math.PI / 2); }
+  else if (ch === 'b') { R(.1, .82, .8, .18, '#4b4f8a'); R(.2, .5, .6, .1, '#a3a8e6'); R(.3, .64, .4, .1, '#a3a8e6'); R(.1, .34, .8, .14, '#3ddc84'); }
+  else if (ch === 'o') tri([[.5, .14], [.8, .5], [.5, .86], [.2, .5]], '#ffc93c');
+  else if (ch === 'r') { g.strokeStyle = COL.ring; g.lineWidth = Math.max(1.5, s * .12); g.beginPath(); g.arc(x + s / 2, y + s / 2, s * .32, 0, 7); g.stroke(); }
+  else if (ch === 'i') { g.fillStyle = COL.ink; g.beginPath(); g.arc(x + s / 2, y + s * .58, s * .27, 0, 7); g.fill(); tri([[.5, .1], [.7, .48], [.3, .48]], COL.ink); }
+  else if (ch === 'c') { R(.22, .1, .1, .9, '#9a96cf'); tri([[.32, .12], [.82, .3], [.32, .5]], '#eef0ff'); }
+  else if (ch === 'G') { R(.22, .02, .1, .98, '#eef0ff'); tri([[.32, .04], [.9, .26], [.32, .5]], '#ff4a5a'); }
+  else if (ch === '*') { g.fillStyle = '#ffc93c'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, d = (i % 2 ? .19 : .42) * s; g.lineTo(x + s / 2 + Math.cos(a) * d, y + s / 2 + Math.sin(a) * d); } g.fill(); }
+  else if (ch === 'P') {
+    g.strokeStyle = '#eef0ff'; g.fillStyle = '#eef0ff'; g.lineWidth = Math.max(1.5, s * .1); g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x + s * .5, y + s * .38); g.lineTo(x + s * .5, y + s * .68); g.lineTo(x + s * .32, y + s * .98); g.moveTo(x + s * .5, y + s * .68); g.lineTo(x + s * .68, y + s * .98); g.moveTo(x + s * .28, y + s * .56); g.lineTo(x + s * .72, y + s * .5); g.stroke();
+    g.beginPath(); g.arc(x + s * .5, y + s * .2, s * .19, 0, 7); g.fill(); R(.3, .1, .4, .1, '#ff4a5a');
+  }
+}
+
+/* ======================================================================
+   THE LEVEL MAKER
+   ====================================================================== */
+const Editor = (() => {
+  const c = $('#edCv'), g = c.getContext('2d'), sheet = $('#sheet');
+  const TOOLS = [['pan', 'Move'], ['.', 'Erase'], ['#', 'Block'], ['-', 'Ledge'], ['x', 'Spikes'], ['C', 'Crumble'], ['b', 'Spring'], ['o', 'Orb'], ['r', 'Ring'], ['i', 'Ink'],
+    ['A', 'Pink'], ['B', 'Blue'], ['^', 'Wind up', 'Wind ↑'], ['<', 'Wind left', 'Wind ←'], ['>', 'Wind right', 'Wind →'], ['c', 'Checkpoint', 'Check'], ['*', 'Star'], ['P', 'Start'], ['G', 'Flag']];
+  let lv = null, map = null, tool = '#', undo = [], raf = 0, stroke = null, pinch = null;
+  const cam = {x: 0, y: 0, s: 28}, ptrs = new Map();
+  const W = () => map[0].length, H = () => map.length;
+  const on = () => !$('#editor').classList.contains('hidden');
+  const redraw = () => { if (!raf) raf = requestAnimationFrame(draw); };
+  function open(id) {
+    lv = Custom.get(id); if (!lv) return showLevels('mine');
+    map = lv.map.map(r => [...r]); undo = []; stroke = pinch = null; ptrs.clear();
+    show('editor'); palette(); head(); fit(); redraw();
+    const tip = $('#edTip'); tip.textContent = touchy() ? 'Two fingers to move and zoom' : 'Scroll to zoom · right-drag to move'; tip.classList.remove('gone'); clearTimeout(open.t); open.t = setTimeout(() => tip.classList.add('gone'), 4200);
+  }
+  function head() { $('#edName').querySelector('b').textContent = lv.name; $('#edUndo').disabled = !undo.length; }
+  function fit() {
+    const r = c.getBoundingClientRect();
+    cam.s = clamp(Math.floor((r.height - 150) / H()), 14, 40); cam.x = -1; cam.y = H() - (r.height - 86) / cam.s; limit();
+  }
+  function limit() {
+    const r = c.getBoundingClientRect(), vw = r.width / cam.s, vh = r.height / cam.s;
+    cam.x = clamp(cam.x, Math.min(-2, W() + 2 - vw), Math.max(-2, W() + 2 - vw));
+    cam.y = clamp(cam.y, Math.min(-3, H() + 4 - vh), Math.max(-3, H() + 4 - vh));
+  }
+  function commit() { lv.map = map.map(r => r.join('')); lv.beaten = false; Custom.save(); head(); }
+  function palette() {
+    const pal = $('#edPal'); pal.innerHTML = '';
+    TOOLS.forEach(([ch, name, short]) => {
+      const b = document.createElement('button'); b.className = 'tool' + (tool === ch ? ' on' : ''); b.setAttribute('aria-label', name); b.setAttribute('aria-pressed', tool === ch);
+      b.innerHTML = (ch === 'pan' ? ic('hand') : ch === '.' ? ic('erase') : '<canvas width="56" height="56"></canvas>') + `<span>${short || name}</span>`;
+      b.onclick = () => { tool = ch; Sound.tap(); pal.querySelectorAll('.tool').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); };
+      pal.appendChild(b);
+      const cv = b.querySelector('canvas'); if (cv) drawCell(cv.getContext('2d'), ch, 6, 6, 44);
+    });
+  }
+  function draw() {
+    raf = 0; if (!on() || !map) return;
+    const r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
+    if (c.width !== Math.round(r.width * d) || c.height !== Math.round(r.height * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+    g.setTransform(d, 0, 0, d, 0, 0); g.fillStyle = '#0b0a1f'; g.fillRect(0, 0, r.width, r.height);
+    const s = cam.s, ox = Math.round(-cam.x * s), oy = Math.round(-cam.y * s), w = W(), h = H();
+    g.fillStyle = '#141236'; g.fillRect(ox, oy, w * s, h * s);
+    const c0 = clamp(Math.floor(cam.x), 0, w), c1 = clamp(Math.ceil(cam.x + r.width / s), 0, w), r0 = clamp(Math.floor(cam.y), 0, h), r1 = clamp(Math.ceil(cam.y + r.height / s), 0, h);
+    g.fillStyle = 'rgba(255,255,255,.055)';
+    for (let x = c0; x <= c1; x++) g.fillRect(ox + x * s, oy + r0 * s, 1, (r1 - r0) * s);
+    for (let y = r0; y <= r1; y++) g.fillRect(ox + c0 * s, oy + y * s, (c1 - c0) * s, 1);
+    for (let y = r0; y < r1; y++) for (let x = c0; x < c1; x++) { const ch = map[y][x]; if (ch !== '.') drawCell(g, ch, ox + x * s, oy + y * s, s); }
+    if (lv.lava) { const gr = g.createLinearGradient(0, oy + (h - 2.5) * s, 0, oy + h * s); gr.addColorStop(0, 'rgba(255,122,26,0)'); gr.addColorStop(1, 'rgba(255,122,26,.75)'); g.fillStyle = gr; g.fillRect(ox, oy + (h - 2.5) * s, w * s, 2.5 * s); }
+    g.strokeStyle = '#5b56a8'; g.lineWidth = 2; g.strokeRect(ox, oy, w * s, h * s);
+  }
+  const cellAt = e => { const r = c.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / cam.s + cam.x), Math.floor((e.clientY - r.top) / cam.s + cam.y)]; };
+  function setCell(x, y, ch) {
+    if (x < 0 || y < 0 || x >= W() || y >= H() || map[y][x] === ch) return;
+    if ('PG*'.includes(ch)) map.forEach(row => row.forEach((q, i) => { if (q === ch) row[i] = '.'; }));   // only one of each
+    map[y][x] = ch; stroke.changed = true;
+  }
+  function lineTo(a, b, ch) {
+    let [x, y] = a; const dx = Math.abs(b[0] - x), dy = -Math.abs(b[1] - y), sx = x < b[0] ? 1 : -1, sy = y < b[1] ? 1 : -1; let err = dx + dy, n = 0;
+    for (; n < 400; n++) { setCell(x, y, ch); if (x === b[0] && y === b[1]) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x += sx; } if (e2 <= dx) { err += dx; y += sy; } }
+  }
+  c.addEventListener('contextmenu', e => e.preventDefault());
+  c.addEventListener('pointerdown', e => {
+    e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {}
+    ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY}); $('#edTip').classList.add('gone');
+    if (ptrs.size === 2) {
+      if (stroke && !stroke.pan && stroke.changed) map = stroke.before.map(r => [...r]);   // that first finger wasn't drawing after all
+      stroke = null;
+      const [a, b] = [...ptrs.values()];
+      pinch = {d: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, s: cam.s, cx: cam.x, cy: cam.y};
+    } else if (ptrs.size === 1) {
+      const pan = tool === 'pan' || e.button === 1 || e.button === 2;
+      stroke = {pan, x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, before: pan ? null : map.map(r => r.join('')), last: null, changed: false};
+      if (!pan) { const q = cellAt(e); setCell(q[0], q[1], tool); stroke.last = q; if (stroke.changed) Sound.tap(); }
+    }
+    redraw();
+  });
+  c.addEventListener('pointermove', e => {
+    const p = ptrs.get(e.pointerId); if (!p) return; p.x = e.clientX; p.y = e.clientY;
+    if (pinch && ptrs.size >= 2) {
+      const [a, b] = [...ptrs.values()], d = Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const wx = pinch.cx + pinch.mx / pinch.s, wy = pinch.cy + pinch.my / pinch.s;
+      cam.s = clamp(pinch.s * d / pinch.d, 10, 60); cam.x = wx - mx / cam.s; cam.y = wy - my / cam.s; limit();
+    } else if (stroke) {
+      if (stroke.pan) { cam.x = stroke.cx - (e.clientX - stroke.x) / cam.s; cam.y = stroke.cy - (e.clientY - stroke.y) / cam.s; limit(); }
+      else { const q = cellAt(e); if (!stroke.last || q[0] !== stroke.last[0] || q[1] !== stroke.last[1]) { lineTo(stroke.last || q, q, tool); stroke.last = q; } }
+    }
+    redraw();
+  });
+  const up = e => {
+    if (!ptrs.delete(e.pointerId)) return;
+    if (ptrs.size < 2) pinch = null;
+    if (stroke && !ptrs.size) {
+      if (!stroke.pan && stroke.changed) { undo.push(stroke.before); if (undo.length > 40) undo.shift(); commit(); }
+      stroke = null;
+    }
+    redraw();
+  };
+  c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+  c.addEventListener('wheel', e => {
+    e.preventDefault(); const r = c.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, wx = cam.x + mx / cam.s, wy = cam.y + my / cam.s;
+    cam.s = clamp(cam.s * (e.deltaY < 0 ? 1.12 : 1 / 1.12), 10, 60); cam.x = wx - mx / cam.s; cam.y = wy - my / cam.s; limit(); redraw();
+  }, {passive: false});
+  function undoOne() { if (!undo.length) return; map = undo.pop().map(r => [...r]); commit(); redraw(); Sound.back(); }
+  $('#edUndo').onclick = undoOne;
+  $('#edBack').onclick = () => { Sound.tap(); showLevels('mine'); };
+  $('#edTest').onclick = () => { const bad = Custom.problem(lv); if (bad) { Sound.back(); return toast(bad); } Sound.tap(); play(Custom.playable(lv), 'editor'); };
+  // level settings: name, size, lava, sharing
+  function resize(dw, dh) {
+    const w = clamp(W() + dw, 16, 160), h = clamp(H() + dh, 10, 70); if (w === W() && h === H()) return;
+    undo.push(map.map(r => r.join(''))); if (undo.length > 40) undo.shift();
+    map = map.map(r => w > r.length ? r.concat(Array(w - r.length).fill('.')) : r.slice(0, w));
+    while (map.length < h) map.unshift(Array(w).fill('.'));   // height changes at the top, so the ground stays put
+    while (map.length > h) map.shift();
+    commit(); limit(); redraw();
+  }
+  function settings() {
+    let armed = false;
+    sheet.innerHTML = `<div class="card edcard" role="dialog" aria-label="Level settings"><h2>Level settings</h2>
+      <div class="frow"><span>Name</span><input type="text" id="edNm" maxlength="24" autocomplete="off" enterkeyhint="done"></div>
+      <div class="frow"><span>Width</span><div class="stepper"><button data-w="-4" aria-label="Narrower">−</button><b id="edW"></b><button data-w="4" aria-label="Wider">+</button></div></div>
+      <div class="frow"><span>Height</span><div class="stepper"><button data-h="-2" aria-label="Shorter">−</button><b id="edH"></b><button data-h="2" aria-label="Taller">+</button></div></div>
+      <div class="frow"><span>Rising lava</span><div class="seg" id="edLava"><button data-v="0">Off</button><button data-v="1">Slow</button><button data-v="2">Fast</button></div></div>
+      <div class="crow"><button class="bbtn red" id="edDel">Delete</button><button class="bbtn" id="edCopy">Copy level code</button><button class="bbtn go" id="edOk">Done</button></div></div>`;
+    const show = () => { $('#edW').textContent = W(); $('#edH').textContent = H(); sheet.querySelectorAll('#edLava button').forEach(b => b.classList.toggle('on', +b.dataset.v === (lv.lava | 0))); };
+    $('#edNm').value = lv.name; show();
+    $('#edNm').oninput = e => { lv.name = e.target.value.trim().slice(0, 24) || 'My level'; Custom.save(); head(); };
+    sheet.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { resize(+b.dataset.w, 0); show(); Sound.tap(); });
+    sheet.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { resize(0, +b.dataset.h); show(); Sound.tap(); });
+    sheet.querySelectorAll('#edLava button').forEach(b => b.onclick = () => { lv.lava = +b.dataset.v; Custom.save(); show(); redraw(); Sound.tap(); });
+    $('#edDel').onclick = () => { if (!armed) { armed = true; $('#edDel').textContent = 'Tap again to delete'; return; } Custom.remove(lv.id); closeSheet(); showLevels('mine'); toast('Level deleted'); };
+    $('#edCopy').onclick = () => {
+      const code = Custom.code(lv), done = () => toast('Level code copied');
+      const fallback = () => { sheet.querySelector('.crow').insertAdjacentHTML('beforebegin', '<textarea id="edCode" readonly></textarea>'); const ta = $('#edCode'); ta.value = code; ta.focus(); ta.select(); $('#edCopy').disabled = true; toast('Copy the code above'); };
+      if ($('#edCode')) return;
+      try { navigator.clipboard.writeText(code).then(done, fallback); } catch { fallback(); }
+    };
+    $('#edOk').onclick = () => { Sound.tap(); closeSheet(); };
+    sheet.classList.remove('hidden');
+  }
+  function closeSheet() { sheet.classList.add('hidden'); sheet.innerHTML = ''; }
+  $('#edMore').onclick = () => { Sound.tap(); settings(); };
+  $('#edName').onclick = () => { Sound.tap(); settings(); setTimeout(() => $('#edNm') && $('#edNm').focus(), 60); };
+  // a level someone sent you
+  function paste() {
+    sheet.innerHTML = `<div class="card edcard" role="dialog" aria-label="Paste a level code"><h2>Paste a level code</h2>
+      <textarea id="edIn" placeholder="SD1…" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+      <div class="crow"><button class="bbtn" id="edNo">Cancel</button><button class="bbtn go" id="edAdd">Add level</button></div></div>`;
+    $('#edNo').onclick = () => { Sound.tap(); closeSheet(); };
+    $('#edAdd').onclick = () => {
+      const got = Custom.parse($('#edIn').value);
+      if (!got) { Sound.back(); return toast('That code doesn’t look right'); }
+      Custom.add(got); closeSheet(); Sound.pop(); showLevels('mine'); toast('Level added');
+    };
+    sheet.classList.remove('hidden'); setTimeout(() => $('#edIn').focus(), 60);
+  }
+  sheet.addEventListener('pointerdown', e => { if (e.target === sheet) closeSheet(); });
+  addEventListener('resize', () => { if (on()) { limit(); redraw(); } });
+  addEventListener('keydown', e => {
+    if (!sheet.classList.contains('hidden')) { if (e.key === 'Escape') { e.stopImmediatePropagation(); closeSheet(); } return; }
+    if (!on() || document.querySelector('.panel.show')) return;
+    if (e.key === 'Escape') showLevels('mine'); else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undoOne(); }
+  }, true);
+  return {open, paste, on};
+})();
+
 const openSettings = () => { renderSettings(); openPanel('setPanel'); };
 $('#setBtnHome').onclick = () => { Sound.tap(); openSettings(); };
 $('#howBtn').onclick = () => { Sound.tap(); openPanel('howPanel'); };
@@ -3320,8 +4786,8 @@ function drawScene(S, now) {
   stepScarf(f, J, dt, -(vx + (S.o.scroll || 0)) * 2.5);
   if (m.st === 'dash') { S.trail = (S.trail || 0) - dt; if (S.trail <= 0) { S.trail = .025; S.after.push({fig: {...f, scarf: []}, x: bx, y: by, life: .28}); } }
   S.after = S.after.filter(a => (a.life -= dt) > 0);
-  S.after.forEach(a => drawFigure(g, a.fig, a.x, a.y, s, css('--accent'), {alpha: a.life / .28 * .4, scarf: false}));
-  drawFigure(g, f, bx, by, s, css('--ink'), {scarfCol: m.used ? css('--muted') : css('--accent')});
+  S.after.forEach((a, k) => drawFigure(g, a.fig, a.x, a.y, s, trailCol(t, a.life / .28, k), {alpha: a.life / .28 * .4, scarf: false}));
+  drawFigure(g, f, bx, by, s, bodyCol(), {scarfCol: m.used ? css('--muted') : bandCol(t), hat: prefs.skin.hat});
 }
 // the title: running on the spot, a jump, a dash, a landing
 const titleScene = makeScene($('#titleCv'), scene([
@@ -3403,16 +4869,17 @@ $('#starIc').innerHTML = STAR;
 show('home');
 requestAnimationFrame(frame);
 requestAnimationFrame(titleLoop);
+requestAnimationFrame(bgLoop);
 // keys on the home and level screens
 addEventListener('keydown', e => {
   if (document.querySelector('.panel.show') || (RZ && RZ.menuOpen) || e.repeat) return;
-  if (!$('#levels').classList.contains('hidden') && e.key === 'Escape') show('home');
+  if ((!$('#levels').classList.contains('hidden') || !$('#locker').classList.contains('hidden')) && e.key === 'Escape') show('home');
 });
 window.RizzoHooks = {
   onMenuOpen() { if (G && inGame() && !G.done) setPause(true); },
   previewSound: () => Sound.orb(),
   leaveWarning: () => G && inGame() && !G.done && G.started ? 'You’re partway through a level.' : '',
-  canReload: () => !inGame(),
+  canReload: () => !inGame() && $('#editor').classList.contains('hidden'),
 };
 </script>
 </body>
