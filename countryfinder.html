@@ -103,7 +103,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .prog .row span{color:var(--muted)}
 .ask{flex:none;margin-top:12px;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:18px;background:var(--panel);box-shadow:0 2px 10px var(--shade)}
 .ask .fl{width:64px;height:43px;flex:none;display:grid;place-items:center}
-.ask .fl img{max-width:100%;max-height:100%;border-radius:4px;box-shadow:0 2px 6px var(--shade),0 0 0 1px rgba(0,0,0,.08)}
+.ask .fl img{display:block;width:auto;height:auto;max-width:64px;max-height:43px;border-radius:4px;box-shadow:0 2px 6px var(--shade),0 0 0 1px rgba(0,0,0,.08)}
 .ask .fl .em{font-size:2.4rem;line-height:1}
 .ask small{display:block;color:var(--muted);font-weight:900;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
 .ask b{display:block;font-size:clamp(1.15rem,5vw,1.45rem);font-weight:900;line-height:1.15}
@@ -145,7 +145,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .rlist h3{margin:0 4px 10px;font-size:.8rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .rrow{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:14px;padding:9px 12px;margin-bottom:7px;box-shadow:0 2px 8px var(--shade)}
 .rrow .fl{width:44px;height:30px;flex:none;display:grid;place-items:center}
-.rrow .fl img{max-width:100%;max-height:100%;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.rrow .fl img{display:block;width:auto;height:auto;max-width:44px;max-height:30px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
 .rrow .fl .em{font-size:1.6rem}
 .rrow .nm{flex:1;min-width:0;font-weight:900}
 .rrow .nm small{display:block;color:var(--muted);font-weight:800;font-size:.78rem}
@@ -568,6 +568,8 @@ function buildMap(topo) {
     return out;
   });
   const sets = [simplify(.3), simplify(.1), simplify(.03), arcs];
+  const ringArea = r => d3.geoArea({type: 'Polygon', coordinates: [r]});
+  const small = a => a > 2 * Math.PI ? 4 * Math.PI - a : a;   // the area either way round
   const ring = (ids, set) => {
     const pts = [];
     for (const i of ids) {
@@ -596,12 +598,26 @@ function buildMap(topo) {
       const flip = d3.geoArea({type: 'Polygon', coordinates: full}) > 2 * Math.PI;
       if (flip) full.forEach(r => r.reverse());
       u.polys.push(full);
-      sets.forEach((set, l) => {
-        if (l === 3) { u.lod[3].push(full); return; }
-        const rs = p.map(r => ring(r, set)).filter(r => r.length >= 4);
-        if (flip) rs.forEach(r => r.reverse());
-        if (rs.length) u.lod[l].push(rs);
-      });
+      u.lod[3].push(full);
+      // the simplified outlines: each one is checked against the real one. Simplifying can turn a small
+      // piece (often an island shared by two countries) inside out, which would flood the whole globe
+      // with its colour, so any outline that flips or changes size too much uses the next more detailed one.
+      const fullA = full.map(ringArea);
+      let finer = full;
+      for (const l of [2, 1, 0]) {
+        const rs = p.map((r, k) => {
+          const s = ring(r, sets[l]);
+          if (flip) s.reverse();
+          if (s.length < 4) return finer[k];
+          const a = ringArea(s), fa = fullA[k];
+          if ((a > 2 * Math.PI) !== (fa > 2 * Math.PI)) return finer[k];
+          const sa = small(a), sf = small(fa);
+          if (sa < sf * .5 || sa > sf * 2) return finer[k];
+          return s;
+        });
+        u.lod[l].push(rs);
+        finer = rs;
+      }
       p.flat().forEach(i => u.arcs.add(i < 0 ? ~i : i));
     }
   }
@@ -813,8 +829,11 @@ const Sound = (() => {
    Tiny countries get a dot so you can still tap them from far out.
    ====================================================================== */
 const cv = $('#globe'), ctx = cv.getContext('2d');
-const proj = d3.geoOrthographic().clipAngle(90).precision(0);
+const proj = d3.geoOrthographic().clipAngle(90).precision(1);
 const gpath = d3.geoPath(proj, ctx);
+// the grid lines have few points, so they get their own projection that adds points along the curve
+const projG = d3.geoOrthographic().clipAngle(90).precision(.3);
+const gridPath = d3.geoPath(projG, ctx);
 const GRAT = d3.geoGraticule10();
 const view = {lon: -8, lat: 18, zoom: 1};
 const ZMIN = 1, ZMAX = 24;
@@ -841,7 +860,7 @@ function sizeGlobe() {
 }
 new ResizeObserver(sizeGlobe).observe($('#globewrap'));
 const R = () => BASE * view.zoom;
-function applyView() { proj.scale(R()).translate([W / 2, H / 2]).rotate([-view.lon, -view.lat]); }
+function applyView() { for (const p of [proj, projG]) p.scale(R()).translate([W / 2, H / 2]).rotate([-view.lon, -view.lat]); }
 const centre = () => [view.lon, view.lat];
 // can this country be seen right now?
 function inView(u, horizon) {
@@ -869,7 +888,7 @@ function draw() {
   const sea = ctx.createRadialGradient(cx - r * .35, cy - r * .4, r * .05, cx, cy, r);
   sea.addColorStop(0, theme.sea1); sea.addColorStop(.65, theme.sea2); sea.addColorStop(1, theme.sea3);
   ctx.fillStyle = sea; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
-  ctx.beginPath(); gpath(GRAT); ctx.strokeStyle = theme.grat; ctx.lineWidth = .8; ctx.stroke();
+  ctx.beginPath(); gridPath(GRAT); ctx.strokeStyle = theme.grat; ctx.lineWidth = .8; ctx.stroke();
   if (!MAP) return;
   // land, one colour at a time, with the borders
   const vis = MAP.units.filter(u => inView(u, horizon));
