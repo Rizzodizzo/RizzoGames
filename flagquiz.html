@@ -47,29 +47,30 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .primary:disabled{filter:grayscale(.6);opacity:.6}
 
 /* ================= HOME ================= */
-.home{max-width:480px;margin:0 auto;padding-top:46px;display:flex;flex-direction:column}
+.home{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:52px 0 8px}
+.homeset{position:fixed;z-index:2;top:calc(env(safe-area-inset-top,0px) + 16px);right:16px;display:flex;gap:8px}
 .hero{text-align:center}
-.hero svg{width:min(150px,36vw);height:auto;display:block;margin:0 auto -4px;filter:drop-shadow(0 8px 14px var(--shade))}
-.hero h1{margin:6px 0 0;font-size:2rem;font-weight:900;letter-spacing:-.01em}
-.hero p{margin:2px 0 0;color:var(--muted);font-weight:800}
-.lbl{margin:18px 4px 8px;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+.hero svg{width:min(104px,26vw,14vh);height:auto;display:block;margin:0 auto -2px;filter:drop-shadow(0 8px 14px var(--shade))}
+.hero h1{margin:4px 0 0;font-size:1.8rem;font-weight:900;letter-spacing:-.01em}
+.lbl{margin:16px 4px 7px;font-size:.74rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
 .lbl span{letter-spacing:0;text-transform:none;font-weight:800}
-.seg{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:16px;box-shadow:0 2px 8px var(--shade)}
-.seg button{flex:1;min-width:0;padding:10px 4px;border-radius:12px;color:var(--muted);font-weight:900;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .2s,color .2s}
-.seg button small{font-weight:800;font-size:.75rem;opacity:.8}
+.row2{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+.seg{display:flex;gap:3px;padding:4px;background:var(--panel);border-radius:15px;box-shadow:0 2px 8px var(--shade)}
+.seg button{flex:1;min-width:0;padding:9px 2px;border-radius:11px;color:var(--muted);font-weight:900;font-size:.93rem;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .2s,color .2s;white-space:nowrap}
 .seg button.on{background:var(--accent);color:var(--onaccent)}
-.seg button .ic{width:19px;height:19px}
-.modehelp{margin:7px 6px 0;color:var(--muted);font-weight:700;font-size:.86rem;text-align:center}
-.regions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.reg{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:14px;background:var(--panel);box-shadow:0 2px 8px var(--shade);border:2px solid transparent;font-weight:900;font-size:.95rem;text-align:left;transition:border-color .2s,background .2s}
-.reg .dotc{width:12px;height:12px;border-radius:50%;background:var(--rc);flex:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--rc) 22%,transparent)}
-.reg .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.reg small{font-size:.75rem;font-weight:800;color:var(--muted);background:var(--soft);border-radius:99px;padding:1px 7px}
-.reg.on{border-color:var(--rc);background:color-mix(in srgb,var(--rc) 10%,var(--panel))}
-.reg.world{grid-column:1/-1;--rc:var(--accent)}
-.reg.world .globe{width:20px;height:20px;color:var(--accent)}
-.reg.miss{grid-column:1/-1;--rc:var(--bad)}
-.play{margin-top:20px;padding:16px;font-size:1.2rem;display:flex;flex-direction:column;align-items:center;gap:1px;width:100%}
+.seg button .ic{width:17px;height:17px}
+@media (max-width:370px){.seg button .ic{display:none}}
+/* continents: chips that wrap */
+.regions{display:flex;flex-wrap:wrap;gap:7px}
+.reg{display:inline-flex;align-items:center;gap:7px;padding:8px 13px 8px 10px;border-radius:99px;background:var(--panel);box-shadow:0 2px 6px var(--shade);border:2px solid transparent;font-weight:900;font-size:.92rem;transition:border-color .2s,background .2s}
+.reg .dotc{width:10px;height:10px;border-radius:50%;background:var(--rc);flex:none}
+.reg small{font-size:.74rem;font-weight:900;color:#fff;background:var(--bad);border-radius:99px;padding:0 6px}
+.reg.on{border-color:var(--rc);background:color-mix(in srgb,var(--rc) 12%,var(--panel))}
+.reg.world{--rc:var(--accent)}
+.reg.world .globe{width:17px;height:17px;color:var(--accent)}
+.reg.miss{--rc:var(--bad)}
+.reg.miss .ic{width:16px;height:16px;color:var(--bad)}
+.play{margin-top:20px;padding:15px;font-size:1.2rem;display:flex;flex-direction:column;align-items:center;gap:1px;width:100%}
 .play small{font-size:.78rem;font-weight:800;opacity:.9}
 .dl{margin-top:20px;padding:14px 16px;border-radius:16px;background:var(--panel);box-shadow:0 2px 8px var(--shade);text-align:center}
 .dl b{display:block;font-weight:900;font-size:1.05rem}
@@ -78,13 +79,10 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .dl .bar{margin-top:10px}
 .dl.bad b{color:var(--bad)}
 .dl .primary{margin-top:12px;padding:11px 22px;font-size:1rem}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
-.tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 4px 11px;border-radius:16px;background:var(--panel);font-weight:800;font-size:.84rem;box-shadow:0 2px 8px var(--shade)}
-.tile .tic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent)}
-@media (max-height:820px){
-  .home{padding-top:40px}.hero svg{width:min(112px,28vw)}.hero h1{font-size:1.75rem;margin-top:2px}.hero p{font-size:.92rem}
-  .lbl{margin:12px 4px 6px}.modehelp{margin-top:5px;font-size:.82rem}.seg button{padding:8px 4px}
-  .regions{gap:6px}.reg{padding:8px 11px;font-size:.9rem}.play,.dl{margin-top:14px}.play{padding:13px}.tiles{margin-top:12px}
+@media (max-height:700px){
+  .home{padding-top:50px}.hero svg{width:min(80px,12vh)}.hero h1{font-size:1.55rem}
+  .lbl{margin:11px 4px 6px}.reg{padding:6px 11px 6px 9px;font-size:.88rem}.play,.dl{margin-top:14px}.play{padding:12px}
+}
 }
 
 /* ================= THE QUIZ ================= */
@@ -210,6 +208,10 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 <body>
 <!-- ================= HOME ================= -->
 <div class="home" id="home">
+  <div class="homeset">
+    <button class="iconbtn" id="atlasBtn" aria-label="Flag atlas"><svg class="ic" viewBox="0 0 24 24"><path d="M3.5 6.5l5.5-2.5 6 2.5 5.5-2.5v13.5l-5.5 2.5-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></button>
+    <button class="iconbtn" id="recBtn" aria-label="Records"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8.5 20h7"/></svg></button>
+  </div>
   <div class="hero">
     <svg viewBox="0 0 160 130" aria-hidden="true">
       <defs><linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fb8ff"/><stop offset="1" stop-color="#2463d6"/></linearGradient></defs>
@@ -232,30 +234,23 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
         <path d="M81.5 8q9-5 18 0t16 0v4q-8 5-16 0t-18 0z" fill="#fff"/></g>
     </svg>
     <h1>Flag Quiz</h1>
-    <p>How many flags do you know?</p>
   </div>
 
-  <div class="lbl">How to answer</div>
-  <div class="seg" id="modeSeg">
+  <div class="row2">
+    <div><div class="lbl">Answer</div>
+    <div class="seg" id="modeSeg">
     <button data-mode="choose"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="4" width="7" height="7" rx="2"/><rect x="13.5" y="4" width="7" height="7" rx="2"/><rect x="3.5" y="14" width="7" height="7" rx="2"/><rect x="13.5" y="14" width="7" height="7" rx="2"/></svg>Choose</button>
     <button data-mode="type"><svg class="ic" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M6.5 10h1M10.5 10h1M14.5 10h1M8 14h8"/></svg>Type</button>
+    </div>
+    </div>
+    <div><div class="lbl">Flags</div><div class="seg" id="lenSeg"></div></div>
   </div>
-  <div class="modehelp" id="modeHelp"></div>
-
-  <div class="lbl">Where in the world <span id="poolCount"></span></div>
+  <div class="lbl">Where <span id="poolCount"></span></div>
   <div class="regions" id="regions"></div>
-
-  <div class="lbl">How many flags</div>
-  <div class="seg" id="lenSeg"></div>
 
   <div class="dl hidden" id="dlBox" role="status" aria-live="polite"></div>
   <button class="primary play" id="playBtn">Play<small id="playSub"></small></button>
 
-  <div class="tiles">
-    <button class="tile" id="atlasBtn"><span class="tic"><svg class="ic" viewBox="0 0 24 24"><path d="M3.5 6.5l5.5-2.5 6 2.5 5.5-2.5v13.5l-5.5 2.5-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg></span>Flag atlas</button>
-    <button class="tile" id="recBtn"><span class="tic"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8.5 20h7"/></svg></span>Records</button>
-    <button class="tile" id="howBtn"><span class="tic"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.6v.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></span>How to play</button>
-  </div>
 </div>
 
 <!-- ================= THE QUIZ ================= -->
@@ -301,22 +296,6 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 <div class="panel" id="recPanel">
   <div class="phead"><button class="iconbtn" data-close aria-label="Back"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Records</h2></div>
   <div class="pbody" id="recBody"></div>
-</div>
-
-<div class="panel" id="howPanel">
-  <div class="phead"><button class="iconbtn" data-close aria-label="Back"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>How to play</h2></div>
-  <div class="pbody how">
-    <ul>
-      <li>A flag appears. Name the country it belongs to.</li>
-      <li><b>Choose</b>: pick the right country from four. Watch out, the wrong answers are often from the same part of the world, and sometimes flags that look nearly the same.</li>
-      <li><b>Type</b>: type the country's name. Spelling doesn't have to be perfect, accents don't matter, and short names like USA, UK and DRC count. You get three tries. <b>Hint</b> shows the next letter; <b>Skip</b> gives up on that flag.</li>
-      <li>Pick one or more continents, or the whole world, and how many flags to do.</li>
-      <li>Get flags right in a row to build a <b>streak</b>.</li>
-      <li>Flags you get wrong go into <b>Mistakes</b>, so you can practise just those. Get one right twice and it leaves the list.</li>
-      <li>The <b>Flag atlas</b> shows every flag with its name, for learning. A green dot means you know it well.</li>
-      <li>The first time you play, the game downloads all 197 flags (a few MB) and keeps them, so after that it works without the internet. You can start once every flag is ready.</li>
-    </ul>
-  </div>
 </div>
 
 <script>
@@ -720,10 +699,6 @@ function checkTyped(text, code) {
 /* ======================================================================
    HOME
    ====================================================================== */
-const MODES = {
-  choose: 'Pick the right country from four.',
-  type: 'Type the country. Spelling can be a little off.',
-};
 const LENS = [10, 20, 0];   // 0 = all of them
 function pool(regions = prefs.regions) {
   if (regions.includes('miss')) return COUNTRIES.filter(c => isMistake(c.code));
@@ -733,18 +708,18 @@ function pool(regions = prefs.regions) {
 const globeIc = '<svg class="ic globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>';
 function renderHome() {
   document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === prefs.mode));
-  $('#modeHelp').textContent = MODES[prefs.mode];
   const misses = COUNTRIES.filter(c => isMistake(c.code)).length;
   if (prefs.regions.includes('miss') && !misses) prefs.regions = ['world'];
   const on = id => prefs.regions.includes(id);
-  $('#regions').innerHTML = `<button class="reg world${on('world') ? ' on' : ''}" data-r="world">${globeIc}<span class="nm">Whole world</span><small>${COUNTRIES.length}</small></button>`
-    + REGIONS.map(r => `<button class="reg${on(r.id) ? ' on' : ''}" data-r="${r.id}" style="--rc:${r.col}"><span class="dotc"></span><span class="nm">${r.short || r.name}</span><small>${COUNTRIES.filter(c => c.reg === r.id).length}</small></button>`).join('')
-    + (misses ? `<button class="reg miss${on('miss') ? ' on' : ''}" data-r="miss"><svg class="ic" viewBox="0 0 24 24" style="width:19px;height:19px;color:var(--bad)"><path d="M4 20V5c4-2 7 2 11 0s5-1 5-1v9s-1-1-5 1-7-2-11 0"/></svg><span class="nm">My mistakes</span><small>${misses}</small></button>` : '');
+  $('#regions').innerHTML = `<button class="reg world${on('world') ? ' on' : ''}" data-r="world">${globeIc}World</button>`
+    + REGIONS.map(r => `<button class="reg${on(r.id) ? ' on' : ''}" data-r="${r.id}" style="--rc:${r.col}"><span class="dotc"></span>${r.short || r.name}</button>`).join('')
+    + (misses ? `<button class="reg miss${on('miss') ? ' on' : ''}" data-r="miss"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20V5c4-2 7 2 11 0s5-1 5-1v9s-1-1-5 1-7-2-11 0"/></svg>Mistakes<small>${misses}</small></button>` : '');
   const n = pool().length;
   $('#poolCount').textContent = `${n} flag${n === 1 ? '' : 's'}`;
-  $('#lenSeg').innerHTML = LENS.map(l => `<button data-len="${l}" class="${prefs.len === l ? 'on' : ''}">${l ? l : `All <small>${n}</small>`}</button>`).join('');
+  $('#lenSeg').innerHTML = LENS.map(l => `<button data-len="${l}" class="${prefs.len === l ? 'on' : ''}">${l || 'All'}</button>`).join('');
   const len = roundLen();
-  $('#playSub').textContent = `${len} flag${len === 1 ? '' : 's'} · ${prefs.mode === 'type' ? 'type the name' : 'choose from four'}`;
+  const where = on('world') ? 'the whole world' : on('miss') ? 'your mistakes' : prefs.regions.map(r => REGION[r].name).join(', ');
+  $('#playSub').textContent = `${len} flag${len === 1 ? '' : 's'} from ${where}`;
   $('#playBtn').disabled = !n || !Flags.ready;
   $('#playBtn').classList.toggle('hidden', !Flags.ready);
   renderDownload();
@@ -962,12 +937,11 @@ function confetti() {
 }
 
 /* ======================================================================
-   PANELS: atlas, records, how to play
+   PANELS: atlas and records
    ====================================================================== */
 function openPanel(id) { $(id).classList.add('show'); }
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.panel').classList.remove('show'));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.panel.show').forEach(p => p.classList.remove('show')); });
-$('#howBtn').onclick = () => openPanel('#howPanel');
 
 // Flag atlas: every flag with its name, by continent, with search
 let atlasReg = 'world';
@@ -1018,7 +992,6 @@ $('#playBtn').onclick = () => { Sound.tap(); startRound(); };
 checkFlags();
 if (!LENS.includes(prefs.len)) prefs.len = 10;
 renderHome();
-if (!load('flagquiz-seen-how', 0)) { keep('flagquiz-seen-how', 1); setTimeout(() => openPanel('#howPanel'), 700); }
 
 /* ---------- Rizzo Games hooks (menu, updates) ---------- */
 window.RizzoHooks = {
