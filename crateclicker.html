@@ -110,15 +110,15 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .crack{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s;filter:drop-shadow(0 0 3px var(--rc))}
 .crack.show{opacity:.95}
 .lid{transform-box:fill-box;transform-origin:50% 100%}
-.boxwrap.open .lid{animation:lidoff .55s cubic-bezier(.3,.6,.4,1) forwards}
+.boxwrap.open .lid{animation:lidoff var(--od,.4s) cubic-bezier(.3,.6,.4,1) forwards}
 @keyframes lidoff{to{transform:translate(18%,-130%) rotate(28deg);opacity:0}}
-.boxwrap.open #box{animation:boxgone .55s ease-in forwards}
+.boxwrap.open #box{animation:boxgone var(--od,.4s) ease-in forwards}
 @keyframes boxgone{40%{transform:scale(1.12)}to{transform:scale(.4);opacity:0}}
-.boxwrap.drop .bob{animation:beamin .55s var(--pop),bob 3.2s ease-in-out .55s infinite}
+.boxwrap.drop .bob{animation:beamin var(--dd,.4s) var(--pop),bob 3.2s ease-in-out var(--dd,.4s) infinite}
 @keyframes beamin{from{transform:translateY(-40%) scale(.5);opacity:0;filter:brightness(3)}}
 .rays{position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 45%,transparent) 0 8deg,transparent 8deg 22deg);
   -webkit-mask:radial-gradient(closest-side,#000 30%,transparent);mask:radial-gradient(closest-side,#000 30%,transparent);opacity:0;pointer-events:none}
-.boxwrap.open .rays{animation:rays .9s ease-out}
+.boxwrap.open .rays{animation:rays calc(var(--od,.4s) * 2) ease-out}
 @keyframes rays{20%{opacity:1}to{opacity:0;transform:rotate(40deg) scale(1.2)}}
 .hpbar{width:min(100%,260px);height:12px;border-radius:6px;background:rgba(5,9,25,.85);border:1px solid rgba(71,215,255,.3);overflow:hidden;position:relative;box-shadow:0 0 12px rgba(0,0,0,.5)}
 .hpbar i{position:absolute;inset:0;width:var(--p,0%);background:linear-gradient(90deg,color-mix(in srgb,var(--rc) 60%,#fff),var(--rc));box-shadow:0 0 10px var(--rc);border-radius:6px;transition:width .08s linear}
@@ -161,11 +161,11 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 .pupc{background:rgba(10,16,40,.85);border:1.5px solid var(--accent);border-radius:10px;padding:2px 8px;font-weight:900;font-size:.78rem;font-variant-numeric:tabular-nums;box-shadow:0 0 12px rgba(71,215,255,.35)}
 .pupc.low{animation:breathe 1s ease-in-out infinite}
 /* small drop cards that slide in over the crate */
-.drops{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;z-index:6;width:min(88vw,330px)}
+.drops{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);display:flex;flex-direction:column;justify-content:flex-end;gap:6px;align-items:center;pointer-events:none;z-index:6;width:min(88vw,330px)}
 .dropcard{display:flex;align-items:center;gap:10px;background:rgba(10,15,38,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid var(--rc);border-radius:14px;padding:3px 10px 3px 5px;box-shadow:0 6px 18px var(--shade),0 0 16px color-mix(in srgb,var(--rc) 40%,transparent);width:100%;animation:dropin .35s var(--pop)}
 .dropcard.out{animation:dropout .35s ease-in forwards}
-@keyframes dropin{from{transform:translateY(-40px) scale(.9);opacity:0}}
-@keyframes dropout{to{transform:translateY(-30px);opacity:0}}
+@keyframes dropin{from{transform:translateY(36px) scale(.9);opacity:0}}
+@keyframes dropout{to{transform:translateY(-14px) scale(.96);opacity:0}}
 .dropcard .e{font-size:1.3rem;display:grid;place-items:center;width:32px;height:32px;border-radius:11px;flex-shrink:0;background:radial-gradient(closest-side,color-mix(in srgb,var(--rc) 35%,transparent),transparent)}
 .dropcard b{display:block;font-weight:900;font-size:.86rem;line-height:1.15}
 .dropcard small{display:block;color:var(--muted);font-weight:800;font-size:.7rem;line-height:1.2}
@@ -395,6 +395,85 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
 @keyframes spin{to{transform:rotate(360deg)}}
 .wave{transform-box:fill-box;transform-origin:50% 0;animation:wave 2.6s ease-in-out infinite}
 @keyframes wave{40%{transform:rotate(-24deg)}60%{transform:rotate(8deg)}}
+/* Collection: a dark display gallery. Every item stands on a lit plinth in its rank's colour, as a spinning 3D model */
+.env-shelf{--acc:#ff9ad5;background:radial-gradient(70% 30% at 50% 0,rgba(255,154,213,.12),transparent),linear-gradient(180deg,#120d1d,#07060d)}
+#shelf3d{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6}
+.stabs{display:flex;gap:6px;max-width:640px;width:calc(100% - 32px);margin:2px auto 6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,154,213,.18);position:relative;z-index:1}
+.stabs button{flex:1;padding:9px 6px;border-radius:10px;font-weight:900;color:#a993b8;position:relative;font-size:.92rem}
+.stabs button.on{background:linear-gradient(#ff9ad5,#d94fa8);color:#2b0420;box-shadow:0 0 14px rgba(255,154,213,.35)}
+.stabs .dot{top:-6px;right:-4px}
+.shsum{background:rgba(255,154,213,.05);border:1px solid rgba(255,154,213,.18);border-radius:18px;padding:12px;margin:2px 0 4px}
+.shsum .top{display:flex;gap:10px}
+.shsum .top div{flex:1;background:rgba(0,0,0,.3);border-radius:12px;padding:8px 10px}
+.shsum small{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a993b8}
+.shsum b{font-family:var(--head);font-size:1.1rem;color:#fff}
+.rklegend{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}
+.rklegend span{display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:800;color:#d6c8e2;background:rgba(0,0,0,.25);border-radius:8px;padding:4px 7px}
+.rklegend i{width:10px;height:10px;border-radius:50%;background:var(--rk);box-shadow:0 0 8px var(--rk);flex-shrink:0}
+.rklegend em{font-style:normal;color:#8f7aa0;margin-left:auto}
+@media (max-width:400px){.rklegend{grid-template-columns:repeat(2,1fr)}}
+.shnote{color:#a993b8;font-weight:700;font-size:.8rem;line-height:1.4;margin:9px 2px 0}
+.shnote b{color:#fff;font:inherit;font-weight:900}
+/* a shelf for each rarity */
+.case{margin-top:18px;position:relative}
+.case h4{margin:0 4px 2px;display:flex;align-items:center;gap:8px;font-family:var(--head);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rc)}
+.case h4::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--rc);box-shadow:0 0 10px var(--rc)}
+.case h4 span{margin-left:auto;color:#8f7aa0;font-family:Nunito,sans-serif;letter-spacing:0;font-weight:800;font-size:.75rem;text-transform:none}
+.case .row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 4px;position:relative}
+/* the glass case: light from above, a plank below */
+.case .glass{position:relative;border-radius:16px 16px 6px 6px;padding:8px 4px 9px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)),radial-gradient(80% 60% at 50% 0,color-mix(in srgb,var(--rc) 14%,transparent),transparent);border:1px solid rgba(255,255,255,.07);border-bottom:0}
+.case .glass::before{content:"";position:absolute;left:10%;right:10%;top:0;height:3px;border-radius:0 0 3px 3px;background:var(--rc);box-shadow:0 0 16px 2px var(--rc);opacity:.75}
+.case .plank{height:14px;margin:0 -2px;border-radius:4px;background:linear-gradient(180deg,#3b3048,#211a2b 60%,#140f1a);box-shadow:0 8px 16px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+.slot{display:flex;flex-direction:column;align-items:center;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.slot:active .mslot{transform:scale(.95)}
+.mslot{width:100%;aspect-ratio:1;position:relative;transition:transform .15s;
+  background:radial-gradient(48% 34% at 50% 8%,rgba(255,255,255,.13),transparent 70%),radial-gradient(44% 14% at 50% 92%,color-mix(in srgb,var(--rk,#000) 30%,rgba(0,0,0,.45)),transparent)}
+.slot.none .mslot{background:radial-gradient(44% 14% at 50% 92%,rgba(0,0,0,.45),transparent)}
+.plinth{width:84%;height:20px;margin-top:-6px;border-radius:5px 5px 3px 3px;position:relative;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--rk,#4a4058) 85%,#fff) 0,var(--rk,#4a4058) 18%,color-mix(in srgb,var(--rk,#4a4058) 55%,#000) 100%);
+  box-shadow:0 0 14px color-mix(in srgb,var(--rk,#000) 45%,transparent),inset 0 -2px 0 rgba(0,0,0,.3);display:grid;place-items:center}
+.plinth b{font-family:var(--head);font-size:.5rem;font-weight:900;letter-spacing:.1em;color:rgba(0,0,0,.72);text-transform:uppercase;white-space:nowrap}
+.slot.r0 .plinth b{color:#a993b8}
+.slot.grand .plinth{background:linear-gradient(90deg,#ff5f9e,#ffb347,#fff36b,#5fffa0,#5fc8ff,#b37bff,#ff5f9e);background-size:200% 100%;animation:grand 3s linear infinite;box-shadow:0 0 18px rgba(255,120,220,.6)}
+@keyframes grand{to{background-position:200% 0}}
+.slot .nm{margin-top:5px;font-size:.62rem;font-weight:900;color:#eadff2;text-align:center;line-height:1.1;min-height:2.2em;display:flex;align-items:center}
+.slot.none .nm{color:#5d5068}
+.slot .xb{width:80%;height:4px;border-radius:2px;background:rgba(0,0,0,.55);overflow:hidden;margin-top:3px}
+.slot .xb i{display:block;height:100%;background:var(--nk,#a993b8);box-shadow:0 0 6px var(--nk,#a993b8)}
+.slot .xt{font-size:.56rem;font-weight:800;color:#8f7aa0;margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.slot.none .xb,.slot.none .xt{visibility:hidden}
+/* the close-up of one item */
+.mcard{--rc:#ff9ad5;background:radial-gradient(80% 45% at 50% 0,color-mix(in srgb,var(--rk,var(--rc)) 26%,transparent),transparent 70%),linear-gradient(180deg,#1b1424,#0d0a12);border-color:color-mix(in srgb,var(--rk,var(--rc)) 60%,transparent)}
+.mcard .mslot.big{width:min(230px,60vw);margin:-6px auto 0;touch-action:none;cursor:grab;background:radial-gradient(44% 12% at 50% 90%,color-mix(in srgb,var(--rk,#000) 35%,rgba(0,0,0,.5)),transparent)}
+.mcard .dragnote{font-size:.66rem;font-weight:800;color:#8f7aa0;margin-top:-4px}
+.mcard .fl{color:#b8a5c6}
+.mcard .rkline{display:flex;justify-content:center;gap:5px;margin:2px 0 12px}
+.mcard .rkline i{width:24px;height:7px;border-radius:4px;background:rgba(255,255,255,.08)}
+.mcard .rkline i.on{background:var(--rk);box-shadow:0 0 8px var(--rk)}
+.mcard .fxrow div{border-color:rgba(255,154,213,.15)}
+.mcard .fxrow small,.mcard .ctext{color:#a993b8}
+.mcard .primary{background:linear-gradient(#ffb6e1,#e05aae);color:#2b0420;box-shadow:0 4px 0 #8f2a68}
+/* achievements */
+.ach{display:flex;align-items:center;gap:11px;background:linear-gradient(90deg,rgba(255,154,213,.07),rgba(255,255,255,.02));border:1px solid rgba(255,154,213,.16);border-radius:16px;padding:10px 11px;margin-bottom:8px}
+.ach .medal{width:42px;height:42px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;font-family:var(--head);font-weight:900;font-size:.78rem;color:#2b0420;
+  background:radial-gradient(circle at 35% 30%,#fff 0,var(--mc,#4a4058) 45%,color-mix(in srgb,var(--mc,#4a4058) 60%,#000) 100%);box-shadow:0 0 12px color-mix(in srgb,var(--mc,#000) 50%,transparent)}
+.ach.zero .medal{color:#8f7aa0}
+.ach .am{flex:1;min-width:0}
+.ach .am b{display:block;font-weight:900;color:#fff;font-size:.95rem}
+.ach .am small{display:block;color:#a993b8;font-weight:700;font-size:.78rem}
+.ach .pips{display:flex;gap:3px;margin-top:5px}
+.ach .pips i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);max-width:34px}
+.ach .pips i.on{background:var(--mc,#ff9ad5);box-shadow:0 0 6px var(--mc,#ff9ad5)}
+.ach .pips i.part{background:linear-gradient(90deg,#ff9ad5 var(--p),rgba(255,255,255,.08) var(--p))}
+.ach .rw{flex-shrink:0;text-align:right;font-weight:900;font-size:.8rem;color:var(--gem);white-space:nowrap}
+.ach .rw small{display:block;color:#8f7aa0;font-size:.66rem;font-weight:800}
+.ach .claim{padding:9px 11px;font-size:.85rem;white-space:nowrap;background:linear-gradient(#a8f4ff,#47d7ff);color:#03202c}
+.ach.complete{opacity:.7}
+.ach.complete .rw{color:var(--ok)}
+.tag.rk{background:color-mix(in srgb,var(--rk) 28%,transparent);color:#fff;box-shadow:inset 0 0 0 1px var(--rk)}
+.tag.rkup{background:var(--rk);color:#1a0d00}
+.helpbtn svg{width:24px;height:24px}
+
 .rz-reduce-motion *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 /* short screens (phones on their side) */
 @media (max-height:520px){
@@ -402,7 +481,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   .score{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);margin:0;z-index:2}
   .score .pts{font-size:1.5rem}.score .sub{font-size:.74rem;margin-top:0}.pups{margin-top:2px}
   .taphint,.lvl{display:none}.rarity{font-size:.8rem}
-  .drops{left:calc(env(safe-area-inset-left,0px) + 12px);top:calc(env(safe-area-inset-top,0px) + 62px);transform:none;width:min(40vw,290px);align-items:stretch}
+  .drops{left:calc(env(safe-area-inset-left,0px) + 12px);transform:none;width:min(40vw,290px);align-items:stretch}
   .deck{grid-template-columns:1fr 1.4fr 1fr}
   .side{flex-direction:row;flex-wrap:wrap;justify-content:space-around;align-content:space-around}
   .station{width:48%}.station svg{width:min(15vh,60px)}.station .sb{display:none}
@@ -426,6 +505,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   <div class="topbar">
     <button class="res gems" id="gemPill" aria-label="Gems: open the Power Lab"><svg class="ico gemi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6.2L12 21.5 2 9.2z" fill="#5fdcff"/><path d="M2 9.2h20M8.8 3L12 21.5 15.2 3" stroke="#d9f8ff" stroke-width="1" fill="none" opacity=".8"/></svg> <span id="gemN">0</span></button>
     <button class="res stars" id="starPill" aria-label="Stars: open the Star Map">★ <span id="starN">0</span></button>
+    <button class="iconbtn helpbtn" id="helpBtn" aria-label="Help Bot: how to play"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="7" width="14" height="11" rx="4" fill="currentColor" opacity=".25" stroke="currentColor" stroke-width="1.8"/><circle cx="9.5" cy="12" r="1.6" fill="currentColor"/><circle cx="14.5" cy="12" r="1.6" fill="currentColor"/><path d="M12 7V4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="3.6" r="1.4" fill="#ff4fd8"/><path d="M10 15.2q2 1.2 4 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></button>
     <button class="iconbtn" id="setBtn" aria-label="Controls (settings)"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></button>
   </div>
   <div class="score">
@@ -436,9 +516,9 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   <!-- the deck: stations on both sides, the crate in the middle -->
   <div class="deck" id="deck">
     <div class="side">
-      <button class="station" data-room="cargo" aria-label="Cargo Hold: your collection"><span class="dot hidden" id="colDot"></span><span class="art"></span><span class="lbl">Cargo Hold</span><span class="sb">Collection</span></button>
+      <button class="station" data-room="cargo" aria-label="Cargo Hold: your items"><span class="dot hidden" id="colDot"></span><span class="art"></span><span class="lbl">Cargo Hold</span><span class="sb">Your items</span></button>
       <button class="station" data-room="fab" aria-label="Fabricator: buy crates"><span class="art"></span><span class="lbl">Fabricator</span><span class="sb">Crates</span></button>
-      <button class="station" data-room="bot" aria-label="Help Bot: how to play"><span class="art"></span><span class="lbl">Help Bot</span><span class="sb">How to play</span></button>
+      <button class="station" data-room="shelf" aria-label="Collection: ranks and achievements"><span class="dot hidden" id="shelfDot"></span><span class="art"></span><span class="lbl">Collection</span><span class="sb">Ranks · Trophies</span></button>
     </div>
     <div class="stage" id="stage">
       <div class="rarity" id="rarityName">Common</div>
@@ -485,6 +565,14 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
   <div class="sheet" id="itemSheet"><div class="sheetbg"></div><div class="sheetcard" id="sheetCard"></div></div>
 </div>
 
+<div class="panel env-shelf" id="shelfPanel">
+  <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Collection</h2><b class="cur" id="shelfCur"></b></div>
+  <div class="stabs" id="shelfTabs"><button data-t="shelf" class="on">Shelf</button><button data-t="ach">Achievements<span class="dot hidden" id="achDot"></span></button></div>
+  <div class="pbody" id="shelfBody"></div>
+  <canvas id="shelf3d" aria-hidden="true"></canvas>
+  <div class="sheet" id="modelSheet"><div class="sheetbg"></div><div class="sheetcard mcard" id="modelCard"></div></div>
+</div>
+
 <div class="panel env-fab" id="fabPanel">
   <div class="phead"><button class="iconbtn" data-close aria-label="Back to the deck"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h2>Fabricator</h2><b class="cur" id="fabCur"></b></div>
   <div class="banner"><span class="art" data-art="fab"></span><p>Special crates, built to order. They go straight onto the pad, before the free ones.</p></div>
@@ -521,6 +609,8 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;str
       <li>Most crates are <b>standard</b> cargo crates with one item. Now and then a <b>Choice pod</b> (pick one of three items) or a <b>Multi stack</b> (four items) turns up. The <b>Fabricator</b> builds those and more: Lucky orbs, Copycat canisters and Mega containers.</li>
       <li><b>Crates get tougher.</b> Every 25 crates you open, the crate level goes up and crates need more taps (and pay out more).</li>
       <li>Every new crate level gives you a <b>gem</b> (two for a new best). Spend gems in the <b>Power Lab</b> on power-ups, and check the <b>Trade Post</b> for new one-time deals every day.</li>
+      <li><b>Ranks:</b> once an item reaches tier 10, every extra copy builds its rank: Bronze, Silver, Gold, Platinum, Diamond, then Grand. Each rank multiplies that item's boost and pays gems, and ranks are <b>kept through prestige</b>. Common items need the most copies, so getting everything to Grand takes a very long time.</li>
+      <li>See your ranks as 3D models in the <b>Collection</b>, where you'll also find <b>achievements</b> that pay gems.</li>
       <li>When it gets slow, go to the <b>Star Map</b> and <b>prestige</b>. You start again from crate level 1 with no items, but you earn <b>stars</b>, and every star makes your taps and points stronger for good.</li>
       <li>Automatic taps keep earning points (at half speed) while you're away, for up to 4 hours.</li>
     </ul>
@@ -711,7 +801,24 @@ const OFFLINE_MAX = 4 * 3600, OFFLINE_RATE = .5;
 // copies needed to go from one tier to the next: 2, 4, 6, ... (so tier 10 takes 90 duplicates)
 const needFor = tier => 2 * tier;
 // an item's boost at a tier: half as much again for every tier (tier 10 is 5.5 times tier 1)
-const valueAt = (it, tier) => it.v * (1 + (tier - 1) * .5);
+const valueAt = (it, tier) => it.v * (1 + (tier - 1) * .5) * rankX(it.id);
+/* ---------- Ranks: the long game ----------
+   Once an item is at tier 10, every extra copy of it builds its rank: Bronze, Silver, Gold,
+   Platinum, Diamond, Grand. Ranks stay through prestige, multiply the item's boost and pay gems.
+   Copies needed per step are scaled by rarity: commons need 3 times as many as rares,
+   mythics a twelfth. A Rare item takes 8,260 copies after tier 10 to reach Grand. */
+const RANKS = [
+  {name: 'Bronze', col: '#d98b4a', x: 1.25, gems: 2},
+  {name: 'Silver', col: '#cfd8e8', x: 1.5, gems: 4},
+  {name: 'Gold', col: '#ffcc33', x: 2, gems: 6},
+  {name: 'Platinum', col: '#8ff0e0', x: 2.75, gems: 10},
+  {name: 'Diamond', col: '#7fd8ff', x: 3.75, gems: 15},
+  {name: 'Grand', col: '#ff5fd2', x: 5, gems: 25},
+];
+const RANK_STEP = [40, 120, 300, 800, 2000, 5000], RANK_RARITY = [3, 2, 1, .5, .2, .08];
+const rankNeed = (it, rank) => Math.ceil(RANK_STEP[rank] * RANK_RARITY[it.r]);   // copies from this rank to the next (rank 0 = none yet)
+const col = id => S.col[id] || {rank: 0, xp: 0};
+const rankX = id => { const k = col(id).rank; return k ? RANKS[k - 1].x : 1; };
 // crates get tougher: every 25 crates in a run the crate level goes up, and crates need 8% more taps
 const PER_LEVEL = 25, LEVEL_HP = 1.08;
 const crateLevel = () => 1 + Math.floor(S.run / PER_LEVEL);
@@ -722,7 +829,8 @@ const starsAt = lv => lv < STAR_MIN ? 0 : Math.floor(Math.pow(lv / 4, 2));
 /* ---------- State (saved) ---------- */
 // run: crates opened since the last prestige; found: every item you've ever had; pending: a choice crate waiting for you to pick
 const fresh = () => ({pts: 0, total: 0, life: 0, taps: 0, run: 0, opened: [0, 0, 0, 0, 0, 0], items: {}, found: {}, bought: {choice: 0, multi: 0}, queue: [], box: null, next: null, pending: null,
-  seen: 0, last: Date.now(), best: -1, stars: 0, prestiges: 0, bestLevel: 1, gems: 0, pups: {}, daily: {day: '', bought: [], seen: ''}});
+  seen: 0, last: Date.now(), best: -1, stars: 0, prestiges: 0, bestLevel: 1, gems: 0, pups: {}, daily: {day: '', bought: [], seen: ''},
+  col: {}, maxed: {}, ach: {}, achSeen: {}, pupBuys: 0, dealBuys: 0});
 let S = Object.assign(fresh(), load(SAVE, {}));
 let prefs = Object.assign({buzz: true}, load(PREFS, {}));
 const vibrate = ms => { if (prefs.buzz && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
@@ -811,9 +919,16 @@ function autoTaps(dt) {
 /* ---------- Opening ---------- */
 let opening = false;
 const pickFrom = r => { const pool = ITEMS.filter(i => i.r === r); return pool[Math.random() * pool.length | 0]; };
+let lastOpenAt = 0;
 function openBox() {
   const {r, t} = S.box;
   opening = true;
+  // how fast are crates being opened? from about 3 s apart (relaxed) down to a few tenths (almost instant)
+  const nowT = performance.now(), gap = lastOpenAt ? nowT - lastOpenAt : 3000; lastOpenAt = nowT;
+  const pace = Math.max(0, Math.min(1, (gap - 250) / 2750));
+  const bwp = $('#boxwrap');
+  bwp.style.setProperty('--od', (.08 + .3 * pace).toFixed(3) + 's');
+  bwp.style.setProperty('--dd', (.1 + .3 * pace).toFixed(3) + 's');
   S.opened[r]++; S.run++; S.best = Math.max(S.best, r);
   const lvlUp = S.run % PER_LEVEL === 0;
   let gemsGot = 0;
@@ -860,16 +975,29 @@ function openBox() {
     takeNext(); drawBox(true); opening = false; refresh(true);
     if (lvlUp) toast(`Crate level <b>${crateLevel()}</b>! <span class="gemc">+${gemsGot} ${GEMI}</span><br><small>Crates are tougher now, and pay out more</small>`, 2400);
     if (starsAt(crateLevel()) > 0 && !S.starHint) { S.starHint = 1; setTimeout(() => toast('You can <b>prestige</b> now! Tap the ★ to see', 3200), 2600); }
-  }, reduced() ? 50 : 520);
+  }, reduced() ? 50 : Math.round(30 + 290 * pace));
 }
 // a new item, or a copy of one you have: copies fill the bar, a full bar raises the tier
 function addItem(it) {
   let h = S.items[it.id], res;
   if (!h) { h = S.items[it.id] = {tier: 1, copies: 0, at: Date.now()}; res = {it, status: S.found[it.id] ? 'back' : 'new'}; S.found[it.id] = 1; }
-  else if (h.tier >= MAX_TIER) { const extra = boxHP(it.r) * B.perTap * 3; earn(extra); res = {it, status: 'max', extra}; }
+  else if (h.tier >= MAX_TIER) {
+    // maxed: the copy pays points and builds the item's rank
+    const extra = boxHP(it.r) * B.perTap * 3; earn(extra);
+    const c = S.col[it.id] = S.col[it.id] || {rank: 0, xp: 0};
+    S.maxed[it.id] = 1;
+    if (c.rank >= RANKS.length) res = {it, status: 'grand', extra};
+    else if (++c.xp >= rankNeed(it, c.rank)) {
+      c.xp = 0; c.rank++;
+      const R = RANKS[c.rank - 1]; S.gems += R.gems;
+      res = {it, status: 'rank', rank: c.rank, extra};
+      Sound.rank(c.rank); vibrate([20, 30, 40]);
+      setTimeout(() => toast(`<b style="color:${R.col}">${R.name.toUpperCase()} RANK</b><br>${it.name} · boost ×${R.x}<br><span class="gemc">+${R.gems} ${GEMI}</span>`, 3000), 450);
+    } else res = {it, status: 'max', extra};
+  }
   else {
     h.copies++;
-    if (h.copies >= needFor(h.tier)) { h.copies = 0; h.tier++; res = {it, status: 'up', tier: h.tier}; Sound.tierUp(); }
+    if (h.copies >= needFor(h.tier)) { h.copies = 0; h.tier++; res = {it, status: 'up', tier: h.tier}; Sound.tierUp(); if (h.tier >= MAX_TIER) S.maxed[it.id] = 1; }
     else res = {it, status: 'copy'};
   }
   S.unseen = (S.unseen || 0) + (res.status === 'new' || res.status === 'up' ? 1 : 0);
@@ -878,17 +1006,21 @@ function addItem(it) {
 const statusTag = g => g.status === 'new' ? '<span class="tag new">NEW!</span>'
   : g.status === 'back' ? '<span class="tag new">BACK!</span>'
   : g.status === 'up' ? `<span class="tag up">TIER ${g.tier}!</span>`
-  : g.status === 'max' ? `<span class="tag">MAX · +${fmt(g.extra)}</span>`
+  : g.status === 'rank' ? `<span class="tag rkup" style="--rk:${RANKS[g.rank - 1].col}">${RANKS[g.rank - 1].name.toUpperCase()}!</span>`
+  : g.status === 'grand' ? `<span class="tag rk" style="--rk:#ff5fd2">GRAND · +${fmt(g.extra)}</span>`
+  : g.status === 'max' ? (() => { const c = col(g.it.id), R = RANKS[c.rank]; return `<span class="tag rk" style="--rk:${R.col}">${R.name} ${c.xp}/${rankNeed(g.it, c.rank)}</span>`; })()
   : `<span class="tag">${S.items[g.it.id].copies}/${needFor(S.items[g.it.id].tier)} to tier ${S.items[g.it.id].tier + 1}</span>`;
 const effectText = (it, tier) => `${KINDS[it.kind].name} ${KINDS[it.kind].show(valueAt(it, tier))}`;
 function showDrop(g) {
   const el = document.createElement('div');
   el.className = 'dropcard'; el.style.setProperty('--rc', rc(g.it.r));
   el.innerHTML = `<span class="e">${g.it.e}</span><div><b>${g.it.name}</b><small>${effectText(g.it, S.items[g.it.id].tier)}</small></div>${statusTag(g)}`;
-  const box = $('#drops'); box.appendChild(el);
+  const box = $('#drops'); placeDrops(); box.appendChild(el);
   while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 360); }, 2200);
 }
+// drop notifications stack up from just above the stats console at the bottom
+function placeDrops() { const b = document.querySelector('.bottom').getBoundingClientRect(); $('#drops').style.bottom = Math.max(8, innerHeight - b.top + 8) + 'px'; }
 // quick reveals: a choice pod just takes its first item
 function autoChoose() {
   const p = S.pending; if (!p) return;
@@ -903,7 +1035,7 @@ function showGroup(title, got) {
   const nNew = got.filter(g => g.status === 'new' || g.status === 'back').length, nUp = got.filter(g => g.status === 'up').length;
   const tag = nNew || nUp ? `<span class="tag ${nNew ? 'new' : 'up'}">${[nNew && nNew + ' new', nUp && nUp + ' tier up'].filter(Boolean).join(' · ')}</span>` : `<span class="tag">${got.length} items</span>`;
   el.innerHTML = `<div style="flex:1;min-width:0"><div class="ghead"><b>${title}</b>${tag}</div><span class="icons">${got.map(g => `<span class="mi${g.status === 'new' || g.status === 'back' ? ' n' : g.status === 'up' ? ' u' : ''}" style="--rc:${rc(g.it.r)}">${g.it.e}</span>`).join('')}</span></div>`;
-  const box = $('#drops'); box.appendChild(el);
+  const box = $('#drops'); placeDrops(); box.appendChild(el);
   while (box.children.length > 2) box.firstChild.remove();
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 360); }, 3200);
 }
@@ -1111,6 +1243,17 @@ const ART = {
     <g class="spin">${STAR(50, 34, 1.15, '#ffd36b', '#ffefb0')}</g>
     <ellipse cx="50" cy="88" rx="30" ry="7" fill="#24304f"/><rect x="32" y="72" width="36" height="16" rx="4" fill="#3a4876"/>
     <ellipse cx="50" cy="73" rx="12" ry="3.5" fill="#ffd36b" class="blink"/></svg>`,
+  // Collection: a glass display case with three items on glowing plinths
+  shelf: `<svg viewBox="0 0 100 100"><defs><linearGradient id="shg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9ad5" stop-opacity=".35"/><stop offset="1" stop-color="#ff9ad5" stop-opacity="0"/></linearGradient></defs>
+    <rect x="10" y="10" width="80" height="80" rx="8" fill="#1a1426" stroke="#ff9ad5" stroke-opacity=".55" stroke-width="2.5"/>
+    <rect x="14" y="13" width="72" height="4" rx="2" fill="#ff9ad5" class="blink"/><path d="M18 17h64L72 60H28z" fill="url(#shg)"/>
+    <rect x="14" y="60" width="72" height="5" rx="2" fill="#3b3048"/><rect x="14" y="84" width="72" height="4" rx="2" fill="#3b3048"/>
+    <rect x="20" y="52" width="16" height="8" rx="2" fill="#d98b4a"/><rect x="42" y="50" width="16" height="10" rx="2" fill="#ffcc33"/><rect x="64" y="52" width="16" height="8" rx="2" fill="#cfd8e8"/>
+    <circle cx="28" cy="44" r="7" fill="#4f93ff"/><circle cx="25.5" cy="41.5" r="2" fill="#fff" opacity=".7"/>
+    <path d="M50 26l3.5 7.5 8 1-6 5.5 1.6 8L50 44l-7 4 1.6-8-6-5.5 8-1z" fill="#ffd36b" stroke="#fff3c4" stroke-width="1.2" stroke-linejoin="round"/>
+    <rect x="66" y="37" width="12" height="15" rx="3" fill="#38d47f"/><rect x="69" y="40" width="6" height="3" rx="1.5" fill="#d4ffe6"/>
+    <rect x="20" y="70" width="60" height="8" rx="3" fill="#2a2138"/><rect x="24" y="73" width="20" height="2.5" rx="1" fill="#ff5fd2" class="blink b2"/>
+    <path d="M16 20h14L16 52z" fill="#fff" opacity=".06"/></svg>`,
   // Help Bot: a friendly robot with a screen face
   bot: `<svg viewBox="0 0 100 100"><rect x="30" y="86" width="40" height="9" rx="4.5" fill="#232b45"/>
     <rect x="28" y="50" width="44" height="38" rx="10" fill="#3a4876"/><circle cx="50" cy="68" r="6" fill="#5dff9b" class="blink"/>
@@ -1473,6 +1616,8 @@ const Sound = (() => {
     tierUp() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, .18, 'square', .045, .35 + i * .06)); },
     buy() { tone(660, .08, 'triangle', .12); tone(990, .12, 'triangle', .1, .07); },
     no() { tone(200, .15, 'square', .06, 0, .7); },
+    rank(k) { [523, 659, 784, 1047, 1319, 1568, 2093].slice(0, 3 + k).forEach((f, i) => { tone(f, .3, 'triangle', .1, .3 + i * .07); tone(f * 2, .25, 'sine', .04, .3 + i * .07); }); },
+    ach() { [880, 1109, 1319, 1760].forEach((f, i) => tone(f, .2, 'sine', .09, i * .08)); },
   };
 })();
 
@@ -1492,7 +1637,8 @@ function renderCollection() {
       const h = S.items[it.id];
       if (!h) { const lost = S.found[it.id]; return `<button class="pod ${lost ? 'lost' : 'none'}" data-id="${it.id}" aria-label="${lost ? it.name : 'Not found yet'}"><span class="pi">${it.e}</span><span class="nm">${lost ? it.name : '???'}</span><span class="pb"></span></button>`; }
       const p = h.tier >= MAX_TIER ? 100 : 100 * h.copies / needFor(h.tier);
-      return `<button class="pod have${it.r === 5 ? ' mythic-r' : ''}" data-id="${it.id}"><span class="tier">${h.tier >= MAX_TIER ? 'MAX' : 'T' + h.tier}</span><span class="pi">${it.e}</span><span class="nm">${it.name}</span><span class="pb"><i style="width:${p}%"></i></span></button>`;
+      const rk = col(it.id).rank;
+      return `<button class="pod have${it.r === 5 ? ' mythic-r' : ''}" data-id="${it.id}"><span class="tier"${rk ? ` style="background:${RANKS[rk - 1].col}"` : ''}>${h.tier >= MAX_TIER ? (rk ? RANKS[rk - 1].name : 'MAX') : 'T' + h.tier}</span><span class="pi">${it.e}</span><span class="nm">${it.name}</span><span class="pb"><i style="width:${p}%"></i></span></button>`;
     }).join('') + '</div></div>';
   }).join('');
   $('#colGrid').querySelectorAll('.pod').forEach(t => t.onclick = () => openSheet(t.dataset.id));
@@ -1506,8 +1652,9 @@ function openSheet(id) {
   if (h) {
     const max = h.tier >= MAX_TIER, need = needFor(h.tier);
     body = `<div class="fxrow"><div><small>Now · tier ${h.tier}</small><b>${K.name} ${K.show(valueAt(it, h.tier))}</b></div>
-      <div class="nx"><small>${max ? 'Max tier' : 'At tier ' + (h.tier + 1)}</small><b>${max ? 'Copies pay points' : K.show(valueAt(it, h.tier + 1))}</b></div></div>
-      ${max ? '' : `<div class="cbar"><i style="width:${100 * h.copies / need}%"></i></div><div class="ctext">${h.copies} / ${need} copies to tier ${h.tier + 1}</div>`}`;
+      <div class="nx"><small>${max ? 'Max tier' : 'At tier ' + (h.tier + 1)}</small><b>${max ? 'Copies build rank' : K.show(valueAt(it, h.tier + 1))}</b></div></div>
+      ${max ? (() => { const c = col(id); if (c.rank >= RANKS.length) return '<div class="ctext">Grand rank: the very top!</div>'; const R = RANKS[c.rank], nd = rankNeed(it, c.rank); return `<div class="cbar" style="--rc:${R.col}"><i style="width:${100 * c.xp / nd}%"></i></div><div class="ctext">${c.xp.toLocaleString()} / ${nd.toLocaleString()} copies to ${R.name} rank</div>`; })()
+        : `<div class="cbar"><i style="width:${100 * h.copies / need}%"></i></div><div class="ctext">${h.copies} / ${need} copies to tier ${h.tier + 1}</div>`}`;
   } else body = `<div class="fxrow"><div><small>Gives</small><b>${K.name} ${K.show(valueAt(it, 1))}</b></div><div class="nx"><small>Found in</small><b>${RARITIES[it.r].name} crates</b></div></div>
       <div class="ctext">${lost ? "You had this before you prestiged. Find it again to get its boost back." : 'Not found yet.'}</div>`;
   c.innerHTML = `<div class="big">${it.e}</div><div class="rn">${RARITIES[it.r].name}</div><h3>${h || lost ? it.name : '???'}</h3>
@@ -1600,7 +1747,7 @@ function buyCrate(t) {
 function buyPup(id) {
   const P = PUPS[id];
   if (S.gems < P.gems) { Sound.no(); return; }
-  S.gems -= P.gems; addPup(id, P.secs);
+  S.gems -= P.gems; addPup(id, P.secs); S.pupBuys = (S.pupBuys || 0) + 1;
   bought(`${P.e} ${P.name} on!`);
 }
 function buyDeal(i) {
@@ -1608,11 +1755,11 @@ function buyDeal(i) {
   if (day.bought.includes(i)) return;
   if (d.k === 'pup') {
     if (S.gems < price) { Sound.no(); return; }
-    S.gems -= price; day.bought.push(i); addPup(d.id, d.secs);
+    S.gems -= price; day.bought.push(i); addPup(d.id, d.secs); S.dealBuys = (S.dealBuys || 0) + 1;
     bought(`${PUPS[d.id].e} ${PUPS[d.id].name} on for ${fmtTime(d.secs)}!`);
   } else {
     if (S.pts < price || S.queue.length >= QUEUE_MAX) { Sound.no(); return; }
-    S.pts -= price; day.bought.push(i);
+    S.pts -= price; day.bought.push(i); S.dealBuys = (S.dealBuys || 0) + 1;
     const c = d.k === 'sale' ? makeCrate(d.t) : {t: 'std', r: d.r}; addCrate(c);
     bought(`${R0(c.r)} ${d.k === 'sale' ? TYPES[d.t].name : 'crate'} added: it's next!`);
   }
@@ -1629,6 +1776,7 @@ const R0 = r => `<span style="color:${rc(r)}">${RARITIES[r].name}</span>`;
 function openRoom(room) {
   if (room === 'cargo') { S.unseen = 0; refresh(true); renderCollection(); closeSheet(); }
   else if (room === 'star') { prestigeArmed = 0; renderStars(); }
+  else if (room === 'shelf') openShelf();
   else if (room !== 'bot') { shopTab = room; renderShop(true); }
   Sound.door(); vibrate(8);
   openPanel(`#${room}Panel`);
@@ -1636,6 +1784,7 @@ function openRoom(room) {
 document.querySelectorAll('.station').forEach(b => { b.querySelector('.art').innerHTML = ART[b.dataset.room]; b.onclick = () => openRoom(b.dataset.room); });
 document.querySelectorAll('[data-art]').forEach(el => el.innerHTML = ART[el.dataset.art]);
 $('#gemPill').onclick = () => openRoom('lab');
+$('#helpBtn').onclick = () => openRoom('bot');
 // the stats console folds away (and remembers)
 $('#app').classList.toggle('hudmin', !!prefs.hudMin);
 $('#hudBtn').onclick = () => { prefs.hudMin = !prefs.hudMin; keep(PREFS, prefs); $('#app').classList.toggle('hudmin', prefs.hudMin); vibrate(6); };
@@ -1652,7 +1801,7 @@ function renderStars() {
       ${gain ? `Prestige now for <b style="color:var(--gold)">+${fmt(gain)} ★</b>, which would make taps and points <b>×${after.toFixed(1)}</b>. Level ${nextLv} would give ${fmt(starsAt(nextLv))} ★.`
              : `Reach crate level <b>${STAR_MIN}</b> to earn stars (${STAR_MIN - lv} more level${STAR_MIN - lv > 1 ? 's' : ''}). Level ${STAR_MIN} gives ${starsAt(STAR_MIN)} ★.`}</p></div>
     <div class="pcard"><h3>How it works</h3><p>Every star adds <b>${STAR_BONUS * 100}%</b> to your tap power and points, for good. The higher the crate level you reach, the more stars you get, so with each prestige you'll get further.</p>
-      <p style="margin-top:8px">Prestige resets your points, items, tiers, crate level and shop prices. You keep your stars, gems, power-ups, stats and the record of every item you've found.</p></div>
+      <p style="margin-top:8px">Prestige resets your points, items, tiers, crate level and shop prices. You keep your stars, gems, power-ups, item <b>ranks</b>, achievements, stats and the record of every item you've found.</p></div>
     <button class="primary pbtn" id="doPrestige" ${gain ? '' : 'disabled'}>${gain ? `Prestige for +${fmt(gain)} ★` : `Prestige at crate level ${STAR_MIN}`}</button>`;
   $('#doPrestige').onclick = () => {
     if (!gain) return;
@@ -1661,7 +1810,7 @@ function renderStars() {
   };
 }
 function prestige(gain) {
-  const keepKeys = ['life', 'taps', 'opened', 'found', 'seen', 'best', 'bestLevel', 'gems', 'pups', 'daily'];
+  const keepKeys = ['life', 'taps', 'opened', 'found', 'seen', 'best', 'bestLevel', 'gems', 'pups', 'daily', 'col', 'maxed', 'ach', 'achSeen', 'pupBuys', 'dealBuys'];
   const old = S; S = fresh();
   keepKeys.forEach(k => S[k] = old[k]);
   S.stars = old.stars + gain; S.prestiges = old.prestiges + 1; S.starHint = 1;
@@ -1691,8 +1840,631 @@ $('#sReset').onclick = () => {
   $('#setPanel').classList.remove('show'); $('#tapHint').classList.remove('hidden'); toast('Fresh start!');
 };
 
+/* ======================================================================
+   3D MODELS for the Collection shelf
+   A tiny WebGL renderer (no libraries). Every item is built from simple
+   shapes (spheres, tubes, boxes, rings, star prisms), lit with a key light,
+   a fill light and a rim light, and can glow. One canvas covers the screen
+   and each model is drawn into the box of its slot on the page.
+   ====================================================================== */
+const View3D = (() => {
+  /* ---------- small maths ---------- */
+  const rad = d => d * Math.PI / 180;
+  const mul = (a, b) => {   // 4x4, column-major
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; }
+    return o;
+  };
+  const ident = () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const trans = (x, y, z) => { const m = ident(); m[12] = x; m[13] = y; m[14] = z; return m; };
+  const scl = (x, y, z) => { const m = ident(); m[0] = x; m[5] = y; m[10] = z; return m; };
+  const rotX = a => { const c = Math.cos(a), s = Math.sin(a), m = ident(); m[5] = c; m[6] = s; m[9] = -s; m[10] = c; return m; };
+  const rotY = a => { const c = Math.cos(a), s = Math.sin(a), m = ident(); m[0] = c; m[2] = -s; m[8] = s; m[10] = c; return m; };
+  const rotZ = a => { const c = Math.cos(a), s = Math.sin(a), m = ident(); m[0] = c; m[1] = s; m[4] = -s; m[5] = c; return m; };
+  const persp = (fov, asp, n, f) => { const t = 1 / Math.tan(fov / 2), m = new Float32Array(16); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; };
+  const norm3 = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const hex = h => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); };
+
+  /* ---------- shapes: each returns triangles as {p: [...xyz], n: [...xyz]} ---------- */
+  function quadGrid(nu, nv, at) {   // at(i, j) -> [pos, normal]
+    const p = [], n = [], w = [], g = [];
+    for (let j = 0; j <= nv; j++) { g.push([]); for (let i = 0; i <= nu; i++) g[j].push(at(i, j)); }
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+      const a = g[j][i], b = g[j][i + 1], c = g[j + 1][i + 1], d = g[j + 1][i];
+      for (const v of [a, b, c, a, c, d]) { p.push(...v[0]); n.push(...v[1]); w.push(v[2] || 0); }
+    }
+    return {p, n, w};
+  }
+  const sphere = (r = 1, nu = 28, nv = 18) => quadGrid(nu, nv, (i, j) => {
+    const th = Math.PI * j / nv, ph = 2 * Math.PI * i / nu, d = [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)];
+    return [d.map(x => x * r), d];
+  });
+  // a shape turned on a lathe: profile is [[radius, y], ...] from bottom to top; corners stay sharp
+  function lathe(prof, seg = 28) {
+    const p = [], n = [];
+    for (let k = 0; k < prof.length - 1; k++) {
+      const [r0, y0] = prof[k], [r1, y1] = prof[k + 1];
+      const nn = norm3([y1 - y0, -(r1 - r0), 0]);   // outward normal of this band (in the r-y plane)
+      for (let i = 0; i < seg; i++) {
+        const a0 = 2 * Math.PI * i / seg, a1 = 2 * Math.PI * (i + 1) / seg;
+        const P = (r, y, a) => [r * Math.cos(a), y, r * Math.sin(a)], Nn = a => [nn[0] * Math.cos(a), nn[1], nn[0] * Math.sin(a)];
+        const v = [[P(r0, y0, a0), Nn(a0)], [P(r0, y0, a1), Nn(a1)], [P(r1, y1, a1), Nn(a1)], [P(r1, y1, a0), Nn(a0)]];
+        for (const q of [v[0], v[1], v[2], v[0], v[2], v[3]]) { p.push(...q[0]); n.push(...q[1]); }
+      }
+    }
+    return {p, n};
+  }
+  // a smooth lathe: normals averaged between bands (for round things)
+  function latheSmooth(prof, seg = 28) {
+    const nrm = prof.map((q, k) => {
+      const a = prof[Math.max(0, k - 1)], b = prof[Math.min(prof.length - 1, k + 1)];
+      return norm3([b[1] - a[1], -(b[0] - a[0]), 0]);
+    });
+    return quadGrid(seg, prof.length - 1, (i, j) => {
+      const a = 2 * Math.PI * i / seg, [r, y] = prof[j], nn = nrm[j];
+      return [[r * Math.cos(a), y, r * Math.sin(a)], [nn[0] * Math.cos(a), nn[1], nn[0] * Math.sin(a)]];
+    });
+  }
+  const cyl = (r = 1, h = 1, seg = 28, r2 = r) => lathe([[0, -h / 2], [r, -h / 2], [r2, h / 2], [0, h / 2]], seg);
+  const cone = (r = 1, h = 1, seg = 28) => lathe([[0, -h / 2], [r, -h / 2], [0, h / 2]], seg);
+  const torus = (R = 1, r = .3, nu = 36, nv = 14, arc = 2 * Math.PI) => quadGrid(nu, nv, (i, j) => {
+    const u = arc * i / nu, v = 2 * Math.PI * j / nv, c = [Math.cos(u), 0, Math.sin(u)], d = [Math.cos(v) * c[0], Math.sin(v), Math.cos(v) * c[2]];
+    return [[R * c[0] + r * d[0], r * d[1], R * c[2] + r * d[2]], d];
+  });
+  function box(w = 1, h = 1, d = 1) {
+    const p = [], n = [], x = w / 2, y = h / 2, z = d / 2;
+    const face = (N, a, b, c, e) => { for (const v of [a, b, c, a, c, e]) { p.push(...v); n.push(...N); } };
+    face([0, 0, 1], [-x, -y, z], [x, -y, z], [x, y, z], [-x, y, z]);
+    face([0, 0, -1], [x, -y, -z], [-x, -y, -z], [-x, y, -z], [x, y, -z]);
+    face([1, 0, 0], [x, -y, z], [x, -y, -z], [x, y, -z], [x, y, z]);
+    face([-1, 0, 0], [-x, -y, -z], [-x, -y, z], [-x, y, z], [-x, y, -z]);
+    face([0, 1, 0], [-x, y, z], [x, y, z], [x, y, -z], [-x, y, -z]);
+    face([0, -1, 0], [-x, -y, -z], [x, -y, -z], [x, -y, z], [-x, -y, z]);
+    return {p, n};
+  }
+  // a rounded box: a box with its edges bevelled off (looks much more solid than a plain box)
+  function rbox(w, h, d, b = .08) {
+    const s = box(w - 2 * b, h - 2 * b, d - 2 * b), p = [], n = [];
+    // inflate: push every vertex out along a blend of its face normal and corner direction
+    for (let k = 0; k < s.p.length; k += 3) {
+      const v = [s.p[k], s.p[k + 1], s.p[k + 2]], N = [s.n[k], s.n[k + 1], s.n[k + 2]];
+      p.push(v[0] + N[0] * b, v[1] + N[1] * b, v[2] + N[2] * b); n.push(...N);
+    }
+    // edge strips between faces
+    const X = w / 2 - b, Y = h / 2 - b, Z = d / 2 - b, seg = 4;
+    const strip = (o, ax, len, d1, d2) => {   // a quarter-round along axis ax at offset o, turning from d1 to d2
+      for (let i = 0; i < seg; i++) {
+        const a0 = Math.PI / 2 * i / seg, a1 = Math.PI / 2 * (i + 1) / seg;
+        const N0 = d1.map((v, k) => v * Math.cos(a0) + d2[k] * Math.sin(a0)), N1 = d1.map((v, k) => v * Math.cos(a1) + d2[k] * Math.sin(a1));
+        const A = t => o.map((v, k) => v + ax[k] * t);
+        const q = [[A(-len), N0], [A(len), N0], [A(len), N1], [A(-len), N1]].map(([P, Nn]) => [P.map((v, k) => v + Nn[k] * b), Nn]);
+        for (const v of [q[0], q[1], q[2], q[0], q[2], q[3]]) { p.push(...v[0]); n.push(...v[1]); }
+      }
+    };
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
+      strip([sx * X, sy * Y, 0], [0, 0, 1], Z, [sx, 0, 0], [0, sy, 0]);
+      strip([sx * X, 0, sy * Z], [0, 1, 0], Y, [sx, 0, 0], [0, 0, sy]);
+      strip([0, sx * Y, sy * Z], [1, 0, 0], X, [0, sx, 0], [0, 0, sy]);
+    }
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {   // corners: an eighth of a sphere
+      const c = [sx * X, sy * Y, sz * Z];
+      for (let i = 0; i < seg; i++) for (let j = 0; j < seg; j++) {
+        const P = (a, e) => { const N = [sx * Math.cos(e) * Math.cos(a), sy * Math.sin(e), sz * Math.cos(e) * Math.sin(a)]; return [c.map((v, k) => v + N[k] * b), N]; };
+        const a0 = Math.PI / 2 * i / seg, a1 = Math.PI / 2 * (i + 1) / seg, e0 = Math.PI / 2 * j / seg, e1 = Math.PI / 2 * (j + 1) / seg;
+        const q = [P(a0, e0), P(a1, e0), P(a1, e1), P(a0, e1)];
+        for (const v of [q[0], q[1], q[2], q[0], q[2], q[3]]) { p.push(...v[0]); n.push(...v[1]); }
+      }
+    }
+    return {p, n};
+  }
+  // a flat shape pushed out into a slab: pts are [x, y] round the outline (star-shaped from its middle)
+  function prism(pts, depth, bevel = 0) {
+    const p = [], n = [], z = depth / 2;
+    const cx = pts.reduce((s, q) => s + q[0], 0) / pts.length, cy = pts.reduce((s, q) => s + q[1], 0) / pts.length;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      // front and back
+      for (const [zz, N] of [[z, [0, 0, 1]], [-z, [0, 0, -1]]]) for (const v of [[cx, cy, zz + Math.sign(zz) * bevel], [a[0], a[1], zz], [b[0], b[1], zz]]) { p.push(...v); n.push(...N); }
+      const N = norm3([b[1] - a[1], -(b[0] - a[0]), 0]);
+      for (const v of [[a[0], a[1], -z], [b[0], b[1], -z], [b[0], b[1], z], [a[0], a[1], -z], [b[0], b[1], z], [a[0], a[1], z]]) { p.push(...v); n.push(...N); }
+    }
+    // if the outline goes the other way round, the side normals point in; flip them
+    let area = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a[0] * b[1] - b[0] * a[1]; }
+    if (area < 0) for (let k = 0; k < n.length; k += 3) if (n[k + 2] === 0) { n[k] = -n[k]; n[k + 1] = -n[k + 1]; }
+    return {p, n};
+  }
+  const starPts = (k, R, r, rot = -Math.PI / 2) => Array.from({length: k * 2}, (_, i) => { const a = rot + Math.PI * i / k, q = i % 2 ? r : R; return [q * Math.cos(a), q * Math.sin(a)]; });
+  // a bumpy rock: a sphere pushed in and out, with flat faces so it looks chipped
+  // a bumpy rock; w (0..1) marks how deep each spot is in a dent, so dents can be coloured differently
+  function rock(r, seed, amp = .22, nu = 40, nv = 26) {
+    let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const bumps = Array.from({length: 14}, () => [norm3([rnd() - .5, rnd() - .5, rnd() - .5]), (rnd() - .35) * amp, .6 + rnd() * 1.4]);
+    const dents = Array.from({length: 10}, () => [norm3([rnd() - .5, rnd() - .5, rnd() - .5]), .05 + rnd() * .07, 18 + rnd() * 30]);
+    const at = d => {
+      let k = 1, w = 0;
+      for (const [c, a, f] of bumps) { const dot = d[0] * c[0] + d[1] * c[1] + d[2] * c[2]; k += a * Math.exp(-(1 - dot) * 4 * f); }
+      for (const [c, a, f] of dents) { const dot = d[0] * c[0] + d[1] * c[1] + d[2] * c[2], e = Math.exp(-(1 - dot) * f); k -= a * e; w = Math.max(w, e); }
+      return [d.map(x => x * r * k), w];
+    };
+    const dir = (th, ph) => [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)];
+    const e = 1e-3, W = [];
+    const out = quadGrid(nu, nv, (i, j) => {
+      const th = Math.min(Math.PI - 1e-4, Math.max(1e-4, Math.PI * j / nv)), ph = 2 * Math.PI * i / nu;
+      const [P, w] = at(dir(th, ph));
+      const a = sub(at(dir(th + e, ph))[0], at(dir(th - e, ph))[0]), b = sub(at(dir(th, ph + e))[0], at(dir(th, ph - e))[0]);
+      let N = norm3(cross(b, a)); if (N[0] * P[0] + N[1] * P[1] + N[2] * P[2] < 0) N = N.map(v => -v);
+      return [P, N, w];
+    });
+    return out;
+  }
+
+  /* ---------- putting a model together ---------- */
+  // part(shape, colour, {t: [x,y,z], r: [degX, degY, degZ], s: [x,y,z] or number, glow: 0..1, shine: 0..1})
+  function builder() {
+    const P = [], N = [], C = [], S = [];
+    function part(sh, col, o = {}) {
+      const c = Array.isArray(col) ? col : hex(col), e = o.glow || 0, sp = o.shine ?? .35;
+      const s = o.s == null ? [1, 1, 1] : typeof o.s === 'number' ? [o.s, o.s, o.s] : o.s, r = o.r || [0, 0, 0], t = o.t || [0, 0, 0];
+      const R = mul(rotZ(rad(r[2])), mul(rotY(rad(r[1])), rotX(rad(r[0]))));
+      const M = mul(trans(...t), mul(R, scl(...s)));
+      const NM = mul(R, scl(1 / s[0], 1 / s[1], 1 / s[2]));
+      for (let k = 0; k < sh.p.length; k += 3) {
+        const x = sh.p[k], y = sh.p[k + 1], z = sh.p[k + 2];
+        P.push(M[0] * x + M[4] * y + M[8] * z + M[12], M[1] * x + M[5] * y + M[9] * z + M[13], M[2] * x + M[6] * y + M[10] * z + M[14]);
+        const a = sh.n[k], b = sh.n[k + 1], d = sh.n[k + 2];
+        N.push(...norm3([NM[0] * a + NM[4] * b + NM[8] * d, NM[1] * a + NM[5] * b + NM[9] * d, NM[2] * a + NM[6] * b + NM[10] * d]));
+        const wv = o.c2 && sh.w ? Math.min(1, sh.w[k / 3] * (o.wk || 1.6)) : 0, c2 = o.c2 ? (Array.isArray(o.c2) ? o.c2 : hex(o.c2)) : c;
+        C.push(c[0] + (c2[0] - c[0]) * wv, c[1] + (c2[1] - c[1]) * wv, c[2] + (c2[2] - c[2]) * wv, e + ((o.g2 ?? e) - e) * wv); S.push(sp);
+      }
+    }
+    // rainbow colours along an axis, for the prism
+    function tint(fn) { for (let k = 0; k < P.length; k += 3) { const c = fn(P[k], P[k + 1], P[k + 2], C.slice(k / 3 * 4, k / 3 * 4 + 4)); if (c) { C[k / 3 * 4] = c[0]; C[k / 3 * 4 + 1] = c[1]; C[k / 3 * 4 + 2] = c[2]; } } }
+    return {part, tint, done: () => ({P, N, C, S})};
+  }
+
+  /* ---------- the 24 items ---------- */
+  const STEEL = '#b9c4dc', DARK = '#3a445f', GUN = '#5f6c8f';
+  const MODELS = {
+    // Hull Wrench: a chunky spanner, open jaw at the top, ring at the bottom
+    mallet: b => {
+      b.part(rbox(.36, 2.1, .2, .08), STEEL, {shine: .9});
+      b.part(torus(.34, .1, 30, 10), STEEL, {t: [0, -1.15, 0], r: [90, 0, 0], shine: .9});
+      b.part(torus(.36, .12, 26, 10, Math.PI * 1.45), STEEL, {t: [0, 1.25, 0], r: [90, 0, 40], shine: .9});
+      b.part(rbox(.2, .5, .17, .04), '#ff8a3d', {t: [0, .15, 0]});
+      b.part(cyl(.05, .19, 12), DARK, {t: [0, .55, 0], r: [90, 0, 0]});
+    },
+    // Zero-G Dice: two dice tumbling, white with blue pips
+    penny: b => {
+      const die = (t, r, s) => {
+        b.part(rbox(1, 1, 1, .17), '#f1f4ff', {t, r, s, shine: .6});
+        const pip = (x, y, z) => b.part(sphere(.1, 12, 8), '#3b82f6', {t, r, s, glow: .15});
+        // pips sit just in front of each face: transform them with the die
+        const faces = [[[0, 0]], [[-.24, -.24], [.24, .24]], [[-.25, -.25], [0, 0], [.25, .25]]];
+        const put = (fx, axis, sgn) => faces[fx].forEach(([u, v]) => {
+          const loc = axis === 'z' ? [u, v, sgn * .5] : axis === 'x' ? [sgn * .5, u, v] : [u, sgn * .5, v];
+          const R = mul(rotZ(rad(r[2])), mul(rotY(rad(r[1])), rotX(rad(r[0]))));
+          const w = [0, 1, 2].map(k => R[k] * loc[0] * s + R[4 + k] * loc[1] * s + R[8 + k] * loc[2] * s + t[k]);
+          b.part(sphere(.09 * s, 12, 8), '#3b82f6', {t: w, glow: .1});
+        });
+        put(0, 'z', 1); put(1, 'x', 1); put(2, 'y', 1); put(2, 'z', -1); put(1, 'x', -1); put(0, 'y', -1);
+      };
+      die([-.42, -.2, 0], [25, 35, 10], 1); die([.62, .62, -.3], [-30, 20, 40], .62);
+    },
+    // Repair Drone: a round body with four rotors and a glowing eye
+    mouse: b => {
+      b.part(sphere(.62, 28, 18), '#a3aecb', {s: [1, .7, 1], shine: .7});
+      b.part(torus(.62, .06, 30, 8), DARK, {});
+      b.part(sphere(.2, 18, 12), '#47d7ff', {t: [0, .02, .56], glow: .9});
+      for (let k = 0; k < 4; k++) {
+        const a = Math.PI / 4 + k * Math.PI / 2, x = Math.cos(a), z = Math.sin(a);
+        b.part(rbox(.75, .1, .12, .03), GUN, {t: [x * .75, .18, z * .75], r: [0, -a * 180 / Math.PI, 0]});
+        b.part(cyl(.08, .14, 12), DARK, {t: [x * 1.1, .26, z * 1.1]});
+        b.part(cyl(.42, .025, 30), '#d4e2ff', {t: [x * 1.1, .34, z * 1.1], glow: .25, shine: .2});
+      }
+      b.part(cyl(.03, .4, 8), GUN, {t: [0, .55, 0]}); b.part(sphere(.06), '#ff5266', {t: [0, .77, 0], glow: 1});
+    },
+    // Meteor Chunk: a lumpy rock, still glowing hot in its cracks
+    pebble: b => {
+      b.part(rock(1, 7, .3), '#8a7868', {shine: .12, c2: '#ff7a2a', g2: 1, wk: 1.8});
+    },
+    // Power Glove: a padded glove with a green cuff and a glowing knuckle plate
+    gloves: b => {
+      b.part(rbox(.95, .9, .5, .2), '#f2f5ff', {t: [0, -.05, 0], shine: .4});
+      [-.33, -.11, .11, .33].forEach((x, i) => b.part(lathe([[0, 0], [.13, .02], [.13, .55 + (i === 1 || i === 2 ? .12 : 0)], [.08, .66 + (i === 1 || i === 2 ? .12 : 0)], [0, .68 + (i === 1 || i === 2 ? .12 : 0)]], 14), '#f2f5ff', {t: [x, .3, 0], shine: .4}));
+      b.part(lathe([[0, 0], [.14, .02], [.14, .45], [.08, .55], [0, .56]], 14), '#f2f5ff', {t: [.5, -.15, .05], r: [0, 0, -55], shine: .4});
+      b.part(cyl(.6, .45, 28, .55), '#2fbf71', {t: [0, -.7, 0], s: [1, 1, .62], shine: .5});
+      b.part(rbox(.75, .16, .1, .04), '#47d7ff', {t: [0, .32, .26], glow: .8});
+    },
+    // Star Compass: a round case with a glass face and a four-point star needle
+    clover: b => {
+      b.part(cyl(1, .28, 40), '#123a2a', {r: [90, 0, 0], shine: .5});
+      b.part(torus(1, .1, 44, 12), '#38d47f', {r: [90, 0, 0], shine: .9});
+      b.part(prism(starPts(4, .85, .2), .1), '#8dffc0', {t: [0, 0, .16], glow: .55, shine: .8});
+      b.part(sphere(.1, 12, 8), '#fff', {t: [0, 0, .22], glow: .5});
+      b.part(cyl(.14, .22, 16), '#38d47f', {t: [0, 1.12, 0]}); b.part(torus(.14, .05, 16, 8), '#38d47f', {t: [0, 1.3, 0], r: [90, 0, 0]});
+    },
+    // Tesla Coil: a coil of copper on a base, with a glowing ball on top
+    spark: b => {
+      b.part(cyl(.6, .3, 30), DARK, {t: [0, -1, 0], shine: .5});
+      b.part(cyl(.3, 1.4, 20), '#38435f', {t: [0, -.15, 0]});
+      for (let k = 0; k < 8; k++) b.part(torus(.34, .06, 24, 8), '#e8b77c', {t: [0, -.75 + k * .17, 0], shine: .95});
+      b.part(torus(.42, .14, 28, 12), '#a3aecb', {t: [0, .7, 0], shine: .9});
+      b.part(sphere(.32, 22, 14), '#c8f1ff', {t: [0, .95, 0], glow: .9});
+      for (const [x, z] of [[.55, .2], [-.4, .45], [.1, -.6]]) b.part(cyl(.02, .5, 6), '#9aeeff', {t: [x * .9, 1.05, z * .9], r: [z * 60, 0, -x * 60], glow: 1});
+    },
+    // Fuel Cell: a canister with glowing green bands and a terminal on top
+    coffee: b => {
+      b.part(latheSmooth([[0, -1.05], [.45, -1.02], [.55, -.9], [.55, .9], [.45, 1.02], [0, 1.05]], 30), '#232b45', {shine: .6});
+      b.part(cyl(.57, 1.3, 30), '#38d47f', {glow: .7});
+      for (const y of [-.7, .7]) b.part(torus(.57, .05, 30, 8), '#7d8aa8', {t: [0, y, 0], shine: .9});
+      b.part(cyl(.18, .25, 16), '#7d8aa8', {t: [0, 1.15, 0], shine: .9});
+      b.part(prism([[-.12, .25], [.08, .02], [-.02, .02], [.12, -.25], [-.08, -.02], [.02, -.02]].map(([x, y]) => [x * 1.4, y * 1.4]), .06), '#eaffe9', {t: [0, 0, .57], glow: 1});
+    },
+    // Laser Drill: a blue body, a steel drill bit and a hot red tip
+    pick: b => {
+      b.part(cyl(.42, 1.3, 26), '#3b82f6', {r: [0, 0, 90], shine: .6});
+      b.part(cyl(.47, .2, 26), '#1d4fb8', {t: [-.55, 0, 0], r: [0, 0, 90]});
+      b.part(lathe([[0, 0], [.32, 0], [0, .9]], 16), STEEL, {t: [.65, 0, 0], r: [0, 0, -90], shine: 1});
+      for (let k = 0; k < 3; k++) b.part(torus(.24 - k * .07, .035, 16, 6), '#8b98ba', {t: [.75 + k * .2, 0, 0], r: [0, 0, 90]});
+      b.part(sphere(.09, 12, 8), '#ff5266', {t: [1.56, 0, 0], glow: 1});
+      b.part(rbox(.3, .8, .32, .08), '#1d4fb8', {t: [-.25, -.6, 0], r: [0, 0, -12]});
+      b.part(rbox(.3, .12, .2, .04), '#47d7ff', {t: [0, .43, 0], glow: .8});
+    },
+    // Gravity Magnet: a horseshoe magnet, blue with steel tips
+    magnet: b => {
+      b.part(torus(.6, .26, 30, 14, Math.PI), '#3b82f6', {t: [0, -.2, 0], r: [90, 0, 0], shine: .6});
+      for (const x of [-.6, .6]) {
+        b.part(cyl(.26, .7, 18), '#3b82f6', {t: [x, .15, 0], shine: .6});
+        b.part(cyl(.27, .35, 18), '#e6efff', {t: [x, .67, 0], shine: 1});
+      }
+      for (const x of [-.28, 0, .28]) b.part(torus(.2, .025, 16, 6, Math.PI), '#9aeeff', {t: [x * 1.6, 1.05, 0], r: [90, 0, 0], glow: 1});
+    },
+    // Rover Bot: a six-wheeled rover with a camera on a mast
+    robot: b => {
+      b.part(rbox(1.6, .45, .9, .12), '#a3aecb', {shine: .6});
+      b.part(rbox(1.1, .2, .7, .06), '#47d7ff', {t: [0, .3, 0], glow: .5});
+      for (const x of [-.6, 0, .6]) for (const z of [-.5, .5]) { b.part(cyl(.24, .16, 18), '#2a3150', {t: [x, -.32, z], r: [90, 0, 0]}); b.part(cyl(.1, .18, 12), STEEL, {t: [x, -.32, z], r: [90, 0, 0], shine: .9}); }
+      b.part(cyl(.05, .7, 8), DARK, {t: [.45, .65, 0]});
+      b.part(rbox(.4, .25, .3, .07), '#d4e2ff', {t: [.45, 1.05, 0]});
+      b.part(sphere(.08, 12, 8), '#ff5266', {t: [.65, 1.05, 0], glow: 1});
+      b.part(cyl(.015, .5, 6), GUN, {t: [-.55, .55, .3]}); b.part(sphere(.05), '#ffd36b', {t: [-.55, .8, .3], glow: 1});
+    },
+    // Ion Blaster: a ray gun with rings round the barrel and a glowing emitter
+    bolt: b => {
+      b.part(latheSmooth([[0, -.8], [.3, -.75], [.38, -.4], [.32, .4], [.18, .7], [0, .72]], 26), '#3b82f6', {r: [0, 0, -90], shine: .7});
+      for (const x of [-.1, .15, .4]) b.part(torus(.3, .06, 24, 8), '#a5ceff', {t: [x, 0, 0], r: [0, 0, 90], shine: .9});
+      b.part(sphere(.13, 14, 10), '#47d7ff', {t: [.78, 0, 0], glow: 1});
+      b.part(rbox(.26, .75, .22, .08), '#1d4fb8', {t: [-.45, -.45, 0], r: [0, 0, -15]});
+      b.part(prism([[0, 0], [.35, 0], [.1, .4]], .06), '#1d4fb8', {t: [-.6, .2, 0]});
+    },
+    // Plasma Charge: a glowing core held in three steel rings
+    tnt: b => {
+      b.part(sphere(.5, 24, 16), '#f0dcff', {glow: 1});
+      b.part(sphere(.68, 24, 16), '#a855f7', {glow: .35, shine: .2});
+      for (const r of [[90, 0, 0], [0, 0, 0], [0, 0, 90]]) b.part(torus(.85, .06, 40, 8), '#7d8aa8', {r, shine: .95});
+      for (const y of [-1, 1]) b.part(cyl(.22, .14, 16), '#7d8aa8', {t: [0, y * .92, 0], shine: .9});
+    },
+    // Nebula Orb: a dark glass ball full of swirling pink and blue, on a stand
+    ball: b => {
+      b.part(sphere(.8, 30, 20), '#2c1258', {t: [0, .25, 0], shine: 1});
+      b.part(torus(.55, .09, 30, 10), '#ff7ad9', {t: [0, .3, 0], r: [20, 0, 15], glow: 1});
+      b.part(torus(.4, .07, 30, 10), '#7fb4ff', {t: [0, .25, 0], r: [-35, 0, -20], glow: 1});
+      b.part(sphere(.14, 14, 10), '#fff', {t: [.1, .3, 0], glow: 1});
+      b.part(lathe([[0, -.9], [.6, -.9], [.6, -.8], [.35, -.65], [.3, -.48], [0, -.48]], 26), '#6f27bd', {shine: .7});
+    },
+    // Rocket Booster: a white rocket with purple fins and a flame
+    rocket: b => {
+      b.part(latheSmooth([[.3, -.7], [.42, -.4], [.45, .1], [.38, .6], [.2, .95], [0, 1.1]], 28), '#eef2ff', {shine: .6});
+      b.part(cyl(.3, .25, 20, .22), '#6c7aa0', {t: [0, -.82, 0]});
+      b.part(sphere(.15, 16, 10), '#47d7ff', {t: [0, .35, .38], glow: .6});
+      for (let k = 0; k < 3; k++) b.part(prism([[0, 0], [.45, -.35], [.45, .05], [0, .45]], .07), '#a855f7', {t: [0, -.45, 0], r: [0, k * 120, 0], s: [1, 1, 1]});
+      b.part(cone(.24, .7, 18), '#ffa53d', {t: [0, -1.25, 0], r: [180, 0, 0], glow: 1});
+      b.part(cone(.13, .45, 14), '#ffe14d', {t: [0, -1.15, 0], r: [180, 0, 0], glow: 1});
+    },
+    // Captain's Badge: a gold star on a purple shield
+    crown: b => {
+      const shield = [[0, 1.1], [.85, .8], [.85, .05], [.6, -.6], [0, -1.05], [-.6, -.6], [-.85, .05], [-.85, .8]];
+      b.part(prism(shield, .22), '#2a1a4a', {shine: .5});
+      b.part(prism(shield.map(([x, y]) => [x * 1.08, y * 1.06]), .14), '#a855f7', {t: [0, 0, -.05], glow: .2});
+      b.part(prism(starPts(5, .6, .25), .14, .1), '#ffd36b', {t: [0, .05, .14], shine: 1});
+    },
+    // Nova Hammer: a heavy gold hammer head with a glowing star core
+    dragon: b => {
+      b.part(cyl(.1, 2, 14), '#8b98ba', {t: [0, -.4, 0], shine: .9});
+      b.part(cyl(.13, .5, 14), '#5f6c8f', {t: [0, -1.25, 0]});
+      b.part(rbox(1.5, .7, .7, .15), '#f5a524', {t: [0, .75, 0], shine: .9});
+      for (const x of [-.78, .78]) b.part(cyl(.38, .12, 24), '#b5700a', {t: [x, .75, 0], r: [0, 0, 90], shine: .9});
+      b.part(sphere(.2, 16, 10), '#fff1b8', {t: [0, .75, .34], glow: 1});
+    },
+    // Star Chart: a rolled-out map between two scrolls, with glowing stars
+    map: b => {
+      b.part(rbox(1.6, 1.2, .04, .015), '#1b2546', {shine: .3});
+      for (const x of [-.85, .85]) { b.part(cyl(.13, 1.35, 18), '#f5a524', {t: [x, 0, 0], shine: .8}); for (const y of [-.72, .72]) b.part(sphere(.1, 12, 8), '#b5700a', {t: [x, y, 0]}); }
+      for (const [x, y, s] of [[-.4, .3, .07], [0, .1, .06], [.35, .38, .08], [.2, -.3, .06], [-.3, -.25, .05], [.55, -.05, .05]]) b.part(sphere(s, 10, 8), '#ffe49e', {t: [x, y, .04], glow: 1});
+      b.part(prism(starPts(4, .16, .05), .05), '#ffe49e', {t: [.35, .38, .06], glow: 1});
+    },
+    // Golden Asteroid: a shiny lump of solid gold
+    egg: b => {
+      b.part(rock(1, 31, .26), '#f7c948', {shine: 1, c2: '#a8730c', g2: 0, wk: 1.3});
+    },
+    // Comet Core: an icy core with a glowing tail streaming behind
+    comet: b => {
+      b.part(rock(.62, 13, .2), '#fff4d6', {t: [.5, -.5, 0], shine: .8, glow: .35, c2: '#f5a524', g2: .8});
+      [[0, 0, .22, 1.7], [12, .12, .13, 1.4], [-12, -.12, .13, 1.4], [24, .05, .08, 1.1], [-24, -.05, .08, 1.1]].forEach(([a, z, rr, len], k) =>
+        b.part(cone(rr * 2.2, len, 16), k % 2 ? '#9aeeff' : '#47d7ff', {t: [.5 - Math.cos(rad(45 + a)) * (len * .5 + .35), -.5 + Math.sin(rad(45 + a)) * (len * .5 + .35), z], r: [0, 0, 225 + a], glow: .95}));
+    },
+    // Black Hole: a black ball with a blazing disc round it
+    hole: b => {
+      b.part(sphere(.55, 28, 18), '#05060a', {shine: .9});
+      b.part(lathe([[.7, 0], [1.35, 0], [1.35, .02], [.7, .02]], 48), '#ff8a3d', {r: [72, 0, -18], glow: 1});
+      b.part(torus(.95, .05, 48, 8), '#ffd36b', {r: [72, 0, -18], glow: 1});
+      b.part(torus(.62, .04, 40, 8), '#fff1c4', {r: [-8, 0, -18], glow: 1});
+    },
+    // Warp Engine: a nacelle with glowing blue rings and a bright exhaust
+    phoenix: b => {
+      b.part(latheSmooth([[0, -1.1], [.3, -1.05], [.48, -.6], [.5, .4], [.42, .9], [0, 1]], 28), '#5f6c8f', {r: [0, 0, 90], shine: .8});
+      for (const x of [-.55, -.15, .25]) b.part(torus(.52, .08, 30, 10), '#47d7ff', {t: [x, 0, 0], r: [0, 0, 90], glow: 1});
+      b.part(cone(.42, .55, 20), '#9aeeff', {t: [1.3, 0, 0], r: [0, 0, -90], glow: 1});
+      for (const s of [-1, 1]) b.part(rbox(.7, .08, .5, .03), '#38435f', {t: [-.3, 0, s * .5], r: [0, s * 20, 0]});
+    },
+    // Dyson Sphere: a little sun caged in a golden lattice
+    gem: b => {
+      b.part(sphere(.55, 24, 16), '#fff3b0', {glow: 1});
+      b.part(sphere(.68, 24, 16), '#ffd36b', {glow: .6, s: .97});
+      for (let k = 0; k < 4; k++) b.part(torus(1, .045, 48, 8), '#8b98ba', {r: [0, k * 45, 90], shine: 1});
+      for (const y of [-.7, 0, .7]) b.part(torus(Math.sqrt(1 - y * y), .045, 48, 8), '#8b98ba', {t: [0, y, 0], shine: 1});
+      for (const [x, y, z] of [[.7, .7, 0], [-.5, -.3, .8], [0, 0, -1]]) b.part(rbox(.22, .22, .06, .02), '#4f93ff', {t: norm3([x, y, z]), glow: .5});
+    },
+    // Quantum Prism: a glass prism splitting light into a rainbow
+    rainbow: b => {
+      b.part(prism([[0, 1.05], [.95, -.6], [-.95, -.6]], .8), '#cfe9ff', {shine: 1, glow: .15});
+      b.part(cyl(.045, .8, 8), '#ffffff', {t: [-.95, .2, 0], r: [0, 0, 70], glow: 1});
+      ['#ff5266', '#ff9a3d', '#ffe14d', '#38d47f', '#4f93ff', '#b867ff'].forEach((c, i) => b.part(cyl(.055, .8, 8), c, {t: [.85, .1 - i * .085, 0], r: [0, 0, 74 + i * 5], glow: 1}));
+    },
+  };
+
+  /* ---------- WebGL ---------- */
+  let gl = null, cv = null, prog = null, loc = {};
+  const meshes = {};
+  const VS = `attribute vec3 p;attribute vec3 n;attribute vec4 c;attribute float s;
+    uniform mat4 uM,uVP;varying vec3 vN,vW;varying vec4 vC;varying float vS;
+    void main(){vec4 w=uM*vec4(p,1.);vW=w.xyz;vN=mat3(uM)*n;vC=c;vS=s;gl_Position=uVP*w;}`;
+  const FS = `precision mediump float;varying vec3 vN,vW;varying vec4 vC;varying float vS;
+    uniform vec3 uCam,uRim;uniform float uSil,uRimK,uFade;
+    void main(){
+      vec3 N=normalize(vN),V=normalize(uCam-vW);if(dot(N,V)<0.)N=-N;
+      vec3 L=normalize(vec3(-.55,.85,.7)),L2=normalize(vec3(.8,.15,.45));
+      float d=max(dot(N,L),0.),d2=max(dot(N,L2),0.),up=N.y*.5+.5;
+      vec3 H=normalize(L+V);float sp=pow(max(dot(N,H),0.),10.+vS*80.)*(.08+vS*.9);
+      float rim=pow(1.-max(dot(N,V),0.),2.6);
+      vec3 base=vC.rgb;
+      vec3 col=base*(.22+.12*up+.85*d+.28*d2)+vec3(sp)*(.6+.4*d)+uRim*rim*uRimK;
+      col=mix(col,base*1.25+.12+uRim*rim*.3,vC.a);
+      if(uSil>.5)col=vec3(.045,.06,.11)+vec3(.22,.36,.75)*rim*.8;
+      gl_FragColor=vec4(col*uFade,1.);
+    }`;
+  function init(canvas) {
+    cv = canvas;
+    gl = cv.getContext('webgl', {antialias: true, alpha: true, premultipliedAlpha: true}) || cv.getContext('experimental-webgl');
+    if (!gl) return false;
+    const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
+    gl.useProgram(prog);
+    for (const a of ['p', 'n', 'c', 's']) loc[a] = gl.getAttribLocation(prog, a);
+    for (const u of ['uM', 'uVP', 'uCam', 'uRim', 'uSil', 'uRimK', 'uFade']) loc[u] = gl.getUniformLocation(prog, u);
+    gl.enable(gl.DEPTH_TEST);
+    return true;
+  }
+  function mesh(id) {
+    if (meshes[id]) return meshes[id];
+    const b = builder(); MODELS[id](b); const m = b.done();
+    // centre it and scale it to fit a ball of radius 1
+    let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+    for (let k = 0; k < m.P.length; k += 3) for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], m.P[k + a]); hi[a] = Math.max(hi[a], m.P[k + a]); }
+    const c = lo.map((v, a) => (v + hi[a]) / 2);
+    let r = 0; for (let k = 0; k < m.P.length; k += 3) r = Math.max(r, Math.hypot(m.P[k] - c[0], m.P[k + 1] - c[1], m.P[k + 2] - c[2]));
+    const buf = (arr) => { const bf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW); return bf; };
+    return meshes[id] = {p: buf(m.P), n: buf(m.N), c: buf(m.C), s: buf(m.S), count: m.P.length / 3, c0: c, r};
+  }
+  // draw a list of {id, rect, clip, yaw, pitch, sil, rim: [r,g,b], rimK, zoom}
+  function draw(list) {
+    if (!gl) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    gl.disable(gl.SCISSOR_TEST); gl.viewport(0, 0, W, H); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.SCISSOR_TEST);
+    const top = cv.getBoundingClientRect();
+    for (const it of list) {
+      const r = it.rect, c = it.clip || r;
+      const x0 = Math.max(r.left, c.left), x1 = Math.min(r.right, c.right), y0 = Math.max(r.top, c.top), y1 = Math.min(r.bottom, c.bottom);
+      if (x1 <= x0 || y1 <= y0) continue;
+      const m = mesh(it.id);
+      gl.viewport(Math.round((r.left - top.left) * dpr), Math.round((top.bottom - r.bottom) * dpr), Math.round(r.width * dpr), Math.round(r.height * dpr));
+      gl.scissor(Math.round((x0 - top.left) * dpr), Math.round((top.bottom - y1) * dpr), Math.round((x1 - x0) * dpr), Math.round((y1 - y0) * dpr));
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      const cam = [0, .55, 4.3], asp = r.width / r.height;
+      const view = mul(rotX(Math.atan2(.55, 4.3)), trans(-cam[0], -cam[1], -cam[2]));
+      const fov = 2 * Math.atan(1.12 / (it.zoom || 1) / Math.hypot(4.3, .55) / Math.min(1, asp));
+      const VP = mul(persp(fov, asp, .1, 20), view);
+      const M = mul(trans(0, it.lift || 0, 0), mul(rotY(it.yaw || 0), mul(rotX(it.pitch || 0), mul(scl(1 / m.r, 1 / m.r, 1 / m.r), trans(-m.c0[0], -m.c0[1], -m.c0[2])))));
+      gl.uniformMatrix4fv(loc.uM, false, M); gl.uniformMatrix4fv(loc.uVP, false, VP);
+      gl.uniform3fv(loc.uCam, cam); gl.uniform3fv(loc.uRim, it.rim || [.55, .7, 1]); gl.uniform1f(loc.uRimK, it.rimK ?? .55);
+      gl.uniform1f(loc.uSil, it.sil ? 1 : 0); gl.uniform1f(loc.uFade, it.fade ?? 1);
+      for (const [a, bf, n] of [['p', m.p, 3], ['n', m.n, 3], ['c', m.c, 4], ['s', m.s, 1]]) { gl.bindBuffer(gl.ARRAY_BUFFER, bf); gl.enableVertexAttribArray(loc[a]); gl.vertexAttribPointer(loc[a], n, gl.FLOAT, false, 0, 0); }
+      gl.drawArrays(gl.TRIANGLES, 0, m.count);
+    }
+  }
+  return {init, draw, ids: Object.keys(MODELS), ok: () => !!gl};
+})();
+
+/* ======================================================================
+   ACHIEVEMENTS
+   Each one has stages (I, II, III...). Reaching a stage pops up a notice;
+   claim its gems in the Collection room.
+   ====================================================================== */
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+const nice = n => n >= 1e6 ? fmt(n) : n.toLocaleString();
+const rankTotal = () => ITEMS.reduce((s, it) => s + col(it.id).rank, 0);
+const rankAtLeast = k => ITEMS.filter(it => col(it.id).rank >= k).length;
+const ACH = [
+  {id: 'crates', name: 'Crate Cracker', what: n => `Open ${nice(n)} crates`, goals: [100, 1e3, 1e4, 1e5, 1e6], gems: [2, 4, 8, 15, 30], val: () => S.opened.reduce((a, b) => a + b, 0)},
+  {id: 'taps', name: 'Tap Master', what: n => `Tap ${nice(n)} times`, goals: [1e3, 1e4, 1e5, 1e6, 1e7], gems: [1, 3, 6, 12, 25], val: () => S.taps},
+  {id: 'points', name: 'Point Hoarder', what: n => `Earn ${fmt(n)} points in total`, goals: [1e6, 1e9, 1e12, 1e15, 1e18], gems: [2, 5, 10, 20, 40], val: () => S.life},
+  {id: 'rare', name: 'Rare Finds', what: n => `Open ${['', '', '', 'a Rare', 'an Epic', 'a Legendary', 'a Mythic'][n]} crate`, goals: [3, 4, 5, 6], gems: [1, 3, 6, 12], val: () => S.best + 1},
+  {id: 'found', name: 'Collector', what: n => `Find ${n} different items`, goals: [4, 8, 12, 18, 24], gems: [2, 3, 5, 8, 15], val: () => Object.keys(S.found).length},
+  {id: 'maxed', name: 'Fully Upgraded', what: n => `Get ${n === 1 ? 'an item' : n + ' items'} to tier ${MAX_TIER}`, goals: [1, 4, 8, 16, 24], gems: [3, 5, 8, 15, 30], val: () => Object.keys(S.maxed).length},
+  {id: 'ranks', name: 'Climbing the Ranks', what: n => `Earn ${n} rank${n > 1 ? 's' : ''} across your collection`, goals: [1, 6, 12, 24, 48, 96, 144], gems: [3, 5, 8, 12, 20, 30, 50], val: rankTotal},
+  {id: 'gold', name: 'Gold Standard', what: n => `Get ${n === 1 ? 'an item' : n + ' items'} to Gold rank`, goals: [1, 6, 12, 24], gems: [5, 10, 20, 40], val: () => rankAtLeast(3)},
+  {id: 'grand', name: 'Grand Collector', what: n => n === 24 ? 'Get every item to Grand rank' : `Get ${n === 1 ? 'an item' : n + ' items'} to Grand rank`, goals: [1, 4, 12, 24], gems: [25, 40, 75, 150], val: () => rankAtLeast(6)},
+  {id: 'mythic', name: 'Mythic Hunter', what: n => `Open ${nice(n)} Mythic crate${n > 1 ? 's' : ''}`, goals: [1, 10, 100, 1000], gems: [5, 10, 20, 40], val: () => S.opened[5]},
+  {id: 'prestige', name: 'Star Traveller', what: n => `Prestige ${n} time${n > 1 ? 's' : ''}`, goals: [1, 3, 10, 25, 50], gems: [3, 5, 10, 20, 30], val: () => S.prestiges},
+  {id: 'level', name: 'Deep Space', what: n => `Reach crate level ${n}`, goals: [10, 25, 50, 100, 200], gems: [2, 4, 8, 15, 25], val: () => S.bestLevel},
+  {id: 'pups', name: 'Powered Up', what: n => `Buy ${n} power-up${n > 1 ? 's' : ''}`, goals: [1, 10, 50, 200], gems: [1, 3, 6, 12], val: () => S.pupBuys},
+  {id: 'deals', name: 'Deal Hunter', what: n => `Buy ${n} daily deal${n > 1 ? 's' : ''}`, goals: [1, 10, 50], gems: [2, 5, 10], val: () => S.dealBuys},
+];
+const MEDAL = ['#9aa6c4', '#d98b4a', '#cfd8e8', '#ffcc33', '#8ff0e0', '#7fd8ff', '#ff5fd2', '#ff5fd2'];
+const achReached = a => { const v = a.val(); let k = 0; while (k < a.goals.length && v >= a.goals[k]) k++; return k; };
+const achClaimable = () => ACH.reduce((s, a) => s + achReached(a) - (S.ach[a.id] || 0), 0);
+// called every second: anything newly reached gets a notice
+function checkAch() {
+  let fresh = null;
+  for (const a of ACH) {
+    const k = achReached(a);
+    if (k > (S.achSeen[a.id] || 0)) { S.achSeen[a.id] = k; fresh = {a, k}; dirty = true; }
+  }
+  if (fresh) { Sound.ach(); toast(`<small style="color:var(--muted);letter-spacing:.1em">ACHIEVEMENT</small><br><b>${fresh.a.name} ${ROMAN[fresh.k - 1]}</b><br><small>Claim <span class="gemc">+${fresh.a.gems[fresh.k - 1]} ${GEMI}</span> in the Collection</small>`, 2800); }
+  const n = achClaimable();
+  $('#shelfDot').textContent = n; $('#shelfDot').classList.toggle('hidden', !n);
+  $('#achDot').textContent = n; $('#achDot').classList.toggle('hidden', !n);
+}
+function claimAch(id) {
+  const a = ACH.find(x => x.id === id), have = S.ach[id] || 0, k = achReached(a);
+  if (k <= have) return;
+  let g = 0; for (let i = have; i < k; i++) g += a.gems[i];
+  S.ach[id] = k; S.gems += g; save(); refresh(true);
+  Sound.buy(); vibrate(12); toast(`<span class="gemc">+${g} ${GEMI}</span>`, 1400);
+  checkAch(); renderShelf();
+}
+function achHTML() {
+  return ACH.map(a => {
+    const k = achReached(a), have = S.ach[a.id] || 0, done = k >= a.goals.length, v = a.val();
+    const nextGoal = a.goals[Math.min(k, a.goals.length - 1)], prev = k ? a.goals[k - 1] : 0;
+    const part = done ? 100 : Math.max(0, Math.min(100, 100 * (v - prev) / (nextGoal - prev)));
+    const pips = a.goals.map((_, i) => `<i class="${i < k ? 'on' : i === k ? 'part' : ''}" ${i === k ? `style="--p:${part}%"` : ''}></i>`).join('');
+    const right = k > have ? `<button class="primary gem claim" data-claim="${a.id}">Claim +${a.gems.slice(have, k).reduce((s, x) => s + x, 0)} ${GEMI}</button>`
+      : done ? `<span class="rw">Done<small>all ${a.goals.length}</small></span>`
+      : `<span class="rw">+${a.gems[k]} ${GEMI}<small>${a.id === 'rare' ? '' : `${nice(Math.floor(v))} / ${nice(nextGoal)}`}</small></span>`;
+    return `<div class="ach${!k ? ' zero' : ''}${done && k === have ? ' complete' : ''}" style="--mc:${MEDAL[k]}"><div class="medal">${k ? ROMAN[k - 1] : '–'}</div>
+      <div class="am"><b>${a.name}</b><small>${a.what(done ? a.goals[a.goals.length - 1] : nextGoal)}</small><div class="pips">${pips}</div></div>${right}</div>`;
+  }).join('');
+}
+
+/* ======================================================================
+   THE COLLECTION ROOM: the shelf of 3D models, and the achievements
+   ====================================================================== */
+let shelfTab = 'shelf', shelfOn = false, shelfT0 = performance.now(), sheetItem = null, sheetSpin = {yaw: 0, pitch: .12, drag: null, vy: 0};
+const have3D = (() => { try { return View3D.init($('#shelf3d')); } catch (e) { console.warn(e); return false; } })();
+const rankCol = k => k ? RANKS[k - 1].col : null;
+function slotInfo(it) {
+  const c = col(it.id), h = S.items[it.id], maxed = h && h.tier >= MAX_TIER;
+  if (c.rank >= RANKS.length) return {text: 'Grand: complete', p: 100, nk: '#ff5fd2'};
+  const need = rankNeed(it, c.rank), nk = RANKS[c.rank].col;
+  if (maxed) return {text: `${c.xp.toLocaleString()} / ${need.toLocaleString()} to ${RANKS[c.rank].name}`, p: 100 * c.xp / need, nk};
+  if (h) return {text: `Tier ${h.tier} · max it to rank up`, p: 100 * (h.tier - 1) / (MAX_TIER - 1), nk: '#8f7aa0'};
+  return {text: c.xp ? `${c.xp} / ${need} to ${RANKS[c.rank].name}` : 'Find it this run', p: 100 * c.xp / need, nk};
+}
+function renderShelf() {
+  document.querySelectorAll('#shelfTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === shelfTab));
+  const body = $('#shelfBody');
+  $('#shelfCur').innerHTML = `${GEMI} <span class="gemc">${S.gems}</span>`;
+  if (shelfTab === 'ach') {
+    const n = ACH.reduce((s, a) => s + (S.ach[a.id] || 0), 0), all = ACH.reduce((s, a) => s + a.goals.length, 0);
+    body.innerHTML = `<p class="note">Achievements done: <b>${n} / ${all}</b>. Each stage pays out gems.</p>${achHTML()}`;
+    body.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => claimAch(b.dataset.claim));
+    return;
+  }
+  const found = ITEMS.filter(it => S.found[it.id]).length;
+  body.innerHTML = `<div class="shsum"><div class="top"><div><small>Found</small><b>${found} / ${ITEMS.length}</b></div><div><small>Ranks earned</small><b>${rankTotal()} / ${ITEMS.length * RANKS.length}</b></div></div>
+      <div class="rklegend">${RANKS.map(R => `<span style="--rk:${R.col}"><i></i>${R.name}<em>×${R.x}</em></span>`).join('')}</div>
+      <p class="shnote">Once an item is at <b>tier ${MAX_TIER}</b>, every extra copy builds its <b>rank</b>. Ranks stay through prestige, multiply that item's boost and pay gems.</p></div>` +
+    RARITIES.map((R, r) => {
+      const its = ITEMS.filter(i => i.r === r), got = its.filter(i => S.found[i.id]).length;
+      return `<div class="case" style="--rc:${rc(r)}"><h4>${R.name}<span>${got}/${its.length} found</span></h4><div class="glass"><div class="row">${its.map(it => {
+        const c = col(it.id), f = S.found[it.id], inf = slotInfo(it), rk = rankCol(c.rank);
+        return `<div class="slot${f ? '' : ' none'}${c.rank ? '' : ' r0'}${c.rank >= RANKS.length ? ' grand' : ''}" data-id="${it.id}" style="${rk ? `--rk:${rk};` : ''}--nk:${inf.nk}">
+          <div class="mslot" data-model="${it.id}">${have3D ? '' : `<div style="display:grid;place-items:center;height:100%;font-size:2.4rem">${it.e}</div>`}</div>
+          <div class="plinth"><b>${c.rank ? RANKS[c.rank - 1].name : f ? 'Unranked' : ''}</b></div>
+          <div class="nm">${f ? it.name : '???'}</div><div class="xb"><i style="width:${inf.p}%"></i></div></div>`;
+      }).join('')}</div></div><div class="plank"></div></div>`;
+    }).join('');
+  body.querySelectorAll('.slot').forEach(s => s.onclick = () => openModel(s.dataset.id));
+}
+function openModel(id) {
+  const it = ITEM[id], c = col(id), f = S.found[id], h = S.items[id], card = $('#modelCard'), K = KINDS[it.kind];
+  sheetItem = id; sheetSpin.yaw = 0; sheetSpin.vy = 0;
+  card.style.setProperty('--rc', rc(it.r));
+  card.style.cssText = `--rc:${rc(it.r)};${c.rank ? `--rk:${rankCol(c.rank)}` : ''}`;
+  const inf = slotInfo(it), grand = c.rank >= RANKS.length;
+  const base = h ? valueAt(it, h.tier) / rankX(id) : it.v;
+  card.innerHTML = `<div class="mslot big" data-model="${id}" id="bigSlot">${have3D ? '' : `<div style="display:grid;place-items:center;height:100%;font-size:5rem">${it.e}</div>`}</div>
+    <div class="dragnote">${have3D ? 'Drag to spin' : ''}</div>
+    <div class="rn">${RARITIES[it.r].name}${c.rank ? ` · <span style="color:var(--rk)">${RANKS[c.rank - 1].name} rank</span>` : ''}</div>
+    <h3>${f ? it.name : '???'}</h3><p class="fl">${f ? FLAVOUR[id] : 'Keep opening crates to find out what this is.'}</p>
+    <div class="rkline">${RANKS.map((R, k) => `<i class="${k < c.rank ? 'on' : ''}" style="--rk:${R.col}"></i>`).join('')}</div>
+    ${f ? `<div class="fxrow"><div><small>Rank bonus</small><b>×${rankX(id)}</b></div><div class="nx"><small>${grand ? 'Top rank' : 'At ' + RANKS[c.rank].name}</small><b style="color:${grand ? '#ff5fd2' : RANKS[c.rank].col}">${grand ? 'Grand!' : '×' + RANKS[c.rank].x + ` · +${RANKS[c.rank].gems} gems`}</b></div></div>
+      <div class="cbar" style="--rc:${inf.nk}"><i style="width:${inf.p}%"></i></div><div class="ctext">${inf.text}</div>
+      ${h ? `<div class="ctext" style="margin-top:-8px">${K.name} now ${K.show(valueAt(it, h.tier))}${c.rank ? ` (×${rankX(id)} from its rank)` : ''}</div>` : ''}`
+      : `<div class="ctext">Found in ${RARITIES[it.r].name} crates.</div>`}
+    <button class="primary" id="modelDone">Done</button>`;
+  $('#modelDone').onclick = closeModel;
+  $('#modelSheet').classList.add('show'); vibrate(6);
+  // drag to spin it
+  const big = $('#bigSlot');
+  big.onpointerdown = e => { sheetSpin.drag = {x: e.clientX, y: e.clientY, yaw: sheetSpin.yaw, pitch: sheetSpin.pitch, t: performance.now()}; try { big.setPointerCapture(e.pointerId); } catch {} };
+  big.onpointermove = e => { const d = sheetSpin.drag; if (!d) return; const ny = d.yaw + (e.clientX - d.x) * .012; sheetSpin.vy = (ny - sheetSpin.yaw) / Math.max(1, performance.now() - d.t) * 16; d.t = performance.now(); sheetSpin.yaw = ny; sheetSpin.pitch = Math.max(-.7, Math.min(.9, d.pitch + (e.clientY - d.y) * .008)); };
+  big.onpointerup = big.onpointercancel = () => { sheetSpin.drag = null; };
+}
+function closeModel() { $('#modelSheet').classList.remove('show'); sheetItem = null; }
+$('#modelSheet .sheetbg').addEventListener('click', closeModel);
+document.querySelectorAll('#shelfTabs button').forEach(b => b.onclick = () => { shelfTab = b.dataset.t; Sound.tap(.3, false); renderShelf(); $('#shelfBody').scrollTop = 0; });
+// draw the models every frame while the room is open
+function shelfFrame(now) {
+  if (!$('#shelfPanel').classList.contains('show')) { shelfOn = false; View3D.draw([]); return; }
+  requestAnimationFrame(shelfFrame);
+  if (!have3D) return;
+  const t = (now - shelfT0) / 1000 * (reduced() ? .25 : 1), list = [], open = !!sheetItem;
+  const rimOf = k => k >= RANKS.length ? hsl((t * 90) % 360) : k ? hexRGB(RANKS[k - 1].col) : [.55, .7, 1];
+  if (shelfTab === 'shelf' && !open) {
+    const clip = $('#shelfBody').getBoundingClientRect();
+    document.querySelectorAll('#shelfBody .mslot').forEach((el, i) => {
+      const id = el.dataset.model, c = col(id), r = el.getBoundingClientRect();
+      if (r.bottom < clip.top || r.top > clip.bottom) return;
+      list.push({id, rect: r, clip, yaw: t * .7 + i * .9, pitch: .14, lift: Math.sin(t * 1.6 + i) * .05, sil: !S.found[id], rim: rimOf(c.rank), rimK: c.rank ? .8 + c.rank * .1 : .45});
+    });
+  }
+  if (open) {
+    const el = $('#bigSlot');
+    if (el) {
+      if (!sheetSpin.drag) { sheetSpin.vy *= .95; sheetSpin.yaw += Math.abs(sheetSpin.vy) > .002 ? sheetSpin.vy : .012 * (reduced() ? .25 : 1); }
+      const c = col(sheetItem);
+      list.push({id: sheetItem, rect: el.getBoundingClientRect(), yaw: sheetSpin.yaw, pitch: sheetSpin.pitch, lift: Math.sin(t * 1.4) * .04, sil: !S.found[sheetItem], rim: rimOf(c.rank), rimK: c.rank ? .8 + c.rank * .1 : .45, zoom: .95});
+    }
+  }
+  View3D.draw(list);
+}
+const hexRGB = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const hsl = hue => { const f = n => { const k = (n + hue / 30) % 12; return .65 - .35 * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0), f(8), f(4)]; };
+function openShelf() {
+  renderShelf(); closeModel();
+  if (!shelfOn) { shelfOn = true; requestAnimationFrame(shelfFrame); }
+}
+
 /* ---------- Start ---------- */
 calcBoosts();
+if (!S.achSeen || !Object.keys(S.achSeen).length) { S.achSeen = {}; ACH.forEach(a => S.achSeen[a.id] = achReached(a)); }
 if (!S.box) takeNext();
 if (!S.next && !S.queue.length) S.next = makeCrate(rollType());
 // automatic taps keep going while you're away (at half speed, for up to 4 hours)
@@ -1720,7 +2492,7 @@ function holdTaps(dt) {
 }
 // keyboard: space or enter taps
 addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !document.querySelector('.panel.show') && !(RZ && RZ.menuOpen) && !e.repeat) { e.preventDefault(); if ($('#reveal').classList.contains('show')) { revealAt = 0; closeReveal(); } else { const r = $('#boxwrap').getBoundingClientRect(); tap({clientX: r.left + r.width / 2, clientY: r.top + r.height / 3}); } } });
-let lastT = performance.now(), saveAt = 0, lastBoost = '', pupSig = '';
+let lastT = performance.now(), saveAt = 0, lastBoost = '', pupSig = '', achAt = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
   if (!(RZ && RZ.menuOpen)) { autoTaps(dt); holdTaps(dt); }
@@ -1735,6 +2507,7 @@ function frame(now) {
     const old = lastBoost && JSON.parse(lastBoost); lastBoost = bs; refresh(true);
     if (old) [B.perTap, B.auto, B.crit, B.power, B.luck, B.mult].forEach((v, i) => { if (v > old[i]) { const el = $('#boosts').children[i]; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } });
   }
+  if (now - achAt > 1000) { achAt = now; checkAch(); }
   if (dirty && now - saveAt > 3000) { saveAt = now; save(); }
   requestAnimationFrame(frame);
 }
