@@ -369,6 +369,34 @@ html,body{overscroll-behavior:none}
 .rz-seg svg{width:16px;height:16px}
 .rz-seg button:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
 .rz-foot{margin:16px 4px 0;color:var(--rz-muted);font-size:12.5px;text-align:center}
+/* backing up and restoring */
+.rz-ui [hidden]{display:none!important}
+.rz-subhead{display:flex;align-items:center;gap:10px;margin:0 0 6px}
+.rz-subhead b{font-size:17px;font-weight:800}
+.rz-ui .rz-back{display:flex;align-items:center;gap:4px;padding:7px 11px 7px 8px}
+.rz-back svg{width:15px;height:15px}
+.rz-note{margin:12px 4px 8px;color:var(--rz-muted);font-size:13.5px;line-height:1.45}
+.rz-note b{color:var(--rz-ink)}
+.rz-list .rz-row{min-height:40px;padding:4px 0}
+.rz-list small{color:var(--rz-muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.rz-ui .rz-wide{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin:10px 0 0;padding:10px 14px;border:0;border-radius:13px;
+  background:var(--rz-soft);color:var(--rz-ink);font:inherit;font-weight:800;font-size:15px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rz-ui .rz-wide:disabled{opacity:.55;cursor:default}
+.rz-ui .rz-wide:active{transform:none;translate:0 1px}
+.rz-ui .rz-go{background:var(--rz-blue);color:#fff}
+.rz-ui .rz-red{background:#d93b2b;color:#fff}
+@media (prefers-color-scheme:dark){.rz-ui .rz-go{color:#06122e}}
+.rz-wide:focus-visible{outline:3px solid #7cc8ff;outline-offset:2px}
+.rz-two{display:flex;gap:8px}
+.rz-two .rz-wide{flex:1}
+.rz-ui .rz-ta{display:block;width:100%;height:96px;margin:4px 0 0;padding:10px 12px;border:1px solid var(--rz-line);border-radius:12px;resize:none;
+  background:var(--rz-card);color:var(--rz-ink);font:12px/1.35 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;-webkit-user-select:text;user-select:text}
+.rz-ui .rz-ta:focus{outline:2px solid var(--rz-blue);outline-offset:0}
+.rz-msg{margin:10px 4px 0;font-size:13.5px;font-weight:600;color:var(--rz-blue)}
+.rz-msg:empty{display:none}
+.rz-msg.rz-bad,.rz-warn2{color:#d93b2b}
+.rz-warn2{margin:10px 4px 0;font-size:13px;font-weight:600}
+.rz-done{text-align:center;font-weight:700;color:var(--rz-ink)}
 /* update note */
 .rz-pill{position:fixed;left:50%;z-index:2147483004;display:flex;align-items:center;gap:8px;width:max-content;max-width:calc(100% - 32px);
   padding:7px 14px 7px 11px;border-radius:999px;font:600 13px/1.25 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;
@@ -407,6 +435,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
   <div class="rz-head"><span class="rz-badge">${R_SVG}</span>
     <span><b>Settings</b><small>${isHub ? 'Every game' : gameName.replace(/[&<>"]/g, '')}</small></span>
     <button class="rz-x" type="button" aria-label="Close menu">${CLOSE}</button></div>
+  <div class="rz-main">
   ${isHub ? '' : `<a class="rz-leave" href="./">${ARROW}<span>All games</span></a><p class="rz-warn" aria-live="polite"></p>`}
   ${isHub ? `<h3>Home screen</h3>
   <div class="rz-card">
@@ -429,12 +458,19 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     <div class="rz-row"><span class="rz-l">Version<small class="rz-ver">Not checked yet</small></span><button class="rz-btn" type="button" data-act="check">Check now</button></div>
     <div class="rz-row"><span class="rz-l">Reload<small>Restart, keeping your progress</small></span><button class="rz-btn" type="button" data-act="reload">Reload</button></div>
   </div>
+  <h3>Your progress</h3>
+  <div class="rz-card">
+    <div class="rz-row"><span class="rz-l">Back up<small>Every game’s progress, as a code to keep</small></span><button class="rz-btn" type="button" data-act="backup">Back up</button></div>
+    <div class="rz-row"><span class="rz-l">Restore<small>Load a backup onto this device</small></span><button class="rz-btn" type="button" data-act="restore">Restore</button></div>
+  </div>
   <h3>More</h3>
   <div class="rz-card">
     <div class="rz-row"><span class="rz-l">Share Rizzo Games<small class="rz-shared">Send to a friend</small></span><button class="rz-btn" type="button" data-act="share">Share</button></div>
     ${standalone ? '' : `<div class="rz-row"><span class="rz-l">Play as an app<small>${ios ? '<b>Share</b> → <b>Add to Home Screen</b>' : 'Browser menu → <b>Install app</b>'}</small></span></div>`}
   </div>
   <p class="rz-foot">Applies to every game</p>
+  </div>
+  <div class="rz-sub" hidden></div>
 </div>`;
     document.body.appendChild(ui);
     const $ = s => ui.querySelector(s);
@@ -487,7 +523,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
       api.menuOpen = true;
       lastFocus = document.activeElement;
       if (lastFocus && lastFocus.blur) lastFocus.blur();
-      syncMenu();
+      syncMenu(); showMain();
       sheet.scrollTop = 0;
       sheet.classList.add('rz-show'); scrim.classList.add('rz-show');
       btn.setAttribute('aria-expanded', 'true');
@@ -516,7 +552,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
     // While the menu is open it gets the keyboard: Escape closes it, and the game doesn't see key presses
     addEventListener('keydown', e => {
       if (!api.menuOpen) return;
-      if (e.key === 'Escape') { e.preventDefault(); closeMenu(); }
+      if (e.key === 'Escape') { e.preventDefault(); if (!sub.hidden) { showMain(); sheet.focus({preventScroll: true}); } else closeMenu(); }
       if (e.key !== 'Tab') e.stopPropagation();
     }, true);
     addEventListener('keyup', e => { if (api.menuOpen) e.stopPropagation(); }, true);
@@ -578,12 +614,186 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
       }
     });
 
+
+    /* ---------- your progress: back it up as a code (or a file), and restore it on another device ----------
+       Every game is on this one site, so they all share one localStorage: a backup is simply every key in it
+       (bar a few that only make sense on this device), packed into one line of text. */
+    const sub = $('.rz-sub'), main = $('.rz-main');
+    const NAMES = {sudoku: 'Sudoku', 'ethereal-equus': 'Ethereal Equus', minesweeper: 'Minesweeper', rizzle: 'Rizzle', 2048: '2048', solitaire: 'Solitaire',
+      quickmaths: 'Quick Maths', blockdefence: 'Block Defence', stickdash: 'Stick Dash', crateclicker: 'Crate Clicker', flagquiz: 'Flag Quiz', countryfinder: 'Country Finder',
+      emojiquiz: 'Emoji Quiz', higherlower: 'Higher or Lower', blackjack: 'Blackjack', crazyeights: 'Crazy Eights', memorypairs: 'Memory Pairs', holdem: 'Texas Hold’em',
+      ghosts: 'Stick Dash ghosts', rz: 'Sound and settings', hub: 'Home screen'};
+    const LAST = ['ghosts', 'hub', 'rz'];
+    const skipKey = k => /^rz-(version|updated):/.test(k) || k === 'rz-menu-intro';
+    const groupOf = k => k.startsWith('stickdash-ghost:') ? 'ghosts' : k.startsWith('mr_') ? 'ethereal-equus' : k.split(/[-_:]/)[0];
+    const nameOf = g => NAMES[g] || g;
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+    const kb = n => Math.max(1, Math.round(n / 1024)) + ' KB';
+    function collect(ghosts) {
+      const d = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k == null || skipKey(k) || (!ghosts && groupOf(k) === 'ghosts')) continue;
+          const v = localStorage.getItem(k); if (v != null) d[k] = v;
+        }
+      } catch {}
+      return d;
+    }
+    function groups(d) {   // [{g, name, n (keys), size}], games first by name, then ghosts and settings
+      const m = {};
+      for (const [k, v] of Object.entries(d)) { const g = groupOf(k); (m[g] = m[g] || {g, name: nameOf(g), n: 0, size: 0}).n++; m[g].size += k.length + v.length; }
+      return Object.values(m).sort((a, b) => (LAST.indexOf(a.g) - LAST.indexOf(b.g)) || a.name.localeCompare(b.name));
+    }
+    const isGame = x => !LAST.includes(x.g);
+    // the code: RIZZO1- then the backup compressed and in base64 (RIZZO0- if this browser can't compress)
+    const b64 = u => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+    const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    const squeeze = async (u, S) => new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new S('deflate'))).arrayBuffer());
+    async function encode(d) {
+      const raw = new TextEncoder().encode(JSON.stringify({v: 1, t: Date.now(), d}));
+      if (window.CompressionStream) try { return 'RIZZO1-' + b64(await squeeze(raw, CompressionStream)); } catch {}
+      return 'RIZZO0-' + b64(raw);
+    }
+    async function decode(text) {
+      const m = /RIZZO([01])-([A-Za-z0-9+/=\s]+)/.exec(String(text || ''));
+      if (!m) throw new Error('bad');
+      let u = unb64(m[2].replace(/\s+/g, ''));
+      if (m[1] === '1') { if (!window.DecompressionStream) throw new Error('old'); u = await squeeze(u, DecompressionStream); }
+      const o = JSON.parse(new TextDecoder().decode(u));
+      if (!o || o.v !== 1 || !o.d || typeof o.d !== 'object' || Object.values(o.d).some(v => typeof v !== 'string')) throw new Error('bad');
+      return o;
+    }
+    const when = t => { try { return new Date(t).toLocaleString(undefined, {day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'}); } catch { return ''; } };
+    const listHTML = gs => `<div class="rz-card rz-list">${gs.map(x => `<div class="rz-row"><span class="rz-l">${esc(x.name)}</span><small>${kb(x.size)}</small></div>`).join('')}</div>`;
+    const top = title => `<div class="rz-subhead"><button class="rz-btn rz-back" type="button" data-act="main">${ARROW}<span>Settings</span></button><b>${title}</b></div>`;
+    let job = 0;
+    function showMain() { job++; sub.hidden = true; sub.innerHTML = ''; main.hidden = false; }
+    function enter(html) { main.hidden = true; sub.hidden = false; sub.innerHTML = html; sheet.scrollTop = 0; const f = sub.querySelector('button,textarea'); if (f) f.focus({preventScroll: true}); }
+
+    // back up: the code is made as soon as this opens, so Copy can put it on the clipboard straight from the tap
+    async function showBackup() {
+      call('beforeReload');   // the open game saves what it's in the middle of
+      let ghosts = false, code = '';
+      const hasGhosts = groups(collect(true)).some(x => x.g === 'ghosts');
+      const my = ++job;
+      const draw = async () => {
+        const d = collect(ghosts), gs = groups(d), n = gs.filter(isGame).length;
+        code = '';
+        enter(top('Back up progress') + (n ? `
+          <p class="rz-note">${n} game${n === 1 ? '' : 's'} with progress on this ${device.touch ? 'device' : 'computer'}:</p>${listHTML(gs)}
+          ${hasGhosts ? `<div class="rz-card" style="margin-top:10px"><label class="rz-row"><span class="rz-l">Stick Dash ghosts<small>Your best runs. They make the code much longer</small></span><input type="checkbox" class="rz-sw" data-ghost ${ghosts ? 'checked' : ''}></label></div>` : ''}
+          <button class="rz-wide rz-go" type="button" data-act="copy" disabled>Getting ready…</button>
+          <button class="rz-wide" type="button" data-act="file" disabled>Save as a file</button>
+          <p class="rz-msg" aria-live="polite"></p>
+          <p class="rz-note">Keep the code somewhere safe, like Notes or a message to yourself. On your new device, open any game, then this menu, then <b>Restore</b>, and paste it in.</p>`
+          : `<p class="rz-note">There’s no progress on this device yet. Play a game first.</p>`));
+        if (!n) return;
+        const g = sub.querySelector('[data-ghost]'); if (g) g.onchange = () => { ghosts = g.checked; draw(); };
+        const c = await encode(d);
+        if (my !== job) return;
+        code = c;
+        const cb = sub.querySelector('[data-act=copy]'), fb = sub.querySelector('[data-act=file]');
+        cb.disabled = fb.disabled = false; cb.textContent = `Copy backup code (${kb(code.length)})`;
+      };
+      await draw();
+      backup = {get code() { return code; }};
+    }
+    let backup = null;
+    const msg = (t, bad) => { const m = sub.querySelector('.rz-msg'); if (m) { m.textContent = t; m.classList.toggle('rz-bad', !!bad); } };
+    function showCode(code) {   // when the clipboard isn't allowed: the code in a box, selected, to copy by hand
+      if (sub.querySelector('.rz-ta[readonly]')) return;
+      sub.querySelector('.rz-msg').insertAdjacentHTML('beforebegin', '<textarea class="rz-ta" readonly aria-label="Your backup code"></textarea>');
+      const ta = sub.querySelector('.rz-ta[readonly]'); ta.value = code; ta.focus(); ta.select();
+      msg('Select all of the code above and copy it.');
+    }
+    function copyCode() {
+      const code = backup && backup.code; if (!code) return;
+      try {
+        navigator.clipboard.writeText(code).then(() => msg('Copied. Paste it into Notes or a message to yourself.'), () => showCode(code));
+      } catch { showCode(code); }
+    }
+    function saveFile() {
+      const code = backup && backup.code; if (!code) return;
+      const d = new Date(), name = `rizzo-games-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.txt`;
+      let file = null; try { file = new File([code], name, {type: 'text/plain'}); } catch {}
+      if (file && navigator.canShare && navigator.canShare({files: [file]})) {
+        navigator.share({files: [file], title: 'Rizzo Games backup'}).then(() => msg('Saved.'), () => {});
+        return;
+      }
+      const a = document.createElement('a'), url = URL.createObjectURL(new Blob([code], {type: 'text/plain'}));
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      msg('Saved to your downloads as ' + name);
+    }
+
+    // restore: paste the code (or pick the file), see what's in it, then replace this device's progress with it
+    let found = null;
+    function showRestore() {
+      found = null; ++job;
+      enter(top('Restore progress') + `
+        <p class="rz-note">Paste your backup code, or pick the backup file.</p>
+        <textarea class="rz-ta" placeholder="RIZZO1-…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Backup code"></textarea>
+        <div class="rz-two">${navigator.clipboard && navigator.clipboard.readText ? '<button class="rz-wide" type="button" data-act="paste">Paste</button>' : ''}<label class="rz-wide" tabindex="0">Choose file<input type="file" accept=".txt,.json,text/plain" hidden></label></div>
+        <p class="rz-msg" aria-live="polite"></p>
+        <div class="rz-found"></div>`);
+      const ta = sub.querySelector('.rz-ta'), fi = sub.querySelector('input[type=file]');
+      let t = 0;
+      ta.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => check(ta.value), 250); });
+      fi.onchange = () => { const f = fi.files && fi.files[0]; if (!f) return; f.text().then(s => { ta.value = s.trim(); check(ta.value); }, () => msg('That file couldn’t be opened.', true)); };
+      sub.querySelector('label.rz-wide').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fi.click(); } };
+    }
+    async function check(text) {
+      const my = job, box = sub.querySelector('.rz-found');
+      found = null; box.innerHTML = '';
+      if (!String(text).trim()) { msg(''); return; }
+      let o;
+      try { o = await decode(text); } catch (e) {
+        if (my !== job) return;
+        return msg(e.message === 'old' ? 'This browser is too old to open that code. Try on a newer one.' : 'That doesn’t look like a whole backup code. Check you copied all of it.', true);
+      }
+      if (my !== job) return;
+      const gs = groups(o.d), n = gs.filter(isGame).length;
+      found = o; msg('');
+      box.innerHTML = `<p class="rz-note">Backup from <b>${esc(when(o.t))}</b>${n ? `, with ${n} game${n === 1 ? '' : 's'}` : ''}:</p>${listHTML(gs)}
+        <p class="rz-warn2">This replaces the progress on this device for everything listed.</p>
+        <button class="rz-wide rz-red" type="button" data-act="apply">Restore ${n ? n + ' game' + (n === 1 ? '' : 's') : 'backup'}</button>`;
+      box.querySelector('[data-act=apply]').scrollIntoView({block: 'nearest', behavior: 'smooth'});
+    }
+    function apply() {
+      if (!found) return;
+      const d = found.d, keep = new Set(groups(d).map(x => x.g));
+      try {
+        // things on this device that belong to a restored game but aren't in the backup go too (an old half-played game, say)
+        const old = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k != null && !skipKey(k) && keep.has(groupOf(k)) && !(k in d)) old.push(k); }
+        old.forEach(k => localStorage.removeItem(k));
+        for (const [k, v] of Object.entries(d)) if (!skipKey(k)) localStorage.setItem(k, v);
+      } catch (e) {
+        return msg(/quota/i.test(e && e.name + e.message) ? 'There isn’t enough room on this device for that backup.' : 'That didn’t work. Try again.', true);
+      }
+      // the page restarts with the restored progress; nothing on this page may save over it while it goes
+      const S = Storage.prototype; S.setItem = S.removeItem = S.clear = function () {};
+      sub.querySelector('.rz-found').innerHTML = '<p class="rz-note rz-done">Restored. Restarting…</p>';
+      setTimeout(() => location.reload(), 500);
+    }
+    ui.addEventListener('click', e => {
+      const b = e.target.closest('[data-act]'); if (!b) return;
+      const act = b.dataset.act;
+      if (act === 'backup') showBackup();
+      else if (act === 'restore') showRestore();
+      else if (act === 'main') { showMain(); sheet.scrollTop = 0; const r = $('[data-act=backup]'); if (r) r.focus({preventScroll: true}); }
+      else if (act === 'copy') copyCode();
+      else if (act === 'file') saveFile();
+      else if (act === 'apply') apply();
+      else if (act === 'paste') navigator.clipboard.readText().then(s => { const ta = sub.querySelector('.rz-ta'); ta.value = s.trim(); check(ta.value); }, () => msg('Paste it into the box above instead.'));
+    });
+
     /* ---------- swiping down on the menu closes it ---------- */
 
     let dz = null;
     sheet.addEventListener('touchstart', e => {
       dz = null;
-      if (e.touches.length !== 1 || sheet.scrollTop > 0 || e.target.closest('input[type=range]')) return;
+      if (e.touches.length !== 1 || sheet.scrollTop > 0 || e.target.closest('input[type=range], textarea')) return;
       dz = {y: e.touches[0].clientY, t: Date.now(), dy: 0, on: false};
     }, {passive: true});
     sheet.addEventListener('touchmove', e => {
