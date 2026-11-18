@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Block Blast</title>
+<meta name="theme-color" content="#f3f6fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10131b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="blockblast" data-show-when="#home:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f6fb;--panel:#fff;--ink:#202b45;--muted:#74809a;--line:#dce4f1;--board:#dce4f1;--empty:#f4f7fc;--accent:#496fe3;--shadow:0 5px 18px #243c7017}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#10131b;--panel:#1b2130;--ink:#edf2ff;--muted:#9ba8c2;--line:#30394d;--board:#30394d;--empty:#202838;--accent:#91b4ff;--shadow:0 5px 18px #0005}}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif}body{padding:calc(env(safe-area-inset-top) + 16px) 14px calc(env(safe-area-inset-bottom) + 18px)}button{font:inherit;color:inherit;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}.app{width:min(100%,520px);margin:auto}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.back{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:10px 14px;font-weight:900}.title{font-size:clamp(1.6rem,7vw,2.3rem);font-weight:1000;letter-spacing:-1px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;text-align:center;box-shadow:var(--shadow)}.stat small{display:block;color:var(--muted);font-weight:900;font-size:.72rem;letter-spacing:1px}.stat strong{font-size:1.45rem}.board{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:7px;background:var(--board);border-radius:14px;aspect-ratio:1;touch-action:manipulation;box-shadow:var(--shadow)}.cell{border-radius:5px;background:var(--empty);min-width:0;aspect-ratio:1;transition:background .12s}.cell.filled{background:var(--c);box-shadow:inset 0 -3px #0002}.cell.hint{outline:2px solid #fff;outline-offset:-3px}.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}.piece{background:var(--panel);border:2px solid var(--line);border-radius:16px;min-height:105px;display:grid;place-items:center;padding:8px;transition:.15s}.piece.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%,transparent)}.piece.used{opacity:.24}.shape{display:grid;gap:3px;grid-template-columns:repeat(var(--w),min(7vw,25px));grid-template-rows:repeat(var(--h),min(7vw,25px))}.mini{width:100%;height:100%;border-radius:4px;background:var(--c)}.mini.off{visibility:hidden}.help{text-align:center;color:var(--muted);font-size:.9rem;font-weight:800;margin:8px 0 14px}.actions{display:flex;justify-content:center;gap:10px}.action{padding:11px 20px;border-radius:13px;background:var(--panel);border:1px solid var(--line);font-weight:900}.action.primary{background:var(--accent);color:white;border-color:transparent}.overlay{position:fixed;inset:0;background:#07102099;display:none;place-items:center;padding:20px;z-index:5}.overlay.show{display:grid}.dialog{background:var(--panel);border-radius:22px;padding:26px;text-align:center;width:min(100%,340px);box-shadow:var(--shadow)}.dialog h2{margin:0 0 5px;font-size:1.8rem}.dialog p{color:var(--muted);font-weight:800}.dialog button{margin-top:10px}.footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:18px}
+</style>
+</head>
+<body>
+<main class="app" id="home">
+<header class="top"><button class="back" onclick="location.href='index.html'">← Games</button><div class="title">BLOCK BLAST</div><span style="width:78px"></span></header>
+<section class="stats"><div class="stat"><small>SCORE</small><strong id="score">0</strong></div><div class="stat"><small>BEST</small><strong id="best">0</strong></div></section>
+<div class="board" id="board" aria-label="8 by 8 game board"></div>
+<div class="help" id="help">Choose a block, then tap a spot on the board</div>
+<section class="tray" id="tray" aria-label="Available blocks"></section>
+<div class="actions"><button class="action" id="new">New game</button><button class="action primary" id="how">How to play</button></div>
+<div class="footer">Fit the pieces. Clear rows and columns. Beat your best!</div>
+</main>
+<div class="overlay" id="overlay"><div class="dialog"><h2 id="dialogTitle">Game over!</h2><p id="dialogText"></p><button class="action primary" id="again">Play again</button></div></div>
+<script>
+(()=>{
+const N=8, colors=['#4f83ed','#ed6a8b','#f2b84b','#39b99a','#9b78e8','#36b8cf','#f08a4b'];
+const shapes=[[[1,1,1,1]],[[1],[1],[1],[1]],[[1,1],[1,1]],[[1,1,1],[0,1,0]],[[1,1,1],[1,0,0]],[[1,1,1],[0,0,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]],[[1,1],[1,0],[1,0]],[[1,1,1],[1,1,1]],[[1,0],[1,1]],[[1,1,1],[0,1,0],[0,1,0]],[[1,1,1],[1,0,1]]];
+const $=id=>document.getElementById(id), boardEl=$('board'),trayEl=$('tray');
+let board, pieces, selected=-1, score=0, best=0, over=false;
+try{best=+(JSON.parse(localStorage.getItem('blockblast-stats-v1'))||{}).best||0}catch{}
+const sound=(name)=>{try{window.RizzoGames?.level?.('sfx')?.play?.(name)}catch{}};
+function save(){try{localStorage.setItem('blockblast-stats-v1',JSON.stringify({best,games:(JSON.parse(localStorage.getItem('blockblast-stats-v1'))||{}).games||0}))}catch{}}
+function freshPiece(){let s=shapes[Math.floor(Math.random()*shapes.length)];return {cells:s.map(r=>r.slice()),color:colors[Math.floor(Math.random()*colors.length)],used:false}}
+function newGame(){board=Array.from({length:N},()=>Array(N).fill(null));pieces=[freshPiece(),freshPiece(),freshPiece()];selected=-1;score=0;over=false;$('overlay').classList.remove('show');render();$('help').textContent='Choose a block, then tap a spot on the board'}
+function render(){ $('score').textContent=score.toLocaleString();$('best').textContent=best.toLocaleString();boardEl.innerHTML='';for(let r=0;r<N;r++)for(let c=0;c<N;c++){let el=document.createElement('div');el.className='cell'+(board[r][c]?' filled':'');if(board[r][c])el.style.setProperty('--c',board[r][c]);el.dataset.r=r;el.dataset.c=c;boardEl.append(el)}
+trayEl.innerHTML='';pieces.forEach((p,i)=>{let btn=document.createElement('button');btn.className='piece'+(i===selected?' selected':'')+(p.used?' used':'');btn.disabled=p.used||over;let h=p.cells.length,w=Math.max(...p.cells.map(x=>x.length));let sh=document.createElement('div');sh.className='shape';sh.style.setProperty('--w',w);sh.style.setProperty('--h',h);p.cells.forEach(row=>{for(let c=0;c<w;c++){let d=document.createElement('i');d.className='mini'+(row[c]?'':' off');d.style.setProperty('--c',p.color);sh.append(d)}});btn.append(sh);btn.onclick=()=>{selected=i;render();$('help').textContent='Now tap where you want to place it'};trayEl.append(btn)})}
+function fits(p,r,c){for(let y=0;y<p.cells.length;y++)for(let x=0;x<p.cells[y].length;x++)if(p.cells[y][x]&&(r+y>=N||c+x>=N||board[r+y][c+x]))return false;return true}
+function place(r,c){if(over||selected<0||pieces[selected].used)return;let p=pieces[selected];if(!fits(p,r,c)){sound('error');$('help').textContent='That block does not fit there';return}
+let count=0;for(let y=0;y<p.cells.length;y++)for(let x=0;x<p.cells[y].length;x++)if(p.cells[y][x]){board[r+y][c+x]=p.color;count++}
+p.used=true;score+=count;let rows=[],cols=[];for(let y=0;y<N;y++)if(board[y].every(Boolean))rows.push(y);for(let x=0;x<N;x++)if(board.every(row=>row[x]))cols.push(x);
+if(rows.length||cols.length){for(let y of rows)for(let x=0;x<N;x++)board[y][x]=null;for(let x of cols)for(let y=0;y<N;y++)board[y][x]=null;score+=(rows.length+cols.length)*N*2+Math.max(0,rows.length+cols.length-1)*5;sound('success');$('help').textContent='Nice clear! Keep it going';}else sound('click');
+if(score>best){best=score;save()}if(pieces.every(x=>x.used)){pieces=[freshPiece(),freshPiece(),freshPiece()];selected=-1}
+else if(pieces[selected].used)selected=pieces.findIndex(x=>!x.used);
+render();if(!pieces.some(p=>!p.used&&canPlace(p))){over=true;try{let st=JSON.parse(localStorage.getItem('blockblast-stats-v1'))||{};st.games=(st.games||0)+1;st.best=best;localStorage.setItem('blockblast-stats-v1',JSON.stringify(st))}catch{}$('dialogTitle').textContent='No more moves!';$('dialogText').textContent='Final score: '+score.toLocaleString();$('overlay').classList.add('show')}}
+function canPlace(p){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(fits(p,r,c))return true;return false}
+boardEl.addEventListener('click',e=>{let cell=e.target.closest('.cell');if(cell)place(+cell.dataset.r,+cell.dataset.c)});
+$('new').onclick=()=>{if(score>0&&!over&&!confirm('Start a new game? Your current score will be lost.'))return;newGame()};
+$('again').onclick=newGame;
+$('how').onclick=()=>{ $('dialogTitle').textContent='How to play';$('dialogText').textContent='Select one of the three pieces, then tap an empty spot to place it. Fill a complete row or column to clear it and earn bonus points. The game ends when none of your remaining pieces can fit.';$('again').textContent='Got it';$('overlay').classList.add('show')};
+newGame();
+})();
+</script>
+</body></html>
