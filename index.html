@@ -371,7 +371,7 @@ const GAMES = [
     blurb: 'Fit colourful blocks, clear complete rows and columns, and chase your best score.',
     colors: ['#4f83ed', '#ed6a8b'],
     art: 'blocks',
-    cat: 'puzzle',
+    cat: ['puzzle', 'arcade'],
     stat() {
       let st = {};
       try { st = JSON.parse(localStorage.getItem('blockblast-stats-v1')) || {}; } catch {}
