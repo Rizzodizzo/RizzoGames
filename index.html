@@ -333,7 +333,8 @@ const GAMES = [
       const wins = Object.values(st).reduce((n, r) => n + ((r && r.wins) || 0), 0);
       return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : 'No wins yet';
     },
-  },  {
+  },
+  {
     id: 'quickmaths',
     name: 'Quick Maths',
     file: 'quickmaths.html',
@@ -347,7 +348,8 @@ const GAMES = [
       const rows = Object.values(st), perfect = rows.reduce((n, r) => n + ((r && r.perfect) || 0), 0), best = Math.max(0, ...rows.map(r => (r && r.bestScore) || 0));
       return perfect ? `🏆 ${perfect.toLocaleString()} perfect` : best ? `⭐ Best ${best}/25` : 'No rounds yet';
     },
-  },  {
+  },
+  {
     id: 'blockdefence',
     name: 'Block Defence',
     file: 'blockdefence.html',
@@ -361,18 +363,19 @@ const GAMES = [
       const rows = Object.values(st), wins = rows.reduce((n, r) => n + ((r && r.wins) || 0), 0), best = Math.max(0, ...rows.map(r => (r && r.best) || 0));
       return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : best ? `⭐ Best ${best} waves` : 'No games yet';
     },
-  },  {
+  },
+  {
     id: 'blockblast',
     name: 'Block Blast',
     file: 'blockblast.html',
     blurb: 'Fit colourful blocks, clear complete rows and columns, and chase your best score.',
     colors: ['#4f83ed', '#ed6a8b'],
-    art: 'twenty48',
+    art: 'blocks',
     cat: 'puzzle',
     stat() {
       let st = {};
       try { st = JSON.parse(localStorage.getItem('blockblast-stats-v1')) || {}; } catch {}
-      return st.games ? `⭐ Best ${(st.best || 0).toLocaleString()}` : 'No games yet';
+      return st.games || st.best ? `⭐ Best ${(st.best || 0).toLocaleString()}` : 'No games yet';
     },
   },
   {
@@ -389,7 +392,8 @@ const GAMES = [
       const rows = Object.values(st), done = rows.filter(r => r && r.done).length, stars = rows.filter(r => r && r.star).length;
       return done ? `🏁 ${done} level${done > 1 ? 's' : ''} cleared` + (stars ? ` · ⭐ ${stars}` : '') : 'No levels yet';
     },
-  },  {
+  },
+  {
     id: 'crateclicker',
     name: 'Crate Clicker',
     file: 'crateclicker.html',
@@ -670,6 +674,16 @@ const ART = {
       <rect x="50" y="13" width="33" height="33" rx="6" fill="#5b8def"/><text x="66.5" y="37" font-size="21" fill="#fff">16</text>
       <rect x="13" y="50" width="33" height="33" rx="6" fill="#c04fc4"/><text x="29.5" y="72" font-size="15" fill="#fff">128</text>
       <rect x="50" y="50" width="33" height="33" rx="6" fill="#f5c518"/><text x="66.5" y="71.5" font-size="12" fill="#fff">2048</text></g>
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1f2a44" stroke-width="4"/></svg>`,
+  // an 8x8-style board with a cleared row and a piece waiting in the tray
+  blocks: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="#dce4f1"/>
+    <g>
+      <rect x="14" y="14" width="16" height="16" rx="3" fill="#4f83ed"/><rect x="32" y="14" width="16" height="16" rx="3" fill="#4f83ed"/><rect x="50" y="14" width="16" height="16" rx="3" fill="#f4f7fc"/><rect x="68" y="14" width="16" height="16" rx="3" fill="#f2b84b"/>
+      <rect x="14" y="32" width="16" height="16" rx="3" fill="#fff" opacity=".9"/><rect x="32" y="32" width="16" height="16" rx="3" fill="#fff" opacity=".9"/><rect x="50" y="32" width="16" height="16" rx="3" fill="#fff" opacity=".9"/><rect x="68" y="32" width="16" height="16" rx="3" fill="#fff" opacity=".9"/>
+      <rect x="14" y="50" width="16" height="16" rx="3" fill="#39b99a"/><rect x="32" y="50" width="16" height="16" rx="3" fill="#f4f7fc"/><rect x="50" y="50" width="16" height="16" rx="3" fill="#ed6a8b"/><rect x="68" y="50" width="16" height="16" rx="3" fill="#ed6a8b"/>
+      <rect x="14" y="68" width="16" height="16" rx="3" fill="#39b99a"/><rect x="32" y="68" width="16" height="16" rx="3" fill="#39b99a"/><rect x="50" y="68" width="16" height="16" rx="3" fill="#f4f7fc"/><rect x="68" y="68" width="16" height="16" rx="3" fill="#ed6a8b"/>
+    </g>
     <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1f2a44" stroke-width="4"/></svg>`,
   // three rows of letter tiles, the last one solved
   words: `<svg viewBox="0 0 96 96" aria-hidden="true"><g font-family="Nunito,system-ui,sans-serif" font-weight="900" font-size="15" text-anchor="middle" fill="#fff">
