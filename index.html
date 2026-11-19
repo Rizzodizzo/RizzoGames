@@ -379,6 +379,20 @@ const GAMES = [
     },
   },
   {
+    id: 'colourbus',
+    name: 'Colour Bus',
+    file: 'colourbus.html',
+    blurb: 'Send buses round the track to pick up people of their colour and drop off the rest. Only five can be out at once, so plan your order. New places every five levels, and tickets to spend in the shop.',
+    colors: ['#2f9e6e', '#facc15'],
+    art: 'bus',
+    cat: 'puzzle',
+    stat() {
+      let st = {};
+      try { st = JSON.parse(localStorage.getItem('colourbus-progress-v1')) || {}; } catch {}
+      return st.wins ? `🚌 Level ${st.level || 1} next · ${st.wins} cleared` : 'No levels yet';
+    },
+  },
+  {
     id: 'stickdash',
     name: 'Stick Dash',
     file: 'stickdash.html',
@@ -684,6 +698,16 @@ const ART = {
       <rect x="14" y="50" width="16" height="16" rx="3" fill="#39b99a"/><rect x="32" y="50" width="16" height="16" rx="3" fill="#f4f7fc"/><rect x="50" y="50" width="16" height="16" rx="3" fill="#ed6a8b"/><rect x="68" y="50" width="16" height="16" rx="3" fill="#ed6a8b"/>
       <rect x="14" y="68" width="16" height="16" rx="3" fill="#39b99a"/><rect x="32" y="68" width="16" height="16" rx="3" fill="#39b99a"/><rect x="50" y="68" width="16" height="16" rx="3" fill="#f4f7fc"/><rect x="68" y="68" width="16" height="16" rx="3" fill="#ed6a8b"/>
     </g>
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1f2a44" stroke-width="4"/></svg>`,
+  // a colour bus seen from above on a loop of road, with a crowd waiting at its flag
+  bus: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="#8fd16a"/>
+    <rect x="17" y="17" width="62" height="62" rx="22" fill="none" stroke="#5d6577" stroke-width="13"/>
+    <rect x="17" y="17" width="62" height="62" rx="22" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="5 5"/>
+    <g transform="translate(48 79)"><rect x="-17" y="-8" width="34" height="16" rx="5" fill="#ef4444" stroke="#1f2a44" stroke-width="2"/><rect x="-12" y="-4.5" width="20" height="9" rx="2.5" fill="#9b1c1c"/>
+      <circle cx="-8" cy="0" r="2.4" fill="#ef4444"/><circle cx="-2" cy="0" r="2.4" fill="#ef4444"/><circle cx="4" cy="0" r="2.4" fill="#ef4444"/><rect x="9" y="-6" width="6" height="12" rx="2" fill="#1d2a42"/></g>
+    <path d="M44 31v16" stroke="#3a4152" stroke-width="2.2" stroke-linecap="round"/><path d="M45 31h12l-3 4 3 4H45z" fill="#ef4444" stroke="#1f2a44" stroke-width="1.4" stroke-linejoin="round"/>
+    <g fill="#ef4444" stroke="#7a1414" stroke-width="1"><circle cx="38" cy="44" r="3.2"/><circle cx="33" cy="49" r="3.2"/><circle cx="39" cy="51" r="3.2"/><circle cx="34" cy="56" r="3.2"/><circle cx="45" cy="52" r="3.2"/><circle cx="41" cy="58" r="3.2"/></g>
     <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1f2a44" stroke-width="4"/></svg>`,
   // three rows of letter tiles, the last one solved
   words: `<svg viewBox="0 0 96 96" aria-hidden="true"><g font-family="Nunito,system-ui,sans-serif" font-weight="900" font-size="15" text-anchor="middle" fill="#fff">
