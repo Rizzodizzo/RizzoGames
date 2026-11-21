@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maze Muncher</title>
+<meta name="theme-color" content="#07070f">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="mazemuncher" data-show-when="#title:not(.hidden)" data-hide-when="body.playing, #pause:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maze Muncher">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="retro.css">
+<script src="retro.js"></script>
+</head>
+<body>
+<div class="rx">
+  <div class="rx-hud">
+    <div class="rx-sc"><div><b>SCORE</b><span id="score">0</span></div><div><b>HI</b><span id="hi">0</span></div><div><b>LEVEL</b><span id="lvl">1</span></div></div>
+    <button class="px pause" id="pauseBtn" aria-label="Pause">II</button>
+  </div>
+  <div class="rx-stage" id="stage">
+    <canvas id="cv" aria-label="Maze Muncher maze"></canvas>
+    <div class="rx-screen" id="title">
+      <h1>MAZE<br>MUNCHER</h1>
+      <p>Eat every seed in the maze while four robots hunt you. Grab a <b>power gem</b> and they flee: catch them for big points. Every level is a new maze.</p>
+      <div class="rx-list" id="cast"></div>
+      <div class="rx-row"><button class="px big" id="go">Start</button></div>
+      <p id="keysHelp"></p>
+      <div class="rx-hi" id="hiTitle"></div>
+    </div>
+    <div class="rx-screen hidden" id="pause">
+      <h2>PAUSED</h2>
+      <div class="rx-row"><button class="px big" id="resume">Resume</button></div>
+      <div class="rx-row"><button class="px dark" id="settings">Settings</button><button class="px dark" id="quit">Quit</button></div>
+    </div>
+    <div class="rx-screen hidden" id="over">
+      <h2>GAME OVER</h2>
+      <p id="overText"></p>
+      <div class="rx-row"><button class="px big" id="again">Play again</button><button class="px dark" id="menu">Menu</button></div>
+    </div>
+  </div>
+  <div class="rx-pad touch-only" id="pad" style="justify-content:center">
+    <div style="display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,52px);gap:6px">
+      <span></span><button class="px rx-key" style="width:64px;height:52px" data-d="0" aria-label="Up">▲</button><span></span>
+      <button class="px rx-key" style="width:64px;height:52px" data-d="3" aria-label="Left">◀</button><button class="px rx-key" style="width:64px;height:52px" data-d="2" aria-label="Down">▼</button><button class="px rx-key" style="width:64px;height:52px" data-d="1" aria-label="Right">▶</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   MAZE MUNCHER
+   Each level's maze is generated from its number: a symmetric maze carved
+   on a grid, with its dead ends opened up and extra loops knocked through,
+   a pen in the middle for the robots and a tunnel at each side. So every
+   level is new, and the same level is always the same maze.
+   The four robots each hunt in their own way:
+     Hunter  heads straight for you
+     Cutter  heads for the junction you're running towards
+     Drifter wanders, until you come within 6 squares
+     Warden  guards the part of the maze with the most seeds left
+   Every so often they all pull back to their corners for a breather.
+   ====================================================================== */
+const TW = 19, TH = 21, T = 8, W = TW * T, H = TH * T + 10;
+const S = Retro.screen(document.getElementById('cv'), W, H), g = S.ctx;
+const $ = s => document.querySelector(s);
+const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // up, right, down, left
+const PAL = {g: '#58e26b', d: '#2f9e45', w: '#ffffff', k: '#07070f', y: '#ffd23f', o: '#ff8a3d', p: '#ff4fa3', c: '#3fe0ff', v: '#a87bff', s: '#8a8aa8', b: '#2a2a6a', r: '#ff4b3e'};
+
+/* ---------- sprites ---------- */
+const SLIME = [  // open mouth, closed mouth; drawn facing right, flipped for left
+  ['..gggg..', '.gggggg.', 'ggwkgggg', 'gggggggg', 'gggggkkk', 'gggggggg', '.gggggg.', '.d.dd.d.'],
+  ['..gggg..', '.gggggg.', 'ggwkgggg', 'gggggggg', 'ggggggkg', 'gggggggg', '.gggggg.', '.d.dd.d.'],
+].map(f => Retro.sprite(f, PAL));
+const ROBOT_ROWS = ['...x....', '...x....', 'xxxxxxxx', 'xwkxxwkx', 'xxxxxxxx', 'x.kkkk.x', 'xxxxxxxx', '.o....o.'];
+const robotSprite = (col, eye = 'w', pupil = 'k') => Retro.sprite(ROBOT_ROWS, {x: col, w: PAL[eye], k: PAL[pupil], o: '#444466'});
+const EYES = Retro.sprite(['........', '........', '........', '.wk..wk.', '........', '........', '........', '........'], PAL);
+const STAR = Retro.sprite(['...y....', '...y....', '.yyyyy..', '..yyy...', '..y.y...', '.y...y..', '........', '........'], PAL);
+const CAST = [
+  {name: 'HUNTER', col: '#ff4fa3', home: [TW - 2, 1]},
+  {name: 'CUTTER', col: '#3fe0ff', home: [1, 1]},
+  {name: 'DRIFTER', col: '#ff8a3d', home: [1, TH - 2]},
+  {name: 'WARDEN', col: '#a87bff', home: [TW - 2, TH - 2]},
+].map(c => ({...c, spr: robotSprite(c.col), scared: robotSprite('#3a3a8a', 'w', 'w'), flash: robotSprite('#ffffff', 'r', 'r')}));
+const WALLS = [['#a87bff', '#1b1240'], ['#3fe0ff', '#0d2236'], ['#ff8a3d', '#2a1608'], ['#58e26b', '#0d2a12'], ['#ff4fa3', '#2a0d1e']];
+
+/* ---------- the maze ---------- */
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const PEN = {x0: 7, x1: 11, y0: 9, y1: 11, door: [9, 9]};
+const TUNNEL_Y = 9;
+function makeMaze(level) {
+  const R = rng(level * 7907 + 17);
+  const m = Array.from({length: TH}, () => Array(TW).fill('#'));
+  const set = (x, y, v) => { m[y][x] = v; m[y][TW - 1 - x] = v; };   // everything mirrored left to right
+  // carve the left half (and the middle column) as a maze of cells on odd squares
+  const cells = []; for (let y = 1; y < TH; y += 2) for (let x = 1; x <= 9; x += 2) cells.push([x, y]);
+  const seen = new Set(), st = [[1, 1]]; seen.add('1,1'); set(1, 1, '.');
+  while (st.length) {
+    const [x, y] = st[st.length - 1];
+    const nb = DIRS.map(([dx, dy]) => [x + dx * 2, y + dy * 2, dx, dy]).filter(([nx, ny]) => nx >= 1 && nx <= 9 && ny >= 1 && ny < TH - 1 && !seen.has(nx + ',' + ny));
+    if (!nb.length) { st.pop(); continue; }
+    const [nx, ny, dx, dy] = nb[Math.floor(R() * nb.length)];
+    set(x + dx, y + dy, '.'); set(nx, ny, '.'); seen.add(nx + ',' + ny); st.push([nx, ny]);
+  }
+  // open every dead end, then knock through extra walls for loops
+  const open = (x, y) => x >= 0 && x < TW && y >= 0 && y < TH && m[y][x] !== '#';
+  for (const [x, y] of cells) {
+    const exits = DIRS.filter(([dx, dy]) => open(x + dx, y + dy)).length;
+    if (exits <= 1) {
+      const walls = DIRS.filter(([dx, dy]) => !open(x + dx, y + dy) && x + dx * 2 >= 1 && x + dx * 2 <= TW - 2 && y + dy * 2 >= 1 && y + dy * 2 <= TH - 2);
+      if (walls.length) { const [dx, dy] = walls[Math.floor(R() * walls.length)]; set(x + dx, y + dy, '.'); }
+    }
+  }
+  for (let k = 0; k < 14; k++) {
+    const [x, y] = cells[Math.floor(R() * cells.length)], [dx, dy] = DIRS[Math.floor(R() * 4)];
+    if (x + dx * 2 >= 1 && x + dx * 2 <= 9 && y + dy * 2 >= 1 && y + dy * 2 <= TH - 2) set(x + dx, y + dy, '.');
+  }
+  // the robots' pen in the middle, with a ring of corridor round it and a door on top
+  for (let y = PEN.y0 - 1; y <= PEN.y1 + 1; y++) for (let x = PEN.x0 - 1; x <= PEN.x1 + 1; x++) m[y][x] = '.';
+  for (let y = PEN.y0; y <= PEN.y1; y++) for (let x = PEN.x0; x <= PEN.x1; x++) m[y][x] = (y === PEN.y0 || y === PEN.y1 || x === PEN.x0 || x === PEN.x1) ? '#' : 'h';
+  m[PEN.y0][9] = '-';
+  // tunnels out of each side
+  for (let x = 0; x <= 2; x++) set(x, TUNNEL_Y, '.');
+  m[TUNNEL_Y][0] = m[TUNNEL_Y][TW - 1] = 't';
+  // seeds everywhere you can walk, except the pen; power gems near the corners; no seeds in the tunnels
+  const out = m.map(r => r.slice());
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) if (out[y][x] === '.') out[y][x] = 's';
+  for (const [x, y] of [[1, 2], [TW - 2, 2], [1, TH - 3], [TW - 2, TH - 3]]) { const c = nearestOpen(out, x, y); out[c[1]][c[0]] = 'o'; }
+  for (let x = 0; x < TW; x++) if (out[TUNNEL_Y][x] === 's' && (x < 3 || x > TW - 4)) out[TUNNEL_Y][x] = ' ';
+  for (let x = PEN.x0 - 1; x <= PEN.x1 + 1; x++) for (const y of [PEN.y0 - 1, PEN.y1 + 1]) if (out[y][x] === 's') out[y][x] = ' ';
+  return out;
+}
+function nearestOpen(m, x, y) { let best = null, bd = 1e9; for (let j = 0; j < TH; j++) for (let i = 0; i < TW; i++) if ('s.'.includes(m[j][i])) { const d = Math.abs(i - x) + Math.abs(j - y); if (d < bd) { bd = d; best = [i, j]; } } return best; }
+
+/* ---------- the game ---------- */
+let G = null;
+const walkable = (x, y, who) => {
+  if (y === TUNNEL_Y && (x < 0 || x >= TW)) return true;
+  if (x < 0 || x >= TW || y < 0 || y >= TH) return false;
+  const c = G.m[y][x];
+  if (c === '#') return false;
+  if (c === '-') return who === 'robot-out' || who === 'eyes' || who === 'robot-in';
+  if (c === 'h') return who !== 'player';
+  return true;
+};
+const wrap = x => (x + TW) % TW;
+function newGame() { G = {score: 0, lives: 3, level: 0, extraAt: 10000, over: false, t: 0}; nextLevel(); }
+function nextLevel() {
+  G.level++;
+  G.m = makeMaze(G.level);
+  G.seeds = G.m.flat().filter(c => c === 's' || c === 'o').length;
+  G.bonusShown = 0;
+  resetPositions();
+  hud();
+}
+function resetPositions() {
+  const sp = .105 + Math.min(.02, G.level * .002);
+  const start = nearestOpen(G.m, 9, PEN.y1 + 2) || [9, 13];
+  G.p = {x: start[0], y: start[1], dir: 3, want: 3, prog: 0, sp, mouth: 0};
+  G.r = CAST.map((c, i) => ({i, x: 9 + [0, -1, 0, 1][i] * (i ? 1 : 0), y: i ? 10 : PEN.y0 - 1, dir: i % 2 ? 1 : 3, prog: 0, mode: i ? 'pen' : 'chase', release: [0, 180, 420, 720][i], sp: .082 + Math.min(.036, (G.level - 1) * .004)}));   // slower than you to begin with, a little faster every level
+  G.scared = 0; G.chain = 0; G.ready = 120; G.dying = 0; G.rest = 0; G.restT = 1100; G.fx = []; G.bonus = null;
+}
+function hud() { $('#score').textContent = G.score; $('#hi').textContent = Math.max(G.score, Retro.best('mazemuncher')); $('#lvl').textContent = G.level; }
+
+/* ---------- moving along the grid ---------- */
+// every mover sits on a square (x, y), heading dir, prog of the way (0 to 1) to the next square
+function advance(a, sp, who, choose) {
+  let left = sp;
+  while (left > 0) {
+    if (a.prog === 0) {
+      const d = choose(a);
+      if (d < 0) return;   // nowhere to go: wait
+      a.dir = d;
+    }
+    const step = Math.min(left, 1 - a.prog); a.prog += step; left -= step;
+    if (a.prog >= 1) { a.x = wrap(a.x + DIRS[a.dir][0]); a.y += DIRS[a.dir][1]; a.prog = 0; if (who === 'player') eat(a.x, a.y); }
+  }
+}
+const pos = a => [a.x + DIRS[a.dir][0] * a.prog, a.y + DIRS[a.dir][1] * a.prog];
+// you can turn back at any moment, and turn at a square
+function playerChoose(p) {
+  if (walkable(p.x + DIRS[p.want][0], p.y + DIRS[p.want][1], 'player')) return p.want;
+  if (walkable(p.x + DIRS[p.dir][0], p.y + DIRS[p.dir][1], 'player')) return p.dir;
+  return -1;
+}
+function robotChoose(r) {
+  // arriving: out of the pen (start hunting), or back home as eyes (head out again)
+  if (r.mode === 'leave' && r.x === 9 && r.y === PEN.y0 - 1) r.mode = G.scared > 0 ? 'scared' : 'chase';
+  if (r.mode === 'eyes' && r.x === 9 && r.y === 10) r.mode = 'leave';
+  const who = r.mode === 'eyes' ? 'eyes' : r.mode === 'leave' ? 'robot-out' : 'robot';
+  const opts = [0, 1, 2, 3].filter(d => d !== (r.dir + 2) % 4 && walkable(r.x + DIRS[d][0], r.y + DIRS[d][1], who));
+  if (!opts.length) return (r.dir + 2) % 4;
+  if (r.mode === 'scared' || (r.i === 2 && r.mode === 'chase' && !near(r, 6))) return opts[Math.floor(Math.random() * opts.length)];
+  const [tx, ty] = target(r);
+  let best = opts[0], bd = 1e9;
+  for (const d of opts) { const nx = r.x + DIRS[d][0], ny = r.y + DIRS[d][1], dd = (nx - tx) ** 2 + (ny - ty) ** 2; if (dd < bd) { bd = dd; best = d; } }
+  return best;
+}
+const near = (r, n) => Math.abs(r.x - G.p.x) + Math.abs(r.y - G.p.y) <= n;
+function target(r) {
+  const p = G.p;
+  if (r.mode === 'eyes') return [9, 10];
+  if (r.mode === 'leave') return [9, PEN.y0 - 1];
+  if (G.rest > 0) return CAST[r.i].home;
+  switch (r.i) {
+    case 0: return [p.x, p.y];
+    case 1: {   // the next junction ahead of you
+      let x = p.x, y = p.y, d = p.dir;
+      for (let k = 0; k < 10; k++) {
+        if (!walkable(x + DIRS[d][0], y + DIRS[d][1], 'player')) break;
+        x = wrap(x + DIRS[d][0]); y += DIRS[d][1];
+        const ways = DIRS.filter(([dx, dy]) => walkable(x + dx, y + dy, 'player')).length;
+        if (ways > 2) break;
+      }
+      return [x, y];
+    }
+    case 2: return [p.x, p.y];
+    case 3: {   // the quarter of the maze with the most seeds left, until you come close
+      if (near(r, 5)) return [p.x, p.y];
+      const q = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([qx, qy]) => { let n = 0; for (let y = qy * 10; y < qy * 10 + 11 && y < TH; y++) for (let x = qx * 9; x < qx * 9 + 10; x++) if ('so'.includes(G.m[y][x])) n++; return {qx, qy, n}; }).sort((a, b) => b.n - a.n)[0];
+      return [q.qx * 9 + 4, q.qy * 10 + 5];
+    }
+  }
+}
+function eat(x, y) {
+  const c = G.m[y] && G.m[y][x];
+  if (c === 's') { G.m[y][x] = ' '; G.seeds--; add(10); G.p.mouth++; if (G.p.mouth % 2) Retro.sfx.tone(G.p.mouth % 4 === 1 ? 520 : 440, .04, 'triangle', .07); }
+  if (c === 'o') {
+    G.m[y][x] = ' '; G.seeds--; add(50); G.chain = 0;
+    G.scared = Math.max(150, 480 - G.level * 40);
+    G.r.forEach(r => { if (r.mode === 'chase') { r.mode = 'scared'; if (r.prog === 0) r.dir = (r.dir + 2) % 4; } });
+    Retro.sfx.jingle([262, 330, 392, 523]);
+  }
+  if (G.seeds <= 0) { G.cleared = 150; Retro.sfx.jingle([523, 659, 784, 1047, 1319, 1568]); }
+  // a bonus star after 70 and 170 seeds
+  if (!G.bonus && G.bonusShown < 2 && G.seedsAtStart - G.seeds >= [70, 170][G.bonusShown]) { G.bonus = {x: 9, y: PEN.y1 + 1, t: 600}; G.bonusShown++; }
+}
+function add(n) {
+  G.score += n;
+  if (G.score >= G.extraAt) { G.extraAt += 10000; G.lives++; Retro.sfx.jingle([784, 988, 1175, 1568]); G.fx.push({txt: '1UP', x: W / 2, y: H / 2, t: 80}); }
+  hud();
+}
+
+/* ---------- each step ---------- */
+function step() {
+  if (!G || G.over) return;
+  G.t++;
+  G.fx = G.fx.filter(f => --f.t > 0);
+  if (G.seedsAtStart == null || G.levelSeen !== G.level) { G.seedsAtStart = G.seeds; G.levelSeen = G.level; }
+  if (G.ready > 0) { G.ready--; return; }
+  if (G.cleared > 0) { if (--G.cleared === 0) { G.seedsAtStart = null; nextLevel(); } return; }
+  if (G.dying > 0) { if (--G.dying === 0) { if (G.lives <= 0) return gameOver(); resetPositions(); } return; }
+  // input
+  const k = [['ArrowUp', 'w'], ['ArrowRight', 'd'], ['ArrowDown', 's'], ['ArrowLeft', 'a']].findIndex(ks => Retro.held(...ks));
+  if (k >= 0) G.p.want = k;
+  const p = G.p;
+  if (p.prog > 0 && p.want === (p.dir + 2) % 4) { p.x = wrap(p.x + DIRS[p.dir][0]); p.y += DIRS[p.dir][1]; p.prog = 1 - p.prog; p.dir = p.want; }   // turn straight back
+  advance(p, p.y === TUNNEL_Y && (p.x < 3 || p.x > TW - 4) ? p.sp * .8 : p.sp, 'player', playerChoose);
+  // the breather: now and then they all head for their corners
+  if (G.rest > 0) G.rest--; else if (--G.restT <= 0) { G.rest = 300; G.restT = 1300 + Math.random() * 400; }
+  if (G.scared > 0 && --G.scared === 0) G.r.forEach(r => { if (r.mode === 'scared') r.mode = 'chase'; });
+  for (const r of G.r) {
+    if (r.mode === 'pen') { r.release--; if (r.release <= 0 && r.prog === 0) { r.mode = 'leave'; r.x = 9; r.y = 10; } continue; }
+    const tunnel = r.y === TUNNEL_Y && (r.x < 3 || r.x > TW - 4);
+    const sp = r.mode === 'eyes' ? .22 : r.mode === 'scared' ? .055 : tunnel ? r.sp * .55 : r.mode === 'leave' ? .06 : r.sp * (G.rest > 0 ? .9 : 1);
+    advance(r, sp, 'robot', robotChoose);
+  }
+  // bumping into a robot
+  const [px, py] = pos(p);
+  for (const r of G.r) {
+    if (r.mode === 'pen' || r.mode === 'eyes' || r.mode === 'leave') continue;
+    const [rx, ry] = pos(r);
+    if (Math.abs(rx - px) < .6 && Math.abs(ry - py) < .6) {
+      if (r.mode === 'scared') {
+        const pts = 200 * Math.pow(2, Math.min(3, G.chain++));
+        r.mode = 'eyes'; add(pts); G.fx.push({txt: String(pts), x: rx * T + 4, y: ry * T + 4, t: 50, c: '#3fe0ff'});
+        Retro.sfx.tone(300, .25, 'square', .07, 0, 4);
+      } else { die(); return; }
+    }
+  }
+  if (G.bonus) {
+    if (--G.bonus.t <= 0) G.bonus = null;
+    else if (Math.abs(G.bonus.x - px) < .6 && Math.abs(G.bonus.y - py) < .6) { const pts = 100 * G.level + 100; add(pts); G.fx.push({txt: String(pts), x: G.bonus.x * T + 4, y: G.bonus.y * T + 4, t: 60, c: '#ffd23f'}); G.bonus = null; Retro.sfx.jingle([880, 1175, 1568]); }
+  }
+}
+function die() {
+  G.lives--; G.dying = 110;
+  Retro.sfx.tone(600, .9, 'square', .07, 0, .15);
+  hud();
+}
+function gameOver() {
+  G.over = true; document.body.classList.remove('playing');
+  const nb = Retro.save('mazemuncher', G.score);
+  try { const s = JSON.parse(localStorage.getItem('mazemuncher-stats') || '{}'); s.games = (s.games || 0) + 1; s.level = Math.max(s.level || 0, G.level); localStorage.setItem('mazemuncher-stats', JSON.stringify(s)); } catch {}
+  Retro.sfx.jingle([392, 330, 262, 196]);
+  $('#overText').innerHTML = `<b>${G.score}</b> points, level <b>${G.level}</b>${nb ? '<br><span style="color:#ff4fa3">NEW HIGH SCORE!</span>' : ''}`;
+  hud();
+  const was = G; setTimeout(() => { if (G === was) $('#over').classList.remove('hidden'); }, 300);
+}
+
+/* ---------- drawing ---------- */
+let wallCache = null;
+function drawWalls() {
+  const key = G.level;
+  if (wallCache && wallCache.key === key) return g.drawImage(wallCache.cv, 0, 0);
+  const c = document.createElement('canvas'); c.width = W; c.height = TH * T;
+  const q = c.getContext('2d'), [edge, fill] = WALLS[(G.level - 1) % WALLS.length];
+  const wall = (x, y) => x < 0 || x >= TW || y < 0 || y >= TH ? y !== TUNNEL_Y : '#'.includes(G.m[y][x]);
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    if (!wall(x, y)) continue;
+    q.fillStyle = fill; q.fillRect(x * T, y * T, T, T);
+    // a bright edge wherever a wall meets an open square
+    q.fillStyle = edge;
+    if (!wall(x, y - 1)) q.fillRect(x * T, y * T, T, 1);
+    if (!wall(x, y + 1)) q.fillRect(x * T, y * T + T - 1, T, 1);
+    if (!wall(x - 1, y)) q.fillRect(x * T, y * T, 1, T);
+    if (!wall(x + 1, y)) q.fillRect(x * T + T - 1, y * T, 1, T);
+  }
+  q.fillStyle = '#ff4fa3'; q.fillRect(PEN.door[0] * T, PEN.y0 * T + 3, T, 2);
+  wallCache = {key, cv: c};
+  g.drawImage(c, 0, 0);
+}
+function text(t, x, y, c = '#ffd23f') { g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#000'; g.fillText(t, x + 1, y + 1); g.fillStyle = c; g.fillText(t, x, y); }
+function draw() {
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  if (!G) return;
+  if (!(G.cleared > 0 && Math.floor(G.cleared / 10) % 2)) drawWalls();
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    const c = G.m[y][x];
+    if (c === 's') { g.fillStyle = '#ffe9c2'; g.fillRect(x * T + 3, y * T + 3, 2, 2); }
+    if (c === 'o' && Math.floor(G.t / 12) % 2 === 0) { g.fillStyle = '#3fe0ff'; g.fillRect(x * T + 2, y * T + 3, 4, 2); g.fillRect(x * T + 3, y * T + 2, 2, 4); g.fillStyle = '#fff'; g.fillRect(x * T + 3, y * T + 3, 1, 1); }
+  }
+  if (G.bonus && (G.bonus.t > 120 || G.bonus.t % 10 < 5)) g.drawImage(STAR, G.bonus.x * T + 1, G.bonus.y * T + 1);
+  // the robots
+  if (!G.dying || G.dying > 80) for (const r of G.r) {
+    const [x, y] = pos(r), c = CAST[r.i], X = Math.round(x * T), Y = Math.round(y * T);
+    if (r.mode === 'eyes') g.drawImage(EYES, X, Y);
+    else if (r.mode === 'scared') g.drawImage(G.scared < 120 && Math.floor(G.scared / 10) % 2 ? c.flash : c.scared, X, Y);
+    else g.drawImage(c.spr, X, Y);
+  }
+  // you
+  const p = G.p, [px, py] = pos(p), frame = (G.ready > 0 || p.prog === 0 && !walkable(p.x + DIRS[p.dir][0], p.y + DIRS[p.dir][1], 'player')) ? 1 : Math.floor(G.t / 5) % 2;
+  if (G.dying > 0) {
+    const k = 1 - G.dying / 110; g.save(); g.translate(Math.round(px * T) + 4, Math.round(py * T) + 4); g.scale(1 - k * .9, 1 - k * .9); g.drawImage(SLIME[1], -4, -4); g.restore();
+  } else {
+    g.save(); g.translate(Math.round(px * T) + 4, Math.round(py * T) + 4);
+    if (p.dir === 3) g.scale(-1, 1); else if (p.dir === 0) g.rotate(-Math.PI / 2); else if (p.dir === 2) g.rotate(Math.PI / 2);
+    g.drawImage(SLIME[frame], -4, -4); g.restore();
+  }
+  for (const f of G.fx) text(f.txt, f.x, f.y - (60 - f.t) * .1, f.c || '#ffd23f');
+  if (G.ready > 0) text(G.level === 1 && G.t < 130 ? 'READY!' : `LEVEL ${G.level}`, W / 2, (PEN.y1 + 1) * T + 4);   // the row above you, so it doesn't cover you
+  // lives along the bottom
+  for (let i = 0; i < Math.min(G.lives - 1, 6); i++) g.drawImage(SLIME[0], 2 + i * 10, TH * T + 1);
+}
+const L = Retro.loop(step, draw);
+
+/* ---------- controls: swipe, the arrow pad, or the keys ---------- */
+let sw = null;
+$('#stage').addEventListener('pointerdown', e => { if (e.target.closest('.rx-screen')) return; sw = {x: e.clientX, y: e.clientY}; });
+$('#stage').addEventListener('pointermove', e => {
+  if (!sw || !G) return;
+  const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+  if (Math.hypot(dx, dy) < 14) return;
+  G.p.want = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);
+  sw = {x: e.clientX, y: e.clientY};
+});
+addEventListener('pointerup', () => { sw = null; });
+document.querySelectorAll('#pad [data-d]').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); if (G) G.p.want = +b.dataset.d; b.classList.add('down'); setTimeout(() => b.classList.remove('down'), 120); }));
+
+/* ---------- screens ---------- */
+function start() { newGame(); wallCache = null; ['#title', '#over', '#pause'].forEach(s => $(s).classList.add('hidden')); document.body.classList.add('playing'); L.resume(); $('.rx-sc').style.visibility = ''; $('#pauseBtn').style.visibility = ''; }
+function showTitle() {
+  G = null; document.body.classList.remove('playing');
+  ['#over', '#pause'].forEach(s => $(s).classList.add('hidden')); $('#title').classList.remove('hidden');
+  $('#hiTitle').textContent = Retro.best('mazemuncher') ? `HIGH SCORE ${Retro.best('mazemuncher')}` : '';
+  $('.rx-sc').style.visibility = 'hidden'; $('#pauseBtn').style.visibility = 'hidden';
+}
+const pause = () => { if (!G || G.over) return; L.pause(); document.body.classList.remove('playing'); $('#pause').classList.remove('hidden'); };
+const resume = () => { $('#pause').classList.add('hidden'); document.body.classList.add('playing'); L.resume(); };
+$('#go').onclick = start; $('#again').onclick = start; $('#menu').onclick = showTitle; $('#quit').onclick = showTitle;
+$('#resume').onclick = resume; $('#pauseBtn').onclick = () => ($('#pause').classList.contains('hidden') ? pause() : resume());
+$('#settings').onclick = () => window.RizzoGames && RizzoGames.openMenu();
+addEventListener('keydown', e => { if (e.key === 'p' && G && !G.over) ($('#pause').classList.contains('hidden') ? pause() : resume()); if (e.key === 'Enter' && !$('#title').classList.contains('hidden')) start(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+const img = c => `<i style="background:url(${c.toDataURL()}) center/contain no-repeat;width:16px;height:16px"></i>`;
+$('#cast').innerHTML = [[SLIME[0], 'YOU'], ...CAST.map((c, i) => [c.spr, `${c.name}: ${['chases you', 'cuts you off', 'wanders, then pounces', 'guards the seeds'][i]}`]), [CAST[0].scared, 'after a gem: catch them!']]
+  .map(([c, t]) => `<div>${img(c)}${t}</div>`).join('');
+$('#keysHelp').innerHTML = Retro.touch() ? '<b>Swipe</b> on the maze or use the <b>arrows</b> to steer.' : '<b>Arrow keys</b> or <b>WASD</b> to steer, <b>P</b> to pause.';
+window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
+  onMenuOpen: () => { if (G && !G.over && $('#pause').classList.contains('hidden')) pause(); },
+  previewSound: () => Retro.sfx.tone(520, .04, 'triangle', .07),
+  leaveWarning: () => G && !G.over ? 'You are in the middle of a game.' : '',
+});
+showTitle();
+</script>
+</body>
+</html>

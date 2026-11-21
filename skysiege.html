@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sky Siege</title>
+<meta name="theme-color" content="#07070f">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="skysiege" data-show-when="#title:not(.hidden)" data-hide-when="body.playing, #pause:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sky Siege">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="retro.css">
+<script src="retro.js"></script>
+</head>
+<body>
+<div class="rx">
+  <div class="rx-hud">
+    <div class="rx-sc"><div><b>SCORE</b><span id="score">0</span></div><div><b>HI</b><span id="hi">0</span></div><div><b>WAVE</b><span id="wave">1</span></div><div><b>LIVES</b><span id="lives">3</span></div></div>
+    <button class="px pause" id="pauseBtn" aria-label="Pause">II</button>
+  </div>
+  <div class="rx-stage" id="stage">
+    <canvas id="cv" aria-label="Sky Siege"></canvas>
+    <div class="rx-screen" id="title">
+      <h1>SKY<br>SIEGE</h1>
+      <p>The invaders march down a step every time they reach the edge, faster as there are fewer of them. Stop them before they land.</p>
+      <div class="rx-list" id="table"></div>
+      <div class="rx-row"><button class="px big" id="go">Start</button></div>
+      <p id="keysHelp"></p>
+      <div class="rx-hi" id="hiTitle"></div>
+    </div>
+    <div class="rx-screen hidden" id="pause">
+      <h2>PAUSED</h2>
+      <div class="rx-row"><button class="px big" id="resume">Resume</button></div>
+      <div class="rx-row"><button class="px dark" id="settings">Settings</button><button class="px dark" id="quit">Quit</button></div>
+    </div>
+    <div class="rx-screen hidden" id="over">
+      <h2>GAME OVER</h2>
+      <p id="overText"></p>
+      <div class="rx-row"><button class="px big" id="again">Play again</button><button class="px dark" id="menu">Menu</button></div>
+    </div>
+  </div>
+  <div class="rx-pad touch-only" id="pad">
+    <div class="rx-row" style="margin:0"><button class="px rx-key" id="kL" aria-label="Left">◀</button><button class="px rx-key" id="kR" aria-label="Right">▶</button></div>
+    <button class="px rx-key fire" id="kF">FIRE</button>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   SKY SIEGE
+   Rows of invaders march side to side above four shields, stepping down
+   at the edges and speeding up as they thin out. You have one shot in
+   the air at a time. A comet crosses the top now and then for bonus
+   points. Each wave starts a little lower than the last.
+   All the sprites are drawn here, pixel by pixel.
+   ====================================================================== */
+const W = 160, H = 208, $ = s => document.querySelector(s);
+const S = Retro.screen(document.getElementById('cv'), W, H), g = S.ctx;
+const PAL = {a: '#ff4fa3', b: '#3fe0ff', c: '#58e26b', w: '#ffffff', k: '#07070f', p: '#ffd23f', o: '#ff8a3d', r: '#ff4b3e', y: '#fff3a0', s: '#8a8aa8'};
+// two frames each: they flap as they march
+const ENEMY = {
+  a: [['....aa....', '...aaaa...', '..aawwaa..', '.aawkkwaa.', 'aaawkkwaaa', '..aaaaaa..', '.a.a..a.a.', 'a..a..a..a'],
+      ['....aa....', '...aaaa...', '..aawwaa..', '.aawkkwaa.', 'aaawkkwaaa', '..aaaaaa..', '..a.aa.a..', '.a..aa..a.']],
+  b: [['...bbbb...', '.bbbbbbbb.', 'bbwkbbwkbb', 'bbbbbbbbbb', 'bb.bbbb.bb', '.b.b..b.b.', 'b..b..b..b', '.b......b.'],
+      ['...bbbb...', '.bbbbbbbb.', 'bbwkbbwkbb', 'bbbbbbbbbb', 'bb.bbbb.bb', '.b.b..b.b.', '.b.b..b.b.', '..b....b..']],
+  c: [['..c....c..', '...cccc...', '..cwccwc..', '.ccckkccc.', 'cc.cccc.cc', 'c..cccc..c', '...c..c...', '..c....c..'],
+      ['c.c....c.c', '.c.cccc.c.', '..cwccwc..', '.ccckkccc.', '..cccccc..', '...cccc...', '..c....c..', '...c..c...']],
+};
+const POINTS = {a: 40, b: 25, c: 15};
+const SPR = {}; for (const k in ENEMY) SPR[k] = ENEMY[k].map(f => Retro.sprite(f, PAL));
+const SHIP = Retro.sprite(['.....p.....', '....ppp....', '....pwp....', '.ppppppppp.', 'ppppppppppp', 'ppppppppppp', 'p.p.....p.p'], PAL);
+const COMET = Retro.sprite(['....oorryy....', '..oorryyyyww..', 'ooorryywwwwww.', '..oorryyyyww..', '....oorryy....'], PAL);
+const BOOM = Retro.sprite(['w...w...w', '.w..w..w.', '..w...w..', 'ww.....ww', '..w...w..', '.w..w..w.', 'w...w...w'], PAL);
+const ROWS = ['a', 'b', 'b', 'c', 'c'], COLS = 8, SX = 16, SY = 12, EW = 10, EH = 8;
+const SHIP_Y = H - 18, SHIELD_Y = H - 48;
+
+let G = null;
+function newGame() {
+  G = {score: 0, lives: 3, wave: 0, extra: false, shot: null, bombs: [], fx: [], comet: null, cometT: 900, dead: 0, over: false, x: W / 2, t: 0};
+  G.shields = [0, 1, 2, 3].map(i => shield(18 + i * 36));
+  nextWave();
+}
+// a shield: a block of pixels with an arch cut out underneath, worn away pixel by pixel
+function shield(x) {
+  const w = 18, h = 12, px = [];
+  for (let y = 0; y < h; y++) for (let i = 0; i < w; i++) {
+    const corner = (y < 3 && (i < 3 - y || i > w - 4 + y)), arch = y > 7 && i > 5 && i < 12;
+    px.push(!corner && !arch);
+  }
+  return {x, y: SHIELD_Y, w, h, px};
+}
+function nextWave() {
+  G.wave++;
+  const top = 24 + Math.min(5, G.wave - 1) * 6;
+  G.inv = [];
+  ROWS.forEach((k, r) => { for (let c = 0; c < COLS; c++) G.inv.push({k, x: 12 + c * SX, y: top + r * SY, alive: true}); });
+  G.dir = 1; G.frame = 0; G.moveT = 0; G.shot = null; G.bombs = []; G.drop = false;
+  hud();
+}
+function hud() {
+  $('#score').textContent = G.score; $('#hi').textContent = Math.max(G.score, Retro.best('skysiege'));
+  $('#wave').textContent = G.wave; $('#lives').textContent = G.lives;
+}
+const alive = () => G.inv.filter(e => e.alive);
+
+/* ---------- each step ---------- */
+function step() {
+  if (!G || G.over) return;
+  G.t++;
+  G.fx = G.fx.filter(f => --f.t > 0);
+  if (G.dead > 0) { if (--G.dead === 0) { if (G.lives <= 0) return gameOver(); G.x = W / 2; } else return; }
+  // your ship
+  const dx = (Retro.held('ArrowRight', 'd') ? 1 : 0) - (Retro.held('ArrowLeft', 'a') ? 1 : 0);
+  G.x = Math.max(7, Math.min(W - 7, G.x + dx * 1.3));
+  if (Retro.held(' ', 'ArrowUp', 'w', 'fire') && !G.shot) { G.shot = {x: Math.round(G.x), y: SHIP_Y - 2}; Retro.sfx.tone(880, .07, 'square', .05, 0, .5); }
+  if (G.shot) {
+    G.shot.y -= 4;
+    if (G.shot.y < 10) { G.fx.push({x: G.shot.x - 4, y: 10, t: 8, spr: BOOM}); G.shot = null; }
+  }
+  // the march: the fewer there are, the faster they go
+  const live = alive();
+  const every = Math.max(1, Math.round(2 + live.length * .7 - G.wave * .5));
+  if (++G.moveT >= every) {
+    G.moveT = 0; G.frame ^= 1;
+    if (G.drop) { live.forEach(e => { e.y += 6; }); G.dir = -G.dir; G.drop = false; }
+    else {
+      live.forEach(e => { e.x += 2 * G.dir; });
+      if (live.some(e => e.x + EW >= W - 3 || e.x <= 3)) G.drop = true;
+    }
+    Retro.sfx.tone([98, 92, 87, 82][G.t % 4], .06, 'triangle', .07);
+  }
+  // bombs from the lowest invader in a column, more often later on
+  const maxBombs = Math.min(5, 2 + Math.floor(G.wave / 2));
+  if (G.bombs.length < maxBombs && Math.random() < .02 + G.wave * .004) {
+    const cols = {}; live.forEach(e => { const c = Math.round(e.x); if (!cols[c] || cols[c].y < e.y) cols[c] = e; });
+    const shooters = Object.values(cols);
+    if (shooters.length) {
+      // now and then one right above you
+      const near = shooters.filter(e => Math.abs(e.x + EW / 2 - G.x) < 14);
+      const e = near.length && Math.random() < .4 ? near[0] : shooters[Math.floor(Math.random() * shooters.length)];
+      G.bombs.push({x: Math.round(e.x + EW / 2), y: e.y + EH, zig: Math.random() < .5, sp: 1.1 + G.wave * .08});
+    }
+  }
+  G.bombs.forEach(b => { b.y += b.sp; });
+  // the comet
+  if (!G.comet && --G.cometT <= 0) { const dir = Math.random() < .5 ? 1 : -1; G.comet = {x: dir > 0 ? -14 : W, dir, y: 14}; }
+  if (G.comet) { G.comet.x += G.comet.dir * .8; if (G.comet.x < -16 || G.comet.x > W + 2) { G.comet = null; G.cometT = 1200 + Math.random() * 900; } else if (G.t % 8 === 0) Retro.sfx.tone(1200 + (G.t % 16) * 20, .04, 'triangle', .025); }
+  collide(live);
+  if (!alive().length) { Retro.sfx.jingle([523, 659, 784, 1047, 1319]); G.score += 100 * G.wave; G.fx.push({txt: `WAVE ${G.wave} CLEAR +${100 * G.wave}`, x: W / 2, y: H / 2, t: 90}); nextWave(); }
+}
+function hitShield(x, y, r, from) {
+  for (const s of G.shields) {
+    if (x < s.x - r || x >= s.x + s.w + r || y < s.y - r || y >= s.y + s.h + r) continue;
+    const ix = Math.round(x - s.x), iy = Math.round(y - s.y);
+    if (ix >= 0 && ix < s.w && iy >= 0 && iy < s.h && s.px[iy * s.w + ix]) {
+      // blow a ragged hole
+      for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+        const xx = ix + i, yy = iy + j + (from === 'up' ? -1 : 1);
+        if (xx >= 0 && xx < s.w && yy >= 0 && yy < s.h && Math.random() < .75 - (Math.abs(i) + Math.abs(j)) * .12) s.px[yy * s.w + xx] = false;
+      }
+      s.px[iy * s.w + ix] = false;
+      return true;
+    }
+  }
+  return false;
+}
+function collide(live) {
+  const sh = G.shot;
+  if (sh) {
+    for (const e of live) if (sh.x >= e.x && sh.x <= e.x + EW && sh.y <= e.y + EH && sh.y + 3 >= e.y) {
+      e.alive = false; G.shot = null; add(POINTS[e.k]);
+      G.fx.push({x: e.x, y: e.y, t: 12, spr: BOOM}); Retro.sfx.noise(.12, .1, 0, 3000); break;
+    }
+    if (G.shot && G.comet && sh.x >= G.comet.x && sh.x <= G.comet.x + 14 && sh.y <= G.comet.y + 5 && sh.y >= G.comet.y - 2) {
+      const pts = 100 + 50 * Math.min(8, G.wave - 1) + 50 * Math.floor(Math.random() * 3);   // bigger in later waves
+      add(pts); G.fx.push({txt: String(pts), x: G.comet.x + 7, y: G.comet.y + 3, t: 60}); G.comet = null; G.cometT = 1300; G.shot = null; Retro.sfx.jingle([880, 1175, 1568]);
+    }
+    if (G.shot) for (const b of G.bombs) if (Math.abs(b.x - sh.x) <= 1 && b.y + 4 >= sh.y && b.y <= sh.y + 3) { b.gone = true; G.shot = null; G.fx.push({x: sh.x - 4, y: sh.y - 3, t: 8, spr: BOOM}); break; }
+    if (G.shot && hitShield(sh.x, sh.y, 1, 'up')) G.shot = null;
+  }
+  for (const b of G.bombs) {
+    if (b.gone) continue;
+    if (hitShield(b.x, b.y + 4, 1, 'down')) { b.gone = true; continue; }
+    if (b.y + 4 >= SHIP_Y && b.y <= SHIP_Y + 7 && Math.abs(b.x - G.x) <= 5) { b.gone = true; die(); return; }
+    if (b.y > H - 8) { b.gone = true; G.fx.push({x: b.x - 4, y: H - 10, t: 6, spr: BOOM}); }
+  }
+  G.bombs = G.bombs.filter(b => !b.gone);
+  // invaders crush the shields they reach, and win if they land
+  for (const e of live) {
+    for (let i = 0; i < EW; i += 2) hitShield(e.x + i, e.y + EH - 1, 0, 'down');
+    if (e.y + EH >= SHIP_Y) { G.lives = 0; die(); return; }
+  }
+}
+function add(n) {
+  G.score += n;
+  if (!G.extra && G.score >= 1500) { G.extra = true; G.lives++; Retro.sfx.jingle([784, 988, 1175, 1568]); G.fx.push({txt: 'EXTRA LIFE', x: W / 2, y: H / 2 + 20, t: 90}); }
+  hud();
+}
+function die() {
+  G.lives = Math.max(0, G.lives - 1); G.dead = 100; G.bombs = []; G.shot = null;
+  Retro.sfx.boom(); G.fx.push({x: G.x - 4, y: SHIP_Y - 1, t: 60, spr: BOOM, big: true});
+  hud();
+}
+function gameOver() {
+  G.over = true; document.body.classList.remove('playing');
+  const nb = Retro.save('skysiege', G.score);
+  try { const s = JSON.parse(localStorage.getItem('skysiege-stats') || '{}'); s.games = (s.games || 0) + 1; s.wave = Math.max(s.wave || 0, G.wave); localStorage.setItem('skysiege-stats', JSON.stringify(s)); } catch {}
+  Retro.sfx.jingle([392, 330, 262, 196]);
+  $('#overText').innerHTML = `<b>${G.score}</b> points, wave <b>${G.wave}</b>${nb ? '<br><span style="color:#ff4fa3">NEW HIGH SCORE!</span>' : ''}`;
+  hud();
+  const was = G; setTimeout(() => { if (G === was) $('#over').classList.remove('hidden'); }, 300);
+}
+
+/* ---------- drawing ---------- */
+const STARS = Array.from({length: 40}, (_, i) => [Math.floor(Math.random() * W), Math.floor(Math.random() * (H - 30)), i % 3]);
+function text(t, x, y, c = '#ffd23f') { g.font = '8px "Press Start 2P", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#000'; g.fillText(t, x + 1, y + 1); g.fillStyle = c; g.fillText(t, x, y); }
+function draw() {
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  const t = G ? G.t : performance.now() / 16;
+  STARS.forEach(([x, y, k]) => { if ((t + x * 3) % 90 > 10) { g.fillStyle = ['#2a2a55', '#44447a', '#6a6aa0'][k]; g.fillRect(x, y, 1, 1); } });
+  g.fillStyle = '#3a8a3a'; g.fillRect(0, H - 6, W, 1);
+  if (!G) return;
+  for (const s of G.shields) { g.fillStyle = '#58e26b'; s.px.forEach((on, i) => { if (on) g.fillRect(s.x + (i % s.w), s.y + Math.floor(i / s.w), 1, 1); }); }
+  for (const e of G.inv) if (e.alive) g.drawImage(SPR[e.k][G.frame], Math.round(e.x), Math.round(e.y));
+  if (G.comet) g.drawImage(COMET, Math.round(G.comet.x), G.comet.y);
+  if (G.shot) { g.fillStyle = '#fff'; g.fillRect(G.shot.x, G.shot.y, 1, 4); }
+  for (const b of G.bombs) {
+    g.fillStyle = '#ff4b3e';
+    if (b.zig) { const o = Math.floor(b.y / 2) % 2; g.fillRect(b.x + o - 1, b.y, 1, 1); g.fillRect(b.x - o, b.y + 1, 1, 1); g.fillRect(b.x + o - 1, b.y + 2, 1, 1); g.fillRect(b.x - o, b.y + 3, 1, 1); }
+    else { g.fillRect(b.x, b.y, 1, 4); g.fillRect(b.x - 1, b.y + 3, 3, 1); }
+  }
+  if (!G.dead || (G.dead > 60 && G.dead % 6 < 3)) { if (!G.dead) g.drawImage(SHIP, Math.round(G.x - 5), SHIP_Y); }
+  for (const f of G.fx) {
+    if (f.txt) text(f.txt, f.x, f.y, f.t % 10 < 5 ? '#ffd23f' : '#ff4fa3');
+    else if (f.spr) { if (f.big) { g.globalAlpha = Math.min(1, f.t / 20); g.drawImage(f.spr, f.x - 4, f.y - 3, 18, 14); g.globalAlpha = 1; } else g.drawImage(f.spr, f.x, f.y); }
+  }
+  for (let i = 0; i < Math.min(G.lives - 1, 5); i++) g.drawImage(SHIP, 4 + i * 13, H - 5 + 0, 11, 4);
+  if (G.dead > 0 && G.lives > 0 && G.dead < 60) text('GET READY', W / 2, H / 2 + 10);
+}
+const L = Retro.loop(step, draw);
+
+/* ---------- controls ---------- */
+Retro.hold($('#kL'), 'ArrowLeft'); Retro.hold($('#kR'), 'ArrowRight'); Retro.hold($('#kF'), 'fire');
+// on a touch screen you can also drag on the game to steer
+$('#stage').addEventListener('pointermove', e => { if (G && !G.over && e.pointerType !== 'mouse' && e.buttons && !e.target.closest('.rx-screen')) G.x = Math.max(7, Math.min(W - 7, S.at(e).x)); });
+
+/* ---------- screens ---------- */
+function start() { newGame(); ['#title', '#over', '#pause'].forEach(s => $(s).classList.add('hidden')); document.body.classList.add('playing'); L.resume(); $('.rx-sc').style.visibility = ''; $('#pauseBtn').style.visibility = ''; }
+function showTitle() {
+  G = null; document.body.classList.remove('playing');
+  ['#over', '#pause'].forEach(s => $(s).classList.add('hidden')); $('#title').classList.remove('hidden');
+  $('#hiTitle').textContent = Retro.best('skysiege') ? `HIGH SCORE ${Retro.best('skysiege')}` : '';
+  $('.rx-sc').style.visibility = 'hidden'; $('#pauseBtn').style.visibility = 'hidden';
+}
+const pause = () => { if (!G || G.over) return; L.pause(); document.body.classList.remove('playing'); $('#pause').classList.remove('hidden'); };
+const resume = () => { $('#pause').classList.add('hidden'); document.body.classList.add('playing'); L.resume(); };
+$('#go').onclick = start; $('#again').onclick = start; $('#menu').onclick = showTitle; $('#quit').onclick = showTitle;
+$('#resume').onclick = resume; $('#pauseBtn').onclick = () => ($('#pause').classList.contains('hidden') ? pause() : resume());
+$('#settings').onclick = () => window.RizzoGames && RizzoGames.openMenu();
+addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'Escape') && G && !G.over && !document.querySelector('.rz-ui.rz-open')) { if (e.key === 'p') ($('#pause').classList.contains('hidden') ? pause() : resume()); } if (e.key === 'Enter' && !$('#title').classList.contains('hidden')) start(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+const img = s => `<i style="background:url(${s.toDataURL()}) center/contain no-repeat"></i>`;
+$('#table').innerHTML = [['a', 40], ['b', 25], ['c', 15]].map(([k, p]) => `<div>${img(SPR[k][0])}= ${p} POINTS</div>`).join('') + `<div>${img(COMET)}= 100+ BONUS</div>`;
+$('#keysHelp').innerHTML = Retro.touch() ? 'Hold <b>◀ ▶</b> to move (or drag on the game) and <b>FIRE</b> to shoot.' : '<b>Arrow keys</b> or <b>A D</b> to move, <b>Space</b> to shoot, <b>P</b> to pause.';
+window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
+  onMenuOpen: () => { if (G && !G.over && $('#pause').classList.contains('hidden')) pause(); },
+  previewSound: () => Retro.sfx.tone(880, .07, 'square', .05, 0, .5),
+  leaveWarning: () => G && !G.over ? 'You are in the middle of a game.' : '',
+});
+showTitle();
+</script>
+</body>
+</html>

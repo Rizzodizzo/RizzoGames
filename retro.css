@@ -1,0 +1,59 @@
+/* ======================================================================
+   RIZZO RETRO: the shared look of the pixel arcade games (Pixel Rally,
+   Sky Siege, Maze Muncher). A pixel font, square pixel buttons with
+   stepped corners, a black arcade cabinet background, and the game drawn
+   at low resolution and scaled up with sharp pixels.
+   ====================================================================== */
+:root{--rx-bg:#07070f;--rx-ink:#f4f4f4;--rx-dim:#8a8aa8;--rx-yellow:#ffd23f;--rx-cyan:#3fe0ff;--rx-pink:#ff4fa3;--rx-green:#58e26b;--rx-red:#ff4b3e;
+  --rz-btn-bg:#111122;--rz-btn-fg:var(--rx-yellow);--rz-btn-border:3px solid var(--rx-yellow);--rz-btn-radius:0;--rz-btn-shadow:4px 4px 0 #000;--rz-btn-size:40px;
+  --rz-splash-bg:#07070f;--rz-splash-fg:var(--rx-yellow);color-scheme:dark}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow:hidden;background:var(--rx-bg);color:var(--rx-ink);font-family:"Press Start 2P",ui-monospace,Menlo,Consolas,monospace;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);opacity:.55}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+
+/* the whole screen: score bar, the game, then the touch controls */
+.rx{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-right,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 10px) calc(env(safe-area-inset-left,0px) + 10px)}
+.rx-hud{width:100%;max-width:640px;min-height:40px;display:flex;align-items:center;gap:10px;padding-left:54px;font-size:10px;line-height:1.5}
+.rx-hud .rx-sc{flex:1;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;text-align:center}
+.rx-hud b{display:block;color:var(--rx-yellow);font-weight:400;font-size:8px}
+.rx-hud span{color:var(--rx-ink)}
+.rx-stage{position:relative;flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;margin:8px 0}
+.rx-stage canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;box-shadow:0 0 0 3px #222240,0 0 0 6px #000,0 0 30px rgba(63,224,255,.12)}
+.rx-pad{width:100%;max-width:520px;display:flex;gap:12px;justify-content:space-between;align-items:center}
+
+/* a pixel button: square, with stepped corners drawn by its shadow */
+.px{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:12px 16px;margin:4px;background:var(--c,var(--rx-yellow));color:var(--t,#111);
+  font-size:11px;line-height:1.3;text-transform:uppercase;letter-spacing:.04em;
+  box-shadow:4px 0 0 0 #000,-4px 0 0 0 #000,0 4px 0 0 #000,0 -4px 0 0 #000,inset -4px -4px 0 0 rgba(0,0,0,.28),inset 4px 4px 0 0 rgba(255,255,255,.38)}
+.px:active,.px.down{transform:translate(2px,2px);box-shadow:4px 0 0 0 #000,-4px 0 0 0 #000,0 4px 0 0 #000,0 -4px 0 0 #000,inset 4px 4px 0 0 rgba(0,0,0,.28)}
+.px:focus-visible{outline:3px dashed var(--rx-cyan);outline-offset:6px}
+.px.dark{--c:#1c1c38;--t:var(--rx-ink)}
+.px.on{--c:var(--rx-cyan)}
+.px.big{min-height:56px;font-size:14px;padding:16px 20px}
+.px.sq{width:56px;height:56px;min-height:0;padding:0;font-size:16px}
+.px.pause{width:40px;height:40px;min-height:0;padding:0;font-size:12px;--c:#1c1c38;--t:var(--rx-yellow);margin:4px}
+/* touch controls: big square buttons */
+.rx-key{width:72px;height:64px;min-height:0;padding:0;font-size:18px;--c:#1c1c38;--t:var(--rx-ink)}
+.rx-key.fire{width:110px;--c:var(--rx-red);--t:#fff;font-size:12px}
+@media (hover:hover) and (pointer:fine){.rx-pad.touch-only{display:none}}
+
+/* screens over the game: title, pause, game over */
+.rx-screen{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px 12px;text-align:center;
+  background:rgba(5,5,14,.9);overflow-y:auto}
+.rx-screen h1{margin:0;font-size:clamp(18px,7vw,30px);line-height:1.35;font-weight:400;color:var(--rx-yellow);text-shadow:3px 3px 0 var(--rx-pink),6px 6px 0 #000}
+.rx-screen h2{margin:0;font-size:16px;font-weight:400;color:var(--rx-cyan);text-shadow:3px 3px 0 #000}
+.rx-screen p{margin:0;font-size:9px;line-height:1.8;color:var(--rx-dim);max-width:30em;text-wrap:pretty}
+.rx-screen p b{color:var(--rx-ink);font-weight:400}
+.rx-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.rx-blink{animation:rxblink 1s steps(2) infinite}
+@keyframes rxblink{50%{opacity:0}}
+.rx-hi{font-size:10px;color:var(--rx-pink)}
+.rx-list{display:flex;flex-direction:column;gap:6px;font-size:9px;line-height:1.6;color:var(--rx-ink);text-align:left}
+.rx-list i{font-style:normal;display:inline-block;width:18px;height:12px;vertical-align:middle;margin-right:8px;image-rendering:pixelated}
+html.rz-reduce-motion .rx-blink{animation:none}
+html.rz-reduce-motion body::after{display:none}

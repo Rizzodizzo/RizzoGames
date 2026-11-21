@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pixel Rally</title>
+<meta name="theme-color" content="#07070f">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="pixelrally" data-show-when="#title:not(.hidden)" data-hide-when="body.playing, #pause:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pixel Rally">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="retro.css">
+<script src="retro.js"></script>
+</head>
+<body>
+<div class="rx">
+  <div class="rx-hud">
+    <div class="rx-sc"><div><b id="nTop">CPU</b><span id="sTop">0</span></div><div><b>FIRST TO</b><span>7</span></div><div><b id="nBot">YOU</b><span id="sBot">0</span></div></div>
+    <button class="px pause" id="pauseBtn" aria-label="Pause">II</button>
+  </div>
+  <div class="rx-stage" id="stage">
+    <canvas id="cv" aria-label="Pixel Rally court"></canvas>
+
+    <div class="rx-screen" id="title">
+      <h1>PIXEL<br>RALLY</h1>
+      <p>Keep the ball in play. Miss it and your opponent scores. <b>First to 7</b> wins.</p>
+      <div class="rx-row" id="lvl"><button class="px dark" data-l="0">Easy</button><button class="px dark" data-l="1">Normal</button><button class="px dark" data-l="2">Hard</button></div>
+      <div class="rx-row"><button class="px big" id="one">1 Player</button><button class="px big" style="--c:var(--rx-pink)" id="two">2 Players</button></div>
+      <div class="rx-list" id="howList"></div>
+      <div class="rx-hi" id="record"></div>
+    </div>
+
+    <div class="rx-screen hidden" id="pause">
+      <h2>PAUSED</h2>
+      <div class="rx-row"><button class="px big" id="resume">Resume</button></div>
+      <div class="rx-row"><button class="px dark" id="settings">Settings</button><button class="px dark" id="quit">Quit</button></div>
+    </div>
+
+    <div class="rx-screen hidden" id="over">
+      <h2 id="overTitle">YOU WIN!</h2>
+      <p id="overText"></p>
+      <div class="rx-row"><button class="px big" id="again">Rematch</button><button class="px dark" id="menu">Menu</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   PIXEL RALLY
+   An upright court: you at the bottom, the computer (or a friend) at the
+   top. The ball speeds up with every hit, and where it meets the paddle
+   sets its angle. Now and then a power brick appears in the middle: hit
+   it with the ball and the last player to touch the ball gets its power.
+   ====================================================================== */
+const W = 120, H = 180, WIN = 7;
+const S = Retro.screen(document.getElementById('cv'), W, H), g = S.ctx;
+const $ = s => document.querySelector(s);
+const PAD_Y = {bot: H - 12, top: 9}, PAD_H = 3, BALL = 3;
+const LEVELS = [{name: 'Easy', speed: .75, aim: 24, react: .45}, {name: 'Normal', speed: 1.15, aim: 15, react: .65}, {name: 'Hard', speed: 1.7, aim: 9, react: .9}];
+const POWERS = {G: {name: 'GROW', c: '#58e26b'}, F: {name: 'FAST', c: '#ff4b3e'}, S: {name: 'SPLIT', c: '#3fe0ff'}};
+const STATS = 'pixelrally-stats';
+const stats = () => { try { return JSON.parse(localStorage.getItem(STATS)) || {}; } catch { return {}; } };
+let level = (() => { try { return +(localStorage.getItem('pixelrally-level') ?? 1); } catch { return 1; } })();
+
+let M = null;   // the match: {two, pads: {bot, top}, balls, score, serveTo, wait, brick, brickT, flash, over}
+const pad = () => ({x: W / 2, w: 22, grow: 0, target: null});
+function newMatch(two) {
+  M = {two, pads: {bot: pad(), top: pad()}, balls: [], score: {bot: 0, top: 0}, serveTo: Math.random() < .5 ? 'bot' : 'top', wait: 70, brick: null, brickT: 400, fx: [], over: false, rally: 0};
+  $('#nTop').textContent = two ? 'P2' : 'CPU'; $('#nBot').textContent = two ? 'P1' : 'YOU';
+  hud();
+}
+function serve() {
+  const dir = M.serveTo === 'bot' ? 1 : -1, a = (Math.random() - .5) * .9;
+  M.balls = [{x: W / 2 - 1, y: H / 2 - 1, vx: Math.sin(a) * 1.25, vy: Math.cos(a) * 1.25 * dir, sp: 1.25, owner: null, trail: []}];
+  M.rally = 0;
+  Retro.sfx.tone(523, .08, 'square', .06);
+}
+function hud() { $('#sTop').textContent = M.score.top; $('#sBot').textContent = M.score.bot; }
+
+/* ---------- each step ---------- */
+function step() {
+  if (!M || M.over) return;
+  // paddles: follow a finger or the mouse, or move with the keys; the computer chases where the ball will be
+  // keys: the arrows move the bottom paddle (A and D too with one player); with two, A and D move the top one
+  const dir = (l, r) => (Retro.held(...r) ? 1 : 0) - (Retro.held(...l) ? 1 : 0);
+  movePad('bot', M.two ? dir(['ArrowLeft'], ['ArrowRight']) : dir(['ArrowLeft', 'a'], ['ArrowRight', 'd']));
+  if (M.two) movePad('top', dir(['a'], ['d']));
+  else cpu();
+  for (const k of ['bot', 'top']) { const p = M.pads[k]; if (p.grow > 0 && --p.grow === 0) p.w = 22; }
+  if (M.wait > 0) { if (--M.wait === 0) serve(); return; }
+  // power bricks
+  if (!M.brick && --M.brickT <= 0) {
+    const kinds = Object.keys(POWERS);
+    M.brick = {x: 12 + Math.random() * (W - 34), y: 70 + Math.random() * 34, w: 11, h: 6, k: kinds[Math.floor(Math.random() * kinds.length)], life: 900};
+  }
+  if (M.brick && --M.brick.life <= 0) { M.brick = null; M.brickT = 300 + Math.random() * 300; }
+  for (const b of M.balls.slice()) moveBall(b);
+  M.fx = M.fx.filter(f => --f.t > 0);
+}
+function movePad(k, d) {
+  const p = M.pads[k], max = 3.2;
+  if (d) { p.target = null; p.x += d * 2.6; }
+  else if (p.target != null) p.x += Math.max(-max * 1.6, Math.min(max * 1.6, p.target - p.x));
+  p.x = Math.max(p.w / 2 + 2, Math.min(W - p.w / 2 - 2, p.x));
+}
+function cpu() {
+  const L = LEVELS[level], p = M.pads.top;
+  // the ball coming this way: work out where it will cross the paddle's line, bounces and all
+  const b = M.balls.filter(b => b.vy < 0).sort((a, c) => a.y - c.y)[0];
+  let tx = W / 2;
+  if (b) {
+    let x = b.x + 1, y = b.y, vx = b.vx, vy = b.vy, n = 0;
+    while (y > PAD_Y.top + PAD_H && n++ < 400) { x += vx; y += vy; if (x < 2) { x = 4 - x; vx = -vx; } if (x > W - 2) { x = 2 * (W - 2) - x; vx = -vx; } }
+    if (!p.err || b !== p.errBall) { p.err = (Math.random() - .5) * L.aim * 2; p.errBall = b; }
+    tx = x + p.err;
+    if (b.y > H * (1 - L.react * .75)) tx = p.x + (tx - p.x) * .3;   // reacts late when the ball is still far away
+  }
+  p.x += Math.max(-L.speed, Math.min(L.speed, tx - p.x));
+  p.x = Math.max(p.w / 2 + 2, Math.min(W - p.w / 2 - 2, p.x));
+}
+function moveBall(b) {
+  b.trail.push([b.x, b.y]); if (b.trail.length > 5) b.trail.shift();
+  // in small steps, so a fast ball can't jump through a paddle
+  const n = Math.ceil(Math.max(Math.abs(b.vx), Math.abs(b.vy)));
+  for (let i = 0; i < n; i++) {
+    b.x += b.vx / n; b.y += b.vy / n;
+    if (b.x < 2) { b.x = 2; b.vx = Math.abs(b.vx); Retro.sfx.tone(330, .03, 'square', .04); }
+    if (b.x > W - 2 - BALL) { b.x = W - 2 - BALL; b.vx = -Math.abs(b.vx); Retro.sfx.tone(330, .03, 'square', .04); }
+    for (const k of ['bot', 'top']) {
+      const p = M.pads[k], py = PAD_Y[k], dir = k === 'bot' ? 1 : -1;
+      if ((dir > 0 ? b.vy > 0 : b.vy < 0) && b.y + BALL >= py && b.y <= py + PAD_H && b.x + BALL >= p.x - p.w / 2 && b.x <= p.x + p.w / 2) {
+        // where it hit sets the angle: the edges send it off wide
+        const off = Math.max(-1, Math.min(1, (b.x + BALL / 2 - p.x) / (p.w / 2)));
+        b.sp = Math.min(3.8, b.sp + .14);
+        const a = off * 1.05;
+        b.vx = Math.sin(a) * b.sp; b.vy = -dir * Math.max(.55, Math.cos(a)) * b.sp;
+        b.y = dir > 0 ? py - BALL : py + PAD_H;
+        b.owner = k; M.rally++;
+        Retro.sfx.tone(k === 'bot' ? 440 : 392, .05, 'square', .07);
+        M.fx.push({x: b.x, y: b.y, t: 8, c: k === 'bot' ? '#3fe0ff' : '#ff4fa3'});
+      }
+    }
+    const br = M.brick;
+    if (br && b.x + BALL > br.x && b.x < br.x + br.w && b.y + BALL > br.y && b.y < br.y + br.h) { b.vy = -b.vy; power(b, br); M.brick = null; M.brickT = 420 + Math.random() * 400; }
+    if (b.y > H + 4 || b.y < -6) { goal(b, b.y < 0 ? 'bot' : 'top'); return; }
+  }
+}
+function power(b, br) {
+  const who = b.owner || (b.vy < 0 ? 'bot' : 'top');
+  Retro.sfx.jingle([660, 880, 1100]);
+  M.fx.push({x: br.x + br.w / 2, y: br.y, t: 50, txt: POWERS[br.k].name, c: POWERS[br.k].c});
+  if (br.k === 'G') { const p = M.pads[who]; p.w = 34; p.grow = 600; }
+  if (br.k === 'F') M.balls.forEach(x => { x.vx *= 1.35; x.vy *= 1.35; x.sp *= 1.35; });
+  if (br.k === 'S') M.balls.push({x: b.x, y: b.y, vx: -b.vx || .8, vy: b.vy, sp: b.sp, owner: b.owner, trail: []});
+}
+function goal(b, scorer) {
+  M.balls = M.balls.filter(x => x !== b);
+  M.score[scorer]++; hud();
+  Retro.sfx.tone(scorer === 'bot' ? 784 : 196, .25, 'square', .08, 0, scorer === 'bot' ? 1.3 : .6);
+  M.fx.push({x: W / 2, y: H / 2 - 20, t: 60, txt: scorer === 'bot' ? (M.two ? 'P1 POINT' : 'POINT!') : (M.two ? 'P2 POINT' : 'CPU POINT'), c: scorer === 'bot' ? '#3fe0ff' : '#ff4fa3'});
+  if (M.score[scorer] >= WIN) return finish(scorer);
+  if (!M.balls.length) { M.serveTo = scorer === 'bot' ? 'top' : 'bot'; M.wait = 80; M.brick = null; M.pads.bot.w = M.pads.top.w = 22; M.pads.bot.grow = M.pads.top.grow = 0; }
+}
+function finish(winner) {
+  M.over = true; document.body.classList.remove('playing');
+  const youWin = winner === 'bot';
+  if (!M.two) {
+    const s = stats(), k = ['easy', 'normal', 'hard'][level];
+    s[k] = s[k] || {w: 0, l: 0}; s[k][youWin ? 'w' : 'l']++;
+    try { localStorage.setItem(STATS, JSON.stringify(s)); } catch {}
+  }
+  (youWin || M.two ? Retro.sfx.jingle([523, 659, 784, 1047]) : Retro.sfx.jingle([392, 330, 262, 196]));
+  $('#overTitle').textContent = M.two ? (youWin ? 'P1 WINS!' : 'P2 WINS!') : youWin ? 'YOU WIN!' : 'CPU WINS';
+  $('#overText').innerHTML = `<b>${M.score.bot} - ${M.score.top}</b>${M.two ? '' : ` on ${LEVELS[level].name}`}`;
+  const was = M; setTimeout(() => { if (M === was) $('#over').classList.remove('hidden'); }, 600);
+}
+
+/* ---------- drawing ---------- */
+const DIGITS = {0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'], 2: ['111', '001', '111', '100', '111'], 3: ['111', '001', '111', '001', '111'], 4: ['101', '101', '111', '001', '001'], 5: ['111', '100', '111', '001', '111'], 6: ['111', '100', '111', '101', '111'], 7: ['111', '001', '010', '010', '010']};
+function digit(n, x, y, s, c) { g.fillStyle = c; (DIGITS[n] || DIGITS[0]).forEach((r, j) => [...r].forEach((v, i) => { if (v === '1') g.fillRect(x + i * s, y + j * s, s, s); })); }
+function text(t, x, y, c, size = 8) { g.font = `${size}px "Press Start 2P", monospace`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#000'; g.fillText(t, x + 1, y + 1); g.fillStyle = c; g.fillText(t, x, y); }
+function draw() {
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  // the court: side walls and a dashed centre line
+  g.fillStyle = '#26264a'; g.fillRect(0, 0, 2, H); g.fillRect(W - 2, 0, 2, H);
+  g.fillStyle = '#1d1d3a'; for (let x = 4; x < W - 4; x += 6) g.fillRect(x, H / 2 - 1, 3, 2);
+  if (!M) return;
+  digit(M.score.top, W / 2 - 4, H / 2 - 16, 3, '#2a2a55'); digit(M.score.bot, W / 2 - 4, H / 2 + 4, 3, '#2a2a55');
+  if (M.brick) {
+    const b = M.brick, blink = b.life < 150 && Math.floor(b.life / 8) % 2;
+    if (!blink) { g.fillStyle = POWERS[b.k].c; g.fillRect(b.x, b.y, b.w, b.h); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(b.x, b.y, b.w, 1); g.fillStyle = '#000'; g.fillRect(b.x + 4, b.y + 2, 3, 2); }
+  }
+  for (const [k, c] of [['top', '#ff4fa3'], ['bot', '#3fe0ff']]) {
+    const p = M.pads[k], x = Math.round(p.x - p.w / 2);
+    g.fillStyle = c; g.fillRect(x, PAD_Y[k], Math.round(p.w), PAD_H);
+    g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(x, PAD_Y[k], Math.round(p.w), 1);
+  }
+  for (const b of M.balls) {
+    b.trail.forEach(([x, y], i) => { g.fillStyle = `rgba(255,255,255,${(i + 1) / 14})`; g.fillRect(Math.round(x), Math.round(y), BALL, BALL); });
+    g.fillStyle = '#fff'; g.fillRect(Math.round(b.x), Math.round(b.y), BALL, BALL);
+  }
+  for (const f of M.fx) {
+    if (f.txt) text(f.txt, f.x, f.y - (60 - f.t) * .15, f.c, 8);
+    else { g.fillStyle = f.c; for (let i = 0; i < 4; i++) g.fillRect(f.x + Math.cos(i * 1.6 + f.t) * (9 - f.t), f.y + Math.sin(i * 1.6 + f.t) * (9 - f.t), 1, 1); }
+  }
+  if (M.wait > 0 && !M.over) text(M.serveTo === 'bot' ? (M.two ? 'P1 SERVE' : 'YOUR SERVE') : (M.two ? 'P2 SERVE' : 'CPU SERVE'), W / 2, H / 2 + (M.serveTo === 'bot' ? 30 : -30), '#ffd23f', 8);
+}
+const L = Retro.loop(step, draw);
+
+/* ---------- touch and mouse: a finger on your half of the court moves your paddle ---------- */
+const fingers = new Map();
+const cv = document.getElementById('cv');
+const stageEl = $('#stage');
+function aim(e) {
+  if (!M || M.over) return;
+  const p = S.at(e), half = !M.two || p.y > H / 2 ? 'bot' : 'top';
+  const k = fingers.get(e.pointerId) || half; fingers.set(e.pointerId, k);
+  M.pads[k].target = p.x;
+}
+stageEl.addEventListener('pointerdown', e => { if (e.target.closest('.rx-screen')) return; aim(e); });
+stageEl.addEventListener('pointermove', e => { if (e.target.closest('.rx-screen')) return; if (e.pointerType === 'mouse' || fingers.has(e.pointerId)) aim(e); });
+addEventListener('pointerup', e => fingers.delete(e.pointerId));
+addEventListener('pointercancel', e => fingers.delete(e.pointerId));
+
+/* ---------- screens ---------- */
+function start(two) {
+  newMatch(two);
+  ['#title', '#over', '#pause'].forEach(s => $(s).classList.add('hidden'));
+  document.body.classList.add('playing'); L.resume();
+  $('.rx-sc').style.visibility = ''; $('#pauseBtn').style.visibility = '';
+}
+function showTitle() {
+  M = null; document.body.classList.remove('playing');
+  ['#over', '#pause'].forEach(s => $(s).classList.add('hidden')); $('#title').classList.remove('hidden');
+  document.querySelectorAll('#lvl [data-l]').forEach(b => b.classList.toggle('on', +b.dataset.l === level));
+  const s = stats(), w = ['easy', 'normal', 'hard'].reduce((a, k) => a + ((s[k] || {}).w || 0), 0);
+  $('#record').textContent = w ? `WINS VS CPU: ${w}` : '';
+  $('#sTop').textContent = $('#sBot').textContent = '0';
+  $('.rx-sc').style.visibility = 'hidden'; $('#pauseBtn').style.visibility = 'hidden';   // nothing to show until a match starts
+}
+const pause = () => { if (!M || M.over) return; L.pause(); document.body.classList.remove('playing'); $('#pause').classList.remove('hidden'); };
+const resume = () => { $('#pause').classList.add('hidden'); document.body.classList.add('playing'); L.resume(); };
+$('#lvl').onclick = e => { const b = e.target.closest('[data-l]'); if (!b) return; level = +b.dataset.l; try { localStorage.setItem('pixelrally-level', level); } catch {} Retro.sfx.blip(); showTitle(); };
+$('#one').onclick = () => start(false);
+$('#two').onclick = () => start(true);
+$('#again').onclick = () => start(M.two);
+$('#menu').onclick = showTitle;
+$('#pauseBtn').onclick = () => (M && !M.over ? ($('#pause').classList.contains('hidden') ? pause() : resume()) : null);
+$('#resume').onclick = resume;
+$('#quit').onclick = showTitle;
+$('#settings').onclick = () => window.RizzoGames && RizzoGames.openMenu();
+addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'P') && M && !M.over) ($('#pause').classList.contains('hidden') ? pause() : resume()); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+const pdl = (c, w = 12) => Retro.spriteURL(['.' + c.repeat(w - 2) + '.', c.repeat(w)], {[c]: {c: '#3fe0ff', p: '#ff4fa3', g: '#58e26b', r: '#ff4b3e', s: '#3fe0ff'}[c]});
+$('#howList').innerHTML = [
+  [pdl('c'), Retro.touch() ? 'Drag on the court to move your paddle' : 'Move with the mouse or arrow keys'],
+  [pdl('g', 10), '<b style="color:#58e26b">Grow</b>: a wider paddle'],
+  [pdl('r', 10), '<b style="color:#ff4b3e">Fast</b>: the ball speeds up'],
+  [pdl('s', 10), '<b style="color:#3fe0ff">Split</b>: a second ball'],
+].map(([src, t]) => `<div><i style="background:url(${src}) center/contain no-repeat"></i>${t}</div>`).join('') + `<div style="color:#8a8aa8">2 players: P2 plays on the top half${Retro.touch() ? '' : ' (A and D keys)'}</div>`;
+window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
+  onMenuOpen: () => { if (M && !M.over && $('#pause').classList.contains('hidden')) pause(); },
+  previewSound: () => Retro.sfx.tone(440, .05, 'square', .07),
+  leaveWarning: () => M && !M.over ? 'You are in the middle of a match.' : '',
+});
+showTitle();
+</script>
+</body>
+</html>
