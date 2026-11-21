@@ -45,6 +45,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .rx-pad3 .rx-key{width:100%;margin:0;height:72px}
 .rx-dpad{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:72px 72px;gap:12px;width:min(100%,330px)}
 .rx-dpad .rx-key{width:100%;height:100%;margin:0;font-size:22px}
+.rx-dpad [data-d="1"],.rx-dpad [data-d="3"]{position:relative;top:-40px}   /* left and right sit up between up and down */
 @media (hover:hover) and (pointer:fine){.rx-pad.touch-only{display:none}}
 
 /* screens over the game: title, pause, game over */
