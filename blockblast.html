@@ -140,7 +140,7 @@ body[data-fx=gold] .blk{background:linear-gradient(135deg,color-mix(in srgb,var(
 @keyframes pdrop{from{opacity:0;transform:translateY(-70%) scale(.7)}}
 .ptitle rect{stroke:rgba(0,0,0,.12);stroke-width:.06}
 .hero{flex:1 1 auto;min-height:150px;display:grid;place-items:center;margin-bottom:10px}
-.hero .board{--gap:3px;width:min(220px,60vw,28vh);pointer-events:none;animation:float 5s ease-in-out infinite}
+.hero .board{--gap:2px;width:min(220px,60vw,28vh);pointer-events:none;animation:float 5s ease-in-out infinite}
 @keyframes float{50%{transform:translateY(-6px) rotate(-1deg)}}
 .playrow{flex:none;display:flex;gap:10px}
 .play{flex:1;border-radius:16px;padding:15px;font-size:1.15rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -195,12 +195,11 @@ body[data-fx=gold] .cell.f{background:linear-gradient(135deg,color-mix(in srgb,v
 .piece{position:relative;border-radius:18px;background:var(--panel);box-shadow:0 2px 10px var(--shade);height:calc(var(--mc) * 5 + 22px);display:grid;place-items:center;touch-action:none;transition:transform .15s,opacity .2s,box-shadow .2s;border:2px solid transparent}
 .piece.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent),0 2px 10px var(--shade)}
 .piece.used{opacity:.25;pointer-events:none}
-.piece.nofit .shape{opacity:.35;filter:grayscale(.7)}
 .piece.lift .shape{opacity:.15}
 .piece.new{animation:pin .35s var(--ease) both}
 @keyframes pin{from{opacity:0;transform:translateY(16px) scale(.85)}}
 @media (hover:hover){.piece:not(.used):hover{transform:translateY(-2px)}}
-.shape{display:grid;gap:3px;grid-template-columns:repeat(var(--w),var(--mc));grid-auto-rows:var(--mc);pointer-events:none}
+.shape{display:grid;gap:1.5px;grid-template-columns:repeat(var(--w),var(--mc));grid-auto-rows:var(--mc);pointer-events:none}
 .shape i{border-radius:22%;--bev:calc(var(--mc) * .12)}
 .shape i.off{visibility:hidden}
 .ghost{position:fixed;left:0;top:0;z-index:20;pointer-events:none;display:grid;gap:var(--gap);grid-template-columns:repeat(var(--w),var(--cs));grid-auto-rows:var(--cs);
@@ -673,7 +672,7 @@ function layout() {
   const vh = innerHeight - (side ? 150 : 300);
   const bw = Math.max(240, Math.min(vw, vh, side ? 680 : 560));
   document.documentElement.style.setProperty('--bw', bw + 'px');
-  const gap = G.n >= 10 ? 3 : 4;
+  const gap = G.n >= 10 ? 1.5 : 2;
   document.documentElement.style.setProperty('--gap', gap + 'px');
   const cs = (bw - 2 * (gap + 3) - gap * (G.n - 1)) / G.n;
   document.documentElement.style.setProperty('--cs', cs + 'px');
@@ -706,7 +705,7 @@ function shapeHTML(p) {
 }
 function renderTray() {
   trayEl.innerHTML = G.pieces.map((p, i) => {
-    const cls = ['piece', p.used && 'used', i === sel && 'on', !p.used && !canPlace(p) && 'nofit', G.fresh && 'new'].filter(Boolean).join(' ');
+    const cls = ['piece', p.used && 'used', i === sel && 'on', G.fresh && 'new'].filter(Boolean).join(' ');
     return `<button class="${cls}" data-i="${i}" aria-label="Block ${i + 1}${p.used ? ', placed' : ''}" style="animation-delay:${i * 60}ms">${p.used ? '' : shapeHTML(p)}</button>`;
   }).join('');
   G.fresh = false;
@@ -790,9 +789,8 @@ function startGhost(d) {
   Sound.pick(); vibrate(6);
 }
 function moveGhost(d, e) {
-  // on a touch screen the block floats above your finger so you can see where it goes
-  const lift = d.touch ? Math.max(70, d.g.cs * 2.2) : 0;
-  const left = e.clientX - d.gw / 2, top = e.clientY - d.gh / 2 - lift - (d.touch ? d.gh / 2 : 0);
+  // the block sits right on your finger (or the mouse), centred under it
+  const left = e.clientX - d.gw / 2, top = e.clientY - d.gh / 2;
   d.ghost.style.transform = `translate(${left}px,${top}px)`;
   const c = Math.round((left - d.g.x0) / d.g.step), r = Math.round((top - d.g.y0) / d.g.step);
   const p = G.pieces[d.i];
@@ -894,9 +892,9 @@ const GLYPH = {
   S: ['0111', '1000', '0110', '0001', '1110'], T: ['111', '010', '010', '010', '010'],
 };
 function drawTitle() {
-  const lines = ['BLOCK', 'BLAST'], u = 1, gap = 1.2;
+  const lines = ['BLOCK', 'BLAST'], LG = .35, gap = .35;   // the space between letters, and between the two words
   let s = '', W = 0, k = 0;
-  const widths = lines.map(w => [...w].reduce((a, ch) => a + GLYPH[ch][0].length, 0) + (w.length - 1));
+  const widths = lines.map(w => [...w].reduce((a, ch) => a + GLYPH[ch][0].length, 0) + (w.length - 1) * LG);
   W = Math.max(...widths);
   lines.forEach((word, li) => {
     let x = (W - widths[li]) / 2;
@@ -904,9 +902,9 @@ function drawTitle() {
     [...word].forEach(ch => {
       const g = GLYPH[ch], col = k % 7;
       s += `<g class="lt" style="animation-delay:${k * 55}ms">`;
-      g.forEach((row, y) => [...row].forEach((v, xx) => { if (v === '1') s += `<rect x="${x + xx + .05}" y="${y0 + y + .05}" width=".9" height=".9" rx=".2" fill="var(--b${col})"/>`; }));
+      g.forEach((row, y) => [...row].forEach((v, xx) => { if (v === '1') s += `<rect x="${x + xx + .025}" y="${y0 + y + .025}" width=".95" height=".95" rx=".2" fill="var(--b${col})"/>`; }));
       s += '</g>';
-      x += g[0].length + 1; k++;
+      x += g[0].length + LG; k++;
     });
   });
   const H = 10 + gap;
@@ -953,7 +951,7 @@ function renderHow() {
   const s3 = [1,1,_,6,6,6, 1,4,4,_,6,_, _,4,2,2,_,3, 5,5,2,_,3,3, 5,0,0,1,_,3, _,0,0,1,1,_];
   const sz = wantSize();
   $('#howSteps').innerHTML = [
-    [s1, 'Place the blocks', isTouch() ? 'Drag one of your three blocks onto the board. It floats above your finger so you can see where it lands.' : 'Drag one of your three blocks onto the board, or click a block and then click a square.'],
+    [s1, 'Place the blocks', isTouch() ? 'Drag one of your three blocks onto the board. The squares it will fill light up as you go.' : 'Drag one of your three blocks onto the board, or click a block and then click a square.'],
     [s2, 'Fill a line to clear it', 'Fill a whole row or column and it clears. Clear more than one at once for bonus points.'],
     [s3, 'Keep the combo going', 'Clear a line at least once every three blocks to build a combo for even more points. When none of your blocks fit, the game ends.'],
   ].map(([b, h, p], k) => `<div class="step">${miniBoard(b)}<div><h3><span class="hn">${k + 1}</span>${h}</h3><p>${p}</p></div></div>`).join('') +
