@@ -160,7 +160,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .card{width:min(360px,100%);padding:24px 22px 22px;border-radius:24px;background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 40px rgba(0,0,0,.25);text-align:center;animation:pop .35s var(--pop)}
 @keyframes pop{from{transform:scale(.85);opacity:0}}
 .card h3{margin:0 0 6px;font-size:1.7rem;font-weight:900}
-.card p{margin:0 0 18px;color:var(--muted);font-weight:700;line-height:1.45}
+.card p{margin:0 0 18px;color:var(--muted);font-weight:700;line-height:1.45;text-wrap:balance}
 .card .hrow .primary{flex:1}
 .card.win h3{font-size:1.9rem}
 .reward{display:flex;align-items:center;justify-content:center;gap:10px;margin:-4px 0 10px;font-size:2.4rem;font-weight:900;color:#e09a00;font-variant-numeric:tabular-nums}
@@ -170,7 +170,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .rlines li{display:flex;justify-content:space-between;padding:3px 0;opacity:0;animation:fadein .3s forwards}
 .rlines li b{color:#c98a00}
 @keyframes fadein{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
-.nudge{margin:-4px 0 14px;font-weight:800;color:var(--accent);font-size:.92rem}
+.nudge{margin:-4px 0 14px;font-weight:800;color:var(--accent);font-size:.92rem;text-wrap:balance}
 .confetti{position:fixed;inset:0;z-index:25;pointer-events:none;overflow:hidden}
 .confetti i{position:absolute;top:-24px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(112vh) rotate(760deg)}}
@@ -755,7 +755,7 @@ function finish(won) {
     cover(`<div class="card win"><div class="chips">${chipsFor(G.n)}</div><h3>Level ${G.n} clear!</h3><p>All ${G.total} passengers home.</p>
       <div class="reward">${TK}<span id="rwN">+0</span></div>
       <ul class="rlines">${lines.map((l, i) => `<li style="animation-delay:${(.2 + i * .2).toFixed(2)}s"><span>${l[0]}</span><b>+${l[1]}</b></li>`).join('')}</ul>
-      ${fresh ? `<div class="nudge">🛍️ New: you can now buy <b>${fresh.name}</b> in the shop</div>` : ''}
+      ${fresh ? `<div class="nudge">🛍️ New: you can now buy <b>${fresh.name}</b> in&nbsp;the&nbsp;shop</div>` : ''}
       <div class="hrow"><button class="ghost" id="cMenu">Menu</button><button class="primary" id="cNext">Level ${G.n + 1}</button></div></div>`);
     confetti(); countUp($('#rwN'), total);
     $('#cNext').onclick = () => { closeCover(); start(G.n + 1); };
