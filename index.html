@@ -101,7 +101,9 @@ header{text-align:center;margin:8px 0 18px}
 .search button[hidden]{display:none}
 .search button svg{width:15px;height:15px}
 .results .sech{font-weight:800;font-size:1.02rem;color:var(--muted);padding:6px 16px}
-.results .row{flex-wrap:wrap;overflow:visible;row-gap:16px}
+/* results fill the width evenly: as many columns as fit, shared out, each icon centred in its column */
+.results .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(var(--sz,76px) + 16px),1fr));justify-items:center;overflow:visible;row-gap:16px}
+#games.small .results .row{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
 .none{padding:18px 16px;text-align:center;color:var(--muted);font-weight:700}
 .sec{margin:0 -16px 18px}
 .sech{display:flex;align-items:center;gap:6px;padding:0 16px;margin:0 0 6px}
