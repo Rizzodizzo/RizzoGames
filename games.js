@@ -56,7 +56,7 @@
      canReload()                   return true when it's safe to reload into an update (default: on the menu)
      beforeReload()                save first; whatever it returns is handed to afterReload
      afterReload(x)                runs once the new version has loaded, e.g. to put the player back in
-     hubSize(size)                 the launcher only: the game boxes were set to 'large' or 'small'
+     hubSize(size)                 the launcher only: the game icons were set to 'large' or 'small'
      loud()                        return true to always show "Checking…" / "Up to date" notes
    ========================================================================================== */
 (() => {
@@ -76,6 +76,22 @@
   };
 
   if (!isHub) store('hub-last-' + id, Date.now());
+  // Play time (hub-time-<game>, in seconds): the launcher uses it to suggest games. It only counts while the
+  // game is on screen and someone has touched it in the last two minutes, so a game left open doesn't count.
+  if (!isHub) {
+    const TKEY = 'hub-time-' + id;
+    let used = Date.now(), lastTick = Date.now();
+    const poke = () => { used = Date.now(); };
+    for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(ev, poke, {passive: true, capture: true});
+    const tick = leaving => {
+      const now = Date.now(), dt = Math.min(now - lastTick, 20000); lastTick = now;
+      if ((document.hidden && !leaving) || now - used > 120000) return;
+      store(TKEY, String(Math.round((+read(TKEY) || 0) + dt / 1000)));
+    };
+    setInterval(tick, 15000);
+    addEventListener('visibilitychange', () => { if (document.hidden) tick(true); else lastTick = Date.now(); });
+    addEventListener('pagehide', () => tick(!document.hidden));
+  }
   if (isHub) document.addEventListener('click', e => {
     const a = e.target.closest && e.target.closest('a[href]');
     if (a && a.origin === location.origin && !e.defaultPrevented) try { sessionStorage.setItem('rz-from-hub', Date.now()); } catch {}
@@ -439,7 +455,7 @@ html.rz-reduce-motion .rz-ui .rz-mbtn.rz-pulse{animation:none}`;
   ${isHub ? '' : `<a class="rz-leave" href="./">${ARROW}<span>All games</span></a><p class="rz-warn" aria-live="polite"></p>`}
   ${isHub ? `<h3>Home screen</h3>
   <div class="rz-card">
-    <div class="rz-row"><span class="rz-l">Game boxes</span><span class="rz-seg" role="radiogroup" aria-label="Game box size">
+    <div class="rz-row"><span class="rz-l">Game icons</span><span class="rz-seg" role="radiogroup" aria-label="Game icon size">
       <button type="button" role="radio" data-size="large"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2.5" fill="currentColor"/></svg>Large</button>
       <button type="button" role="radio" data-size="small"><svg viewBox="0 0 16 16" aria-hidden="true"><g fill="currentColor"><rect x="1.5" y="1.5" width="5.8" height="5.8" rx="1.6"/><rect x="8.7" y="1.5" width="5.8" height="5.8" rx="1.6"/><rect x="1.5" y="8.7" width="5.8" height="5.8" rx="1.6"/><rect x="8.7" y="8.7" width="5.8" height="5.8" rx="1.6"/></g></svg>Small</button></span></div>
   </div>` : ''}
