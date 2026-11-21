@@ -789,8 +789,8 @@ function startGhost(d) {
   Sound.pick(); vibrate(6);
 }
 function moveGhost(d, e) {
-  // the block sits right on your finger (or the mouse), centred under it
-  const left = e.clientX - d.gw / 2, top = e.clientY - d.gh / 2;
+  // touch: the block's bottom row sits just above your thumb, so none of it is hidden; mouse: centred on the pointer
+  const left = e.clientX - d.gw / 2, top = d.touch ? e.clientY - d.gh - 24 : e.clientY - d.gh / 2;
   d.ghost.style.transform = `translate(${left}px,${top}px)`;
   const c = Math.round((left - d.g.x0) / d.g.step), r = Math.round((top - d.g.y0) / d.g.step);
   const p = G.pieces[d.i];
@@ -951,7 +951,7 @@ function renderHow() {
   const s3 = [1,1,_,6,6,6, 1,4,4,_,6,_, _,4,2,2,_,3, 5,5,2,_,3,3, 5,0,0,1,_,3, _,0,0,1,1,_];
   const sz = wantSize();
   $('#howSteps').innerHTML = [
-    [s1, 'Place the blocks', isTouch() ? 'Drag one of your three blocks onto the board. The squares it will fill light up as you go.' : 'Drag one of your three blocks onto the board, or click a block and then click a square.'],
+    [s1, 'Place the blocks', isTouch() ? 'Drag one of your three blocks onto the board. It sits just above your thumb, and the squares it will fill light up as you go.' : 'Drag one of your three blocks onto the board, or click a block and then click a square.'],
     [s2, 'Fill a line to clear it', 'Fill a whole row or column and it clears. Clear more than one at once for bonus points.'],
     [s3, 'Keep the combo going', 'Clear a line at least once every three blocks to build a combo for even more points. When none of your blocks fit, the game ends.'],
   ].map(([b, h, p], k) => `<div class="step">${miniBoard(b)}<div><h3><span class="hn">${k + 1}</span>${h}</h3><p>${p}</p></div></div>`).join('') +
