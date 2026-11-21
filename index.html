@@ -186,7 +186,8 @@ html.rz-vt .tile{animation:none}
    To add a new game:
      1. Put its .html file next to this one (e.g. word-hunt.html)
      2. Add one entry below. Its tags are never shown: they say what kind of game it is, and
-        Recommended suggests games whose tags match the ones you spend the most time playing
+        Recommended suggests games whose tags match the ones you spend the most time playing.
+        assets lists any other files the game loads (like a word list), so they're saved for offline play too
      3. In the game's file, add the games.js line inside its <head>
         (copy it from the top of games.js). That gives it the Settings menu, shared settings,
         automatic updates and offline play
@@ -258,6 +259,23 @@ const GAMES = [
       try { st = JSON.parse(localStorage.getItem('rizzle-stats-v1')) || {}; } catch {}
       const wins = Object.values(st).reduce((n, r) => n + ((r && r.wins) || 0), 0);
       return wins ? `🏆 ${wins.toLocaleString()} win${wins > 1 ? 's' : ''}` : 'No wins yet';
+    },
+  },
+  {
+    id: 'wordweave',
+    name: 'Word Weave',
+    file: 'wordweave.html',
+    assets: ['wordweave-words.js'],
+    blurb: 'Build crossing words on the board with seven letter tiles. Play the computer on Easy, Medium or Hard, pass and play with friends, or race through Quick fire rounds.',
+    colors: ['#d9572c', '#f2b84b'],
+    art: 'weave',
+    cat: ['word', 'puzzle'],
+    tags: ['words', 'strategy', 'vs-computer', 'two-player', 'logic'],
+    stat() {
+      let st = {};
+      try { st = JSON.parse(localStorage.getItem('wordweave-stats-v1')) || {}; } catch {}
+      const wins = Object.values(st.cpu || {}).reduce((a, x) => a + (x.wins || 0), 0);
+      return wins ? `🏆 ${wins} win${wins > 1 ? 's' : ''} vs the computer` : st.quickBest ? `⚡ Quick fire best ${st.quickBest}` : 'No games yet';
     },
   },
   {
@@ -681,6 +699,14 @@ const ART = {
     <path d="M44 31v16" stroke="#3a4152" stroke-width="2.2" stroke-linecap="round"/><path d="M45 31h12l-3 4 3 4H45z" fill="#ef4444" stroke="#1f2a44" stroke-width="1.4" stroke-linejoin="round"/>
     <g fill="#ef4444" stroke="#7a1414" stroke-width="1"><circle cx="38" cy="44" r="3.2"/><circle cx="33" cy="49" r="3.2"/><circle cx="39" cy="51" r="3.2"/><circle cx="34" cy="56" r="3.2"/><circle cx="45" cy="52" r="3.2"/><circle cx="41" cy="58" r="3.2"/></g>
     <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1f2a44" stroke-width="4"/></svg>`,
+  // letter tiles crossing on a green board
+  weave: `<svg viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="#2f6b4f"/>
+    <g fill="#e9f0e4" opacity=".35"><rect x="12" y="12" width="16" height="16" rx="3"/><rect x="68" y="12" width="16" height="16" rx="3"/><rect x="12" y="68" width="16" height="16" rx="3"/><rect x="68" y="68" width="16" height="16" rx="3"/></g>
+    <rect x="68" y="12" width="16" height="16" rx="3" fill="#ef6f6c"/><rect x="12" y="68" width="16" height="16" rx="3" fill="#5aaee0"/>
+    <g font-family="Nunito,system-ui,sans-serif" font-weight="900" font-size="15" text-anchor="middle" fill="#3a2a12">
+      ${[[12, 40, 'W'], [30, 40, 'O'], [48, 40, 'R'], [66, 40, 'D'], [48, 22, 'O'], [48, 58, 'E']].map(([x, y, l]) => `<rect x="${x}" y="${y}" width="17" height="17" rx="3.5" fill="#f6dfae" stroke="#b98c43" stroke-width="1.2"/><text x="${x + 8.5}" y="${y + 13.5}">${l}</text>`).join('')}</g>
+    <rect x="6" y="6" width="84" height="84" rx="14" fill="none" stroke="#1f2a44" stroke-width="4"/></svg>`,
   // three rows of letter tiles, the last one solved
   words: `<svg viewBox="0 0 96 96" aria-hidden="true"><g font-family="Nunito,system-ui,sans-serif" font-weight="900" font-size="15" text-anchor="middle" fill="#fff">
     <rect x="8" y="10" width="24" height="24" rx="5" fill="#878c95"/><rect x="36" y="10" width="24" height="24" rx="5" fill="#d9a92c"/><rect x="64" y="10" width="24" height="24" rx="5" fill="#878c95"/>
@@ -943,7 +969,7 @@ addEventListener('resize', () => gamesEl.querySelectorAll('.sec').forEach(arrows
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   // Ask sw.js to save every game now, so they all work offline even before you've opened them
   navigator.serviceWorker.ready.then(reg => {
-    if (reg.active) reg.active.postMessage({type: 'warm', urls: GAMES.map(g => g.file)});
+    if (reg.active) reg.active.postMessage({type: 'warm', urls: GAMES.flatMap(g => [g.file, ...(g.assets || [])])});
   }).catch(() => {});
 }
 </script>

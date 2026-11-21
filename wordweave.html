@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Weave</title>
+<meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161d" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<script src="games.js" data-game="wordweave" data-show-when="#home:not(.hidden)" data-hide-when=".panel.show, .cover:not(.hidden)" data-sounds="sfx" data-top="16" data-left="16" data-pill-top="64"></script>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Word Weave">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="wordweave-words.js"></script>
+<style>
+/* ======================================================================
+   WORD WEAVE. Light or dark follows the device setting.
+   ====================================================================== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);
+  --bg:#f4efe6;--panel:#ffffff;--ink:#2a2118;--muted:#7d6f60;--line:#e6dccd;--soft:#efe6d8;--shade:rgba(60,40,20,.12);
+  --accent:#d9572c;--hi:#ef7a4c;--edge:#9e3a17;--onaccent:#ffffff;--ok:#2e9b5b;--bad:#d64545;
+  --board:#2f6b4f;--sq:#e9f0e4;--sqline:#2f6b4f;
+  --l2:#bfe3f5;--l3:#5aaee0;--w2:#f7c6d3;--w3:#ef6f6c;--l2i:#1f5f80;--l3i:#ffffff;--w2i:#8f2d4a;--w3i:#ffffff;
+  --tile:#f6dfae;--tile2:#e9c784;--tileink:#3a2a12;--tileedge:#b98c43;
+  --rz-btn-bg:var(--panel);--rz-btn-fg:var(--accent);--rz-btn-border:1px solid var(--line);--rz-btn-radius:12px;--rz-btn-shadow:0 2px 8px var(--shade);--rz-btn-size:42px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;
+  --bg:#14161d;--panel:#1f222c;--ink:#efe9df;--muted:#a59a8c;--line:#30343f;--soft:#282c37;--shade:rgba(0,0,0,.45);
+  --accent:#f08a5d;--hi:#f6a37e;--edge:#a8461f;--onaccent:#1a120c;
+  --board:#1d4634;--sq:#22392f;--sqline:#1d4634;
+  --l2:#2c5870;--l3:#2f7fb3;--w2:#7a3a4f;--w3:#b5413f;--l2i:#cfeaf7;--l3i:#ffffff;--w2i:#ffd6e1;--w3i:#ffffff}}
+*{box-sizing:border-box}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;height:100%;overflow-y:auto;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);-webkit-user-select:none;user-select:none}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{cursor:default}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.iconbtn{width:42px;height:42px;border-radius:12px;display:inline-grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 2px 8px var(--shade);flex:none}
+.iconbtn:active{transform:scale(.94)}
+.primary{background:linear-gradient(180deg,var(--hi),var(--accent));color:var(--onaccent);box-shadow:0 4px 0 var(--edge),0 8px 18px color-mix(in srgb,var(--accent) 30%,transparent);font-weight:900;border-radius:14px}
+.primary:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+.primary:disabled{background:var(--soft);color:var(--muted);box-shadow:none}
+.sec{background:var(--soft);font-weight:900;border-radius:14px}
+.seg{display:flex;gap:3px;padding:4px;background:var(--soft);border-radius:12px}
+.seg button{flex:1;padding:8px 0;border-radius:9px;color:var(--muted);font-weight:900;font-size:.9rem;transition:background .2s,color .2s}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+
+/* a letter tile */
+.t{position:relative;display:grid;place-items:center;border-radius:18%;background:linear-gradient(180deg,var(--tile),var(--tile2));color:var(--tileink);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.14),inset 0 2px 0 rgba(255,255,255,.55),0 1px 2px rgba(0,0,0,.2);font-weight:900;line-height:1;text-transform:uppercase}
+.t b{font-size:58%}
+.t i{position:absolute;right:9%;bottom:6%;font-style:normal;font-size:26%;font-weight:900;opacity:.85}
+.t.wild b{color:#b0432a}
+.t.wild i{display:none}
+
+/* ================= HOME ================= */
+.home{max-width:480px;margin:0 auto;padding-top:54px;display:flex;flex-direction:column;gap:12px}
+.title{display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px 0 8px}
+.title .wd{display:flex;gap:5px}
+.title .t{width:clamp(38px,11vw,50px);height:clamp(38px,11vw,50px);font-size:clamp(38px,11vw,50px);animation:drop .5s var(--ease) both}
+@keyframes drop{from{opacity:0;transform:translateY(-30px) rotate(-8deg)}}
+.cont{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;text-align:left}
+.cont .ci{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.2)}
+.cont b{display:block;font-size:1.1rem}
+.cont small{font-weight:700;opacity:.9}
+.mode{background:var(--panel);border-radius:20px;padding:14px;box-shadow:0 3px 12px var(--shade);display:flex;flex-direction:column;gap:10px}
+.mode .mh{display:flex;align-items:center;gap:12px}
+.mode .mi{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--accent);flex:none}
+.mode h2{margin:0;font-size:1.15rem;font-weight:900}
+.mode p{margin:1px 0 0;color:var(--muted);font-weight:700;font-size:.85rem}
+.mode .row{display:flex;gap:10px;align-items:center}
+.mode .row .seg{flex:1}
+.mode .go{padding:11px 18px;font-size:1rem}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:16px;background:var(--panel);font-weight:800;box-shadow:0 2px 8px var(--shade)}
+.tile svg{color:var(--accent)}
+
+/* ================= GAME ================= */
+.game{max-width:620px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ghead{width:100%;display:flex;align-items:center;gap:10px;padding-left:52px;min-height:44px}
+.gtitle{flex:1;min-width:0;text-align:center;line-height:1.15}
+.gtitle b{display:block;font-size:1.08rem;font-weight:900}
+.gtitle small{font-size:.78rem;color:var(--muted);font-weight:800}
+.players{width:100%;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pl{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:99px;background:var(--panel);box-shadow:0 2px 8px var(--shade);font-weight:800;font-size:.9rem;border:2px solid transparent;transition:border-color .2s}
+.pl .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.8rem;font-weight:900}
+.pl b{font-variant-numeric:tabular-nums;font-size:1.02rem}
+.pl.on{border-color:var(--accent)}
+.pl.on .nm::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+.bag{font-size:.78rem;font-weight:800;color:var(--muted)}
+.last{min-height:1.3em;font-size:.88rem;font-weight:800;color:var(--muted);text-align:center}
+.last b{color:var(--ink)}
+.boardwrap{width:var(--bw);position:relative}
+.board{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;padding:4px;background:var(--board);border-radius:12px;box-shadow:0 8px 22px var(--shade);touch-action:none}
+.sq{position:relative;aspect-ratio:1;border-radius:14%;background:var(--sq);display:grid;place-items:center;font-size:calc(var(--bw) / 11 * .26);font-weight:900;line-height:1;text-align:center;color:transparent}
+.sq.L2{background:var(--l2);color:var(--l2i)}.sq.L3{background:var(--l3);color:var(--l3i)}.sq.W2{background:var(--w2);color:var(--w2i)}.sq.W3{background:var(--w3);color:var(--w3i)}
+.sq.st::before{content:'';position:absolute;inset:22%;background:var(--w2i);clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);opacity:.75}
+.sq .t{position:absolute;inset:0;font-size:calc(var(--bw) / 11)}
+.sq .t.pend{background:linear-gradient(180deg,#fff2cc,#f7d77a);box-shadow:0 0 0 2px var(--accent),inset 0 -3px 0 rgba(0,0,0,.12)}
+.sq .t.lastmv{box-shadow:0 0 0 2px #e8a300,inset 0 -3px 0 rgba(0,0,0,.14),inset 0 2px 0 rgba(255,255,255,.55)}
+.sq .t.pop{animation:tpop .3s var(--ease)}
+@keyframes tpop{from{transform:scale(.4)}}
+.sq.hot{outline:3px solid var(--accent);outline-offset:-3px}
+.preview{position:absolute;z-index:3;pointer-events:none;padding:2px 7px;border-radius:99px;background:var(--ok);color:#fff;font-size:.8rem;font-weight:900;transform:translate(-30%,-60%);white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.rackrow{width:var(--bw);display:flex;flex-direction:column;gap:8px}
+.rack{display:flex;gap:6px;justify-content:center;padding:8px;border-radius:16px;background:color-mix(in srgb,var(--board) 18%,var(--panel));min-height:calc(var(--rs) + 16px);touch-action:none}
+.rack .t{width:var(--rs);height:var(--rs);font-size:var(--rs);transition:transform .15s,opacity .15s}
+.rack .t.sel{transform:translateY(-8px);box-shadow:0 0 0 3px var(--accent),inset 0 -3px 0 rgba(0,0,0,.14)}
+.rack .t.gone{opacity:.18;pointer-events:none}
+.rack.hide .t b,.rack.hide .t i{visibility:hidden}
+.acts{display:flex;gap:8px}
+.acts .sec{flex:1;padding:11px 4px;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:5px}
+.acts .sec svg{width:18px;height:18px}
+.acts .primary{flex:1.5;padding:11px 6px;font-size:1rem}
+.hint{min-height:1.2em;text-align:center;font-weight:800;font-size:.85rem;color:var(--bad)}
+.hint.ok{color:var(--ok)}
+.drag{position:fixed;left:0;top:0;z-index:30;pointer-events:none;width:var(--ds);height:var(--ds);font-size:var(--ds);filter:drop-shadow(0 8px 10px rgba(0,0,0,.3))}
+.think{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}.think i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse .9s ease-in-out infinite}.think i:nth-child(2){animation-delay:.15s}.think i:nth-child(3){animation-delay:.3s}
+
+/* ================= QUICK FIRE ================= */
+.quick{max-width:520px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:14px}
+.qstats{display:flex;gap:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border-radius:99px;padding:7px 14px;font-weight:900;box-shadow:0 2px 8px var(--shade);font-variant-numeric:tabular-nums}
+.timer{width:100%;height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.timer i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#9bd36a);border-radius:5px;transform-origin:left;transition:background .3s}
+.timer.low i{background:var(--bad)}
+.slots{display:flex;gap:6px;justify-content:center;min-height:62px;padding:8px;width:100%;border-radius:16px;background:var(--panel);box-shadow:0 2px 8px var(--shade);flex-wrap:wrap}
+.slots .t,.qrack .t{width:min(46px,11.5vw);height:min(46px,11.5vw);font-size:min(46px,11.5vw)}
+.slots .empty{color:var(--muted);font-weight:800;align-self:center}
+.qrack{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.qrack .t.gone{opacity:.2;pointer-events:none}
+.qword{font-weight:900;color:var(--muted);min-height:1.3em}
+.qword.ok{color:var(--ok)}
+.qacts{display:flex;gap:8px;width:100%}
+.qacts .sec{flex:1;padding:12px}
+.qacts .primary{flex:2;padding:12px;font-size:1.05rem}
+.reveal{width:100%;background:var(--panel);border-radius:18px;padding:14px;box-shadow:0 3px 12px var(--shade);display:flex;flex-direction:column;gap:8px;animation:rise .3s var(--ease)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.rv{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:800}
+.rv small{color:var(--muted);font-weight:800;display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.rv .w{font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em}
+.rv .p{font-size:1.2rem;font-weight:900;color:var(--accent)}
+
+/* ================= COVERS AND PANELS ================= */
+.cover{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:rgba(20,14,8,.55);animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.card{width:min(380px,100%);background:var(--panel);border-radius:22px;padding:22px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.3);animation:pop .3s var(--ease)}
+@keyframes pop{from{transform:scale(.9);opacity:0}}
+.card h3{margin:0 0 6px;font-size:1.5rem;font-weight:900}
+.card p{margin:0 0 14px;color:var(--muted);font-weight:700;line-height:1.4}
+.card .row{display:flex;gap:10px}
+.card .row button{flex:1;padding:13px;font-size:1rem}
+.picks{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:4px 0 14px}
+.picks .t{aspect-ratio:1;font-size:40px;width:100%}
+.picks .t b{font-size:22px}
+.picks .t.on{box-shadow:0 0 0 3px var(--accent)}
+.scores{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:6px}
+.scores li{display:flex;justify-content:space-between;padding:8px 12px;border-radius:12px;background:var(--soft);font-weight:800}
+.scores li.win{background:color-mix(in srgb,#ffd23f 45%,var(--soft))}
+.panel{position:fixed;inset:0;z-index:15;background:var(--bg);overflow-y:auto;transform:translateY(100%);visibility:hidden;transition:transform .35s var(--ease),visibility 0s .35s}
+.panel.show{transform:none;visibility:visible;transition:transform .35s var(--ease),visibility 0s}
+.panelin{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phead h1{flex:1;margin:0;text-align:center;font-size:1.3rem;font-weight:900}
+.phead .sp{width:42px}
+.howc{background:var(--panel);border-radius:16px;padding:14px;box-shadow:0 2px 8px var(--shade);margin-bottom:10px}
+.howc h3{margin:0 0 6px;font-size:1rem;font-weight:900}
+.howc p,.howc li{margin:0;color:var(--muted);font-weight:700;font-size:.9rem;line-height:1.45}
+.howc ul{margin:0;padding-left:18px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.legend span{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.85rem}
+.legend .sq{width:30px;font-size:9px;flex:none}
+.vals{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-top:8px}
+.vals .t{aspect-ratio:1;font-size:34px;width:100%}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sbox{background:var(--panel);border-radius:16px;padding:12px 14px;box-shadow:0 2px 8px var(--shade)}
+.sbox small{display:block;font-size:.72rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.sbox b{font-size:1.35rem;font-weight:900;font-variant-numeric:tabular-nums}
+.sbox.wide{grid-column:1/-1}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translate(-50%,-10px);opacity:0;padding:9px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:800;pointer-events:none;transition:.2s;z-index:40;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+html.rz-reduce-motion *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<section class="home" id="home">
+  <div class="title" id="title" aria-label="Word Weave"></div>
+  <button class="primary cont hidden" id="contBtn"></button>
+  <div class="mode">
+    <div class="mh"><span class="mi" data-ic="cpu"></span><div><h2>Vs computer</h2><p>Take turns building words on the board</p></div></div>
+    <div class="row"><div class="seg" id="lvlSeg"><button data-v="0">Easy</button><button data-v="1">Medium</button><button data-v="2">Hard</button></div><button class="primary go" id="cpuGo">Play</button></div>
+  </div>
+  <div class="mode">
+    <div class="mh"><span class="mi" data-ic="people"></span><div><h2>Pass and play</h2><p>2 to 4 players on one device</p></div></div>
+    <div class="row"><div class="seg" id="pnpSeg"><button data-v="2">2 players</button><button data-v="3">3</button><button data-v="4">4</button></div><button class="primary go" id="pnpGo">Play</button></div>
+  </div>
+  <div class="mode">
+    <div class="mh"><span class="mi" data-ic="bolt"></span><div><h2>Quick fire</h2><p id="qfSub">5 rounds: find the best word in 30 seconds</p></div></div>
+    <div class="row"><span style="flex:1"></span><button class="primary go" id="qfGo">Play</button></div>
+  </div>
+  <div class="tiles"><button class="tile" id="howBtn"><span data-ic="help"></span>How to play</button><button class="tile" id="statsBtn"><span data-ic="trophy"></span>Stats</button></div>
+</section>
+
+<!-- ================= GAME ================= -->
+<section class="game hidden" id="game">
+  <div class="ghead">
+    <button class="iconbtn" id="homeBtn" aria-label="Home" data-ic="back"></button>
+    <div class="gtitle"><b id="gTitle">Vs computer</b><small id="gSub"></small></div>
+    <button class="iconbtn" id="newBtn" aria-label="New game" data-ic="refresh"></button>
+  </div>
+  <div class="players" id="players"></div>
+  <div class="last" id="last"></div>
+  <div class="boardwrap" id="boardWrap"><div class="board" id="board" role="grid" aria-label="Board"></div></div>
+  <div class="rackrow">
+    <div class="rack" id="rack" aria-label="Your tiles"></div>
+    <div class="acts">
+      <button class="sec" id="recallBtn"><span data-ic="shuffle"></span><span id="recallTxt">Shuffle</span></button>
+      <button class="sec" id="swapBtn"><span data-ic="swap"></span>Swap</button>
+      <button class="sec" id="passBtn"><span data-ic="skip"></span>Pass</button>
+      <button class="primary" id="playBtn" disabled>Play</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+</section>
+
+<!-- ================= QUICK FIRE ================= -->
+<section class="quick hidden" id="quick">
+  <div class="ghead">
+    <button class="iconbtn" id="qHome" aria-label="Home" data-ic="back"></button>
+    <div class="gtitle"><b>Quick fire</b><small id="qRound">Round 1 of 5</small></div>
+    <span style="width:42px"></span>
+  </div>
+  <div class="qstats"><span class="chip" id="qTotal">0 points</span><span class="chip" id="qTime">30</span></div>
+  <div class="timer" id="timer"><i id="timerBar"></i></div>
+  <div class="slots" id="slots"></div>
+  <div class="qword" id="qWord"></div>
+  <div class="qrack" id="qRack"></div>
+  <div class="qacts" id="qActs"><button class="sec" id="qClear">Clear</button><button class="sec" id="qShuffle">Shuffle</button><button class="primary" id="qSubmit" disabled>Submit</button></div>
+  <div class="reveal hidden" id="reveal"></div>
+</section>
+
+<div class="cover hidden" id="cover"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<div class="panel" id="howPanel" role="dialog" aria-label="How to play"><div class="panelin">
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>How to play</h1><span class="sp"></span></div>
+  <div id="howBody"></div>
+</div></div>
+<div class="panel" id="statsPanel" role="dialog" aria-label="Stats"><div class="panelin">
+  <div class="phead"><button class="iconbtn" data-close data-ic="back" aria-label="Close"></button><h1>Stats</h1><span class="sp"></span></div>
+  <div class="sgrid" id="statsGrid"></div>
+</div></div>
+
+<script>
+/* ======================================================================
+   HELPERS
+   ====================================================================== */
+const RZ = window.RizzoGames || null;
+const $ = s => document.querySelector(s);
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch { return d; } };
+const store = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const fmt = n => (n || 0).toLocaleString();
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const vibrate = ms => { if (RZ && RZ.device && RZ.device.touch && navigator.vibrate) try { navigator.vibrate(ms); } catch {} };
+let toastT = 0;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+const SAVE_KEY = 'wordweave-save-v1', STATS_KEY = 'wordweave-stats-v1', PREFS_KEY = 'wordweave-prefs';
+const prefs = Object.assign({level: 1, players: 2}, load(PREFS_KEY, {}));
+
+const ICONS = {
+  back: '<path d="M15 5l-7 7 7 7"/>', refresh: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.5v.6"/><path d="M12 17.2v.1"/>',
+  trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7 10M17 6h2.5v1A3 3 0 0 1 17 10M12 13v4M8.5 20.5h7l-.8-3.5H9.3z"/>',
+  cpu: '<rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9.5 10h.01M14.5 10h.01M9.5 14.5h5M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/>',
+  people: '<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5"/>',
+  bolt: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>', play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  shuffle: '<path d="M4 7h3.5c4 0 5 10 9 10H20M4 17h3.5c1.6 0 2.7-1.6 3.6-3.4M13 10.4C13.9 8.6 15 7 16.5 7H20"/><path d="M18 5l2 2-2 2M18 15l2 2-2 2"/>',
+  recall: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  swap: '<path d="M7 4L4 7l3 3M4 7h13M17 20l3-3-3-3M20 17H7"/>', skip: '<path d="M6 5l8 7-8 7z"/><path d="M18 5v14"/>',
+};
+const ic = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+function fillIcons(root = document) { root.querySelectorAll('[data-ic]').forEach(el => { el.insertAdjacentHTML('afterbegin', ic(el.dataset.ic)); el.removeAttribute('data-ic'); }); }
+
+/* ---------- sound effects (follow the shared Rizzo volume) ---------- */
+const Sound = (() => {
+  let ctx = null;
+  const vol = () => RZ ? RZ.level('sfx') : 0.6;
+  function tone(f, d, type = 'sine', g = .2, at = 0, slide = 0) {
+    const v = vol(); if (!v) return;
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume();
+      const t = ctx.currentTime + at, o = ctx.createOscillator(), gn = ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + d);
+      gn.gain.setValueAtTime(.0001, t); gn.gain.exponentialRampToValueAtTime(g * v, t + .01); gn.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(gn).connect(ctx.destination); o.start(t); o.stop(t + d + .02);
+    } catch {}
+  }
+  return {
+    tap() { tone(560, .05, 'triangle', .08); },
+    place() { tone(240, .07, 'triangle', .15); tone(360, .05, 'sine', .06, .02); },
+    back() { tone(300, .06, 'triangle', .08, 0, .7); },
+    word(pts) { const n = Math.min(6, 2 + Math.floor(pts / 10)); for (let k = 0; k < n; k++) tone(440 * Math.pow(1.19, k), .13, 'triangle', .12, k * .06); },
+    bad() { tone(150, .14, 'square', .045, 0, .8); },
+    cpu() { tone(330, .08, 'sine', .08); tone(440, .08, 'sine', .07, .07); },
+    tick() { tone(880, .04, 'square', .03); },
+    end() { tone(392, .2, 'triangle', .1); tone(523, .25, 'triangle', .1, .12); },
+    win() { [523, 659, 784, 1047].forEach((f, k) => tone(f, .2, 'triangle', .14, k * .1)); },
+    lose() { tone(330, .25, 'sine', .13, 0, .7); tone(247, .4, 'sine', .11, .2, .7); },
+  };
+})();
+
+/* ======================================================================
+   THE WORDS
+   Every word the game accepts (2 to 8 letters) goes in a Set for checking,
+   and into a letter tree (a trie, packed into typed arrays) that the
+   computer players walk to find moves. Both are built the first time a
+   game needs them.
+   ====================================================================== */
+const Dict = (() => {
+  let set = null, common = null, T = null;
+  const split = (s, n) => { const out = []; for (let i = 0; i < s.length; i += n) out.push(s.slice(i, i + n)); return out; };
+  function words() { const all = []; for (const [n, s] of Object.entries(window.WW_WORDS || {})) for (const w of split(s, +n)) all.push(w); return all; }
+  function ready() {
+    if (set) return;
+    set = new Set(words());
+    common = new Set();
+    for (const [n, s] of Object.entries(window.WW_COMMON || {})) for (const w of split(s, +n)) common.add(w);
+  }
+  function trie() {
+    if (T) return T;
+    const list = words().sort(), size = list.reduce((a, w) => a + w.length, 0) + 1;
+    const first = new Int32Array(size).fill(-1), next = new Int32Array(size).fill(-1), ch = new Uint8Array(size), end = new Uint8Array(size);
+    let count = 1, prev = '';
+    const path = [0];
+    for (const w of list) {
+      let p = 0; while (p < w.length && p < prev.length && w[p] === prev[p]) p++;
+      for (let k = p; k < w.length; k++) { const n = count++, par = path[k]; ch[n] = w.charCodeAt(k) - 97; next[n] = first[par]; first[par] = n; path[k + 1] = n; }
+      path.length = w.length + 1; end[path[w.length]] = 1; prev = w;
+    }
+    const child = (node, c) => { for (let k = first[node]; k !== -1; k = next[k]) if (ch[k] === c) return k; return -1; };
+    return T = {first, next, ch, end, child};
+  }
+  return {
+    ready, trie,
+    has: w => { ready(); return set.has(w); },
+    common: w => { ready(); return common.has(w); },
+    commonList: () => { ready(); return [...common]; },
+    all: () => { ready(); return set; },
+  };
+})();
+
+/* ======================================================================
+   THE TILES AND THE BOARD
+   Word Weave's own letter values and tile mix (82 tiles, 2 of them wild),
+   worked out from how often each letter is used in English words, and its
+   own 11 x 11 board of bonus squares.
+   ====================================================================== */
+const N = 11, CENTER = 5 * N + 5, RACK = 7, FULL_RACK = 40;
+const VAL = {a: 1, b: 4, c: 3, d: 2, e: 1, f: 4, g: 3, h: 3, i: 1, j: 9, k: 6, l: 2, m: 3, n: 1, o: 1, p: 3, q: 10, r: 1, s: 1, t: 1, u: 2, v: 6, w: 5, x: 8, y: 4, z: 9};
+const MIX = {e: 9, a: 7, i: 6, o: 6, n: 5, r: 5, t: 5, s: 4, l: 4, u: 3, d: 3, g: 2, c: 2, m: 2, p: 2, h: 2, b: 2, f: 2, w: 2, y: 1, k: 1, v: 1, x: 1, j: 1, q: 1, z: 1, '?': 2};
+const PREM = new Array(N * N).fill('');
+(() => {
+  // one eighth of the board, mirrored round to fill it
+  const put = (r, c, k) => { for (const [a, b] of [[r, c], [c, r]]) for (const [y, x] of [[a, b], [a, N - 1 - b], [N - 1 - a, b], [N - 1 - a, N - 1 - b]]) PREM[y * N + x] = k; };
+  put(0, 2, 'W3'); put(1, 1, 'W2'); put(0, 0, 'L2'); put(1, 5, 'L3'); put(3, 3, 'L3');
+  put(2, 4, 'L2'); put(4, 4, 'L2'); put(0, 5, 'L2'); put(2, 2, 'W2');
+  PREM[CENTER] = 'W2';
+})();
+const PREM_LABEL = {L2: 'L×2', L3: 'L×3', W2: 'W×2', W3: 'W×3'};
+const newBag = () => shuffle(Object.entries(MIX).flatMap(([l, n]) => Array(n).fill(l)));
+const tileVal = (l, wild) => wild ? 0 : VAL[l] || 0;
+const tileHTML = (l, wild, cls = '') => `<span class="t${wild ? ' wild' : ''}${cls ? ' ' + cls : ''}"><b>${l === '?' ? '' : l}</b>${l === '?' || wild ? '' : `<i>${VAL[l]}</i>`}</span>`;
+
+/* ---------- checking and scoring a move ----------
+   placed: [{i, l, w}] tiles put down this turn. Returns {ok, score, words: [{word, score}]} or {ok: false, why}. */
+function evaluate(board, placed) {
+  if (!placed.length) return {ok: false, why: ''};
+  const rows = new Set(placed.map(p => Math.floor(p.i / N))), cols = new Set(placed.map(p => p.i % N));
+  if (rows.size > 1 && cols.size > 1) return {ok: false, why: 'Tiles must be in one line'};
+  const at = i => board[i] || placed.find(p => p.i === i) || null;
+  const empty = board.every(x => !x);
+  if (empty && !placed.some(p => p.i === CENTER)) return {ok: false, why: 'The first word must cover the star'};
+  if (empty && placed.length < 2) return {ok: false, why: 'The first word needs at least 2 letters'};
+  // the line the tiles are in (one tile: whichever way makes a word)
+  let across = rows.size === 1 && (cols.size > 1 || (placed.length === 1 && ((placed[0].i % N > 0 && at(placed[0].i - 1)) || (placed[0].i % N < N - 1 && at(placed[0].i + 1)))));
+  const step = across ? 1 : N;
+  const inLine = (i, j) => Math.floor(i / N) === Math.floor(j / N);   // across, a word never wraps onto the next row
+  const sorted = placed.map(p => p.i).sort((a, b) => a - b);
+  for (let i = sorted[0]; i <= sorted[sorted.length - 1]; i += step) if (!at(i)) return {ok: false, why: 'Tiles must join up with no gaps'};
+  const wordAt = (start, st) => {
+    let s = start; while (s - st >= 0 && (st === 1 ? inLine(s - 1, s) : true) && at(s - st)) s -= st;
+    let e = start; while (e + st < N * N && (st === 1 ? inLine(e + 1, e) : true) && at(e + st)) e += st;
+    const cells = []; for (let i = s; i <= e; i += st) cells.push(i);
+    return cells;
+  };
+  const scoreCells = cells => {
+    let sum = 0, mult = 1, word = '';
+    for (const i of cells) {
+      const t = at(i), fresh = !board[i], v = tileVal(t.l, t.w), pm = fresh ? PREM[i] : '';
+      word += t.l;
+      sum += v * (pm === 'L2' ? 2 : pm === 'L3' ? 3 : 1);
+      mult *= pm === 'W2' ? 2 : pm === 'W3' ? 3 : 1;
+    }
+    return {word, score: sum * mult};
+  };
+  const words = [];
+  const main = wordAt(sorted[0], step);
+  if (main.length > 1) words.push({cells: main, ...scoreCells(main)});
+  const cross = across ? N : 1;
+  for (const p of placed) { const c = wordAt(p.i, cross); if (c.length > 1) words.push({cells: c, ...scoreCells(c)}); }
+  if (!words.length) return {ok: false, why: 'Make a word of at least 2 letters'};
+  if (!empty) {
+    const touches = words.some(w => w.cells.some(i => board[i]));
+    if (!touches) return {ok: false, why: 'Join your word to the tiles on the board'};
+  }
+  const bad = words.find(w => !Dict.has(w.word));
+  if (bad) return {ok: false, why: `${bad.word.toUpperCase()} isn't in the word list`};
+  const score = words.reduce((a, w) => a + w.score, 0) + (placed.length === RACK ? FULL_RACK : 0);
+  return {ok: true, score, words: words.map(w => ({word: w.word, score: w.score})), full: placed.length === RACK};
+}
+
+/* ======================================================================
+   THE COMPUTER PLAYER
+   Finds every move its tiles can make, the way crossword-game programs do:
+   for each empty square next to a tile (an "anchor"), it grows words out
+   to the left and then to the right along the letter tree, only using
+   letters that also make real words with the tiles above and below. Then
+   it does the same down the columns.
+   Hard plays its best-scoring move. Medium picks a good move, preferring
+   everyday words. Easy plays shorter everyday words for modest scores.
+   ====================================================================== */
+function findMoves(board, rack) {
+  const T = Dict.trie(), {first, next, ch, end, child} = T, ALL = (1 << 26) - 1;
+  const counts = new Array(27).fill(0);
+  rack.forEach(l => counts[l === '?' ? 26 : l.charCodeAt(0) - 97]++);
+  const moves = new Map();
+  const empty = board.every(x => !x);
+  for (const dir of [0, 1]) {
+    if (empty && dir === 1) break;   // the first move: across only (down would be the same moves turned)
+    const I = (r, c) => dir ? c * N + r : r * N + c;
+    const L = (r, c) => { const t = board[I(r, c)]; return t ? t.l.charCodeAt(0) - 97 : -1; };
+    const Wd = (r, c) => { const t = board[I(r, c)]; return t ? t.w : false; };
+    for (let r = 0; r < N; r++) {
+      // what may go in each empty square of this row, and the score of the word it would make up and down
+      const mask = new Array(N).fill(ALL), cscore = new Array(N).fill(-1), anchor = new Array(N).fill(false);
+      for (let c = 0; c < N; c++) {
+        if (L(r, c) >= 0) continue;
+        const nb = (r > 0 && L(r - 1, c) >= 0) || (r < N - 1 && L(r + 1, c) >= 0) || (c > 0 && L(r, c - 1) >= 0) || (c < N - 1 && L(r, c + 1) >= 0);
+        anchor[c] = empty ? I(r, c) === CENTER : nb;
+        const up = [], down = [];
+        for (let k = r - 1; k >= 0 && L(k, c) >= 0; k--) up.unshift(k);
+        for (let k = r + 1; k < N && L(k, c) >= 0; k++) down.push(k);
+        if (!up.length && !down.length) continue;
+        let node = 0; for (const k of up) { node = node < 0 ? -1 : child(node, L(k, c)); }
+        let m = 0;
+        if (node >= 0) for (let e = first[node]; e !== -1; e = next[e]) {
+          let n2 = e; for (const k of down) { n2 = child(n2, L(k, c)); if (n2 < 0) break; }
+          if (n2 >= 0 && end[n2]) m |= 1 << ch[e];
+        }
+        mask[c] = m;
+        cscore[c] = [...up, ...down].reduce((a, k) => a + tileVal(String.fromCharCode(97 + L(k, c)), Wd(k, c)), 0);
+      }
+      const word = [];   // [{c (letter 0-25), w (wild), n (newly placed)}]
+      let A = 0;
+      const record = endCol => {
+        const start = endCol - word.length;
+        let sum = 0, mult = 1, crossT = 0, placed = 0;
+        const tiles = [];
+        let txt = '';
+        for (let k = 0; k < word.length; k++) {
+          const col = start + k, x = word[k], l = String.fromCharCode(97 + x.c), v = x.w ? 0 : VAL[l];
+          txt += l;
+          if (!x.n) { sum += v; continue; }
+          placed++;
+          const i = I(r, col), pm = PREM[i], lm = pm === 'L2' ? 2 : pm === 'L3' ? 3 : 1, wm = pm === 'W2' ? 2 : pm === 'W3' ? 3 : 1;
+          sum += v * lm; mult *= wm;
+          if (cscore[col] >= 0) crossT += (cscore[col] + v * lm) * wm;
+          tiles.push({i, l, w: x.w});
+        }
+        if (!placed) return;
+        const score = sum * mult + crossT + (placed === RACK ? FULL_RACK : 0);
+        const key = tiles.map(t => t.i + t.l + (t.w ? '*' : '')).sort().join();
+        const old = moves.get(key);
+        if (!old || old.score < score) moves.set(key, {tiles, score, word: txt});
+      };
+      const extendRight = (node, c) => {
+        if (c >= N || L(r, c) < 0) {
+          if (c > A && end[node]) record(c);
+          if (c >= N) return;
+          const m = mask[c];
+          for (let e = first[node]; e !== -1; e = next[e]) {
+            const x = ch[e]; if (!((m >> x) & 1)) continue;
+            if (counts[x]) { counts[x]--; word.push({c: x, w: false, n: 1}); extendRight(e, c + 1); word.pop(); counts[x]++; }
+            if (counts[26]) { counts[26]--; word.push({c: x, w: true, n: 1}); extendRight(e, c + 1); word.pop(); counts[26]++; }
+          }
+        } else {
+          const e = child(node, L(r, c));
+          if (e >= 0) { word.push({c: L(r, c), w: Wd(r, c), n: 0}); extendRight(e, c + 1); word.pop(); }
+        }
+      };
+      const leftPart = (node, limit) => {
+        extendRight(node, A);
+        if (limit <= 0) return;
+        for (let e = first[node]; e !== -1; e = next[e]) {
+          const x = ch[e];
+          if (counts[x]) { counts[x]--; word.push({c: x, w: false, n: 1}); leftPart(e, limit - 1); word.pop(); counts[x]++; }
+          if (counts[26]) { counts[26]--; word.push({c: x, w: true, n: 1}); leftPart(e, limit - 1); word.pop(); counts[26]++; }
+        }
+      };
+      for (let c = 0; c < N; c++) {
+        if (!anchor[c]) continue;
+        A = c;
+        if (c > 0 && L(r, c - 1) >= 0) {
+          // tiles already on the board just left of the anchor start the word
+          let s = c - 1; while (s > 0 && L(r, s - 1) >= 0) s--;
+          let node = 0; for (let k = s; k < c && node >= 0; k++) { node = child(node, L(r, k)); if (node >= 0) word.push({c: L(r, k), w: Wd(r, k), n: 0}); }
+          if (node >= 0) extendRight(node, c);
+          word.length = 0;
+        } else {
+          let limit = 0; for (let k = c - 1; k >= 0 && L(r, k) < 0 && !anchor[k]; k--) limit++;
+          leftPart(0, Math.min(limit, RACK - 1));
+        }
+      }
+    }
+  }
+  return [...moves.values()];
+}
+function chooseMove(moves, level) {
+  if (!moves.length) return null;
+  moves.sort((a, b) => b.score - a.score);
+  if (level >= 2) return moves[0];
+  const best = moves[0].score, pick = list => list[Math.floor(Math.random() * list.length)];
+  const commonOnly = moves.filter(m => Dict.common(m.word));
+  if (level === 1) {
+    const band = (commonOnly.length ? commonOnly : moves).filter(m => m.score >= best * .45 && m.score <= best * .85);
+    return pick(band.length ? band : (commonOnly.length ? commonOnly.slice(0, 5) : moves.slice(0, 5)));
+  }
+  const easy = commonOnly.filter(m => m.word.length <= 5 && m.tiles.length <= 4);
+  const band = easy.filter(m => m.score >= best * .2 && m.score <= best * .5);
+  if (band.length) return pick(band);
+  if (easy.length) return pick(easy.slice(Math.floor(easy.length / 3)));
+  return pick(moves.slice(Math.floor(moves.length / 2)));
+}
+
+/* ======================================================================
+   A GAME (vs computer, or pass and play)
+   ====================================================================== */
+const COLORS = ['#d9572c', '#2f7be0', '#2e9b5b', '#9b59d0'];
+let G = null;            // the game: {mode, level, players: [{name, cpu, score, rack}], turn, board, bag, passes, last, over, history}
+let pend = [];           // tiles put down this turn: [{i, l, w, r (rack slot)}]
+let sel = -1, busy = false, hidden = false;
+const me = () => G.players[G.turn];
+const draw = (p, n = RACK - p.rack.length) => { for (let k = 0; k < n && G.bag.length; k++) p.rack.push(G.bag.pop()); };
+function newGame(mode, opt) {
+  const players = mode === 'cpu'
+    ? [{name: 'You', cpu: false}, {name: 'Computer', cpu: true}]
+    : Array.from({length: opt.players}, (_, k) => ({name: 'Player ' + (k + 1), cpu: false}));
+  G = {mode, level: opt.level ?? 1, players: players.map(p => ({...p, score: 0, rack: []})), turn: 0, board: new Array(N * N).fill(null), bag: newBag(), passes: 0, last: null, over: false, moves: 0, best: null};
+  G.players.forEach(p => draw(p));
+  pend = []; sel = -1;
+  store(SAVE_KEY, G);
+}
+const save = () => store(SAVE_KEY, G && !G.over ? G : null);
+
+/* ---------- drawing the game ---------- */
+const boardEl = $('#board'), rackEl = $('#rack');
+let sqEls = [];
+function buildBoard() {
+  boardEl.innerHTML = PREM.map((p, i) => `<div class="sq ${p}${i === CENTER ? ' st' : ''}" data-i="${i}">${p && i !== CENTER ? PREM_LABEL[p] : ''}</div>`).join('');
+  sqEls = [...boardEl.children];
+}
+function layout() {
+  const w = Math.min(document.documentElement.clientWidth - 32, 600), h = innerHeight - 340;
+  const bw = Math.max(260, Math.min(w, h, 600));
+  document.documentElement.style.setProperty('--bw', bw + 'px');
+  document.documentElement.style.setProperty('--rs', Math.min(54, (bw - 16 - 6 * 6) / 7) + 'px');
+}
+function renderBoard(popped = []) {
+  const lastSet = new Set((G.last && G.last.tiles) || []);
+  sqEls.forEach((el, i) => {
+    const t = G.board[i], p = pend.find(x => x.i === i);
+    const old = el.querySelector('.t'); if (old) old.remove();
+    el.classList.remove('hot');
+    if (t) el.insertAdjacentHTML('beforeend', tileHTML(t.l, t.w, (lastSet.has(i) ? 'lastmv' : '') + (popped.includes(i) ? ' pop' : '')));
+    else if (p) el.insertAdjacentHTML('beforeend', tileHTML(p.l, p.w, 'pend'));
+  });
+  renderPreview();
+}
+function renderRack() {
+  const p = me(), used = new Set(pend.map(x => x.r));
+  rackEl.classList.toggle('hide', hidden);
+  rackEl.innerHTML = p.rack.map((l, k) => `<span data-r="${k}" class="rk">${tileHTML(l, l === '?', (used.has(k) ? 'gone' : '') + (k === sel ? ' sel' : ''))}</span>`).join('');
+  rackEl.querySelectorAll('.rk').forEach(s => { const t = s.firstElementChild; t.dataset.r = s.dataset.r; s.replaceWith(t); });
+  $('#recallTxt').textContent = pend.length ? 'Recall' : 'Shuffle';
+  $('#recallBtn').firstElementChild.outerHTML = ic(pend.length ? 'recall' : 'shuffle');
+}
+function renderPlayers() {
+  $('#players').innerHTML = G.players.map((p, k) => `<span class="pl${k === G.turn && !G.over ? ' on' : ''}"><span class="av" style="background:${COLORS[k]}">${p.cpu ? ic('cpu').replace('class="ic"', 'class="ic" style="width:16px;height:16px"') : (p.name === 'You' ? 'Y' : k + 1)}</span><span class="nm">${p.name}</span><b>${fmt(p.score)}</b></span>`).join('') +
+'';
+  $('#gTitle').textContent = G.mode === 'cpu' ? 'Vs computer' : 'Pass and play';
+  $('#gSub').textContent = (G.mode === 'cpu' ? ['Easy', 'Medium', 'Hard'][G.level] : `${G.players.length} players`) + ` · ${G.bag.length} in the bag`;
+}
+function renderLast() {
+  const L = G.last, el = $('#last');
+  if (!L) { el.textContent = G.board.every(x => !x) ? 'Make the first word: it must cover the star' : ''; return; }
+  const who = G.players[L.p].name;
+  el.innerHTML = L.kind === 'play' ? `${who} played <b>${L.words.map(w => w.toUpperCase()).join(', ')}</b> for <b>${L.score}</b>${L.full ? ' (full rack!)' : ''}`
+    : L.kind === 'swap' ? `${who} swapped ${L.n} tile${L.n > 1 ? 's' : ''}` : `${who} passed`;
+}
+function renderPreview() {
+  document.querySelectorAll('.preview').forEach(x => x.remove());
+  const btn = $('#playBtn'), hint = $('#hint');
+  if (!pend.length || busy) { btn.disabled = true; btn.textContent = 'Play'; hint.textContent = ''; hint.className = 'hint'; return; }
+  const r = evaluate(G.board, pend);
+  btn.disabled = !r.ok; btn.textContent = r.ok ? `Play ${r.score}` : 'Play';
+  hint.className = 'hint' + (r.ok ? ' ok' : ''); hint.textContent = r.ok ? r.words.map(w => w.word.toUpperCase()).join(' + ') : r.why;
+  if (r.ok) {   // the score, floating by the last tile
+    const i = Math.max(...pend.map(p => p.i)), el = sqEls[i], wr = $('#boardWrap').getBoundingClientRect(), b = el.getBoundingClientRect();
+    const tag = document.createElement('div'); tag.className = 'preview'; tag.textContent = r.score;
+    tag.style.left = (b.right - wr.left) + 'px'; tag.style.top = (b.top - wr.top) + 'px';
+    $('#boardWrap').appendChild(tag);
+  }
+}
+function renderAll() { renderPlayers(); renderLast(); renderBoard(); renderRack(); updateButtons(); }
+function updateButtons() {
+  const mine = !G.over && !busy && !me().cpu && !hidden;
+  $('#swapBtn').disabled = !mine || G.bag.length < RACK; $('#passBtn').disabled = !mine; $('#recallBtn').disabled = !mine;
+  ['#swapBtn', '#passBtn', '#recallBtn'].forEach(s => { $(s).style.opacity = $(s).disabled ? '.5' : ''; });
+}
+
+/* ---------- putting tiles down ---------- */
+function putTile(r, i) {
+  if (G.board[i] || pend.some(p => p.i === i) || pend.some(p => p.r === r)) return;
+  const l = me().rack[r];
+  if (l === '?') { pickWild(letter => { pend.push({i, l: letter, w: true, r}); Sound.place(); sel = -1; renderBoard(); renderRack(); }); return; }
+  pend.push({i, l, w: false, r}); Sound.place(); vibrate(6);
+  sel = -1; renderBoard(); renderRack();
+}
+function takeBack(i) { const k = pend.findIndex(p => p.i === i); if (k < 0) return; pend.splice(k, 1); Sound.back(); renderBoard(); renderRack(); }
+function pickWild(done) {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  cover(`<div class="card"><h3>Wild tile</h3><p>Pick the letter it stands for. It scores no points.</p><div class="picks">${letters.map(l => `<button data-l="${l}">${tileHTML(l, true)}</button>`).join('')}</div><button class="sec" id="cNo" style="width:100%;padding:12px">Cancel</button></div>`);
+  $('#cover').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { closeCover(); done(b.dataset.l); });
+  $('#cNo').onclick = closeCover;
+}
+// taps
+rackEl.addEventListener('click', e => {
+  if (dragged) return;
+  const t = e.target.closest('.t'); if (!t || busy || me().cpu || hidden || G.over) return;
+  const r = +t.dataset.r; if (pend.some(p => p.r === r)) return;
+  sel = sel === r ? -1 : r; Sound.tap(); renderRack();
+});
+boardEl.addEventListener('click', e => {
+  if (dragged) return;
+  const sq = e.target.closest('.sq'); if (!sq || busy || me().cpu || hidden || G.over) return;
+  const i = +sq.dataset.i;
+  if (pend.some(p => p.i === i)) return takeBack(i);
+  if (sel >= 0) putTile(sel, i);
+});
+// dragging a tile from the rack onto the board, or a placed tile to another square (or back to the rack)
+let drag = null, dragged = false;
+function dragStart(e, from) { drag = {from, x0: e.clientX, y0: e.clientY, moved: false}; dragged = false; }
+rackEl.addEventListener('pointerdown', e => { const t = e.target.closest('.t'); if (!t || busy || me().cpu || hidden || G.over || t.classList.contains('gone')) return; dragStart(e, {r: +t.dataset.r}); });
+boardEl.addEventListener('pointerdown', e => { const sq = e.target.closest('.sq'); if (!sq || busy || G.over) return; const i = +sq.dataset.i; const p = pend.find(x => x.i === i); if (p) dragStart(e, {i}); });
+addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) {
+    drag.moved = true; dragged = true;
+    const l = drag.from.r != null ? me().rack[drag.from.r] : pend.find(p => p.i === drag.from.i).l, w = drag.from.r != null ? l === '?' : pend.find(p => p.i === drag.from.i).w;
+    const ds = sqEls[0].getBoundingClientRect().width * 1.25;
+    document.documentElement.style.setProperty('--ds', ds + 'px');
+    document.body.insertAdjacentHTML('beforeend', tileHTML(l, w, 'drag'));
+    drag.el = document.body.lastElementChild; drag.ds = ds;
+    if (drag.from.i != null) { const p = pend.find(x => x.i === drag.from.i); drag.r = p.r; pend = pend.filter(x => x !== p); renderBoard(); renderRack(); }
+  }
+  if (!drag.moved) return;
+  const touch = e.pointerType !== 'mouse', y = e.clientY - (touch ? drag.ds * .9 : 0);
+  drag.el.style.transform = `translate(${e.clientX - drag.ds / 2}px,${y - drag.ds / 2}px)`;
+  sqEls.forEach(s => s.classList.remove('hot'));
+  const under = document.elementFromPoint(e.clientX, y);
+  const sq = under && under.closest && under.closest('.sq');
+  if (sq && !G.board[+sq.dataset.i] && !pend.some(p => p.i === +sq.dataset.i)) sq.classList.add('hot');
+  drag.target = sq ? +sq.dataset.i : null;
+});
+addEventListener('pointerup', () => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.moved) return;
+  d.el.remove(); sqEls.forEach(s => s.classList.remove('hot'));
+  const r = d.from.r != null ? d.from.r : d.r;
+  if (d.target != null && !G.board[d.target] && !pend.some(p => p.i === d.target)) putTile(r, d.target);
+  else { renderBoard(); renderRack(); if (d.from.i != null) Sound.back(); }
+  setTimeout(() => { dragged = false; }, 0);
+});
+addEventListener('pointercancel', () => { if (drag && drag.el) drag.el.remove(); drag = null; dragged = false; if (G) { renderBoard(); renderRack(); } });
+
+/* ---------- the turn buttons ---------- */
+$('#recallBtn').onclick = () => {
+  if (pend.length) { pend = []; Sound.back(); }
+  else { shuffle(me().rack); Sound.tap(); }
+  sel = -1; renderBoard(); renderRack();
+};
+$('#playBtn').onclick = () => {
+  const r = evaluate(G.board, pend); if (!r.ok) { Sound.bad(); return; }
+  commitPlay(G.turn, pend.map(p => ({i: p.i, l: p.l, w: p.w})), r, pend.map(p => p.r));
+};
+$('#passBtn').onclick = () => {
+  cover(`<div class="card"><h3>Pass your turn?</h3><p>You won't play or swap anything this turn.</p><div class="row"><button class="sec" id="cNo">Cancel</button><button class="primary" id="cYes">Pass</button></div></div>`);
+  $('#cNo').onclick = closeCover; $('#cYes').onclick = () => { closeCover(); pend = []; G.passes++; G.last = {p: G.turn, kind: 'pass'}; endTurn(); };
+};
+$('#swapBtn').onclick = () => {
+  pend = []; renderBoard(); renderRack();
+  const rack = me().rack, picked = new Set();
+  cover(`<div class="card"><h3>Swap tiles</h3><p>Pick the tiles to put back in the bag. You'll draw new ones, but you won't play this turn.</p>
+    <div class="picks" style="grid-template-columns:repeat(${rack.length},1fr)">${rack.map((l, k) => `<button data-k="${k}">${tileHTML(l, l === '?')}</button>`).join('')}</div>
+    <div class="row"><button class="sec" id="cNo">Cancel</button><button class="primary" id="cYes" disabled>Swap</button></div></div>`);
+  $('#cover').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+    const k = +b.dataset.k; picked.has(k) ? picked.delete(k) : picked.add(k);
+    b.firstElementChild.classList.toggle('on', picked.has(k)); $('#cYes').disabled = !picked.size; $('#cYes').textContent = picked.size ? `Swap ${picked.size}` : 'Swap';
+  });
+  $('#cNo').onclick = closeCover;
+  $('#cYes').onclick = () => { closeCover(); doSwap(G.turn, [...picked]); };
+};
+function doSwap(p, slots) {
+  const pl = G.players[p], back = slots.map(k => pl.rack[k]);
+  pl.rack = pl.rack.filter((_, k) => !slots.includes(k));
+  draw(pl, back.length); G.bag.push(...back); shuffle(G.bag);
+  G.passes++; G.last = {p, kind: 'swap', n: back.length};
+  endTurn();
+}
+function commitPlay(p, tiles, r, slots) {
+  const pl = G.players[p];
+  tiles.forEach(t => { G.board[t.i] = {l: t.l, w: t.w}; });
+  if (slots) pl.rack = pl.rack.filter((_, k) => !slots.includes(k));
+  else tiles.forEach(t => { const k = pl.rack.indexOf(t.w ? '?' : t.l); if (k >= 0) pl.rack.splice(k, 1); });
+  pl.score += r.score; G.passes = 0; G.moves++;
+  G.last = {p, kind: 'play', words: r.words.map(w => w.word), score: r.score, full: r.full, tiles: tiles.map(t => t.i)};
+  if (!pl.cpu) { const top = r.words.reduce((a, w) => w.score > a.score ? w : a, r.words[0]); if (!G.best || r.score > G.best.score) G.best = {word: top.word, score: r.score}; }
+  draw(pl);
+  pend = []; sel = -1;
+  Sound.word(r.score); vibrate(15);
+  renderBoard(tiles.map(t => t.i));
+  if (r.full) toast('Full rack! +' + FULL_RACK);
+  endTurn();
+}
+function endTurn() {
+  // the end: someone has used every tile with the bag empty, or everyone has passed or swapped twice in a row
+  const out = G.players.findIndex(p => !p.rack.length) >= 0 && !G.bag.length;
+  if (out || G.passes >= G.players.length * 2) return finish();
+  G.turn = (G.turn + 1) % G.players.length;
+  save();
+  startTurn();
+}
+function startTurn() {
+  renderPlayers(); renderLast(); renderBoard();
+  const p = me();
+  if (p.cpu) { hidden = false; renderRack(); cpuTurn(); }
+  else if (G.mode === 'pnp') {   // hide the tiles until the next player has the device
+    hidden = true; renderRack(); updateButtons();
+    cover(`<div class="card"><h3>${p.name}'s turn</h3><p>${G.last ? $('#last').textContent + '. ' : ''}Pass the device to ${p.name}, then tap to see your tiles.</p><button class="primary" id="cYes" style="width:100%;padding:14px">Show my tiles</button></div>`);
+    $('#cYes').onclick = () => { closeCover(); hidden = false; renderRack(); updateButtons(); };
+  } else { hidden = false; renderRack(); updateButtons(); }
+}
+function cpuTurn() {
+  busy = true; updateButtons(); renderPreview();
+  $('#last').innerHTML = (G.last ? $('#last').innerHTML + ' · ' : '') + `Computer is thinking<span class="think"><i></i><i></i><i></i></span>`;
+  setTimeout(() => {
+    const p = me(), t0 = performance.now();
+    const m = chooseMove(findMoves(G.board, p.rack), G.level);
+    const wait = Math.max(0, 700 - (performance.now() - t0));
+    setTimeout(() => {
+      busy = false;
+      if (m) {
+        const r = evaluate(G.board, m.tiles);
+        if (r.ok) { Sound.cpu(); commitPlay(G.turn, m.tiles, r); return; }
+      }
+      if (G.bag.length >= RACK) {   // nothing to play: swap the awkward tiles
+        const slots = p.rack.map((l, k) => [l, k]).filter(([l], k, a) => 'qjxzvkw'.includes(l) || a.findIndex(x => x[0] === l) !== k).map(x => x[1]);
+        doSwap(G.turn, slots.length ? slots : p.rack.map((_, k) => k));
+      } else { G.passes++; G.last = {p: G.turn, kind: 'pass'}; endTurn(); }
+    }, wait);
+  }, 60);
+}
+function finish() {
+  G.over = true; busy = false;
+  // tiles left over: their points come off; someone who went out gets everyone else's
+  const outP = G.players.findIndex(p => !p.rack.length);
+  let bonus = 0;
+  G.players.forEach((p, k) => { const left = p.rack.reduce((a, l) => a + tileVal(l, l === '?'), 0); p.score -= left; if (k !== outP) bonus += left; });
+  if (outP >= 0 && !G.bag.length) G.players[outP].score += bonus;
+  store(SAVE_KEY, null);
+  const top = Math.max(...G.players.map(p => p.score)), winners = G.players.filter(p => p.score === top);
+  const s = stats();
+  if (G.mode === 'cpu') {
+    const lv = ['easy', 'medium', 'hard'][G.level], res = winners.length > 1 ? 'draws' : winners[0].cpu ? 'losses' : 'wins';
+    s.cpu = s.cpu || {}; s.cpu[lv] = s.cpu[lv] || {wins: 0, losses: 0, draws: 0}; s.cpu[lv][res]++;
+    s.bestGame = Math.max(s.bestGame || 0, G.players[0].score);
+  } else s.pnp = (s.pnp || 0) + 1;
+  if (G.best && (!s.bestMove || G.best.score > s.bestMove.score)) s.bestMove = G.best;
+  saveStats(s);
+  const youWin = G.mode === 'cpu' && winners.length === 1 && !winners[0].cpu;
+  (G.mode === 'cpu' ? (youWin ? Sound.win : Sound.lose) : Sound.win)();
+  renderPlayers(); renderRack(); updateButtons();
+  const title = winners.length > 1 ? "It's a draw!" : G.mode === 'cpu' ? (youWin ? 'You win!' : 'The computer wins') : `${winners[0].name} wins!`;
+  cover(`<div class="card"><h3>${title}</h3><p>${outP >= 0 && !G.bag.length ? `${G.players[outP].name} used every tile.` : 'Nobody could play.'} Leftover tiles came off each score.</p>
+    <ul class="scores">${[...G.players].sort((a, b) => b.score - a.score).map(p => `<li class="${p.score === top ? 'win' : ''}"><span>${p.name}</span><b>${fmt(p.score)}</b></li>`).join('')}</ul>
+    <div class="row"><button class="sec" id="cNo">Home</button><button class="primary" id="cYes">Play again</button></div></div>`);
+  $('#cNo').onclick = () => { closeCover(); showHome(); };
+  $('#cYes').onclick = () => { closeCover(); newGame(G.mode, {level: G.level, players: G.players.length}); startGame(); };
+}
+
+/* ======================================================================
+   QUICK FIRE
+   Five rounds. Each gives you seven letters and 30 seconds to make the
+   best-scoring word you can. Then you see the best word there was.
+   ====================================================================== */
+const QF_ROUNDS = 5, QF_TIME = 30;
+const qBonus = n => n >= 7 ? 25 : n === 6 ? 10 : n === 5 ? 5 : 0;
+const qScore = w => [...w].reduce((a, l) => a + VAL[l], 0) + qBonus(w.length);
+let Q = null;
+function qLetters() {
+  // seven letters with a good word in them: at least two vowels and two others, and a 5+ letter everyday word
+  const vowels = 'aeiou', commons = Dict.commonList().filter(w => w.length >= 5 && w.length <= 7);
+  for (let t = 0; t < 200; t++) {
+    const bag = shuffle(Object.entries(MIX).filter(([l]) => l !== '?').flatMap(([l, n]) => Array(n).fill(l))).slice(0, 7);
+    const v = bag.filter(l => vowels.includes(l)).length;
+    if (v < 2 || v > 4) continue;
+    if (commons.some(w => fits(w, bag))) return bag;
+  }
+  return shuffle('streamdlin'.split('')).slice(0, 7);
+}
+function fits(w, letters) { const c = {}; for (const l of letters) c[l] = (c[l] || 0) + 1; for (const l of w) { if (!c[l]) return false; c[l]--; } return true; }
+// the best word in the whole list, and the best everyday word (the one shown first: the top list word can be obscure)
+function qBest(letters) {
+  let best = null, everyday = null;
+  for (const w of Dict.all()) if (w.length <= 7 && fits(w, letters)) {
+    const s = qScore(w);
+    if (!best || s > best.score) best = {word: w, score: s};
+    if (Dict.common(w) && (!everyday || s > everyday.score)) everyday = {word: w, score: s};
+  }
+  return best ? Object.assign(everyday || best, {top: best}) : null;
+}
+function qStart() {
+  Dict.ready();
+  Q = {round: 0, total: 0, rounds: []};
+  show('quick'); qRound();
+}
+function qRound() {
+  Q.round++; Q.letters = qLetters(); Q.picked = []; Q.end = performance.now() + QF_TIME * 1000; Q.done = false; Q.lastTick = QF_TIME;
+  $('#reveal').classList.add('hidden'); $('#qActs').classList.remove('hidden'); $('#qRack').classList.remove('hidden');
+  $('#qRound').textContent = `Round ${Q.round} of ${QF_ROUNDS}`;
+  qRender(); qTick();
+}
+function qWordNow() { return Q.picked.map(k => Q.letters[k]).join(''); }
+function qRender() {
+  const w = qWordNow(), ok = w.length >= 2 && Dict.has(w);
+  $('#slots').innerHTML = Q.picked.length ? Q.picked.map((k, j) => `<button data-j="${j}">${tileHTML(Q.letters[k], false)}</button>`).join('') : '<span class="empty">Tap letters to make a word</span>';
+  $('#qRack').innerHTML = Q.letters.map((l, k) => `<button data-k="${k}">${tileHTML(l, false, Q.picked.includes(k) ? 'gone' : '')}</button>`).join('');
+  $('#qWord').className = 'qword' + (ok ? ' ok' : '');
+  $('#qWord').textContent = !w ? '' : ok ? `${w.toUpperCase()}: ${qScore(w)} points` : w.length < 2 ? '' : 'Not a word yet';
+  $('#qSubmit').disabled = !ok;
+  $('#qTotal').textContent = `${fmt(Q.total)} points`;
+}
+function qTick() {
+  if (!Q || Q.done || $('#quick').classList.contains('hidden')) return;
+  const left = Math.max(0, (Q.end - performance.now()) / 1000);
+  $('#timerBar').style.transform = `scaleX(${left / QF_TIME})`;
+  $('#timer').classList.toggle('low', left < 6);
+  $('#qTime').textContent = Math.ceil(left);
+  if (Math.ceil(left) < Q.lastTick && left < 5.5 && left > 0) Sound.tick();
+  Q.lastTick = Math.ceil(left);
+  if (left <= 0) return qFinishRound();
+  requestAnimationFrame(qTick);
+}
+function qFinishRound() {
+  if (Q.done) return;
+  Q.done = true;
+  const w = qWordNow(), ok = w.length >= 2 && Dict.has(w), pts = ok ? qScore(w) : 0, best = qBest(Q.letters);
+  Q.total += pts; Q.rounds.push({word: ok ? w : '', pts, best});
+  ok ? Sound.word(pts) : Sound.bad();
+  $('#qActs').classList.add('hidden'); $('#qRack').classList.add('hidden');
+  const last = Q.round >= QF_ROUNDS;
+  const r = $('#reveal'); r.classList.remove('hidden');
+  r.innerHTML = `<div class="rv"><div><small>Your word</small><span class="w">${ok ? w : '—'}</span></div><span class="p">+${pts}</span></div>
+    <div class="rv"><div><small>Best everyday word</small><span class="w">${best ? best.word : '—'}</span></div><span class="p">${best ? best.score : 0}</span></div>
+    ${best && best.top.score > best.score ? `<div class="rv"><div><small>Top word in the list</small><span class="w" style="font-size:1rem">${best.top.word}</span></div><span class="p" style="font-size:1rem">${best.top.score}</span></div>` : ''}
+    ${ok && best && pts >= best.top.score ? '<div class="rv" style="color:var(--ok)">You found the top word!</div>' : ok && best && pts >= best.score ? '<div class="rv" style="color:var(--ok)">As good as the best everyday word!</div>' : ''}
+    <button class="primary" id="qNext" style="padding:13px;font-size:1.05rem">${last ? 'See your score' : 'Next round'}</button>`;
+  $('#qTotal').textContent = `${fmt(Q.total)} points`;
+  $('#qNext').onclick = () => last ? qSummary() : qRound();
+}
+function qSummary() {
+  const s = stats(), prev = s.quickBest || 0, nb = Q.total > prev;
+  s.quickBest = Math.max(prev, Q.total); s.quickGames = (s.quickGames || 0) + 1;
+  const topRound = Q.rounds.reduce((a, r) => r.pts > (a ? a.pts : -1) ? r : a, null);
+  if (topRound && topRound.pts && (!s.quickWord || topRound.pts > s.quickWord.pts)) s.quickWord = {word: topRound.word, pts: topRound.pts};
+  saveStats(s);
+  nb ? Sound.win() : Sound.end();
+  const possible = Q.rounds.reduce((a, r) => a + (r.best ? r.best.score : 0), 0);
+  cover(`<div class="card"><h3>${nb ? 'New best!' : 'Quick fire done'}</h3><p>You scored <b>${fmt(Q.total)}</b>. The best everyday words would have made ${fmt(possible)}.${!nb && prev ? ` Your best is ${fmt(prev)}.` : ''}</p>
+    <ul class="scores">${Q.rounds.map((r, k) => `<li><span>${k + 1}. ${r.word ? r.word.toUpperCase() : '—'}</span><b>${r.pts}</b></li>`).join('')}</ul>
+    <div class="row"><button class="sec" id="cNo">Home</button><button class="primary" id="cYes">Play again</button></div></div>`);
+  $('#cNo').onclick = () => { closeCover(); showHome(); };
+  $('#cYes').onclick = () => { closeCover(); qStart(); };
+}
+$('#qRack').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b || Q.done) return; const k = +b.dataset.k; if (Q.picked.includes(k)) return; Q.picked.push(k); Sound.tap(); qRender(); });
+$('#slots').addEventListener('click', e => { const b = e.target.closest('[data-j]'); if (!b || Q.done) return; Q.picked.splice(+b.dataset.j, 1); Sound.back(); qRender(); });
+$('#qClear').onclick = () => { Q.picked = []; qRender(); };
+$('#qShuffle').onclick = () => { const word = Q.picked.map(k => Q.letters[k]); const order = shuffle(Q.letters.map((_, k) => k)); const nl = order.map(k => Q.letters[k]); Q.picked = Q.picked.map(k => order.indexOf(k)); Q.letters = nl; void word; Sound.tap(); qRender(); };
+$('#qSubmit').onclick = () => qFinishRound();
+$('#qHome').onclick = () => { if (Q) Q.done = true; showHome(); };
+addEventListener('keydown', e => {
+  if ($('#quick').classList.contains('hidden') || !Q || Q.done || !$('#cover').classList.contains('hidden')) return;
+  const l = e.key.toLowerCase();
+  if (/^[a-z]$/.test(l)) { const k = Q.letters.findIndex((x, j) => x === l && !Q.picked.includes(j)); if (k >= 0) { Q.picked.push(k); Sound.tap(); qRender(); } }
+  else if (e.key === 'Backspace') { Q.picked.pop(); qRender(); }
+  else if (e.key === 'Enter' && !$('#qSubmit').disabled) qFinishRound();
+});
+
+/* ======================================================================
+   SCREENS, PANELS, STATS
+   ====================================================================== */
+const stats = () => load(STATS_KEY, {});
+const saveStats = s => store(STATS_KEY, s);
+function show(id) { ['home', 'game', 'quick'].forEach(k => $('#' + k).classList.toggle('hidden', k !== id)); }
+function cover(html) { const c = $('#cover'); c.innerHTML = html; c.classList.remove('hidden'); }
+function closeCover() { const c = $('#cover'); c.classList.add('hidden'); c.innerHTML = ''; }
+function showHome() { show('home'); renderHome(); }
+function startGame() {
+  Dict.ready();
+  show('game'); layout(); buildBoard(); pend = []; sel = -1; busy = false;
+  renderAll(); startTurn();
+}
+function renderHome() {
+  const s = load(SAVE_KEY, null), st = stats();
+  const c = $('#contBtn');
+  c.classList.toggle('hidden', !s);
+  if (s) {
+    const you = s.players[0];
+    c.innerHTML = `<span class="ci">${ic('play')}</span><span><b>Continue</b><small>${s.mode === 'cpu' ? `Vs computer (${['Easy', 'Medium', 'Hard'][s.level]}) · You ${s.players[0].score}, computer ${s.players[1].score}` : `Pass and play · ${s.players.length} players`}</small></span>`;
+    void you;
+  }
+  document.querySelectorAll('#lvlSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === prefs.level));
+  document.querySelectorAll('#pnpSeg button').forEach(b => b.classList.toggle('on', +b.dataset.v === prefs.players));
+  $('#qfSub').textContent = st.quickBest ? `5 rounds of 30 seconds · best ${fmt(st.quickBest)}` : '5 rounds: find the best word in 30 seconds';
+}
+function drawTitle() {
+  let k = 0;
+  $('#title').innerHTML = ['word', 'weave'].map(w => `<div class="wd">${[...w].map(l => tileHTML(l, false).replace('class="t"', `class="t" style="animation-delay:${k++ * 55}ms"`)).join('')}</div>`).join('');
+}
+const confirmNew = go => {
+  if (!load(SAVE_KEY, null)) return go();
+  cover(`<div class="card"><h3>Start a new game?</h3><p>The game you're in the middle of will be lost.</p><div class="row"><button class="sec" id="cNo">Cancel</button><button class="primary" id="cYes">New game</button></div></div>`);
+  $('#cNo').onclick = closeCover; $('#cYes').onclick = () => { closeCover(); go(); };
+};
+$('#lvlSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; prefs.level = +b.dataset.v; store(PREFS_KEY, prefs); Sound.tap(); renderHome(); };
+$('#pnpSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; prefs.players = +b.dataset.v; store(PREFS_KEY, prefs); Sound.tap(); renderHome(); };
+$('#cpuGo').onclick = () => confirmNew(() => { newGame('cpu', {level: prefs.level}); startGame(); });
+$('#pnpGo').onclick = () => confirmNew(() => { newGame('pnp', {players: prefs.players}); startGame(); });
+$('#qfGo').onclick = () => qStart();
+$('#contBtn').onclick = () => { G = load(SAVE_KEY, null); if (G) startGame(); };
+$('#homeBtn').onclick = () => { if (G && !G.over) save(); showHome(); };
+$('#newBtn').onclick = () => {
+  cover(`<div class="card"><h3>Start a new game?</h3><p>This game will be lost.</p><div class="row"><button class="sec" id="cNo">Cancel</button><button class="primary" id="cYes">New game</button></div></div>`);
+  $('#cNo').onclick = closeCover; $('#cYes').onclick = () => { closeCover(); newGame(G.mode, {level: G.level, players: G.players.length}); startGame(); };
+};
+addEventListener('resize', () => { if (!$('#game').classList.contains('hidden')) { layout(); renderPreview(); } });
+
+function openPanel(id) { $('#' + id).classList.add('show'); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.panel').classList.remove('show'));
+addEventListener('keydown', e => { if (e.key === 'Escape') { const p = [...document.querySelectorAll('.panel.show')].pop(); if (p) { e.stopImmediatePropagation(); p.classList.remove('show'); } } }, true);
+$('#howBtn').onclick = () => {
+  const sq = k => `<div class="sq ${k}" style="aspect-ratio:1">${PREM_LABEL[k]}</div>`;
+  $('#howBody').innerHTML = `
+    <div class="howc"><h3>Build words on the board</h3><p>You have seven letter tiles. On your turn, put some down in one line, across or down, to make a word. It must join onto tiles already on the board, and every word it makes, including any it crosses, must be a real word. The first word goes over the star in the middle.</p></div>
+    <div class="howc"><h3>Putting tiles down</h3><p>Drag a tile onto the board, or tap a tile and then a square. Tap a tile you've put down to take it back. The Play button shows what the move will score.</p></div>
+    <div class="howc"><h3>Scoring</h3><p>Each letter has points in its corner. Bonus squares count when you first cover them. Use all seven tiles in one go for a <b>+${FULL_RACK}</b> full rack bonus.</p>
+      <div class="legend"><span>${sq('L2')} letter scores double</span><span>${sq('L3')} letter scores triple</span><span>${sq('W2')} whole word double</span><span>${sq('W3')} whole word triple</span></div></div>
+    <div class="howc"><h3>Wild tiles</h3><p>Two tiles are blank: they can be any letter you choose, but score nothing.</p></div>
+    <div class="howc"><h3>Stuck?</h3><p>Swap any of your tiles for new ones from the bag (when it has at least seven), or pass. Either one uses up your turn.</p></div>
+    <div class="howc"><h3>The end</h3><p>The game ends when someone uses their last tile with the bag empty, or when everyone has passed or swapped twice in a row. Leftover tiles come off your score; if you went out, you get everyone else's.</p></div>
+    <div class="howc"><h3>Quick fire</h3><p>Five rounds. Each gives you seven letters and 30 seconds to make the best-scoring word you can. Longer words score bonus points: +5 for 5 letters, +10 for 6 and +25 for all 7. After each round you see the best word there was.</p></div>
+    <div class="howc"><h3>Letter points</h3><div class="vals">${Object.keys(VAL).map(l => tileHTML(l, false)).join('')}</div></div>`;
+  openPanel('howPanel');
+};
+$('#statsBtn').onclick = () => {
+  const s = stats(), c = s.cpu || {}, wl = lv => { const x = c[lv] || {}; return `${x.wins || 0}–${x.losses || 0}${x.draws ? '–' + x.draws : ''}`; };
+  $('#statsGrid').innerHTML = [
+    ['Easy (won–lost)', wl('easy')], ['Medium (won–lost)', wl('medium')], ['Hard (won–lost)', wl('hard')], ['Best game score', fmt(s.bestGame || 0)],
+    ['Best move', s.bestMove ? `${s.bestMove.word.toUpperCase()} ${s.bestMove.score}` : '—', 'wide'], ['Pass and play games', fmt(s.pnp || 0)],
+    ['Quick fire best', fmt(s.quickBest || 0)], ['Best quick fire word', s.quickWord ? `${s.quickWord.word.toUpperCase()} ${s.quickWord.pts}` : '—', 'wide'],
+  ].map(([k, v, w]) => `<div class="sbox${w ? ' wide' : ''}"><small>${k}</small><b>${v}</b></div>`).join('');
+  openPanel('statsPanel');
+};
+
+/* ---------- start ---------- */
+fillIcons(); drawTitle(); renderHome();
+if (!window.WW_WORDS) toast('The word list did not load. Check your connection and reload.');
+window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
+  previewSound: () => Sound.place(),
+  beforeReload() { if (G && !G.over) save(); return {inGame: !$('#game').classList.contains('hidden')}; },
+  afterReload(info) { const s = load(SAVE_KEY, null); if (info && info.inGame && s) { G = s; startGame(); } },
+});
+</script>
+</body>
+</html>
