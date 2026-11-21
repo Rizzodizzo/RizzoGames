@@ -117,7 +117,7 @@ header{text-align:center;margin:8px 0 18px}
 .ico{position:relative;flex:none;width:var(--sz);height:var(--sz);border-radius:24%;display:grid;place-items:center;overflow:hidden;
   box-shadow:0 6px 16px rgba(23,48,110,.18),inset 0 0 0 1px rgba(255,255,255,.18);transition:transform .15s cubic-bezier(.2,.8,.2,1)}
 .ico::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.35),transparent 60%);pointer-events:none}
-.ico>svg:first-child{width:80%;height:80%;position:relative;z-index:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,.18))}
+.ico>svg:first-child{width:80%;height:80%}
 .tile:active .ico{transform:scale(.92)}
 @media (hover:hover){.tile:hover .ico{transform:translateY(-3px)}}
 .tile:focus-visible{outline:0}
@@ -791,7 +791,7 @@ function tile(g, sub, favs, n) {
 function sections() {
   const favs = loadFavs(), out = [];
   const recent = GAMES.filter(g => lastPlayed(g.id)).sort((a, b) => lastPlayed(b.id) - lastPlayed(a.id)).slice(0, 12);
-  if (recent.length) out.push({id: 'recent', name: 'Recently played', icon: clockIc, items: recent.map(g => [g, statOf(g)])});
+  if (recent.length) out.push({id: 'recent', name: 'Recently played', icon: clockIc, items: recent.map(g => [g, null])});
   const rec = recommend(8), anyWhy = rec.some(r => r.why);
   out.push({id: 'for-you', name: recent.length ? 'Recommended for you' : 'Start here', icon: sparkIc, items: rec.map(r => [r.g, anyWhy ? r.why : null])});
   if (favs.length) out.push({id: 'favs', name: 'Favourites', icon: starIc, cls: 'gold', items: favs.map(id => [byId(id), null])});
@@ -816,15 +816,23 @@ function render(still) {
       <div class="row" id="row-${s.id}">${s.items.map(([g, sub], n) => tile(g, sub, favs, n)).join('')}</div></section>`;
   }).join('');
   gamesEl.querySelectorAll('.sec').forEach(s => { const r = s.querySelector('.row'); if (scroll[s.dataset.sec]) r.scrollLeft = scroll[s.dataset.sec]; arrows(s); });
-  nameCards();
+  nameCards(); clearNamesSoon();
 }
 // The page transition: the icon you tap grows into the game, and the game shrinks back into it.
 // A game can be in several rows, so only one of its icons has the name: the first one, or the one you tapped.
 const cardName = id => 'rz-card-' + String(id).replace(/[^\w-]/g, '');
+// Safari can stop drawing icons that keep a transition name inside a scrolling row, so names are only
+// there while needed: as the page appears (a game shrinking back into its icon), and on the icon you tap
+let namesT = 0;
+function clearNamesSoon() {
+  clearTimeout(namesT);
+  namesT = setTimeout(() => document.querySelectorAll('.tile .ico, .sheet .ico').forEach(ic => { ic.style.viewTransitionName = ''; }), 1500);
+}
 function nameCards(chosen) {
+  if (chosen) clearTimeout(namesT);
   const seen = new Set();
   document.querySelectorAll('.tile .ico, .sheet .ico').forEach(ic => { ic.style.viewTransitionName = ''; });
-  if (chosen) { chosen.style.viewTransitionName = cardName(chosen.closest('[data-id]').dataset.id); seen.add(chosen.closest('[data-id]').dataset.id); }
+  if (chosen) { chosen.style.viewTransitionName = cardName(chosen.closest('[data-id]').dataset.id); return; }   // only the one you tapped
   gamesEl.querySelectorAll('.sec:not(.min) .tile').forEach(t => { if (seen.has(t.dataset.id)) return; seen.add(t.dataset.id); t.querySelector('.ico').style.viewTransitionName = cardName(t.dataset.id); });
 }
 // the scroll arrows (computers only) grey out at each end
@@ -842,7 +850,6 @@ gamesEl.addEventListener('click', e => {
     const m = loadMin().filter(x => x !== id); if (on) m.push(id);
     write(MIN_KEY, JSON.stringify(m));
     if (!on) arrows(s);
-    nameCards();
     return;
   }
   const ar = e.target.closest('.arr');
