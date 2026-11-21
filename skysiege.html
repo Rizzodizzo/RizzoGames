@@ -225,7 +225,10 @@ function draw() {
   if (!G) return;
   for (const s of G.shields) { g.fillStyle = '#58e26b'; s.px.forEach((on, i) => { if (on) g.fillRect(s.x + (i % s.w), s.y + Math.floor(i / s.w), 1, 1); }); }
   for (const e of G.inv) if (e.alive) g.drawImage(SPR[e.k][G.frame], Math.round(e.x), Math.round(e.y));
-  if (G.comet) g.drawImage(COMET, Math.round(G.comet.x), G.comet.y);
+  if (G.comet) {   // the picture faces right: flip it when the comet flies left, so it always goes head first
+    if (G.comet.dir < 0) { g.save(); g.translate(Math.round(G.comet.x) + COMET.width, G.comet.y); g.scale(-1, 1); g.drawImage(COMET, 0, 0); g.restore(); }
+    else g.drawImage(COMET, Math.round(G.comet.x), G.comet.y);
+  }
   if (G.shot) { g.fillStyle = '#fff'; g.fillRect(G.shot.x, G.shot.y, 1, 4); }
   for (const b of G.bombs) {
     g.fillStyle = '#ff4b3e';
