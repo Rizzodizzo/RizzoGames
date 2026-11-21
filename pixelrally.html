@@ -29,10 +29,9 @@
 
     <div class="rx-screen" id="title">
       <h1>PIXEL<br>RALLY</h1>
-      <p>Keep the ball in play. Miss it and your opponent scores. <b>First to 7</b> wins.</p>
       <div class="rx-row" id="lvl"><button class="px dark" data-l="0">Easy</button><button class="px dark" data-l="1">Normal</button><button class="px dark" data-l="2">Hard</button></div>
       <div class="rx-row"><button class="px big" id="one">1 Player</button><button class="px big" style="--c:var(--rx-pink)" id="two">2 Players</button></div>
-      <div class="rx-list" id="howList"></div>
+      <div class="rx-pics" id="howList"></div>
       <div class="rx-hi" id="record"></div>
     </div>
 
@@ -147,7 +146,7 @@ function moveBall(b) {
       }
     }
     const br = M.brick;
-    if (br && b.x + BALL > br.x && b.x < br.x + br.w && b.y + BALL > br.y && b.y < br.y + br.h) { b.vy = -b.vy; power(b, br); M.brick = null; M.brickT = 420 + Math.random() * 400; }
+    if (br && b.x + BALL > br.x && b.x < br.x + br.w && b.y + BALL > br.y && b.y < br.y + br.h) { power(b, br); M.brick = null; M.brickT = 420 + Math.random() * 400; }
     if (b.y > H + 4 || b.y < -6) { goal(b, b.y < 0 ? 'bot' : 'top'); return; }
   }
 }
@@ -257,13 +256,9 @@ $('#quit').onclick = showTitle;
 $('#settings').onclick = () => window.RizzoGames && RizzoGames.openMenu();
 addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'P') && M && !M.over) ($('#pause').classList.contains('hidden') ? pause() : resume()); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-const pdl = (c, w = 12) => Retro.spriteURL(['.' + c.repeat(w - 2) + '.', c.repeat(w)], {[c]: {c: '#3fe0ff', p: '#ff4fa3', g: '#58e26b', r: '#ff4b3e', s: '#3fe0ff'}[c]});
-$('#howList').innerHTML = [
-  [pdl('c'), Retro.touch() ? 'Drag on the court to move your paddle' : 'Move with the mouse or arrow keys'],
-  [pdl('g', 10), '<b style="color:#58e26b">Grow</b>: a wider paddle'],
-  [pdl('r', 10), '<b style="color:#ff4b3e">Fast</b>: the ball speeds up'],
-  [pdl('s', 10), '<b style="color:#3fe0ff">Split</b>: a second ball'],
-].map(([src, t]) => `<div><i style="background:url(${src}) center/contain no-repeat"></i>${t}</div>`).join('') + `<div style="color:#8a8aa8">2 players: P2 plays on the top half${Retro.touch() ? '' : ' (A and D keys)'}</div>`;
+// the power bricks, drawn just as they are in the game, with their names
+const brick = c => Retro.spriteURL(['hhhhhhhhhhh', 'ccccccccccc', 'cccckkkcccc', 'cccckkkcccc', 'ccccccccccc', 'ccccccccccc'], {c, h: '#ffffff', k: '#000000'});
+$('#howList').innerHTML = Object.values(POWERS).map(p => `<figure><img src="${brick(p.c)}" width="55" height="30" alt=""><b style="color:${p.c};font-weight:400">${p.name}</b></figure>`).join('');
 window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
   onMenuOpen: () => { if (M && !M.over && $('#pause').classList.contains('hidden')) pause(); },
   previewSound: () => Retro.sfx.tone(440, .05, 'square', .07),

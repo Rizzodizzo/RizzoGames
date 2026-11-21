@@ -28,10 +28,8 @@
     <canvas id="cv" aria-label="Sky Siege"></canvas>
     <div class="rx-screen" id="title">
       <h1>SKY<br>SIEGE</h1>
-      <p>The invaders march down a step every time they reach the edge, faster as there are fewer of them. Stop them before they land.</p>
       <div class="rx-list" id="table"></div>
       <div class="rx-row"><button class="px big" id="go">Start</button></div>
-      <p id="keysHelp"></p>
       <div class="rx-hi" id="hiTitle"></div>
     </div>
     <div class="rx-screen hidden" id="pause">
@@ -265,9 +263,8 @@ $('#resume').onclick = resume; $('#pauseBtn').onclick = () => ($('#pause').class
 $('#settings').onclick = () => window.RizzoGames && RizzoGames.openMenu();
 addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'Escape') && G && !G.over && !document.querySelector('.rz-ui.rz-open')) { if (e.key === 'p') ($('#pause').classList.contains('hidden') ? pause() : resume()); } if (e.key === 'Enter' && !$('#title').classList.contains('hidden')) start(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-const img = s => `<i style="background:url(${s.toDataURL()}) center/contain no-repeat"></i>`;
+const img = s => `<i style="background:url(${s.toDataURL()}) center/contain no-repeat;width:${s.width * 3}px;height:${s.height * 3}px;margin-right:12px"></i>`;
 $('#table').innerHTML = [['a', 40], ['b', 25], ['c', 15]].map(([k, p]) => `<div>${img(SPR[k][0])}= ${p} POINTS</div>`).join('') + `<div>${img(COMET)}= 100+ BONUS</div>`;
-$('#keysHelp').innerHTML = Retro.touch() ? 'Hold <b>◀ ▶</b> to move (or drag on the game) and <b>FIRE</b> to shoot.' : '<b>Arrow keys</b> or <b>A D</b> to move, <b>Space</b> to shoot, <b>P</b> to pause.';
 window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
   onMenuOpen: () => { if (G && !G.over && $('#pause').classList.contains('hidden')) pause(); },
   previewSound: () => Retro.sfx.tone(880, .07, 'square', .05, 0, .5),

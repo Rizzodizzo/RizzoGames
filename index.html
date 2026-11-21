@@ -602,10 +602,12 @@ const pix = (rows, pal) => `<svg viewBox="0 0 96 96" shape-rendering="crispEdges
 const ART = {
   rally: pix(['kkkkkkkkkkkk', 'kkkppppkkkkk', 'kkkkkkkkkkkk', 'kkkkkkkkkkkk', 'kkkkkkkwkkkk', 'kkkkkkgkkkkk', 'kdkdkdkdkdkd', 'kkkkgkkkkkkk', 'kkkkkkkkkkkk', 'kkkkkkkkkkkk', 'kkkkkccccckk', 'kkkkkkkkkkkk'],
     {k: '#07070f', p: '#ff4fa3', c: '#3fe0ff', w: '#ffffff', g: '#55557a', d: '#26264a'}),
-  siege: pix(['nnnnnnnnnnnn', 'nnnnnaannnnn', 'nnnnaaaannnn', 'nnnaawwaannn', 'nnaawkkwaann', 'nnnaaaaaannn', 'nnanannanann', 'nnnnnnnnnnnn', 'nnnnnwnnnnnn', 'nnGGnnnnGGnn', 'nnnnnynnnnnn', 'nnnyyyyynnnn'],
-    {n: '#0b0b24', a: '#ff4fa3', w: '#ffffff', k: '#07070f', G: '#58e26b', y: '#ffd23f'}),
-  muncher: pix(['vvvvvvvvvvvv', 'vnnnnnnnnnnv', 'vnggggnnpppv', 'vgwkgggnpwpv', 'vgggkkknpppv', 'vggggggnpnpv', 'vnggggnnnnnv', 'vnvvvvnnvvvv', 'vnvnnnnnnnnv', 'vnvnsnsnsnsv', 'vnnnnnnnnnnv', 'vvvvvvvvvvvv'],
-    {v: '#a87bff', n: '#07070f', g: '#58e26b', w: '#ffffff', k: '#07070f', p: '#ff4fa3', s: '#ffe9c2'}),
+  // Sky Siege: its main enemy, the eye drone
+  siege: pix(['nnnnnnnnnnnn', 'nnnnnnnnnnnn', 'nnnnnaannnnn', 'nnnnaaaannnn', 'nnnaawwaannn', 'nnaawkkwaann', 'naaawkkwaaan', 'nnnaaaaaannn', 'nnanannanann', 'nannannannan', 'nnnnnnnnnnnn', 'nnnnnnnnnnnn'],
+    {n: '#0b0b24', a: '#ff4fa3', w: '#ffffff', k: '#07070f'}),
+  // Maze Muncher: its main character, the slime
+  muncher: pix(['nnnnnnnnnnnn', 'nnnnnnnnnnnn', 'nnnnggggnnnn', 'nnnggggggnnn', 'nnggwkggggnn', 'nnggggggggnn', 'nnggggggkkkn', 'nnggggggggnn', 'nnnggggggnnn', 'nnndnddndnnn', 'nnnnnnnnnnnn', 'nnnnnnnnnnnn'],
+    {n: '#0b1a12', g: '#58e26b', w: '#ffffff', k: '#07070f', d: '#2f9e45'}),
   sudoku: `<svg viewBox="0 0 96 96" aria-hidden="true">
     <rect x="6" y="6" width="84" height="84" rx="14" fill="#fff"/>
     <rect x="35.5" y="35.5" width="25" height="25" fill="#c7d6fb"/>

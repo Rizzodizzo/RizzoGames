@@ -28,10 +28,8 @@
     <canvas id="cv" aria-label="Maze Muncher maze"></canvas>
     <div class="rx-screen" id="title">
       <h1>MAZE<br>MUNCHER</h1>
-      <p>Eat every seed in the maze while four robots hunt you. Grab a <b>power gem</b> and they flee: catch them for big points. Every level is a new maze.</p>
-      <div class="rx-list" id="cast"></div>
+      <div id="cast"></div>
       <div class="rx-row"><button class="px big" id="go">Start</button></div>
-      <p id="keysHelp"></p>
       <div class="rx-hi" id="hiTitle"></div>
     </div>
     <div class="rx-screen hidden" id="pause">
@@ -388,10 +386,11 @@ $('#resume').onclick = resume; $('#pauseBtn').onclick = () => ($('#pause').class
 $('#settings').onclick = () => window.RizzoGames && RizzoGames.openMenu();
 addEventListener('keydown', e => { if (e.key === 'p' && G && !G.over) ($('#pause').classList.contains('hidden') ? pause() : resume()); if (e.key === 'Enter' && !$('#title').classList.contains('hidden')) start(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-const img = c => `<i style="background:url(${c.toDataURL()}) center/contain no-repeat;width:16px;height:16px"></i>`;
-$('#cast').innerHTML = [[SLIME[0], 'YOU'], ...CAST.map((c, i) => [c.spr, `${c.name}: ${['chases you', 'cuts you off', 'wanders, then pounces', 'guards the seeds'][i]}`]), [CAST[0].scared, 'after a gem: catch them!']]
-  .map(([c, t]) => `<div>${img(c)}${t}</div>`).join('');
-$('#keysHelp').innerHTML = Retro.touch() ? '<b>Swipe</b> on the maze or use the <b>arrows</b> to steer.' : '<b>Arrow keys</b> or <b>WASD</b> to steer, <b>P</b> to pause.';
+// the cast as pictures: you and the four robots, then a power gem turning a robot into one you can catch
+const GEM = Retro.sprite(['..cc..', '.cwcc.', 'cccccc', 'cccccc', '.cccc.', '..cc..'], {c: '#3fe0ff', w: '#ffffff'});
+const pic = (c, k = 4) => `<figure><img src="${c.toDataURL()}" width="${c.width * k}" height="${c.height * k}" alt=""></figure>`;
+$('#cast').innerHTML = `<div class="rx-pics">${pic(SLIME[0], 5)}${CAST.map(c => pic(c.spr)).join('')}</div>
+  <div class="rx-pics">${pic(GEM, 4)}<span class="to">→</span>${pic(CAST[0].scared)}</div>`;
 window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {
   onMenuOpen: () => { if (G && !G.over && $('#pause').classList.contains('hidden')) pause(); },
   previewSound: () => Retro.sfx.tone(520, .04, 'triangle', .07),

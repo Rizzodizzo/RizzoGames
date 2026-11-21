@@ -22,8 +22,8 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .rx-hud .rx-sc{flex:1;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;text-align:center}
 .rx-hud b{display:block;color:var(--rx-yellow);font-weight:400;font-size:8px}
 .rx-hud span{color:var(--rx-ink)}
-.rx-stage{position:relative;flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;margin:8px 0}
-.rx-stage canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;box-shadow:0 0 0 3px #222240,0 0 0 6px #000,0 0 30px rgba(63,224,255,.12)}
+.rx-stage{position:relative;flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;margin:4px 0}
+.rx-stage canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;box-shadow:0 0 0 2px #222240,0 0 30px rgba(63,224,255,.12)}
 .rx-pad{width:100%;max-width:520px;display:flex;gap:12px;justify-content:space-between;align-items:center}
 
 /* a pixel button: square, with stepped corners drawn by its shadow */
@@ -45,7 +45,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 /* screens over the game: title, pause, game over */
 .rx-screen{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px 12px;text-align:center;
   background:rgba(5,5,14,.9);overflow-y:auto}
-.rx-screen h1{margin:0;font-size:clamp(18px,7vw,30px);line-height:1.35;font-weight:400;color:var(--rx-yellow);text-shadow:3px 3px 0 var(--rx-pink),6px 6px 0 #000}
+.rx-screen h1{margin:0 0 6px;font-size:clamp(30px,12vw,58px);line-height:1.25;font-weight:400;color:var(--rx-yellow);text-shadow:4px 4px 0 var(--rx-pink),8px 8px 0 #000}
 .rx-screen h2{margin:0;font-size:16px;font-weight:400;color:var(--rx-cyan);text-shadow:3px 3px 0 #000}
 .rx-screen p{margin:0;font-size:9px;line-height:1.8;color:var(--rx-dim);max-width:30em;text-wrap:pretty}
 .rx-screen p b{color:var(--rx-ink);font-weight:400}
@@ -53,6 +53,11 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .rx-blink{animation:rxblink 1s steps(2) infinite}
 @keyframes rxblink{50%{opacity:0}}
 .rx-hi{font-size:10px;color:var(--rx-pink)}
+/* pictures instead of words: sprites drawn big, with at most a one-word label */
+.rx-pics{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap;margin:4px 0}
+.rx-pics figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:9px}
+.rx-pics img{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.rx-pics .to{font-size:16px;color:var(--rx-dim)}
 .rx-list{display:flex;flex-direction:column;gap:6px;font-size:9px;line-height:1.6;color:var(--rx-ink);text-align:left}
 .rx-list i{font-style:normal;display:inline-block;width:18px;height:12px;vertical-align:middle;margin-right:8px;image-rendering:pixelated}
 html.rz-reduce-motion .rx-blink{animation:none}

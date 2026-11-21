@@ -17,8 +17,7 @@
     ctx.imageSmoothingEnabled = false;
     const fit = () => {
       const box = cv.parentElement.getBoundingClientRect();
-      let k = Math.min(box.width / W, box.height / H);
-      if (k >= 2) k = Math.floor(k * 2) / 2;   // whole or half steps keep the pixels even
+      const k = Math.min(box.width / W, box.height / H);   // as big as the space allows
       cv.style.width = Math.max(1, Math.floor(W * k)) + 'px'; cv.style.height = Math.max(1, Math.floor(H * k)) + 'px';
       cv.dataset.k = k;
     };
