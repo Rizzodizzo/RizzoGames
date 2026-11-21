@@ -778,6 +778,22 @@ function recommend(n = 8) {
   });
 }
 
+/* ---------- the category rows, in the order you're most likely to want them ----------
+   Each category scores the share of your play time spent on its games, plus how closely its games match
+   the tags you play most (the same match as Recommended), averaged over its games so big categories don't
+   win just by being big. With no play history they keep their usual order. */
+function catOrder() {
+  const t = {};
+  GAMES.forEach(g => { t[g.id] = playTime(g.id) || (lastPlayed(g.id) ? 120 : 0); });
+  const total = Object.values(t).reduce((a, b) => a + b, 0);
+  if (!total) return CATS;
+  const like = {}, freq = {};
+  GAMES.forEach(g => (g.tags || []).forEach(tag => { freq[tag] = (freq[tag] || 0) + 1; if (t[g.id]) like[tag] = (like[tag] || 0) + t[g.id]; }));
+  const match = g => { const ts = g.tags || []; let s = 0; ts.forEach(tag => { s += (like[tag] || 0) / total * Math.log(1 + GAMES.length / freq[tag]); }); return ts.length ? s / Math.sqrt(ts.length) : 0; };
+  const score = c => { const gs = GAMES.filter(g => inCat(g, c.id)); return gs.length ? gs.reduce((s, g) => s + t[g.id] / total + match(g) * .5, 0) / Math.sqrt(gs.length) : 0; };
+  return CATS.map((c, i) => ({c, i, s: score(c)})).sort((a, b) => b.s - a.s || a.i - b.i).map(x => x.c);
+}
+
 /* ======================================================================
    DRAWING THE ROWS
    ====================================================================== */
@@ -795,7 +811,7 @@ function sections() {
   const rec = recommend(8), anyWhy = rec.some(r => r.why);
   out.push({id: 'for-you', name: recent.length ? 'Recommended for you' : 'Start here', icon: sparkIc, items: rec.map(r => [r.g, anyWhy ? r.why : null])});
   if (favs.length) out.push({id: 'favs', name: 'Favourites', icon: starIc, cls: 'gold', items: favs.map(id => [byId(id), null])});
-  CATS.forEach(c => {
+  catOrder().forEach(c => {
     const gs = GAMES.filter(g => inCat(g, c.id));
     if (gs.length) out.push({id: 'cat-' + c.id, name: c.name, icon: c.icon, count: gs.length, items: gs.sort((a, b) => favs.includes(b.id) - favs.includes(a.id)).map(g => [g, null])});
   });
