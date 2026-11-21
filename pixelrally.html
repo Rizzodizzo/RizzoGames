@@ -61,7 +61,7 @@ const W = 120, H = 180, WIN = 7;
 const S = Retro.screen(document.getElementById('cv'), W, H), g = S.ctx;
 const $ = s => document.querySelector(s);
 const PAD_Y = {bot: H - 12, top: 9}, PAD_H = 3, BALL = 3;
-const LEVELS = [{name: 'Easy', speed: .75, aim: 24, react: .45}, {name: 'Normal', speed: 1.15, aim: 15, react: .65}, {name: 'Hard', speed: 1.7, aim: 9, react: .9}];
+const LEVELS = [{name: 'Easy', speed: .6, aim: 30, react: .4}, {name: 'Normal', speed: .85, aim: 22, react: .55}, {name: 'Hard', speed: 2.3, aim: 7, react: .95}];
 const POWERS = {G: {name: 'GROW', c: '#58e26b'}, F: {name: 'FAST', c: '#ff4b3e'}, S: {name: 'SPLIT', c: '#3fe0ff'}};
 const STATS = 'pixelrally-stats';
 const stats = () => { try { return JSON.parse(localStorage.getItem(STATS)) || {}; } catch { return {}; } };
@@ -136,7 +136,7 @@ function moveBall(b) {
       if ((dir > 0 ? b.vy > 0 : b.vy < 0) && b.y + BALL >= py && b.y <= py + PAD_H && b.x + BALL >= p.x - p.w / 2 && b.x <= p.x + p.w / 2) {
         // where it hit sets the angle: the edges send it off wide
         const off = Math.max(-1, Math.min(1, (b.x + BALL / 2 - p.x) / (p.w / 2)));
-        b.sp = Math.min(3.8, b.sp + .14);
+        b.sp = Math.min(7, b.sp + .12);   // faster with every hit, all through the rally
         const a = off * 1.05;
         b.vx = Math.sin(a) * b.sp; b.vy = -dir * Math.max(.55, Math.cos(a)) * b.sp;
         b.y = dir > 0 ? py - BALL : py + PAD_H;

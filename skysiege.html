@@ -243,7 +243,9 @@ function draw() {
 const L = Retro.loop(step, draw);
 
 /* ---------- controls ---------- */
-Retro.hold($('#kL'), 'ArrowLeft'); Retro.hold($('#kR'), 'ArrowRight'); Retro.hold($('#kF'), 'fire');
+// slide your finger from one button to another and the new one takes over
+$('#kL').dataset.key = 'ArrowLeft'; $('#kR').dataset.key = 'ArrowRight'; $('#kF').dataset.key = 'fire';
+Retro.pad($('#pad'));
 // on a touch screen you can also drag on the game to steer
 $('#stage').addEventListener('pointermove', e => { if (G && !G.over && e.pointerType !== 'mouse' && e.buttons && !e.target.closest('.rx-screen')) G.x = Math.max(7, Math.min(W - 7, S.at(e).x)); });
 

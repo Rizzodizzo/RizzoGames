@@ -369,7 +369,9 @@ $('#stage').addEventListener('pointermove', e => {
   sw = {x: e.clientX, y: e.clientY};
 });
 addEventListener('pointerup', () => { sw = null; });
-document.querySelectorAll('#pad [data-d]').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); if (G) G.p.want = +b.dataset.d; b.classList.add('down'); setTimeout(() => b.classList.remove('down'), 120); }));
+// the arrow pad: slide from one arrow to another and the new one takes over (the steering reads them like arrow keys)
+document.querySelectorAll('#pad [data-d]').forEach(b => { b.dataset.key = ['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft'][+b.dataset.d]; });
+Retro.pad($('#pad'));
 
 /* ---------- screens ---------- */
 function start() { newGame(); wallCache = null; ['#title', '#over', '#pause'].forEach(s => $(s).classList.add('hidden')); document.body.classList.add('playing'); L.resume(); $('.rx-sc').style.visibility = ''; $('#pauseBtn').style.visibility = ''; }

@@ -83,6 +83,22 @@
     btn.addEventListener('contextmenu', e => e.preventDefault());
   }
 
+  // a pad of touch buttons: a finger pressed anywhere on it presses whichever button is under it, and sliding
+  // onto another button presses that one instead. Each finger counts on its own, so two can be held at once
+  function pad(el, keyOf = b => b.dataset.key) {
+    const fingers = new Map();   // finger -> the button under it (or none)
+    const under = e => { const t = document.elementFromPoint(e.clientX, e.clientY), b = t && t.closest && t.closest('button'); return b && el.contains(b) ? b : null; };
+    const sync = () => {
+      const on = new Set([...fingers.values()].filter(Boolean)), want = new Set([...on].map(keyOf));
+      el.querySelectorAll('button').forEach(b => { const k = keyOf(b); b.classList.toggle('down', on.has(b)); if (k) want.has(k) ? keys.add(k) : keys.delete(k); });
+    };
+    el.addEventListener('pointerdown', e => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch {} fingers.set(e.pointerId, under(e)); sync(); });
+    el.addEventListener('pointermove', e => { if (!fingers.has(e.pointerId)) return; const b = under(e); if (b !== fingers.get(e.pointerId)) { fingers.set(e.pointerId, b); sync(); } });
+    const up = e => { if (fingers.delete(e.pointerId)) sync(); };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
   /* ---------- high scores ---------- */
   const best = id => { try { return +(localStorage.getItem(id + '-best') || 0); } catch { return 0; } };
   const save = (id, n) => { if (n > best(id)) { try { localStorage.setItem(id + '-best', String(n)); } catch {} return true; } return false; };
@@ -102,6 +118,6 @@
     return {pause() { on = false; }, resume() { on = true; last = 0; acc = 0; }, get running() { return on; }};
   }
 
-  window.Retro = {screen, sprite, spriteURL, sfx, keys, held, hold, best, save, loop,
+  window.Retro = {screen, sprite, spriteURL, sfx, keys, held, hold, pad, best, save, loop,
     touch: () => { const r = RZ(); return !!(r && r.device && r.device.touch); }};
 })();
