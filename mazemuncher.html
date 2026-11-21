@@ -44,9 +44,9 @@
     </div>
   </div>
   <div class="rx-pad touch-only" id="pad" style="justify-content:center">
-    <div style="display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,52px);gap:6px">
-      <span></span><button class="px rx-key" style="width:64px;height:52px" data-d="0" aria-label="Up">▲</button><span></span>
-      <button class="px rx-key" style="width:64px;height:52px" data-d="3" aria-label="Left">◀</button><button class="px rx-key" style="width:64px;height:52px" data-d="2" aria-label="Down">▼</button><button class="px rx-key" style="width:64px;height:52px" data-d="1" aria-label="Right">▶</button>
+    <div class="rx-dpad">
+      <span></span><button class="px rx-key" data-d="0" aria-label="Up">▲</button><span></span>
+      <button class="px rx-key" data-d="3" aria-label="Left">◀</button><button class="px rx-key" data-d="2" aria-label="Down">▼</button><button class="px rx-key" data-d="1" aria-label="Right">▶</button>
     </div>
   </div>
 </div>
@@ -158,10 +158,10 @@ function nextLevel() {
   hud();
 }
 function resetPositions() {
-  const sp = .105 + Math.min(.02, G.level * .002);
+  const sp = .078 + Math.min(.015, (G.level - 1) * .0015);   // about 4.7 squares a second
   const start = nearestOpen(G.m, 9, PEN.y1 + 2) || [9, 13];
   G.p = {x: start[0], y: start[1], dir: 3, want: 3, prog: 0, sp, mouth: 0};
-  G.r = CAST.map((c, i) => ({i, x: 9 + [0, -1, 0, 1][i] * (i ? 1 : 0), y: i ? 10 : PEN.y0 - 1, dir: i % 2 ? 1 : 3, prog: 0, mode: i ? 'pen' : 'chase', release: [0, 180, 420, 720][i], sp: .082 + Math.min(.036, (G.level - 1) * .004)}));   // slower than you to begin with, a little faster every level
+  G.r = CAST.map((c, i) => ({i, x: 9 + [0, -1, 0, 1][i] * (i ? 1 : 0), y: i ? 10 : PEN.y0 - 1, dir: i % 2 ? 1 : 3, prog: 0, mode: i ? 'pen' : 'chase', release: [0, 180, 420, 720][i], sp: .062 + Math.min(.026, (G.level - 1) * .003)}));   // slower than you to begin with, a little faster every level   // slower than you to begin with, a little faster every level
   G.scared = 0; G.chain = 0; G.ready = 120; G.dying = 0; G.rest = 0; G.restT = 1100; G.fx = []; G.bonus = null;
 }
 function hud() { $('#score').textContent = G.score; $('#hi').textContent = Math.max(G.score, Retro.best('mazemuncher')); $('#lvl').textContent = G.level; }
@@ -266,7 +266,7 @@ function step() {
   for (const r of G.r) {
     if (r.mode === 'pen') { r.release--; if (r.release <= 0 && r.prog === 0) { r.mode = 'leave'; r.x = 9; r.y = 10; } continue; }
     const tunnel = r.y === TUNNEL_Y && (r.x < 3 || r.x > TW - 4);
-    const sp = r.mode === 'eyes' ? .22 : r.mode === 'scared' ? .055 : tunnel ? r.sp * .55 : r.mode === 'leave' ? .06 : r.sp * (G.rest > 0 ? .9 : 1);
+    const sp = r.mode === 'eyes' ? .16 : r.mode === 'scared' ? .042 : tunnel ? r.sp * .55 : r.mode === 'leave' ? .045 : r.sp * (G.rest > 0 ? .9 : 1);
     advance(r, sp, 'robot', robotChoose);
   }
   // bumping into a robot
