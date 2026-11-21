@@ -90,7 +90,19 @@ header{text-align:center;margin:8px 0 18px}
 .tag{margin:14px 0 0;color:var(--muted);font-weight:700;font-size:.98rem}
 
 /* ---------- rows of games: each one scrolls sideways, and its heading minimises it ---------- */
-.tip{margin:-6px 0 18px;text-align:center;color:var(--muted);font-weight:700;font-size:.82rem}
+.search{position:relative;max-width:520px;margin:-4px auto 20px}
+.search>svg{position:absolute;left:15px;top:50%;width:19px;height:19px;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search input{width:100%;height:48px;padding:0 46px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);font:inherit;font-weight:700;font-size:1rem;
+  box-shadow:var(--shadow);outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s,box-shadow .2s}
+.search input::placeholder{color:var(--muted);font-weight:700}
+.search input::-webkit-search-cancel-button{display:none}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent),var(--shadow)}
+.search button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border:0;border-radius:50%;background:var(--soft);color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.search button[hidden]{display:none}
+.search button svg{width:15px;height:15px}
+.results .sech{font-weight:800;font-size:1.02rem;color:var(--muted);padding:6px 16px}
+.results .row{flex-wrap:wrap;overflow:visible;row-gap:16px}
+.none{padding:18px 16px;text-align:center;color:var(--muted);font-weight:700}
 .sec{margin:0 -16px 18px}
 .sech{display:flex;align-items:center;gap:6px;padding:0 16px;margin:0 0 6px}
 .sectog{flex:1;display:flex;align-items:center;gap:10px;min-width:0;padding:6px 0;border:0;background:none;color:var(--ink);font:inherit;font-weight:800;font-size:1.08rem;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
@@ -175,7 +187,11 @@ html.rz-vt .tile{animation:none}
       <h1 class="logo" aria-label="Rizzo Games"><span class="rz" data-t="RIZZO" aria-hidden="true">RIZZO</span><span class="gm" aria-hidden="true"><span>GAMES</span></span></h1>
     </div>
   </header>
-  <p class="tip" id="tip"></p>
+  <div class="search" role="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+    <input id="q" type="search" placeholder="Search games" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search games by name, category or kind of game">
+    <button id="qx" type="button" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
   <div id="games"></div>
 </div>
 <div class="sheet" id="sheet" aria-hidden="true"><div class="sheetin" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
@@ -804,6 +820,29 @@ function recommend(n = 8) {
   });
 }
 
+/* ---------- search ----------
+   Matches the game's name first, then its categories, then its tags (the hidden ones Recommended uses, so
+   "geography", "vs computer" or "two player" find games), then words in its description. Every word typed
+   has to match somewhere; the best matches come first. */
+const norm = s => String(s).toLowerCase().replace(/[-_]/g, ' ').replace(/[^a-z0-9 ]/g, '');
+function searchGames(q) {
+  const words = norm(q).trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const starts = (text, w) => text.split(' ').some(x => x.startsWith(w));
+  return GAMES.map((g, k) => {
+    const name = norm(g.name), cats = [].concat(g.cat || []).map(c => norm(((CATS.find(x => x.id === c) || {}).name || '') + ' ' + c)).join(' ');
+    const tags = (g.tags || []).map(norm).join(' '), blurb = norm(g.blurb);
+    let score = 0;
+    for (const w of words) {
+      const s = name.startsWith(w) ? 12 : starts(name, w) ? 10 : name.replace(/ /g, '').includes(w) ? 7 : starts(cats, w) ? 5 : starts(tags, w) ? 4 : starts(blurb, w) ? 2 : 0;
+      if (!s) return null;
+      score += s;
+    }
+    return {g, score, k};
+  }).filter(Boolean).sort((a, b) => b.score - a.score || a.k - b.k).map(x => x.g);
+}
+let query = '', keptScroll = {};
+
 /* ---------- the category rows, in the order you're most likely to want them ----------
    Each category scores the share of your play time spent on its games, plus how closely its games match
    the tags you play most (the same match as Recommended), averaged over its games so big categories don't
@@ -845,11 +884,18 @@ function sections() {
 }
 function render(still) {
   // keep each row where it was scrolled to (Recently played goes back to the start: the game you just played is first)
-  const scroll = {};
-  gamesEl.querySelectorAll('.sec').forEach(s => { if (s.dataset.sec !== 'recent') scroll[s.dataset.sec] = s.querySelector('.row').scrollLeft; });
-  const {list, favs} = sections(), min = loadMin();
+  if (!gamesEl.querySelector('.results')) gamesEl.querySelectorAll('.sec').forEach(s => { if (s.dataset.sec !== 'recent') keptScroll[s.dataset.sec] = s.querySelector('.row').scrollLeft; });
+  const scroll = keptScroll;
   gamesEl.classList.toggle('nofx', !!still);
   gamesEl.classList.toggle('small', boxSize() === 'small');
+  if (query.trim()) {   // searching: one list of matches, wrapping onto more lines, in place of the rows
+    const found = searchGames(query), favs = loadFavs();
+    gamesEl.innerHTML = `<section class="sec results" data-sec="search"><div class="sech" aria-live="polite">${found.length ? `${found.length} game${found.length > 1 ? 's' : ''}` : ''}</div>
+      ${found.length ? `<div class="row">${found.map((g, n) => tile(g, null, favs, n)).join('')}</div>` : `<p class="none">No games match “${esc(query.trim())}”</p>`}</section>`;
+    nameCards(); clearNamesSoon();
+    return;
+  }
+  const {list, favs} = sections(), min = loadMin();
   gamesEl.innerHTML = list.map(s => {
     const m = min.includes(s.id);
     return `<section class="sec${m ? ' min' : ''}${s.cls ? ' ' + s.cls : ''}" data-sec="${s.id}">
@@ -954,8 +1000,15 @@ sheet.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('open')) { e.stopImmediatePropagation(); closeSheet(); } }, true);
 
-const touch = !!(window.RizzoGames && RizzoGames.device && RizzoGames.device.touch);
-document.getElementById('tip').textContent = touch ? 'Press and hold a game for more about it' : 'Right-click a game for more about it';
+const qEl = document.getElementById('q'), qx = document.getElementById('qx');
+query = qEl.value; qx.hidden = !query;   // a browser can put back what was typed before
+qEl.addEventListener('input', () => { query = qEl.value; qx.hidden = !query; render(true); });
+const clearSearch = () => { qEl.value = ''; query = ''; qx.hidden = true; render(true); };
+qx.addEventListener('click', () => { clearSearch(); qEl.focus(); });
+qEl.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && qEl.value) { e.stopPropagation(); clearSearch(); }
+  if (e.key === 'Enter') { const t = gamesEl.querySelector('.tile'); if (t && query.trim()) { qEl.blur(); nameCards(t.querySelector('.ico')); t.click(); } }   // Enter opens the top match
+});
 render();
 // Changing the icon size in the Settings menu: redraw straight away, behind the menu
 window.RizzoHooks = Object.assign(window.RizzoHooks || {}, {hubSize: () => render(true)});
