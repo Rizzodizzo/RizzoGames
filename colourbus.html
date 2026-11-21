@@ -532,6 +532,9 @@ function buildLevel(n, attempt) {
     b.load.push(r);
   }
   held.forEach(k => { if (!stops[k].n) stops[k].c = null; });
+  // each bus's riders sit together by colour, the biggest group at the back, and its own colour last so people
+  // getting on join them. Only where they sit changes: the game only ever counts riders, so it plays the same
+  buses.forEach(b => { const n = {}; b.load.forEach(c => { n[c] = (n[c] || 0) + 1; }); b.load.sort((x, y) => (x === b.c) - (y === b.c) || n[y] - n[x] || x - y); });
   // the bay: buses shared out over the lanes
   const depot = Array.from({length: sh.cols}, () => []);
   shuffle(buses).forEach((b, i) => depot[i % sh.cols].push(b));
